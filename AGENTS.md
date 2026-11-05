@@ -84,7 +84,7 @@ Propose merges without writing anything, from `back/`:
 uv run vx-back sanitize-report ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-Write proposals to the local database, from the repo root, after `docker compose up`:
+Rebuild the search index and write proposals to the local database, from the repo root, after `docker compose up`. Search in chat needs this index:
 
 ```bash
 docker compose run --rm batch
@@ -391,6 +391,12 @@ Extraction prefers leaving a field empty to guessing, because a wrong value can 
 The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.
 
 To change the default, measure against `back/tests/fixtures/merge_review.json`. Those pairs were reviewed by reading descriptions during development, so add pairs reviewed by people who know the materials whenever possible.
+
+## Similar material search
+
+`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Embeddings aren't used yet.
+
+The API passes the validated caller to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock.
 
 ## Local first
 
