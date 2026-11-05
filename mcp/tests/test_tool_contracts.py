@@ -41,7 +41,12 @@ def discover():
 
 def test_client_discovers_the_tools_over_the_protocol():
     tools = {tool.name: tool for tool in discover()}
-    assert set(tools) == {"get_pdm_template", "search_similar_materials", "validate_and_format_pdm"}
+    assert set(tools) == {
+        "check_ncm_consistency",
+        "get_pdm_template",
+        "search_similar_materials",
+        "validate_and_format_pdm",
+    }
     for tool in tools.values():
         assert tool.description
         assert tool.output_schema
@@ -58,6 +63,8 @@ def test_tool_parameters_have_no_identity_fields():
             "unit",
             "query",
             "limit",
+            "ncm",
+            "ncm_version",
         }
         for name in tool.input_schema["properties"]:
             assert not any(word in name.lower() for word in FORBIDDEN)
@@ -78,6 +85,23 @@ def test_template_follows_the_architecture_example():
     assert attributes["LARGURA"]["required"] is False
     assert attributes["LARGURA"]["allowed_values"] is None
     assert result["ncm_references"] == [{"codes": ["8482.10.10"], "rule": "único para a classe"}]
+
+
+def test_ncm_tool_requires_fiscal_review_without_claiming_official_validation():
+    result = call("check_ncm_consistency", pdm_class_id="PDM003", attributes={"TIPO": "SEXTAVADA"}, ncm="7318.15.00")
+    assert result["suggested_ncm_codes"] == ["7318.16.00"]
+    assert result["technical_consistency"] == "INCONSISTENT"
+    assert result["requires_fiscal_review"] is True
+    assert result["exists_in_snapshot"] is None
+    assert result["valid_in_snapshot"] is None
+    assert len(result["evaluation_hash"]) == 64
+
+
+def test_ncm_tool_rejects_unavailable_reference_versions():
+    with pytest.raises(McpToolError, match="indisponível"):
+        call("check_ncm_consistency", pdm_class_id="PDM003", attributes={}, ncm="7318.16.00", ncm_version="inventada")
+    with pytest.raises(McpToolError, match="indisponivel"):
+        call("check_ncm_consistency", pdm_class_id="PDM003", attributes={}, ncm=None, pdm_version="inventada")
 
 
 def test_template_exposes_conditions_and_item_names():
