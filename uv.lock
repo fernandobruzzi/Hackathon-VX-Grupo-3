@@ -1912,6 +1912,7 @@ dependencies = [
 dev = [
     { name = "httpx" },
     { name = "pytest" },
+    { name = "vx-materials-api" },
 ]
 
 [package.metadata]
@@ -1927,6 +1928,7 @@ requires-dist = [
 dev = [
     { name = "httpx", specifier = ">=0.28" },
     { name = "pytest", specifier = ">=8" },
+    { name = "vx-materials-api", editable = "api" },
 ]
 
 [[package]]
