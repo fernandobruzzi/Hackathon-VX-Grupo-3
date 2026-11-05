@@ -41,7 +41,7 @@ def discover():
 
 def test_client_discovers_the_tools_over_the_protocol():
     tools = {tool.name: tool for tool in discover()}
-    assert set(tools) == {"get_pdm_template", "validate_and_format_pdm"}
+    assert set(tools) == {"get_pdm_template", "search_similar_materials", "validate_and_format_pdm"}
     for tool in tools.values():
         assert tool.description
         assert tool.output_schema
@@ -56,6 +56,8 @@ def test_tool_parameters_have_no_identity_fields():
             "attributes",
             "item_name",
             "unit",
+            "query",
+            "limit",
         }
         for name in tool.input_schema["properties"]:
             assert not any(word in name.lower() for word in FORBIDDEN)
