@@ -10,6 +10,7 @@
 > - **Armazenamento (seção 4):** fica em `back/clients/storage.py`, com pasta local ou S3, no lugar de `clients/s3.py`.
 > - **Tools (seção 3):** `format` traz o texto do PDM, sem códigos como `DECIMAL_MM`. `get_pdm_template` acrescenta `item_names` e `ncm_references`, e `validate_and_format_pdm` aceita `item_name` e `unit`. Em classes com vários qualificadores, `qualifier` é nulo.
 > - **Normalização (seção 4):** fica em `back/repositories/normalization/`, não em `domain/normalization.py`, para permitir a troca de algoritmos.
+> - **Classificação (seção 4):** contrato compartilhado em `back/domain/contracts.py`, algoritmos em `back/repositories/classification/` e relatório por registro em `back/pipelines/classify.py`. Seleção por `CLASSIFICATION_REPOSITORY`; regras e limites da avaliação em [`classificacao.md`](classificacao.md).
 > - **Aprovação automática:** a decisão está em aberto na [issue #36](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/36).
 
 ## 1. Diagrama e fluxo de arquitetura na AWS

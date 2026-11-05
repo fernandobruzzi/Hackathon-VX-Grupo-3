@@ -127,3 +127,47 @@ class PdmValidationResult:
     formatted_description: str | None = None
     identity_key: str | None = None
     can_submit: bool = False
+
+
+class ClassificationStatus(StrEnum):
+    CLASSIFIED = "CLASSIFIED"
+    UNRESOLVED = "UNRESOLVED"
+    OUT_OF_SCOPE = "OUT_OF_SCOPE"
+
+
+@dataclass(frozen=True)
+class ClassificationInput:
+    """Textos originais, tanto do cadastro legado quanto de um pedido."""
+
+    description: str | None
+    short_description: str | None = None
+    merchandise_group: str | None = None
+    attachment_text: str | None = None
+
+
+@dataclass(frozen=True)
+class ClassificationEvidence:
+    class_id: str
+    source_field: str
+    matched_name: str
+    rule: str
+
+
+@dataclass(frozen=True)
+class ClassificationResult:
+    original: ClassificationInput
+    status: ClassificationStatus
+    pdm_class_id: str | None
+    candidate_class_ids: tuple[str, ...]
+    evidence: tuple[ClassificationEvidence, ...]
+    rule: str
+    pdm_version: str
+    pdm_source_sha256: str
+
+
+class ClassificationRepository(Protocol):
+    """Classificacao substituivel; o resultado nao altera o cadastro mestre."""
+
+    name: str
+
+    def classify(self, item: ClassificationInput) -> ClassificationResult: ...
