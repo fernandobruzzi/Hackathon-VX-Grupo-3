@@ -78,6 +78,12 @@ uv run vx-bootstrap --data-dir ../data/desafio01
 
 Schema changes need a new migration in `api/vx_materials_api/db/migrations/versions/`. Tests fail if models and migrations differ.
 
+Measure attribute extraction on the whole base, from `back/`. Its class detection is approximate until #15 lands:
+
+```bash
+uv run python -m pipelines.measure_extraction
+```
+
 Report, from `back/`:
 
 ```bash
@@ -345,6 +351,10 @@ CREATE DATABASE vx_materiais OWNER migration_user;
 
 Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATABASE_URL`, `API_DB_PASSWORD`, `BATCH_DB_PASSWORD` and `MCP_DB_PASSWORD` set. These steps haven't been run on RDS yet, so [#6](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/6) must confirm them and correct this section if needed.
 
+## Attribute extraction
+
+Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. Tests hold real base rows with results checked by hand, so add one with each new rule.
+
 ## Local first
 
 Every feature must run and pass its tests locally with `docker compose up`, without an AWS account. AWS deployment proceeds in parallel, to surface its problems early, but doesn't block local work.
@@ -372,7 +382,7 @@ Any algorithm whose results may disappoint, such as preprocessing, extraction, c
 3. Register it in `REPOSITORIES`, selectable through an environment variable.
 4. Parametrize contract tests over every registered repository, so new ones meet the same bar.
 
-`back/repositories/normalization/` is the reference example. Deterministic parsing with one correct answer, like the PDM loader, doesn't need this.
+`back/repositories/normalization/` and `back/repositories/extraction/` are reference examples. Deterministic parsing with one correct answer, like the PDM loader, doesn't need this.
 
 ## Frontend
 
