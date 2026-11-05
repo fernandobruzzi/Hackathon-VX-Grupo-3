@@ -28,9 +28,12 @@ async def send_message(
     """Executa um turno com chamadas MCP reais. Não publica material nem cria pedido."""
     if "chat:use" not in identity.permissions:
         raise ApiProblem(403, "FORBIDDEN", "Sem permissão para usar o chat.")
+    if payload.center_code not in identity.center_codes:
+        raise ApiProblem(403, "FORBIDDEN", "Centro fora do escopo do usuário.")
     rid = request_id(request)
     reservation = chat_service.reserve_turn(db, identity, payload)
-    token = issue_agent_token(identity.user_id, identity.permissions, settings.agent_internal_token_secret())
+    secret = settings.agent_internal_token_secret()
+    token = issue_agent_token(identity.user_id, identity.permissions, identity.center_codes, secret)
     try:
         result = await agent.run(reservation.agent_payload, token, rid)
     except AgentUnavailable as error:

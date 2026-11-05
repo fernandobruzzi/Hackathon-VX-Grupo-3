@@ -10,3 +10,5 @@ class Identity:
     tenant_id: uuid.UUID
     roles: tuple[str, ...]
     permissions: frozenset[str]
+    # Centros cujo estoque o usuário pode ver. Configuração do backend, nunca do payload.
+    center_codes: frozenset[str] = frozenset()
