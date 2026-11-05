@@ -1,6 +1,6 @@
 """Comando `vx-batch-job`: cria um job de batch para rodar localmente, sem a tela do front.
 
-Em produção, quem cria o job é a API (`POST /api/v1/batch/jobs`, #21), com o usuário autenticado.
+A tela /batch cria o job pela API (`POST /api/v1/batch/jobs`), com o usuário autenticado.
 Este atalho só funciona com APP_ENV=local e registra um operador local como solicitante.
 """
 

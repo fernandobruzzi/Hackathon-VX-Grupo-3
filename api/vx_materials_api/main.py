@@ -14,12 +14,13 @@ from sqlalchemy.orm import Session, sessionmaker
 from vx_materials_api import settings
 from vx_materials_api.db.session import make_engine, make_session_factory
 from vx_materials_api.errors import register_error_handlers, request_id
-from vx_materials_api.routes import auth, chat, sanitization
+from vx_materials_api.routes import auth, batch, chat, sanitization
 from vx_materials_api.security.cognito import CognitoClient, CognitoConfig
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.local_session import local_identity
 from vx_materials_api.security.sessions import session_identity
 from vx_materials_api.services.agent_client import AgentClient
+from vx_materials_api.services.batch_runner import BatchRunner, get_batch_runner
 
 IdentityProvider = Callable[[Session], Identity]
 
@@ -43,6 +44,7 @@ def create_app(
     agent_client: AgentClient | None = None,
     cognito_config: CognitoConfig | None = None,
     cognito_client: CognitoClient | None = None,
+    batch_runner: BatchRunner | None = None,
 ) -> FastAPI:
     app = FastAPI(title="VX Materiais API", docs_url="/api/docs", openapi_url="/api/openapi.json")
     app.state.session_factory = session_factory or (lambda: _default_session_factory()())
@@ -66,6 +68,7 @@ def create_app(
         app.include_router(auth.local_router)
     app.state.agent_client = agent_client or AgentClient(settings.agent_url())
     app.state.pdm_catalog = None
+    app.state.batch_runner = batch_runner or get_batch_runner()
     register_error_handlers(app)
 
     @app.middleware("http")
@@ -83,6 +86,7 @@ def create_app(
     def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
+    app.include_router(batch.router)
     app.include_router(chat.router)
     app.include_router(auth.router)
     app.include_router(sanitization.router)
