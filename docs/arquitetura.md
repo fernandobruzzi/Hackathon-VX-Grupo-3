@@ -9,6 +9,7 @@
 > - **Pacotes Python (seção 4):** `mcp` e `api` ficam em `mcp/vx_materials_mcp/` e `api/vx_materials_api/`, em um único workspace uv com `uv.lock` na raiz.
 > - **Armazenamento (seção 4):** fica em `back/clients/storage.py`, com pasta local ou S3, no lugar de `clients/s3.py`.
 > - **Tools (seção 3):** `format` traz o texto do PDM, sem códigos como `DECIMAL_MM`. `get_pdm_template` acrescenta `item_names` e `ncm_references`, e `validate_and_format_pdm` aceita `item_name` e `unit`. Em classes com vários qualificadores, `qualifier` é nulo.
+> - **Candidatos a duplicidade:** ficam em `back/repositories/candidates/`. O padrão é a identidade exata; a busca por tokens fica registrada, mas desligada até atingir precisão suficiente em pares revisados.
 > - **Extração:** fica em `back/repositories/extraction/`, sem LLM por enquanto. O que as regras não resolvem fica em `unresolved`, para um repositório futuro tratar.
 > - **Normalização (seção 4):** fica em `back/repositories/normalization/`, não em `domain/normalization.py`, para permitir a troca de algoritmos.
 > - **Classificação (seção 4):** contrato compartilhado em `back/domain/contracts.py`, algoritmos em `back/repositories/classification/` e relatório por registro em `back/pipelines/classify.py`. Seleção por `CLASSIFICATION_REPOSITORY`; regras e limites da avaliação em [`classificacao.md`](classificacao.md).
