@@ -95,16 +95,20 @@ def detail(db, proposal, principal, catalog):
         "version": proposal.version,
         "proposal_type": proposal.proposal_type,
         "status": proposal.status,
-        "title": f"{after.item_name} · " + " / ".join(m.material_code for m in materials),
+        "title": f"{after.item_name or after.pdm_class_id or 'Classe pendente'} · "
+        + " / ".join(m.material_code for m in materials),
         "material_codes": [m.material_code for m in materials],
         "suggested_primary_code": primary.material_code if primary else None,
         "identity": {
             "mode": first_class.identity_mode.value if first_class else "TECHNICAL_ATTRIBUTES",
-            "summary": after.item_name,
+            "summary": after.item_name or after.pdm_class_id or "Classe pendente",
         },
         "members": member_rows,
         "after": {
-            "description": validation.formatted_description or after.item_name,
+            "description": validation.formatted_description
+            or after.item_name
+            or after.pdm_class_id
+            or "Descrição pendente",
             "ncm": after.ncm,
             "unit": after.unit,
             "attributes": {k: v for k, v in after.attributes.items() if v is not None},
@@ -113,7 +117,7 @@ def detail(db, proposal, principal, catalog):
         "technical_review_status": proposal.technical_review_status,
         "fiscal_review_status": proposal.fiscal_review_status,
         "conflicts": conflicts,
-        "ranking_score": None,
+        "ranking_score": changes.ranking_score,
         "created_at": proposal.created_at.isoformat().replace("+00:00", "Z"),
         "allowed_actions": [
             action for action in allowed_actions(proposal, principal) if action != "APPROVE" or not conflicts

@@ -26,14 +26,14 @@ class ProposalDecision(StrictModel):
 class MemberInterpretation(StrictModel):
     material_id: UUID
     expected_version: int = Field(ge=1)
-    pdm_class_id: str
-    item_name: str
+    pdm_class_id: str | None
+    item_name: str | None
     attributes: dict[str, str | None]
 
 
 class MaterialAfter(StrictModel):
-    pdm_class_id: str
-    item_name: str
+    pdm_class_id: str | None
+    item_name: str | None
     attributes: dict[str, str | None]
     unit: str
     ncm: str | None
@@ -65,6 +65,9 @@ class ProposalChangeset(StrictModel):
     conflicts: list[str] = Field(default_factory=list)
     sources: dict[str, str] = Field(default_factory=dict)
     evidence_hashes: dict[str, str] = Field(default_factory=dict)
+    primary_material_code: str | None = None
+    ranking_score: float | None = None
+    changes: list[dict] = Field(default_factory=list)
 
 
 def evidence_hash(source) -> str:

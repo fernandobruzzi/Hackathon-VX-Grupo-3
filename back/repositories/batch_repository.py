@@ -9,6 +9,7 @@ from decimal import Decimal
 from sqlalchemy import Connection, Engine, text
 
 from domain.contracts import MaterialRecord, MergeProposal
+from repositories.proposal_payload import approval_payload
 
 _READ_MATERIALS = text(
     """
@@ -121,16 +122,19 @@ def write_search_index(engine: Engine, tenant_id: str, version: str, rows: list[
     return len(rows)
 
 
-def _proposal_row(proposal: MergeProposal, ids: dict[str, str | None], tenant_id: str, job_id: str | None) -> dict:
+def _proposal_row(
+    proposal: MergeProposal, ids: dict[str, str | None], tenant_id: str, job_id: str | None, dataset_id: str
+) -> dict:
+    members, changeset, digest = approval_payload(proposal, ids, dataset_id)
     return {
         "id": proposal.id,
         "tenant_id": tenant_id,
         "job_id": job_id,
         "proposal_type": proposal.proposal_type,
-        "members": json.dumps(proposal.members, ensure_ascii=False),
+        "members": json.dumps(members, ensure_ascii=False),
         "primary_material_id": ids[proposal.suggested_primary_code],
-        "changeset": json.dumps(proposal.changeset, ensure_ascii=False),
-        "changeset_hash": proposal.changeset_hash,
+        "changeset": json.dumps(changeset, ensure_ascii=False),
+        "changeset_hash": digest,
         "fiscal_review_status": "PENDING" if proposal.fiscal_review_required else "NOT_REQUIRED",
     }
 
@@ -145,8 +149,17 @@ def insert_proposals(
     """Insere na transação de quem chama. Os ids vêm do conteúdo, então repetir não duplica nada."""
     ids = {record.code: record.database_id for record in records}
     inserted = 0
+    if not proposals:
+        return 0
+    datasets = (
+        connection.execute(text("SELECT id::text FROM datasets WHERE tenant_id = :tenant"), {"tenant": tenant_id})
+        .scalars()
+        .all()
+    )
+    if len(datasets) != 1:
+        raise ValueError("A persistência de propostas exige exatamente um dataset por empresa no MVP")
     for proposal in proposals:
-        result = connection.execute(_INSERT_PROPOSAL, _proposal_row(proposal, ids, tenant_id, job_id))
+        result = connection.execute(_INSERT_PROPOSAL, _proposal_row(proposal, ids, tenant_id, job_id, datasets[0]))
         inserted += result.rowcount if result.rowcount > 0 else 0
     return inserted
 

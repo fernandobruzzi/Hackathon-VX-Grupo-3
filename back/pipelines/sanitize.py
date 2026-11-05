@@ -97,8 +97,10 @@ def build_proposal(
         conflicts.append("UNIDADES_DIFERENTES: consolidacao de quantidade bloqueada ate definir a conversao")
 
     ncms = [normalizer.normalize_ncm(member.record.ncm).value for member in members]
-    fiscal_required = len(set(ncms)) > 1
-    if fiscal_required:
+    divergent_ncms = len(set(ncms)) > 1
+    target_ncm = normalizer.normalize_ncm(primary.record.ncm).value
+    fiscal_required = divergent_ncms or any((m.record.ncm or None) != target_ncm for m in members)
+    if divergent_ncms:
         conflicts.append("NCM_DIVERGENTE: exige revisao fiscal")
 
     attributes = {name: value for name, value in primary.attributes.items()}
@@ -119,11 +121,16 @@ def build_proposal(
         "identity_mode": IdentityMode(pdm_class.identity_mode).value,
         "pdm_class_id": pdm_class.id,
         "pdm_version": catalog.version,
+        "pdm_source_sha256": catalog.source_sha256,
         "primary_material_code": primary.record.code,
         "blocked_material_codes": [m.record.code for m in members if m is not primary],
         "conflicts": conflicts,
         "ranking_score": group.score,
         "after": {
+            "pdm_class_id": pdm_class.id,
+            "item_name": item_name,
+            "unit": normalizer.normalize_unit(primary.record.unit).value or primary.record.unit,
+            "ncm": target_ncm,
             "description": format_description(pdm_class, item_name, attributes) if item_name else None,
             "attributes": attributes,
         },
@@ -161,6 +168,8 @@ def _member(member: AnalyzedMaterial) -> dict:
         "value_brl": record.total_value,
         "inventory": list(record.inventory),
         "attributes": member.attributes,
+        "pdm_class_id": member.pdm_class_id,
+        "item_name": member.item_name,
     }
 
 

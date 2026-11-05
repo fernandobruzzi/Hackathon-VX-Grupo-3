@@ -12,6 +12,7 @@ from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
 from domain.contracts import PdmCatalog, ValidationStatus
+from domain.identity import reference_key
 from domain.pdm_validator import validate_pdm
 from vx_materials_api.db.models import (
     AuditLog,
@@ -49,6 +50,16 @@ def exact_product(left: Decimal, right: Decimal) -> Decimal:
     with localcontext() as context:
         context.prec = max(28, len(left.as_tuple().digits) + len(right.as_tuple().digits) + 1)
         return left * right
+
+
+def _attribute_matches(name: str, left: str | None, right: str | None) -> bool:
+    if name == "REFERENCIA FABRICANTE" and isinstance(left, str) and isinstance(right, str):
+        return reference_key(left) == reference_key(right)
+    return left == right
+
+
+def _attributes_match(first: dict, second: dict) -> bool:
+    return first.keys() == second.keys() and all(_attribute_matches(k, v, second[k]) for k, v in first.items())
 
 
 def exact_sum(left: Decimal, right: Decimal) -> Decimal:
@@ -401,7 +412,7 @@ def _decide_current(
         fiscal_change = any(m.ncm != changes.after.ncm for m in materials)
         fiscal_basis_changed = any(
             (m.pdm_class_id is not None and m.pdm_class_id != changes.after.pdm_class_id)
-            or (bool(m.attributes) and m.attributes != changes.after.attributes)
+            or (bool(m.attributes) and not _attributes_match(m.attributes, changes.after.attributes))
             for m in materials
         )
         if (fiscal_change or fiscal_basis_changed) and proposal.fiscal_review_status == "NOT_REQUIRED":
@@ -433,7 +444,7 @@ def _decide_current(
                 if checked.identity_key != validation.identity_key:
                     raise ApiError(422, "IDENTITY_CONFLICT", "Materiais diferentes nao podem ser unificados.")
                 if any(
-                    value is not None and changes.after.attributes.get(name) != value
+                    value is not None and not _attribute_matches(name, value, changes.after.attributes.get(name))
                     for name, value in interpretation.attributes.items()
                 ):
                     raise ApiError(
@@ -445,14 +456,15 @@ def _decide_current(
                     ("manufacturer", "FABRICANTE"),
                     ("manufacturer_reference", "REFERENCIA FABRICANTE"),
                 ]:
-                    if getattr(material, field) and getattr(material, field) != interpretation.attributes.get(
-                        attribute
+                    if getattr(material, field) and not _attribute_matches(
+                        attribute, getattr(material, field), interpretation.attributes.get(attribute)
                     ):
                         raise ApiError(
                             422, "IDENTITY_CONFLICT", "Fabricante ou referencia atuais divergem da proposta."
                         )
                 if material.attributes and any(
-                    interpretation.attributes.get(k) != v for k, v in material.attributes.items()
+                    not _attribute_matches(k, v, interpretation.attributes.get(k))
+                    for k, v in material.attributes.items()
                 ):
                     raise ApiError(422, "IDENTITY_CONFLICT", "Atributos atuais divergem da identidade proposta.")
         rows = inventory_rows(
