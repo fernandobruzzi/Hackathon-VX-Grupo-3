@@ -9,10 +9,12 @@ import time
 from typing import Any, Protocol
 
 from domain.contracts import ClassificationStatus, PdmClass
-from vx_materials_mcp.chatbot.session_manager import TurnContext
+from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import (
     AgentRunRequest,
     AgentRunResponse,
+    ExistingMatch,
+    InventoryRow,
     MaterialCard,
     NcmCard,
     ToolCallRecord,
@@ -82,6 +84,69 @@ def _summarize_validation(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _summarize_search(result: dict[str, Any]) -> dict[str, Any]:
+    """Resumo para o painel: sem estoque, que só aparece na ficha e só dos centros autorizados."""
+    return {
+        "match_status": result["match_status"],
+        "candidates": [
+            {
+                "material_code": item["material_code"],
+                "status": item["status"],
+                "identity_verified": item["identity_verified"],
+                "match_type": item["match_type"],
+            }
+            for item in result["candidates"]
+        ],
+    }
+
+
+def _existing(search: dict[str, Any]) -> ExistingMatch | None:
+    """Primeiro item com a mesma identidade que pode ser reutilizado.
+
+    Ativo é oferecido como está; bloqueado só pelo código ativo de destino; obsoleto nunca.
+    """
+    for item in search["candidates"]:
+        if not item["identity_verified"]:
+            continue
+        if item["status"] == "ATIVO":
+            code, reason = item["material_code"], "Mesmo item pela regra de identidade do PDM."
+        elif item["status"] == "BLOQUEADO" and item["active_code_target"]:
+            code = item["active_code_target"]
+            reason = f"O código {item['material_code']} está bloqueado: use o código ativo {code}."
+        else:
+            continue
+        return ExistingMatch(
+            material_code=code,
+            status="ATIVO",
+            pdm_description=item["description"] or "",
+            match_type=item["match_type"],
+            reason=reason,
+            inventory=[
+                InventoryRow(center_code=row["center_code"], quantity=row["quantity"], unit=row["unit"] or "")
+                for row in item["inventory"]
+            ],
+        )
+    return None
+
+
+def _existing_message(existing: ExistingMatch) -> str:
+    stock = ", ".join(f"{row.quantity} {row.unit} no centro {row.center_code}".strip() for row in existing.inventory)
+    where = f" Estoque nos seus centros: {stock}." if stock else " Sem estoque nos seus centros."
+    return f"Esse item já existe: use o código {existing.material_code}. {existing.reason}{where}"
+
+
+async def _search(
+    recorder: ToolRecorder, request: AgentRunRequest, context: TurnContext, pdm_class_id: str | None
+) -> dict[str, Any] | None:
+    arguments: dict[str, Any] = {"query": " ".join(user_messages(request)), "limit": 5}
+    if pdm_class_id:
+        arguments["pdm_class_id"] = pdm_class_id
+    attributes = {name: value for name, value in context.attributes.items() if value}
+    if attributes:
+        arguments["attributes"] = attributes
+    return await recorder.call("search_similar_materials", arguments, _summarize_search)
+
+
 def _class_name(pdm_class: PdmClass, item_name: str | None) -> str:
     if item_name:
         return item_name
@@ -95,8 +160,27 @@ def _suggested_ncm(template: dict[str, Any] | None) -> str | None:
     return next(iter(codes)) if len(codes) == 1 else None
 
 
-def _no_class_response(context: TurnContext, recorder: ToolRecorder) -> AgentRunResponse:
+def _no_class_response(context: TurnContext, recorder: ToolRecorder, search: dict[str, Any] | None) -> AgentRunResponse:
     candidates = context.classification.candidate_class_ids
+    existing = _existing(search) if search else None
+    if existing is not None:
+        # Em classes de referência, fabricante e referência bastam para achar o item, mesmo sem a classe.
+        return AgentRunResponse(
+            assistant_message=_existing_message(existing),
+            tool_calls=recorder.calls,
+            context_patch={"planner": PLANNER, "pdm_class_id": search["pdm_class_id"]},
+            material_card=MaterialCard(
+                pdm_class_id=search["pdm_class_id"],
+                attributes=dict(search["query_attributes"]),
+                pdm_description=None,
+                validation_status="INCOMPLETE",
+                missing_attributes=[],
+                ncm=NcmCard(suggested=None, status="PENDING_VALIDATION"),
+                duplicate_check_status="MATCH_FOUND",
+                existing=existing,
+                can_submit=False,
+            ),
+        )
     if context.classification.status == ClassificationStatus.UNRESOLVED and candidates:
         message = (
             "Encontrei mais de uma classe possível para esse material. "
@@ -129,10 +213,7 @@ def _message_for(validation: dict[str, Any] | None, class_name: str) -> str:
         return "Não consegui validar o material agora. Tente enviar a mensagem de novo em instantes."
     status = validation["status"]
     if status == "VALID":
-        return (
-            f"A ficha de {class_name} está completa: {validation['formatted_description']}. "
-            "Falta a verificação de duplicidade na base antes de enviar o pedido."
-        )
+        return f"A ficha de {class_name} está completa: {validation['formatted_description']}."
     if status == "INCOMPLETE":
         questions = [item["question"] for item in validation["missing_attributes"]]
         return f"Identifiquei {class_name}. Para completar a ficha: " + " ".join(questions)
@@ -147,9 +228,9 @@ def _message_for(validation: dict[str, Any] | None, class_name: str) -> str:
 
 
 async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: ToolRecorder) -> AgentRunResponse:
-    """Um turno: consulta o modelo da classe e valida a ficha com as tools MCP."""
+    """Um turno: consulta o modelo da classe, valida a ficha e procura o item na base, com as tools MCP."""
     if context.pdm_class is None:
-        return _no_class_response(context, recorder)
+        return _no_class_response(context, recorder, await _search(recorder, request, context, None))
 
     pdm_class = context.pdm_class
     version = request.context.pdm_version
@@ -164,14 +245,26 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     if context.item_name:
         arguments["item_name"] = context.item_name
     validation = await recorder.call("validate_and_format_pdm", arguments, _summarize_validation)
+    search = await _search(recorder, request, context, pdm_class.id)
 
     template_names = [attribute["name"] for attribute in (template or {}).get("attributes", [])]
     card_attributes = {name: context.attributes.get(name) for name in template_names} or dict(context.attributes)
     status = validation["status"] if validation else "INCOMPLETE"
     missing = [item["name"] for item in validation["missing_attributes"]] if validation else []
-    # Pedido só pode ser enviado depois da verificação de duplicidade, que ainda não roda no chat.
+    message = _message_for(validation, _class_name(pdm_class, context.item_name))
+    existing = _existing(search) if search else None
+    if existing is not None:
+        duplicate, message = "MATCH_FOUND", _existing_message(existing)
+    elif search is None:
+        # Sem a verificação, o pedido nunca fica pronto: juntar itens diferentes custa mais que esperar.
+        duplicate = "PENDING"
+        message += " Não consegui verificar se o item já existe na base: tente enviar de novo em instantes."
+    else:
+        duplicate = "NO_MATCH"
+        if status == "VALID":
+            message += " Não encontrei item igual na base: o pedido pode ser enviado para revisão."
     return AgentRunResponse(
-        assistant_message=_message_for(validation, _class_name(pdm_class, context.item_name)),
+        assistant_message=message,
         tool_calls=recorder.calls,
         context_patch={
             "planner": PLANNER,
@@ -189,7 +282,8 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
             validation_status=status,
             missing_attributes=missing,
             ncm=NcmCard(suggested=_suggested_ncm(template), status="PENDING_VALIDATION"),
-            duplicate_check_status="PENDING",
-            can_submit=False,
+            duplicate_check_status=duplicate,
+            existing=existing,
+            can_submit=status == "VALID" and duplicate == "NO_MATCH",
         ),
     )
