@@ -6,7 +6,7 @@ O MVP está em construção. Veja o andamento nas [issues](https://github.com/fe
 
 ## Rodar
 
-Requer [uv](https://docs.astral.sh/uv/) e Node 20.9 ou mais novo. Os dados já estão em `data/`.
+Requer [uv](https://docs.astral.sh/uv/) e Node 20.9 ou mais novo. Os dados já estão em `data/`. A API, o Agent e o MCP ainda estão em construção.
 
 Back (testes e relatório de normalização da base):
 
@@ -22,6 +22,12 @@ Front (protótipo navegável com dados mock, em http://localhost:3000):
 cd front
 npm ci
 npm run dev
+```
+
+Tudo em containers, com Docker, em http://localhost:8000:
+
+```bash
+docker compose up --build
 ```
 
 ## Documentação
