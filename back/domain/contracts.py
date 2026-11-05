@@ -268,3 +268,31 @@ class MergeProposal:
     conflicts: tuple[str, ...]
     fiscal_review_required: bool
     ranking_score: float
+
+
+@dataclass(frozen=True)
+class FieldCorrection:
+    """Mudança proposta em um campo do cadastro, sempre com o valor original e a regra aplicada."""
+
+    proposal_type: str  # PDM_CORRECTION ou UNIT_CORRECTION
+    field: str  # description, merchandise_group ou unit
+    before: str | None
+    after: str
+    rule: str
+
+
+@dataclass(frozen=True)
+class CorrectionResult:
+    corrections: tuple[FieldCorrection, ...]
+    # Motivos para não corrigir automaticamente, no formato `CODIGO: detalhe`. Ficam para revisão.
+    pending: tuple[str, ...] = ()
+
+
+class CorrectionRepository(Protocol):
+    """Decide o que corrigir em um material já analisado. Nada é aplicado: o resultado vira proposta."""
+
+    name: str
+
+    def correct(
+        self, material: AnalyzedMaterial, catalog: PdmCatalog, normalizer: NormalizationRepository
+    ) -> CorrectionResult: ...
