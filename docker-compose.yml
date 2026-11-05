@@ -98,7 +98,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
-    command: ["vx-back", "sanitize"]
+    command: ["sh", "-c", "vx-back index && vx-back sanitize"]
     volumes:
       - ./data:/data:ro
     depends_on:
