@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+# Entrada original: nunca normalizar
+data/** -text
+
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.xlsx binary
+
+# Gerados: em conflito, regenere em vez de editar
+uv.lock linguist-generated=true
+front/package-lock.json linguist-generated=true
