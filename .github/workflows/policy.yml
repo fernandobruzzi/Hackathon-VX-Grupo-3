@@ -1,0 +1,33 @@
+name: Repository policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: node --test scripts/tests/*.test.cjs
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { checkPolicy } = require(`${process.env.GITHUB_WORKSPACE}/scripts/check_pr_policy.cjs`);
+            const pr = context.payload.pull_request;
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              ...context.repo, pull_number: pr.number, per_page: 100
+            });
+            const problems = checkPolicy(pr, commits);
+            if (problems.length) core.setFailed(problems.join('\n'));

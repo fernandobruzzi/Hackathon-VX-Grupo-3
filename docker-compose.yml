@@ -51,6 +51,7 @@ services:
         condition: service_completed_successfully
 
   api:
+    init: true
     build:
       context: .
       target: api
@@ -65,15 +66,16 @@ services:
       LOCAL_TEST_SESSION: ${LOCAL_TEST_SESSION:-true}
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:${API_BIND_PORT:-8000}:8000"
     depends_on:
       bootstrap:
         condition: service_completed_successfully
       agent:
-        condition: service_started
+        condition: service_healthy
 
   # Sem portas publicadas: acessivel somente pela API.
   agent:
+    init: true
     build:
       context: .
       target: agent
@@ -86,8 +88,12 @@ services:
       AGENT_INTERNAL_TOKEN_SECRET: ${AGENT_INTERNAL_TOKEN_SECRET:-local_only_agent_internal_token_secret}
     volumes:
       - ./data:/data:ro
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
 
   batch:
+    init: true
     profiles: [batch]
     build:
       context: .
