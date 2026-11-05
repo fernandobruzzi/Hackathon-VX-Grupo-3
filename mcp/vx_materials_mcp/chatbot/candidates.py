@@ -6,16 +6,27 @@
 - O solicitante diz que é outro item: os códigos oferecidos ficam descartados. Se a ficha mudar e
   aparecerem candidatos novos, pergunta de novo.
 
-As respostas do solicitante são lidas de forma determinística: o front envia frases fixas pelos
-botões, e só variações óbvias do texto são aceitas.
+Os botões do front enviam uma ação estruturada (`ChatAction`), independente do texto exibido. Texto
+digitado continua aceito como alternativa, lido de forma determinística: só frases fixas e variações
+óbvias.
+
+A escolha fica salva na conversa: enquanto a ficha não muda, o turno reaproveita a última verificação
+aceita pela API, sem nova busca.
 """
 
+import json
 import re
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
-from vx_materials_mcp.schemas.agent import ExistingMatch, InventoryRow, SimilarCandidate
+from vx_materials_mcp.schemas.agent import (
+    ChatAction,
+    DuplicateCheckState,
+    ExistingMatch,
+    InventoryRow,
+    SimilarCandidate,
+)
 
 DISMISS_MESSAGE = "Nenhum desses é o meu item"
 PICK_PREFIX = "É o item"
@@ -45,6 +56,24 @@ def is_dismissal(text: str) -> bool:
 def picked_code(text: str) -> str | None:
     match = _PICK.match(_normalize(text))
     return match.group(1) if match else None
+
+
+def card_signature(pdm_class_id: str | None, attributes: dict[str, str | None]) -> str:
+    """Identifica a ficha usada na busca: classe e atributos preenchidos. A API calcula igual."""
+    filled = {name: value for name, value in attributes.items() if value}
+    return json.dumps({"pdm_class_id": pdm_class_id, "attributes": filled}, sort_keys=True, ensure_ascii=False)
+
+
+def wanted_code(action: ChatAction | None, message: str) -> str | None:
+    if action is not None:
+        return action.material_code if action.type == "PICK_CANDIDATE" else None
+    return picked_code(message)
+
+
+def wants_dismissal(action: ChatAction | None, message: str) -> bool:
+    if action is not None:
+        return action.type == "DISMISS_CANDIDATES"
+    return is_dismissal(message)
 
 
 def is_reply_to_candidates(text: str) -> bool:
@@ -125,8 +154,24 @@ def existing_message(existing: ExistingMatch) -> str:
     return f"Esse item já existe: use o código {existing.material_code}. {existing.reason}{where}"
 
 
+def _pending_or_clear(similar: list[SimilarCandidate], dismissed: list[str]) -> DuplicateDecision:
+    if similar:
+        return DuplicateDecision(
+            "PENDING",
+            similar=similar,
+            offered=[item.material_code for item in similar],
+            dismissed=dismissed,
+            message=_ask(similar),
+        )
+    return DuplicateDecision("NO_MATCH", dismissed=dismissed)
+
+
 def decide(
-    search: dict[str, Any] | None, message: str, offered_before: list[str], dismissed_before: list[str]
+    search: dict[str, Any] | None,
+    message: str,
+    offered_before: list[str],
+    dismissed_before: list[str],
+    action: ChatAction | None = None,
 ) -> DuplicateDecision:
     dismissed = list(dismissed_before)
     if search is None:
@@ -141,23 +186,38 @@ def decide(
         return DuplicateDecision("MATCH_FOUND", existing=existing, dismissed=dismissed)
 
     reusable = [item for item in search["candidates"] if not item["identity_verified"] and _code_to_use(item)]
-    code = picked_code(message)
+    code = wanted_code(action, message)
     if code and code in offered_before:
         chosen = next((item for item in reusable if code in (item["material_code"], _code_to_use(item))), None)
         if chosen is not None:
             existing = existing_from(chosen, "Confirmado pelo solicitante como o mesmo item.")
             return DuplicateDecision("MATCH_FOUND", existing=existing, dismissed=dismissed)
-    if is_dismissal(message):
+    if wants_dismissal(action, message):
         dismissed += [code for code in offered_before if code not in dismissed]
 
-    pending = [item for item in reusable if item["material_code"] not in dismissed]
-    if pending:
-        similar = [_similar(item) for item in pending]
-        return DuplicateDecision(
-            "PENDING",
-            similar=similar,
-            offered=[item.material_code for item in similar],
-            dismissed=dismissed,
-            message=_ask(similar),
-        )
-    return DuplicateDecision("NO_MATCH", dismissed=dismissed)
+    pending = [_similar(item) for item in reusable if item["material_code"] not in dismissed]
+    return _pending_or_clear(pending, dismissed)
+
+
+def reuse(
+    previous: DuplicateCheckState,
+    message: str,
+    offered_before: list[str],
+    dismissed_before: list[str],
+    action: ChatAction | None = None,
+) -> DuplicateDecision:
+    """Decide sem nova busca, a partir da última verificação aceita para a mesma ficha."""
+    dismissed = list(dismissed_before)
+    if previous.existing is not None:
+        return DuplicateDecision("MATCH_FOUND", existing=previous.existing, dismissed=dismissed)
+    if wants_dismissal(action, message):
+        dismissed += [code for code in offered_before if code not in dismissed]
+    pending = [item for item in previous.similar_candidates if item.material_code not in dismissed]
+    return _pending_or_clear(pending, dismissed)
+
+
+def needs_search(previous: DuplicateCheckState | None, signature: str, action: ChatAction | None, message: str) -> bool:
+    """Busca de novo quando a ficha mudou, ou para trazer estoque e detalhes do item escolhido."""
+    if previous is None or previous.signature != signature:
+        return True
+    return previous.existing is None and wanted_code(action, message) is not None

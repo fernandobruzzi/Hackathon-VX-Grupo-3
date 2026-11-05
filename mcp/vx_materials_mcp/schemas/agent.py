@@ -26,38 +26,11 @@ class HistoryMessage(_Contract):
     created_at: str
 
 
-class AgentContext(_Contract):
-    pdm_version: str
-    ncm_version: str
-    center_code: str
-    history: list[HistoryMessage]
-    confirmed_attributes: dict[str, str | None]
-    # Lidos pela API do contexto persistido da sessão, nunca do retorno anterior do Agent sem validação.
-    offered_material_codes: list[str] = Field(default_factory=list)
-    dismissed_material_codes: list[str] = Field(default_factory=list)
+class ChatAction(_Contract):
+    """Ação estruturada dos botões do front: independe do texto exibido."""
 
-
-class AgentRunRequest(_Contract):
-    turn_id: UUID
-    session_id: UUID
-    session_version: int = Field(ge=0)
-    message: str = Field(min_length=1)
-    context: AgentContext
-
-
-class ToolCallRecord(_Contract):
-    id: str
-    name: ToolName
-    transport: Literal["MCP_STDIO"] = "MCP_STDIO"
-    input: dict[str, Any]
-    status: Literal["SUCCEEDED", "FAILED", "PENDING"]
-    duration_ms: float
-    result: dict[str, Any]
-
-
-class NcmCard(_Contract):
-    suggested: str | None
-    status: Literal["PENDING_VALIDATION", "CONSISTENT", "REVIEW_REQUIRED"]
+    type: Literal["PICK_CANDIDATE", "DISMISS_CANDIDATES"]
+    material_code: str | None = None
 
 
 class InventoryRow(_Contract):
@@ -84,6 +57,52 @@ class SimilarCandidate(_Contract):
     status: Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]
     pdm_description: str
     active_code_target: str | None
+
+
+class DuplicateCheckState(_Contract):
+    """Última verificação de duplicidade aceita pela API, com a assinatura da ficha que a gerou."""
+
+    signature: str
+    status: Literal["PENDING", "NO_MATCH", "MATCH_FOUND"]
+    existing: ExistingMatch | None = None
+    similar_candidates: list[SimilarCandidate] = Field(default_factory=list)
+
+
+class AgentContext(_Contract):
+    pdm_version: str
+    ncm_version: str
+    center_code: str
+    history: list[HistoryMessage]
+    confirmed_attributes: dict[str, str | None]
+    # Lidos pela API do contexto persistido da sessão, nunca do retorno anterior do Agent sem validação.
+    offered_material_codes: list[str] = Field(default_factory=list)
+    dismissed_material_codes: list[str] = Field(default_factory=list)
+    duplicate_check: DuplicateCheckState | None = None
+
+
+class AgentRunRequest(_Contract):
+    turn_id: UUID
+    session_id: UUID
+    session_version: int = Field(ge=0)
+    message: str = Field(min_length=1)
+    # Validada pela API: só vale para códigos oferecidos antes nesta conversa.
+    action: ChatAction | None = None
+    context: AgentContext
+
+
+class ToolCallRecord(_Contract):
+    id: str
+    name: ToolName
+    transport: Literal["MCP_STDIO"] = "MCP_STDIO"
+    input: dict[str, Any]
+    status: Literal["SUCCEEDED", "FAILED", "PENDING"]
+    duration_ms: float
+    result: dict[str, Any]
+
+
+class NcmCard(_Contract):
+    suggested: str | None
+    status: Literal["PENDING_VALIDATION", "CONSISTENT", "REVIEW_REQUIRED"]
 
 
 class MaterialCard(_Contract):

@@ -16,11 +16,14 @@ from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.agent import ToolLimitExceeded, ToolRecorder
 from vx_materials_mcp.chatbot.candidates import (
     DISMISS_MESSAGE,
+    card_signature,
     decide,
     is_dismissal,
+    needs_search,
     picked_code,
     verified_existing,
 )
+from vx_materials_mcp.schemas.agent import ChatAction, DuplicateCheckState
 from vx_materials_mcp.security import caller_to_environment
 
 PDM = str(Path(__file__).parents[2] / "data" / "desafio01" / "03_padrao_cadastro_PDM.xlsx")
@@ -91,7 +94,7 @@ def token(**overrides):
     return jwt.encode({**claims, **overrides}, SECRET, algorithm="HS256")
 
 
-def run(client, message, history=(), confirmed=None, bearer=None, offered=(), dismissed=()):
+def run(client, message, history=(), confirmed=None, bearer=None, offered=(), dismissed=(), action=None, check=None):
     body = {
         "turn_id": str(uuid.uuid4()),
         "session_id": str(uuid.uuid4()),
@@ -108,8 +111,11 @@ def run(client, message, history=(), confirmed=None, bearer=None, offered=(), di
             "confirmed_attributes": confirmed or {},
             "offered_material_codes": list(offered),
             "dismissed_material_codes": list(dismissed),
+            "duplicate_check": check,
         },
     }
+    if action is not None:
+        body["action"] = action
     headers = {"X-Request-ID": "req-test", "Authorization": f"Bearer {bearer or token()}"}
     return client.post("/internal/v1/chat/run", json=body, headers=headers)
 
@@ -185,7 +191,20 @@ def test_existing_item_is_shown_with_authorized_stock(db_client):
 NEW_BOLT = "Parafuso sextavado M36x333, classe A4-70, aço inox 316, oxidado preto, DIN 931"
 
 
-def _next(client, history, body, message):
+def _saved_check(body):
+    """Verificação que a API salva depois de um turno: assinatura da ficha e decisão."""
+    card = body["material_card"]
+    check = {
+        "signature": card_signature(card["pdm_class_id"], card["attributes"]),
+        "status": card["duplicate_check_status"],
+        "similar_candidates": card["similar_candidates"],
+    }
+    if "existing" in card:
+        check["existing"] = card["existing"]
+    return check
+
+
+def _next(client, history, body, message, action=None, saved=False):
     """Turno seguinte, com o contexto que a API persistiria."""
     patch = body["context_patch"]
     history = [*history, ("assistant", body["assistant_message"])]
@@ -196,7 +215,62 @@ def _next(client, history, body, message):
         patch.get("confirmed_attributes"),
         offered=patch["offered_material_codes"],
         dismissed=patch["dismissed_material_codes"],
+        action=action,
+        check=_saved_check(body) if saved else None,
     ).json()
+
+
+def _searches(executed):
+    return sum(1 for name, _ in executed if name == "search_similar_materials")
+
+
+def test_dismiss_action_on_the_same_card_does_not_search_again(db_client, executed):
+    first = run(db_client, NEW_BOLT).json()
+    before = _searches(executed)
+
+    second = _next(db_client, [("user", NEW_BOLT)], first, "texto qualquer", {"type": "DISMISS_CANDIDATES"}, True)
+
+    card = second["material_card"]
+    assert card["duplicate_check_status"] == "NO_MATCH" and card["can_submit"] is True
+    assert _searches(executed) == before
+    assert set(second["context_patch"]["dismissed_material_codes"]) == set(
+        first["context_patch"]["offered_material_codes"]
+    )
+
+
+def test_picked_item_is_kept_on_later_turns_without_new_search(db_client, executed):
+    first = run(db_client, NEW_BOLT).json()
+    chosen = first["material_card"]["similar_candidates"][0]
+    pick = {"type": "PICK_CANDIDATE", "material_code": chosen["material_code"]}
+    history = [("user", NEW_BOLT)]
+
+    # O texto do botão pode ser qualquer um: vale a ação.
+    second = _next(db_client, history, first, "Quero este", pick, True)
+    searches = _searches(executed)
+    history = [*history, ("assistant", first["assistant_message"]), ("user", "Quero este")]
+    third = _next(db_client, history, second, "preciso de 20 unidades", saved=True)
+
+    code = chosen["active_code_target"] or chosen["material_code"]
+    assert second["material_card"]["existing"]["material_code"] == code
+    assert third["material_card"]["existing"]["material_code"] == code
+    assert third["material_card"]["duplicate_check_status"] == "MATCH_FOUND"
+    assert _searches(executed) == searches
+
+
+def test_changed_card_searches_again():
+    previous = DuplicateCheckState(signature=card_signature("PDM001", {"BITOLA": "M12"}), status="NO_MATCH")
+
+    assert needs_search(previous, card_signature("PDM001", {"BITOLA": "M16"}), None, "M16")
+    assert not needs_search(previous, card_signature("PDM001", {"BITOLA": "M12", "NORMA": None}), None, "ok")
+    assert needs_search(None, card_signature("PDM001", {}), None, "ok")
+
+
+def test_pick_on_saved_similar_items_searches_for_details():
+    previous = DuplicateCheckState(signature="s", status="PENDING")
+    pick = ChatAction(type="PICK_CANDIDATE", material_code="123")
+
+    assert needs_search(previous, "s", pick, "É este")
+    assert not needs_search(previous, "s", ChatAction(type="DISMISS_CANDIDATES"), "Nenhum")
 
 
 def test_only_similar_items_ask_the_requester(db_client):
