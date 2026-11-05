@@ -94,3 +94,36 @@ class PdmCatalog:
     version: str
     source_sha256: str
     classes: dict[str, PdmClass]
+
+
+class ValidationStatus(StrEnum):
+    VALID = "VALID"
+    INCOMPLETE = "INCOMPLETE"
+    INVALID = "INVALID"
+    OUT_OF_SCOPE = "OUT_OF_SCOPE"
+
+
+@dataclass(frozen=True)
+class MissingAttribute:
+    name: str
+    reason_code: str
+    question: str
+
+
+@dataclass(frozen=True)
+class InvalidAttribute:
+    name: str
+    reason_code: str
+    value: str | None
+    expected: str | None = None
+
+
+@dataclass(frozen=True)
+class PdmValidationResult:
+    status: ValidationStatus
+    missing_attributes: tuple[MissingAttribute, ...] = ()
+    invalid_attributes: tuple[InvalidAttribute, ...] = ()
+    not_applicable_attributes: tuple[str, ...] = ()
+    formatted_description: str | None = None
+    identity_key: str | None = None
+    can_submit: bool = False
