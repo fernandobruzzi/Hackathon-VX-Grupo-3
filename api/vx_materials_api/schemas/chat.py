@@ -1,1 +1,71 @@
-"""Schemas de conversa. Ver #5."""
+"""Schemas de conversa (`ChatMessageRequest`, `ChatTurnResponse` e retorno do Agent no OpenAPI)."""
+
+from typing import Any, Literal
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class _Contract(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ChatMessageRequest(_Contract):
+    session_id: UUID | None
+    client_message_id: UUID
+    expected_session_version: int = Field(ge=0)
+    message: str = Field(min_length=1)
+    center_code: str
+
+
+class ToolCall(_Contract):
+    id: str
+    name: Literal[
+        "search_similar_materials",
+        "get_pdm_template",
+        "validate_and_format_pdm",
+        "check_ncm_consistency",
+        "enrich_from_trusted_source",
+    ]
+    transport: Literal["MCP_STDIO"]
+    input: dict[str, Any]
+    status: Literal["SUCCEEDED", "FAILED", "PENDING"]
+    duration_ms: float | None = Field(default=None, exclude_if=lambda value: value is None)
+    result: dict[str, Any]
+
+
+class NcmCard(_Contract):
+    suggested: str | None
+    status: Literal["PENDING_VALIDATION", "CONSISTENT", "REVIEW_REQUIRED"]
+
+
+class MaterialCard(_Contract):
+    pdm_class_id: str | None
+    pdm_class_name: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    attributes: dict[str, str | None]
+    pdm_description: str | None
+    validation_status: Literal["VALID", "INCOMPLETE", "INVALID", "OUT_OF_SCOPE"]
+    missing_attributes: list[str]
+    ncm: NcmCard
+    duplicate_check_status: Literal["PENDING", "NO_MATCH", "MATCH_FOUND"]
+    can_submit: bool
+
+
+class AgentRunResponse(_Contract):
+    """Retorno do Agent, validado antes de qualquer persistência."""
+
+    assistant_message: str
+    tool_calls: list[ToolCall] = Field(max_length=5)
+    context_patch: dict[str, Any]
+    material_card: MaterialCard
+
+
+class ChatTurnResponse(_Contract):
+    request_id: str
+    session_id: UUID
+    session_version: int
+    order_id: UUID | None
+    status: Literal["NEEDS_INPUT", "EXISTING", "READY_TO_SUBMIT", "SUBMITTED", "OUT_OF_SCOPE"]
+    assistant_message: str
+    tool_calls: list[ToolCall]
+    material_card: MaterialCard
