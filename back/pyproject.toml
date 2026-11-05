@@ -1,0 +1,20 @@
+[project]
+name = "vx-materials-back"
+version = "0.1.0"
+description = "Pipeline batch e regras de dominio do cadastro de materiais"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["domain*", "repositories*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
