@@ -1899,6 +1899,7 @@ source = { editable = "mcp" }
 dependencies = [
     { name = "fastapi" },
     { name = "mcp" },
+    { name = "pyjwt" },
     { name = "uvicorn" },
     { name = "vx-materials-back" },
 ]
@@ -1913,6 +1914,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "mcp", specifier = ">=2.3,<3" },
+    { name = "pyjwt", specifier = ">=2.10" },
     { name = "uvicorn", specifier = ">=0.34" },
     { name = "vx-materials-back", editable = "back" },
 ]
