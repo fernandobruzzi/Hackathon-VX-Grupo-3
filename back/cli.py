@@ -8,6 +8,7 @@ from collections import Counter
 
 from domain.contracts import NormalizedField
 from pipelines.classify import classification_evaluation, classification_report
+from pipelines.sanitize import run_sanitize, sanitize_report
 from repositories.normalization import get_normalization_repository
 
 
@@ -51,9 +52,21 @@ def main(argv: list[str] | None = None) -> int:
     evaluate.add_argument("sample_path")
     evaluate.add_argument("--pdm-workbook", required=True)
     evaluate.add_argument("--repository")
+    report_merges = commands.add_parser("sanitize-report", help="Resume as propostas de um CSV, sem gravar nada")
+    report_merges.add_argument("csv_path")
+    report_merges.add_argument("--pdm-workbook")
+    report_merges.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
+    sanitize = commands.add_parser("sanitize", help="Grava propostas no banco, com a credencial batch_user")
+    sanitize.add_argument("--pdm-workbook")
+    sanitize.add_argument("--job-id")
+    sanitize.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
     args = parser.parse_args(argv)
 
-    if args.command == "normalization-report":
+    if args.command == "sanitize-report":
+        result = sanitize_report(args.csv_path, args.pdm_workbook, args.repository)
+    elif args.command == "sanitize":
+        result = run_sanitize(args.pdm_workbook, args.job_id, args.repository)
+    elif args.command == "normalization-report":
         result = normalization_report(args.csv_path, args.repository)
     elif args.command == "classification-report":
         result = classification_report(args.csv_path, args.pdm_workbook, args.input_kind, args.repository)
