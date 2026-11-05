@@ -14,8 +14,6 @@ from collections import Counter
 from collections.abc import Iterable
 from decimal import Decimal
 
-from sqlalchemy import create_engine
-
 from domain.contracts import (
     AnalyzedMaterial,
     CandidateGroup,
@@ -35,7 +33,6 @@ from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
 from pipelines.corrections import propose_corrections, summarize_corrections
-from repositories.batch_repository import read_materials, save_proposals, single_tenant
 from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
@@ -254,25 +251,3 @@ def sanitize_report(
     catalog = _catalog(pdm_workbook)
     merges, corrections, pending = _propose(read_csv_records(path), catalog, repository_name, correction_repository)
     return {**summarize(merges), "corrections": summarize_corrections(corrections, pending)}
-
-
-def run_sanitize(
-    pdm_workbook: str | None = None,
-    job_id: str | None = None,
-    repository_name: str | None = None,
-    database_url: str | None = None,
-    correction_repository: str | None = None,
-) -> dict:
-    url = database_url or os.environ.get("DATABASE_URL")
-    if not url:
-        raise RuntimeError("Defina DATABASE_URL com a credencial batch_user")
-    engine = create_engine(url)
-    try:
-        catalog = _catalog(pdm_workbook)
-        tenant_id = single_tenant(engine)
-        records = read_materials(engine, tenant_id)
-        merges, corrections, pending = _propose(records, catalog, repository_name, correction_repository)
-        inserted = save_proposals(engine, merges + corrections, records, tenant_id, job_id)
-    finally:
-        engine.dispose()
-    return {**summarize(merges), "corrections": summarize_corrections(corrections, pending), "inserted": inserted}

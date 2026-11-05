@@ -8,7 +8,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 
 from clients.storage import LocalObjectStore
-from pipelines.sanitize import run_sanitize
+from pipelines.full_run import run_sanitize
 from vx_materials_api.bootstrap import bootstrap
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
@@ -37,7 +37,7 @@ def sanitized(migrated_url, tmp_path_factory):
 
 def total(result):
     """Unificações mais correções, todas gravadas na mesma tabela."""
-    return result["proposals"] + sum(result["corrections"]["proposals"].values())
+    return result["proposals"]
 
 
 def scalar(engine, query):
@@ -47,7 +47,8 @@ def scalar(engine, query):
 
 def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
     first, _, admin, _ = sanitized
-    assert first["proposals"] > 1000
+    assert first["merges"] > 1000
+    assert first["proposals"] == first["merges"] + sum(first["corrections"]["proposals"].values())
     assert first["inserted"] == total(first)
     assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == total(first)
     with admin.connect() as connection:
@@ -97,12 +98,12 @@ def test_batch_credential_cannot_change_master(sanitized):
 
 def test_packaging_units_are_flagged_in_saved_proposals(sanitized):
     first, _, admin, _ = sanitized
-    assert first["conflicts"]["UNIDADE_SEM_FATOR"] > 0
+    assert first["merge_summary"]["conflicts"]["UNIDADE_SEM_FATOR"] > 0
     query = (
         "SELECT count(*) FROM sanitization_proposals "
         "WHERE proposal_type = 'MERGE' AND changeset::text LIKE '%UNIDADE_SEM_FATOR%'"
     )
-    assert scalar(admin, query) == first["conflicts"]["UNIDADE_SEM_FATOR"]
+    assert scalar(admin, query) == first["merge_summary"]["conflicts"]["UNIDADE_SEM_FATOR"]
 
 
 def test_corrections_are_saved_with_before_after_and_rule(sanitized):
