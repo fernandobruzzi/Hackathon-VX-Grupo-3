@@ -38,10 +38,23 @@ def test_technical_class_keeps_attribute_order(catalog):
     assert parafuso.identity_mode is IdentityMode.TECHNICAL_ATTRIBUTES
     assert parafuso.default_unit == "PC"
     assert [a.name for a in parafuso.attributes] == [
-        "ROSCA", "BITOLA", "COMPRIMENTO", "CLASSE RESISTENCIA", "MATERIAL", "ACABAMENTO", "NORMA",
+        "ROSCA",
+        "BITOLA",
+        "COMPRIMENTO",
+        "CLASSE RESISTENCIA",
+        "MATERIAL",
+        "ACABAMENTO",
+        "NORMA",
     ]
     assert attribute(catalog, "PDM001", "CLASSE RESISTENCIA").allowed_values == (
-        "10.9", "5.8", "8.8", "A2-70", "A4-70", "SAE GRAU 2", "SAE GRAU 5", "SAE GRAU 8",
+        "10.9",
+        "5.8",
+        "8.8",
+        "A2-70",
+        "A4-70",
+        "SAE GRAU 2",
+        "SAE GRAU 5",
+        "SAE GRAU 8",
     )
     assert attribute(catalog, "PDM001", "COMPRIMENTO").allowed_values is None
 
@@ -114,7 +127,10 @@ def set_cell(sheet, class_id, attribute_name, column, value):
     [
         (lambda w: set_cell(w["ATRIBUTOS"], "PDM081", "GRAO", "QUANDO_SE_APLICA", "__import__('os')"), "nao mapeada"),
         (lambda w: set_cell(w["ATRIBUTOS"], "PDM081", "GRAO", "OBRIGATORIO", "TALVEZ"), "OBRIGATORIO"),
-        (lambda w: set_cell(w["ATRIBUTOS"], "PDM081", "TIPO", "VALORES_PERMITIDOS", "CORTE | DESBASTE"), "inexistentes"),
+        (
+            lambda w: set_cell(w["ATRIBUTOS"], "PDM081", "TIPO", "VALORES_PERMITIDOS", "CORTE | DESBASTE"),
+            "inexistentes",
+        ),
         (lambda w: set_cell(w["ATRIBUTOS"], "PDM081", "TIPO", "ATRIBUTO", "CATEGORIA"), "inexistente"),
         (lambda w: w["CLASSES"].cell(2, 5, "XX"), "unidade desconhecida"),
         (lambda w: w["CLASSES"].cell(2, 7, "OUTRO"), "identidade"),
