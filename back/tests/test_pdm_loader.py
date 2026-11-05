@@ -6,7 +6,7 @@ import pytest
 from domain.contracts import ITEM_NAME_SUBJECT, Condition, ConditionOperator, IdentityMode
 from domain.pdm_loader import PdmLoadError, load_pdm
 
-KIT = Path(__file__).parent / "fixtures" / "pdm-kit-v1.xlsx"
+KIT = Path(__file__).parents[2] / "data" / "desafio01" / "03_padrao_cadastro_PDM.xlsx"
 
 
 @pytest.fixture(scope="module")
