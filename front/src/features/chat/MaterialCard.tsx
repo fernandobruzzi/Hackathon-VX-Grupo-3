@@ -2,7 +2,7 @@ import { CheckCircle2, CircleDashed, Copy, Send } from "lucide-react";
 import { Badge, Button, Card, Code } from "@/components/ui";
 import { MaterialStatusBadge, ValidationBadge } from "@/components/ui/status";
 import { cn } from "@/lib/format";
-import type { MaterialCardData } from "@/types/api";
+import type { ChatAction, MaterialCardData } from "@/types/api";
 import { SimilarCandidates } from "./SimilarCandidates";
 
 /** Ficha do pedido em construção. Espelha material_card do contrato 6.2. */
@@ -16,7 +16,7 @@ export function MaterialCard({
   card: MaterialCardData;
   onSubmit?: () => void;
   submitted?: boolean;
-  onReply?: (message: string) => void;
+  onReply?: (message: string, action: ChatAction) => void;
   busy?: boolean;
 }) {
   const entries = Object.entries(card.attributes);
