@@ -345,3 +345,34 @@ def test_known_duplicate_pairs_do_not_regress(catalog):
 )
 def test_same_meaning_gives_same_result(catalog, class_id, description, variant):
     assert values(catalog, class_id, description) == values(catalog, class_id, variant)
+
+
+HOSE = (
+    'MANGUEIRA HIDRAULICA, PADRAO: SAE 100R2AT, DIAMETRO INTERNO: 2", PRESSAO TRABALHO: {pressure}, '
+    "REFORCO: 2 TRAMAS ACO, MATERIAL COBERTURA: BORRACHA SINTETICA ANTIABRASAO"
+)
+
+
+# A base escreve pressões em bar inteiro convertidas para PSI e arredondadas a 5 PSI: 145 é 10 bar.
+# Só esse caminho de volta é aceito. 150 PSI não vem de bar inteiro, então fica sem valor (#82).
+@pytest.mark.parametrize(
+    ("pressure", "expected"),
+    [
+        ("145PSI", "10BAR"),
+        ("580 PSI", "40BAR"),
+        ("85PSI", "6BAR"),
+        ("5075 PSI", "350BAR"),
+        ("150PSI", None),
+        ("35PSI", None),
+        ("6000PSI", None),
+    ],
+)
+def test_psi_converts_only_when_it_comes_from_whole_bar(catalog, pressure, expected):
+    assert values(catalog, "PDM010", HOSE.format(pressure=pressure)).get("PRESSAO TRABALHO") == expected
+
+
+def test_psi_conversion_keeps_the_original_and_the_rule(catalog):
+    result = RuleBasedV1ExtractionRepository().extract(catalog.classes["PDM010"], HOSE.format(pressure="145PSI"))
+    pressure = result.attributes["PRESSAO TRABALHO"]
+    assert (pressure.value, pressure.rule) == ("10BAR", "measure.psi_to_bar")
+    assert "145" in pressure.original
