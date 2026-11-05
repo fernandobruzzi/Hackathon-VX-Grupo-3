@@ -12,5 +12,9 @@ extend-exclude = ["design"]
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+# Migrações geradas ficam como o Alembic escreveu.
+"api/vx_materials_api/db/migrations/versions/*" = ["E501", "I"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["clients", "cli", "domain", "enrichment", "matching", "pipelines", "repositories", "vx_materials_api", "vx_materials_mcp"]

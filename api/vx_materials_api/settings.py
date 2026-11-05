@@ -12,3 +12,20 @@ def front_dist_dir() -> Path | None:
 
 def api_port() -> int:
     return int(os.environ.get("API_PORT", "8000"))
+
+
+def _required(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"Variavel de ambiente ausente: {name}")
+    return value
+
+
+def database_url() -> str:
+    """Conexao da aplicacao, com a credencial api_user."""
+    return _required("DATABASE_URL")
+
+
+def migration_database_url() -> str:
+    """Conexao das migracoes, com a credencial migration_user."""
+    return _required("MIGRATION_DATABASE_URL")
