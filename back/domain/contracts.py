@@ -169,6 +169,8 @@ class ClassificationRepository(Protocol):
     """Classificacao substituivel; o resultado nao altera o cadastro mestre."""
 
     name: str
+    # Mude ao alterar regras ou tabelas: a revisão entra na versão do índice de busca.
+    revision: str
 
     def classify(self, item: ClassificationInput) -> ClassificationResult: ...
 
@@ -193,6 +195,8 @@ class ExtractionRepository(Protocol):
     repositories/extraction e registre-o; os existentes permanecem no código."""
 
     name: str
+    # Mude ao alterar regras ou tabelas: a revisão entra na versão do índice de busca.
+    revision: str
 
     def extract(
         self,

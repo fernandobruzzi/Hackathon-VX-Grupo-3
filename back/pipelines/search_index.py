@@ -1,14 +1,19 @@
 """Índice de busca: classe, atributos, identidade e texto normalizado de cada material.
 
-A versão do índice reúne os algoritmos usados. A busca recusa consultar um índice de outra versão,
-porque tokens e identidades só são comparáveis quando gerados pelas mesmas regras.
+A versão do índice reúne o PDM e os algoritmos usados. A busca recusa consultar um índice de outra
+versão, porque tokens e identidades só são comparáveis quando gerados pelas mesmas regras.
+
+O rótulo do PDM pode ficar igual com outro conteúdo, então a versão leva também o hash da planilha.
+Nome de algoritmo não muda quando suas regras mudam, então cada um declara uma revisão.
+Mudanças em `search_text` ou nos tokens pedem um novo `INDEX_FORMAT`.
 """
 
 import os
 
 from sqlalchemy import create_engine
 
-from domain.contracts import AnalyzedMaterial, PdmCatalog
+from domain.contracts import AnalyzedMaterial, ClassificationRepository, ExtractionRepository, PdmCatalog
+from domain.identity import IDENTITY_RULES_VERSION
 from pipelines.sanitize import _REDIRECT_PREFIX, _catalog, analyze_material
 from repositories.batch_repository import read_materials, single_tenant, write_search_index
 from repositories.candidates.tokens_v1 import tokens
@@ -20,10 +25,23 @@ INDEX_FORMAT = "search-index-v1"
 
 
 def index_version(
-    catalog: PdmCatalog, classifier_name: str, extractor_name: str, embedding_signature: str | None = None
+    catalog: PdmCatalog,
+    classifier: ClassificationRepository,
+    extractor: ExtractionRepository,
+    embedding_signature: str | None = None,
 ) -> str:
-    version = f"{INDEX_FORMAT}|{catalog.version}|{classifier_name}|{extractor_name}"
-    return f"{version}|{embedding_signature}" if embedding_signature else version
+    """Assinatura comum a batch e consulta. Qualquer parte diferente torna o índice incompatível."""
+    parts = [
+        INDEX_FORMAT,
+        catalog.version,
+        f"pdm-sha256:{catalog.source_sha256}",
+        f"classifier:{classifier.name}@{classifier.revision}",
+        f"extractor:{extractor.name}@{extractor.revision}",
+        IDENTITY_RULES_VERSION,
+    ]
+    if embedding_signature:
+        parts.append(embedding_signature)
+    return "|".join(parts)
 
 
 def embedding_text(material: AnalyzedMaterial) -> str:
@@ -50,7 +68,7 @@ def run_index(pdm_workbook: str | None = None, database_url: str | None = None) 
         extractor = get_extraction_repository()
         embedder = get_embedding_repository()
         signature = embedder.signature if embedder else None
-        version = index_version(catalog, classifier.name, extractor.name, signature)
+        version = index_version(catalog, classifier, extractor, signature)
         tenant_id = single_tenant(engine)
         records = read_materials(engine, tenant_id)
         analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]

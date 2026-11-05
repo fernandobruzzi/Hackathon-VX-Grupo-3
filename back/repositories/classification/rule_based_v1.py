@@ -37,6 +37,7 @@ class _Match:
 
 class RuleBasedV1ClassificationRepository:
     name = "rule_based_v1"
+    revision = "1"
 
     def __init__(self, catalog: PdmCatalog):
         self.catalog = catalog

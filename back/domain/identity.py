@@ -8,6 +8,8 @@ from collections.abc import Mapping
 
 from domain.contracts import IdentityMode, PdmClass
 
+# Mude ao alterar as regras de identidade: a revisão entra na versão do índice de busca.
+IDENTITY_RULES_VERSION = "identity-v1"
 _MANUFACTURER = "FABRICANTE"
 _REFERENCE = "REFERENCIA FABRICANTE"
 _REFERENCE_SEPARATORS = re.compile(r"[\s.\-/]")

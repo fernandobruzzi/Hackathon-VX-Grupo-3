@@ -222,6 +222,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
+    revision = "1"
 
     def extract(
         self,
