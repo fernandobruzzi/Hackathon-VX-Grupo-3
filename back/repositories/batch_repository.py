@@ -85,6 +85,41 @@ def _record(row, inventory: list[dict], total: Decimal) -> MaterialRecord:
     )
 
 
+_DELETE_INDEX = text(
+    "DELETE FROM material_search_index WHERE tenant_id = :tenant_id AND normalization_version = :version"
+)
+_INSERT_INDEX = text(
+    """
+    INSERT INTO material_search_index (
+        tenant_id, material_id, proposed_class_id, extracted_attributes, search_vector, normalization_version,
+        candidate_identity_key
+    )
+    VALUES (
+        :tenant_id, :material_id, :proposed_class_id, CAST(:extracted_attributes AS jsonb),
+        to_tsvector('simple', :search_text), :version, :candidate_identity_key
+    )
+    """
+)
+
+
+def write_search_index(engine: Engine, tenant_id: str, version: str, rows: list[dict]) -> int:
+    """Troca o índice inteiro de uma versão, em uma transação: a busca nunca vê um índice pela metade."""
+    with engine.begin() as connection:
+        connection.execute(_DELETE_INDEX, {"tenant_id": tenant_id, "version": version})
+        payload = [
+            {
+                **row,
+                "tenant_id": tenant_id,
+                "version": version,
+                "extracted_attributes": json.dumps(row["extracted_attributes"], ensure_ascii=False),
+            }
+            for row in rows
+        ]
+        if payload:
+            connection.execute(_INSERT_INDEX, payload)
+    return len(rows)
+
+
 def save_proposals(
     engine: Engine,
     proposals: list[MergeProposal],
