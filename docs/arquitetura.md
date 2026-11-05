@@ -807,6 +807,20 @@ O chatbot retorna alterações propostas à API. Ele não recebe credencial de e
 
 ### Convenções de transporte
 
+O contrato consumível está em [`api/contracts/openapi.json`](../api/contracts/openapi.json),
+com exemplos validados e instruções em [`api/contracts/README.md`](../api/contracts/README.md).
+Os tipos do front são gerados desse arquivo; os JSONs abaixo são exemplos resumidos.
+O contrato descreve a integração alvo, não a disponibilidade das rotas.
+
+Complementos das telas já existentes: listagens paginadas de materiais, pedidos,
+enriquecimentos e auditoria; detalhe da proposta; `version` nos pedidos;
+`heartbeat_at` e `error` no batch. O dashboard pode incluir `pipeline`, e a
+avaliação pode incluir `validated_class_ids`. `financial` e `value_brl` dos membros
+de propostas são omitidos sem `metrics:financial`. O chat pode não ter `order_id`
+ou classe identificada; nesses casos retorna null. Nome de classe e duração de tool
+são metadados opcionais. A troca demo retorna a nova representação de `/auth/me`;
+o front ainda deve invalidar caches e refazer a consulta após trocar a sessão.
+
 Para chamadas do navegador:
 
 ```

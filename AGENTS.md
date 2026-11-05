@@ -15,7 +15,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | First tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Health check and placeholders |
-| `api/contracts/` | OpenAPI and fixtures | Empty contract |
+| `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
 | `design/` | Presentation template and design system, source for brand values | Reference |
@@ -93,6 +93,17 @@ npm ci
 ```bash
 npm run typecheck
 ```
+
+After changing an API contract, regenerate front types and validate them (from `front/`):
+
+```bash
+npm run api:generate
+npm run api:check
+npm test
+```
+
+`api:check`, front tests and API contract tests run in CI. Contract files describe the
+integration target; an endpoint is available only after its implementation issue is delivered.
 
 ```bash
 npm run build

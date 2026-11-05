@@ -4,6 +4,7 @@ import type { Proposal } from "@/types/api";
 export const proposals: Proposal[] = [
   {
     id: "p-valvula-merge",
+    allowed_actions: ["APPROVE", "REJECT"],
     version: 1,
     proposal_type: "COMPOSITE",
     status: "PENDING",
@@ -89,6 +90,7 @@ export const proposals: Proposal[] = [
   },
   {
     id: "p-fleetguard-merge",
+    allowed_actions: ["APPROVE", "REJECT"],
     version: 1,
     proposal_type: "MERGE",
     status: "PENDING",
@@ -142,6 +144,7 @@ export const proposals: Proposal[] = [
   },
   {
     id: "p-porca-ncm",
+    allowed_actions: ["APPROVE", "REJECT"],
     version: 2,
     proposal_type: "NCM_CORRECTION",
     status: "PENDING",
@@ -183,6 +186,7 @@ export const proposals: Proposal[] = [
   },
   {
     id: "p-parafuso-unit",
+    allowed_actions: ["APPROVE", "REJECT"],
     version: 1,
     proposal_type: "UNIT_CORRECTION",
     status: "PENDING",
@@ -225,6 +229,7 @@ export const proposals: Proposal[] = [
   },
   {
     id: "p-filtro-diferente",
+    allowed_actions: [],
     version: 1,
     proposal_type: "MERGE",
     status: "REJECTED",

@@ -1,0 +1,1065 @@
+[
+  {
+    "name": "sso-start",
+    "path": "/api/v1/auth/sso-start",
+    "method": "get",
+    "status": 302,
+    "response_headers": {
+      "Location": "https://example.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=code"
+    }
+  },
+  {
+    "name": "sso-callback",
+    "path": "/api/v1/auth/sso-callback",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "code": "<authorization-code>",
+      "state": "<login-transaction-state>"
+    },
+    "response": {
+      "authenticated": true,
+      "expires_in_seconds": 3600,
+      "redirect_path": "/chat"
+    }
+  },
+  {
+    "name": "me",
+    "path": "/api/v1/auth/me",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "user": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "display_name": "Operação Demo",
+        "roles": [
+          "ROLE_SOLICITANTE"
+        ]
+      },
+      "permissions": [
+        "chat:use",
+        "materials:read",
+        "inventory:read",
+        "orders:create",
+        "orders:read_own",
+        "orders:update_own"
+      ],
+      "scope": {
+        "center_codes": [
+          "1100",
+          "1200",
+          "1300",
+          "2100",
+          "2200",
+          "9000"
+        ]
+      },
+      "demo": {
+        "enabled": true,
+        "active_persona": "SOLICITANTE_OPERACAO"
+      },
+      "csrf_token": "<csrf-token>"
+    }
+  },
+  {
+    "name": "demo-switch",
+    "path": "/api/v1/auth/demo/switch",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "session_handle": "demo_session_operacao_01"
+    },
+    "response": {
+      "user": {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "display_name": "Operação Demo",
+        "roles": [
+          "ROLE_SOLICITANTE"
+        ]
+      },
+      "permissions": [
+        "chat:use",
+        "materials:read",
+        "inventory:read",
+        "orders:create",
+        "orders:read_own",
+        "orders:update_own"
+      ],
+      "scope": {
+        "center_codes": [
+          "1100",
+          "1200",
+          "1300",
+          "2100",
+          "2200",
+          "9000"
+        ]
+      },
+      "demo": {
+        "enabled": true,
+        "active_persona": "SOLICITANTE_OPERACAO"
+      },
+      "csrf_token": "<csrf-token>"
+    }
+  },
+  {
+    "name": "chat-incomplete",
+    "path": "/api/v1/chat/message",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "session_id": null,
+      "client_message_id": "22222222-2222-4222-8222-222222222222",
+      "expected_session_version": 0,
+      "message": "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933.",
+      "center_code": "1200"
+    },
+    "response": {
+      "request_id": "req-chat-001",
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "session_version": 1,
+      "order_id": "44444444-4444-4444-8444-444444444444",
+      "status": "NEEDS_INPUT",
+      "assistant_message": "Qual é a classe de resistência do parafuso?",
+      "tool_calls": [
+        {
+          "id": "tool-call-001",
+          "name": "get_pdm_template",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1"
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "required_attributes_count": 7
+          }
+        },
+        {
+          "id": "tool-call-002",
+          "name": "validate_and_format_pdm",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1",
+            "attributes": {
+              "ROSCA": "METRICA GROSSA",
+              "BITOLA": "M12",
+              "COMPRIMENTO": "50MM",
+              "MATERIAL": "ACO CARBONO",
+              "ACABAMENTO": "ZINCADO BRANCO",
+              "NORMA": "DIN 933"
+            }
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "validation_status": "INCOMPLETE",
+            "missing_attributes": [
+              "CLASSE RESISTENCIA"
+            ]
+          }
+        }
+      ],
+      "material_card": {
+        "pdm_class_id": "PDM001",
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M12",
+          "COMPRIMENTO": "50MM",
+          "CLASSE RESISTENCIA": null,
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO BRANCO",
+          "NORMA": "DIN 933"
+        },
+        "pdm_description": null,
+        "validation_status": "INCOMPLETE",
+        "missing_attributes": [
+          "CLASSE RESISTENCIA"
+        ],
+        "ncm": {
+          "suggested": "7318.15.00",
+          "status": "PENDING_VALIDATION"
+        },
+        "duplicate_check_status": "PENDING",
+        "can_submit": false
+      }
+    }
+  },
+  {
+    "name": "queue",
+    "path": "/api/v1/sanitization/queue",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "id": "66666666-6666-4666-8666-666666666666",
+          "version": 1,
+          "proposal_type": "MERGE",
+          "status": "PENDING",
+          "material_codes": [
+            "27841570",
+            "16031971"
+          ],
+          "suggested_primary_code": "16031971",
+          "identity": {
+            "mode": "MANUFACTURER_REFERENCE",
+            "manufacturer": "FLEETGUARD",
+            "manufacturer_reference": "LF9009"
+          },
+          "technical_review_status": "PENDING",
+          "fiscal_review_status": "NOT_REQUIRED",
+          "conflicts": [],
+          "allowed_actions": [
+            "APPROVE",
+            "REJECT"
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "query": {
+      "review_area": "TECHNICAL",
+      "status": "PENDING",
+      "limit": 20
+    }
+  },
+  {
+    "name": "proposal-detail",
+    "path": "/api/v1/sanitization/{id}",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "allowed_actions": [
+        "APPROVE",
+        "REJECT"
+      ],
+      "version": 1,
+      "proposal_type": "MERGE",
+      "status": "PENDING",
+      "title": "Filtro de óleo Fleetguard LF9009 — 2 códigos",
+      "material_codes": [
+        "27841570",
+        "16031971"
+      ],
+      "suggested_primary_code": "16031971",
+      "identity": {
+        "mode": "MANUFACTURER_REFERENCE",
+        "summary": "Fabricante FLEETGUARD + referência LF9009"
+      },
+      "members": [
+        {
+          "material_code": "16031971",
+          "status": "ATIVO",
+          "description": "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009",
+          "unit": "PC",
+          "ncm": "8421.23.00",
+          "inventory": [
+            {
+              "center_code": "1200",
+              "quantity": "4",
+              "unit": "PC"
+            }
+          ],
+          "value_brl": "1352.00"
+        },
+        {
+          "material_code": "27841570",
+          "status": "ATIVO",
+          "description": "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD",
+          "unit": "PC",
+          "ncm": "8421.23.00",
+          "inventory": [
+            {
+              "center_code": "2200",
+              "quantity": "7",
+              "unit": "PC"
+            }
+          ],
+          "value_brl": "2366.00"
+        }
+      ],
+      "after": {
+        "description": "FILTRO OLEO LUBRIFICANTE; FABRICANTE: FLEETGUARD; REFERENCIA FABRICANTE: LF9009",
+        "ncm": "8421.23.00",
+        "unit": "PC",
+        "attributes": {
+          "FABRICANTE": "FLEETGUARD",
+          "REFERENCIA FABRICANTE": "LF9009"
+        }
+      },
+      "changes": [
+        {
+          "field": "Descrição",
+          "before": "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD",
+          "after": "padrão PDM100",
+          "source": "Formatador PDM"
+        }
+      ],
+      "technical_review_status": "PENDING",
+      "fiscal_review_status": "NOT_REQUIRED",
+      "conflicts": [],
+      "ranking_score": 0.97,
+      "created_at": "2026-11-07T14:15:00Z"
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "proposal-approve",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "proposal_id": "66666666-6666-4666-8666-666666666666",
+      "version": 2,
+      "status": "APPLIED",
+      "technical_review_status": "APPROVED",
+      "fiscal_review_status": "NOT_REQUIRED",
+      "result": {
+        "primary_material_code": "16031971",
+        "blocked_material_codes": [
+          "27841570"
+        ]
+      },
+      "audit_event_id": "77777777-7777-4777-8777-777777777777"
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "proposal-fiscal-pending",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "expected_version": 2,
+      "review_area": "FISCAL",
+      "decision": "APPROVE",
+      "reason": "Classificação conferida com a referência aplicável."
+    },
+    "response": {
+      "proposal_id": "66666666-6666-4666-8666-666666666666",
+      "version": 2,
+      "status": "PENDING",
+      "technical_review_status": "PENDING",
+      "fiscal_review_status": "APPROVED",
+      "result": null,
+      "audit_event_id": "77777777-7777-4777-8777-777777777777"
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "dashboard-executive",
+    "path": "/api/v1/dashboard/metrics",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "dataset_id": "88888888-8888-4888-8888-888888888888",
+      "comparison_status": "AFTER_SNAPSHOT_NOT_AVAILABLE",
+      "before": {
+        "materials_total": 23554,
+        "active": 20014,
+        "blocked": 2331,
+        "obsolete": 1209,
+        "missing_ncm": 1173,
+        "noncanonical_unit": 2030
+      },
+      "after": null,
+      "evaluation": {
+        "reviewed_pairs": 0,
+        "merge_precision": null,
+        "duplicate_recall": null,
+        "validated_class_ids": []
+      },
+      "financial": {
+        "currency": "BRL",
+        "data_origin": "SYNTHETIC_CHALLENGE_DATA",
+        "inventory_book_value": "200874691.83",
+        "realized_savings": null,
+        "estimated_savings": null,
+        "assumptions": []
+      }
+    },
+    "query": {
+      "view": "executive"
+    }
+  },
+  {
+    "name": "dashboard-quality",
+    "path": "/api/v1/dashboard/metrics",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "dataset_id": "88888888-8888-4888-8888-888888888888",
+      "comparison_status": "AFTER_SNAPSHOT_NOT_AVAILABLE",
+      "before": {
+        "materials_total": 23554,
+        "active": 20014,
+        "blocked": 2331,
+        "obsolete": 1209,
+        "missing_ncm": 1173,
+        "noncanonical_unit": 2030
+      },
+      "after": null,
+      "evaluation": {
+        "reviewed_pairs": 0,
+        "merge_precision": null,
+        "duplicate_recall": null,
+        "validated_class_ids": []
+      }
+    },
+    "query": {
+      "view": "quality"
+    }
+  },
+  {
+    "name": "batch-start",
+    "path": "/api/v1/batch/jobs",
+    "method": "post",
+    "status": 202,
+    "request": {
+      "dataset_id": "88888888-8888-4888-8888-888888888888",
+      "job_type": "SANITIZE",
+      "pdm_version": "pdm-kit-v1",
+      "ncm_version": "ncm-demo-v1",
+      "scope": {
+        "pdm_class_ids": [],
+        "include_statuses": [
+          "ATIVO",
+          "BLOQUEADO",
+          "OBSOLETO"
+        ]
+      }
+    },
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "job_type": "SANITIZE",
+      "status": "QUEUED",
+      "requested_by": "Fernanda · Cadastro",
+      "pdm_version": "pdm-kit-v1",
+      "ncm_version": "ncm-demo-v1",
+      "progress": {
+        "processed": 0,
+        "total": 23554
+      },
+      "counts": {
+        "proposals": 0,
+        "merges": 0,
+        "ncm": 0,
+        "enrichment": 0
+      },
+      "started_at": null,
+      "finished_at": null,
+      "heartbeat_at": null,
+      "error": null
+    }
+  },
+  {
+    "name": "batch-running",
+    "path": "/api/v1/batch/jobs/{id}",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "job_type": "SANITIZE",
+      "status": "RUNNING",
+      "requested_by": "Fernanda · Cadastro",
+      "pdm_version": "pdm-kit-v1",
+      "ncm_version": "ncm-demo-v1",
+      "progress": {
+        "processed": 15780,
+        "total": 23554
+      },
+      "counts": {
+        "proposals": 1284,
+        "merges": 611,
+        "ncm": 402,
+        "enrichment": 15
+      },
+      "started_at": "2026-11-07T22:05:00Z",
+      "finished_at": null,
+      "heartbeat_at": "2026-11-07T16:10:00Z",
+      "error": null
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "batch-failed",
+    "path": "/api/v1/batch/jobs/{id}",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "job_type": "SANITIZE",
+      "status": "FAILED",
+      "requested_by": "Fernanda · Cadastro",
+      "pdm_version": "pdm-kit-v1",
+      "ncm_version": "ncm-demo-v1",
+      "progress": {
+        "processed": 15780,
+        "total": 23554
+      },
+      "counts": {
+        "proposals": 1284,
+        "merges": 611,
+        "ncm": 402,
+        "enrichment": 15
+      },
+      "started_at": "2026-11-07T22:05:00Z",
+      "finished_at": "2026-11-07T16:11:00Z",
+      "heartbeat_at": null,
+      "error": {
+        "code": "WORKER_TIMEOUT",
+        "message": "Processamento interrompido por ausência de heartbeat."
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "orders",
+    "path": "/api/v1/registration-orders",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "id": "66666666-6666-4666-8666-666666666666",
+          "version": 1,
+          "origin": "CHAT",
+          "requester": "Operação Demo",
+          "original_text": "preciso de 10 parafuso sextavado m16 x 60 galvanizado 8.8 din 933 pra peneira",
+          "center_code": "1300",
+          "pdm_class_id": "PDM001",
+          "status": "READY_FOR_REVIEW",
+          "missing_attributes": [],
+          "material_code": null,
+          "updated_at": "2026-11-07T13:10:00Z"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "order-submit",
+    "path": "/api/v1/registration-orders/{id}/submit",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "expected_version": 1
+    },
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "version": 2,
+      "origin": "CHAT",
+      "requester": "Operação Demo",
+      "original_text": "preciso de 10 parafuso sextavado m16 x 60 galvanizado 8.8 din 933 pra peneira",
+      "center_code": "1300",
+      "pdm_class_id": "PDM001",
+      "status": "READY_FOR_REVIEW",
+      "missing_attributes": [],
+      "material_code": null,
+      "updated_at": "2026-11-07T13:10:00Z"
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "order-decide",
+    "path": "/api/v1/registration-orders/{id}/decide",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "expected_version": 2,
+      "decision": "APPROVE",
+      "reason": "Atributos e requisitos fiscais conferidos."
+    },
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "version": 3,
+      "origin": "CHAT",
+      "requester": "Operação Demo",
+      "original_text": "preciso de 10 parafuso sextavado m16 x 60 galvanizado 8.8 din 933 pra peneira",
+      "center_code": "1300",
+      "pdm_class_id": "PDM001",
+      "status": "REGISTERED",
+      "missing_attributes": [],
+      "material_code": "90000001",
+      "updated_at": "2026-11-07T13:10:00Z"
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "enrichment-list",
+    "path": "/api/v1/enrichment",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "proposal_id": "66666666-6666-4666-8666-666666666666",
+          "version": 1,
+          "material_code": "31880021",
+          "original_description": "ROL 6206-2RSH SKF",
+          "proposed_description": "ROLAMENTO RIGIDO ESFERAS; REFERENCIA: 6206-2RSH; DIAMETRO INTERNO: 30MM; DIAMETRO EXTERNO: 62MM; LARGURA: 16MM; VEDACAO: 2RSH; FABRICANTE: SKF",
+          "pdm_class_id": "PDM020",
+          "status": "PENDING",
+          "evidence": [
+            {
+              "attribute": "DIAMETRO INTERNO",
+              "current_value": null,
+              "proposed_value": "30MM",
+              "source_title": "Catálogo de rolamentos SKF · 6206-2RSH",
+              "source_url": "https://www.skf.com/",
+              "source_excerpt": "d 30 mm · D 62 mm · B 16 mm",
+              "source_page": "ficha do produto",
+              "confidence": "ALTA",
+              "divergence": null
+            },
+            {
+              "attribute": "DIAMETRO EXTERNO",
+              "current_value": null,
+              "proposed_value": "62MM",
+              "source_title": "Catálogo de rolamentos SKF · 6206-2RSH",
+              "source_url": "https://www.skf.com/",
+              "source_excerpt": "d 30 mm · D 62 mm · B 16 mm",
+              "source_page": "ficha do produto",
+              "confidence": "ALTA",
+              "divergence": null
+            },
+            {
+              "attribute": "LARGURA",
+              "current_value": null,
+              "proposed_value": "16MM",
+              "source_title": "Catálogo de rolamentos SKF · 6206-2RSH",
+              "source_url": "https://www.skf.com/",
+              "source_excerpt": "d 30 mm · D 62 mm · B 16 mm",
+              "source_page": "ficha do produto",
+              "confidence": "ALTA",
+              "divergence": null
+            },
+            {
+              "attribute": "VEDACAO",
+              "current_value": "2RSH",
+              "proposed_value": "2RSH (contato, dois lados)",
+              "source_title": "Catálogo de rolamentos SKF · sufixos",
+              "source_url": "https://www.skf.com/",
+              "source_excerpt": "2RSH: vedação de contato em ambos os lados",
+              "source_page": "tabela de sufixos",
+              "confidence": "MEDIA",
+              "divergence": "Pedido importado o-004 cita \"2RS\": confirmar se é o mesmo sufixo."
+            }
+          ]
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "enrichment-detail",
+    "path": "/api/v1/enrichment/{proposal_id}",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "proposal_id": "66666666-6666-4666-8666-666666666666",
+      "version": 1,
+      "material_code": "31880021",
+      "original_description": "ROL 6206-2RSH SKF",
+      "proposed_description": "ROLAMENTO RIGIDO ESFERAS; REFERENCIA: 6206-2RSH; DIAMETRO INTERNO: 30MM; DIAMETRO EXTERNO: 62MM; LARGURA: 16MM; VEDACAO: 2RSH; FABRICANTE: SKF",
+      "pdm_class_id": "PDM020",
+      "status": "PENDING",
+      "evidence": [
+        {
+          "attribute": "DIAMETRO INTERNO",
+          "current_value": null,
+          "proposed_value": "30MM",
+          "source_title": "Catálogo de rolamentos SKF · 6206-2RSH",
+          "source_url": "https://www.skf.com/",
+          "source_excerpt": "d 30 mm · D 62 mm · B 16 mm",
+          "source_page": "ficha do produto",
+          "confidence": "ALTA",
+          "divergence": null
+        },
+        {
+          "attribute": "DIAMETRO EXTERNO",
+          "current_value": null,
+          "proposed_value": "62MM",
+          "source_title": "Catálogo de rolamentos SKF · 6206-2RSH",
+          "source_url": "https://www.skf.com/",
+          "source_excerpt": "d 30 mm · D 62 mm · B 16 mm",
+          "source_page": "ficha do produto",
+          "confidence": "ALTA",
+          "divergence": null
+        },
+        {
+          "attribute": "LARGURA",
+          "current_value": null,
+          "proposed_value": "16MM",
+          "source_title": "Catálogo de rolamentos SKF · 6206-2RSH",
+          "source_url": "https://www.skf.com/",
+          "source_excerpt": "d 30 mm · D 62 mm · B 16 mm",
+          "source_page": "ficha do produto",
+          "confidence": "ALTA",
+          "divergence": null
+        },
+        {
+          "attribute": "VEDACAO",
+          "current_value": "2RSH",
+          "proposed_value": "2RSH (contato, dois lados)",
+          "source_title": "Catálogo de rolamentos SKF · sufixos",
+          "source_url": "https://www.skf.com/",
+          "source_excerpt": "2RSH: vedação de contato em ambos os lados",
+          "source_page": "tabela de sufixos",
+          "confidence": "MEDIA",
+          "divergence": "Pedido importado o-004 cita \"2RS\": confirmar se é o mesmo sufixo."
+        }
+      ]
+    },
+    "params": {
+      "proposal_id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "materials",
+    "path": "/api/v1/materials",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "material_code": "10293847",
+          "status": "ATIVO",
+          "description": "VALVULA ESFERA 2POL INOX 316 ROSCA NPT",
+          "pdm_class": "VALVULA ESFERA",
+          "unit": "PC",
+          "ncm": "8481.80.95",
+          "active_code_target": null,
+          "inventory": [
+            {
+              "center_code": "1100",
+              "quantity": "6",
+              "unit": "PC"
+            }
+          ],
+          "flags": [
+            "DUPLICIDADE_SUSPEITA"
+          ]
+        }
+      ],
+      "next_cursor": null
+    },
+    "query": {
+      "q": "valvula esfera",
+      "status": "ATIVO"
+    }
+  },
+  {
+    "name": "audit",
+    "path": "/api/v1/audit",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "id": "66666666-6666-4666-8666-666666666666",
+          "actor": "Auditoria Fiscal",
+          "effective_role": "ROLE_AUDITOR_FISCAL",
+          "action": "NCM_REVIEW_APPROVE",
+          "entity": "proposta p-porca-ncm",
+          "reason": "Classificação conferida com a referência aplicável.",
+          "request_id": "req-approval-019",
+          "created_at": "2026-11-07T15:31:00Z"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "error-401",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 401,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "UNAUTHENTICATED",
+        "message": "Sessão expirada.",
+        "request_id": "req-approval-001",
+        "details": {}
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "error-403",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 403,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Sem permissão para decidir esta proposta.",
+        "request_id": "req-approval-001",
+        "details": {}
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "error-404",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 404,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Proposta não encontrada.",
+        "request_id": "req-approval-001",
+        "details": {}
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "error-409",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 409,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "VERSION_CONFLICT",
+        "message": "A proposta foi alterada. Atualize a revisão antes de decidir.",
+        "request_id": "req-approval-001",
+        "details": {
+          "expected_version": 1,
+          "current_version": 2
+        }
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "error-422",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 422,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "A justificativa é obrigatória.",
+        "request_id": "req-approval-001",
+        "details": {}
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "error-429",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 429,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "RATE_LIMITED",
+        "message": "Limite de chamadas excedido.",
+        "request_id": "req-approval-001",
+        "details": {}
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "error-503",
+    "path": "/api/v1/sanitization/{id}/decide",
+    "method": "post",
+    "status": 503,
+    "request": {
+      "expected_version": 1,
+      "review_area": "TECHNICAL",
+      "decision": "APPROVE",
+      "primary_material_code": "16031971",
+      "reason": "Mesmo fabricante e referência confirmados nas evidências."
+    },
+    "response": {
+      "error": {
+        "code": "DEPENDENCY_UNAVAILABLE",
+        "message": "Serviço temporariamente indisponível.",
+        "request_id": "req-approval-001",
+        "details": {}
+      }
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
+  },
+  {
+    "name": "agent-internal",
+    "path": "/internal/v1/chat/run",
+    "method": "post",
+    "status": 200,
+    "request_headers": {
+      "X-Request-ID": "req-chat-001"
+    },
+    "request": {
+      "turn_id": "55555555-5555-4555-8555-555555555555",
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "session_version": 0,
+      "message": "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933.",
+      "context": {
+        "pdm_version": "pdm-kit-v1",
+        "ncm_version": "ncm-demo-v1",
+        "center_code": "1200",
+        "history": [],
+        "confirmed_attributes": {}
+      }
+    },
+    "response": {
+      "assistant_message": "Qual é a classe de resistência do parafuso?",
+      "tool_calls": [
+        {
+          "id": "tool-call-001",
+          "name": "get_pdm_template",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1"
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "required_attributes_count": 7
+          }
+        },
+        {
+          "id": "tool-call-002",
+          "name": "validate_and_format_pdm",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1",
+            "attributes": {
+              "ROSCA": "METRICA GROSSA",
+              "BITOLA": "M12",
+              "COMPRIMENTO": "50MM",
+              "MATERIAL": "ACO CARBONO",
+              "ACABAMENTO": "ZINCADO BRANCO",
+              "NORMA": "DIN 933"
+            }
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "validation_status": "INCOMPLETE",
+            "missing_attributes": [
+              "CLASSE RESISTENCIA"
+            ]
+          }
+        }
+      ],
+      "context_patch": {
+        "confirmed_attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M12",
+          "COMPRIMENTO": "50MM",
+          "CLASSE RESISTENCIA": null,
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO BRANCO",
+          "NORMA": "DIN 933"
+        }
+      },
+      "material_card": {
+        "pdm_class_id": "PDM001",
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M12",
+          "COMPRIMENTO": "50MM",
+          "CLASSE RESISTENCIA": null,
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO BRANCO",
+          "NORMA": "DIN 933"
+        },
+        "pdm_description": null,
+        "validation_status": "INCOMPLETE",
+        "missing_attributes": [
+          "CLASSE RESISTENCIA"
+        ],
+        "ncm": {
+          "suggested": "7318.15.00",
+          "status": "PENDING_VALIDATION"
+        },
+        "duplicate_check_status": "PENDING",
+        "can_submit": false
+      }
+    }
+  }
+]

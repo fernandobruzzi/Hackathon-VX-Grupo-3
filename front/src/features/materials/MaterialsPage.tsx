@@ -26,7 +26,7 @@ export function MaterialsPage() {
         (!t ||
           m.material_code.includes(t) ||
           m.description.toLowerCase().includes(t) ||
-          m.pdm_class.toLowerCase().includes(t)),
+          m.pdm_class?.toLowerCase().includes(t)),
     );
   }, [q, status]);
 

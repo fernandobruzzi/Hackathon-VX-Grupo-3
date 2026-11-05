@@ -51,7 +51,9 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
         byCenter.set(i.center_code, { qty: (cur?.qty ?? 0) + Number(i.quantity), unit: i.unit });
       }),
     );
-    const total = p.members.reduce((s, m) => s + Number(m.value_brl), 0);
+    const total = p.members.every((m) => m.value_brl !== undefined)
+      ? p.members.reduce((s, m) => s + Number(m.value_brl), 0)
+      : null;
     return { centers: [...byCenter.entries()], total };
   }, [p.members]);
 
@@ -175,7 +177,7 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
                   )}
                 </Td>
                 <Td className="text-right">
-                  <Code>{fmtBRL(m.value_brl)}</Code>
+                  <Code>{fmtBRL(m.value_brl ?? null)}</Code>
                 </Td>
               </tr>
             ))}

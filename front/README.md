@@ -66,7 +66,7 @@ src/
 │   ├── materials/ orders/ batch/ audit/
 ├── lib/                      auth (sessão simulada), permissions (matriz RBAC), format
 ├── mocks/                    dados de demonstração (fictícios, baseados no briefing VX/D01)
-└── types/api.ts              tipos dos contratos — substituir pelos gerados do OpenAPI
+└── types/                    api.generated.ts (OpenAPI) e api.ts (aliases para as telas)
 ```
 
 ## Design system
@@ -84,11 +84,13 @@ no código:
 
 ## Integração (próximos passos)
 
-1. `src/lib/api.ts` com fetch `credentials: "include"`, `X-CSRF-Token` (de `/auth/me`)
-   e `Idempotency-Key` em toda escrita; tratar 401/403/404/409/422/429/503 do formato
-   de erro padronizado.
+1. Usar o cliente tipado `src/lib/api.ts`, já disponível com cookie, CSRF,
+   idempotência e `ApiError`. Exemplo de configuração e uso em
+   [`api/contracts/README.md`](../api/contracts/README.md).
 2. Trocar `AuthProvider` por `GET /api/v1/auth/me` e o seletor por
    `POST /api/v1/auth/demo/switch` (descartar caches e refazer `/auth/me`).
-3. Gerar `types/api.ts` do `api/contracts/openapi.json` (ex.: `openapi-typescript`).
+3. Alterou o OpenAPI? Executar `npm run api:generate` e incluir `api.generated.ts`
+   no commit. `npm run api:check` recusa tipos desatualizados. Os aliases em
+   `types/api.ts` não duplicam estruturas. `npm test` valida o cliente HTTP.
 4. Substituir cada `mocks/*` pela chamada indicada no comentário do componente.
 5. Chat: enviar `expected_session_version` e tratar 409 de turno concorrente.

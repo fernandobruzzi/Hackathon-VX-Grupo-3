@@ -215,7 +215,8 @@ export function ChatPage() {
         )}
         {last && (
           <p className="font-mono text-[11px] text-muted">
-            {last.request_id} · sessão v{last.session_version} · pedido {last.order_id.slice(0, 8)}
+            {last.request_id} · sessão v{last.session_version} · pedido{" "}
+            {last.order_id?.slice(0, 8) ?? "não criado"}
           </p>
         )}
       </aside>
