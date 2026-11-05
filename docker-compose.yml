@@ -105,6 +105,14 @@ services:
       bootstrap:
         condition: service_completed_successfully
 
+  # Modelo de embeddings local, opcional: docker compose --profile embeddings up -d embeddings
+  embeddings:
+    profiles: [embeddings]
+    image: ollama/ollama:0.12.3
+    volumes:
+      - embedding-models:/root/.ollama
+
 volumes:
   db-data:
   storage-data:
+  embedding-models:
