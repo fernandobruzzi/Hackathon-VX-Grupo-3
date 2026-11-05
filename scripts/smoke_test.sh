@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Confere se a API responde. Uso: scripts/smoke_test.sh [url-base]
-base_url="${1:-http://localhost:8000}"
-curl --fail --silent --show-error "$base_url/api/v1/healthz"
-echo
+# Executa de qualquer diretório. Uso e modos: --help.
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 "$script_dir/smoke_test.py" "$@"

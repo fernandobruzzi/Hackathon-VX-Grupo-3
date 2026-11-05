@@ -16,7 +16,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat turns with a local test session, rest placeholders |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
-| `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
+| `scripts/` | Deploy, demo data, policy check and HTTP smoke test | Deploy/demo scripts remain placeholders; checks implemented |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
 | `design/` | Presentation template and design system, source for brand values | Reference |
 | `Dockerfile`, `docker-compose.yml`, `.env.example` | Images `api`, `agent`, `batch`, and local setup | Ready for integration |
@@ -160,6 +160,19 @@ docker compose up --build
 ```bash
 scripts/smoke_test.sh
 ```
+
+The integration smoke exercises the static front and a real MCP chat turn after
+building the search index:
+
+```bash
+scripts/smoke_test.sh http://localhost:8000 --mode local
+```
+
+CI runs the same flow in an isolated Compose project, with cached images that
+include the original data kit. `DB_PORT` and `API_BIND_PORT` choose local ports;
+published ports bind to loopback. CI also checks branch/commit policy and runs the
+installed migration command twice. Operational limits, authenticated smoke usage
+and required GitHub admin settings are in [`docs/devops.md`](docs/devops.md).
 
 ## Workflow
 

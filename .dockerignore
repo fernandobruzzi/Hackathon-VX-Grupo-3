@@ -8,6 +8,12 @@
 **/node_modules
 front/.next
 front/out
-data
+data/*
+!data/desafio01
 docs
-.env
+.env*
+!.env.example
+.claude
+.agents
+.aws
+.storage
