@@ -78,7 +78,7 @@ uv run vx-bootstrap --data-dir ../data/desafio01
 
 Schema changes need a new migration in `api/vx_materials_api/db/migrations/versions/`. Tests fail if models and migrations differ.
 
-Propose merges without writing anything, from `back/`:
+Propose merges and corrections without writing anything, from `back/`:
 
 ```bash
 uv run vx-back sanitize-report ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
@@ -397,6 +397,12 @@ To change the default, measure against `back/tests/fixtures/merge_review.json`. 
 `search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Embeddings aren't used yet.
 
 The API passes the validated caller to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock.
+
+## Correction proposals
+
+The same batch run proposes `PDM_CORRECTION` (description in PDM format, merchandise group of the class) and `UNIT_CORRECTION` (unit spelled as an alias, like `PCA` or `UN` for `PC`), one proposal per type and material. Every change records before, after and rule.
+
+Only `ATIVO` materials are corrected, as with merges. Corrections also need a trusted class: classified, and the PDM item name opens the description. A class name found mid-text is usually an attribute of an abbreviated product, such as `PARAFUSO SEXT ... REVESTIMENTO`, so those materials only get a pending reason. The one exception is a unit alias of the same unit, like `PÇ` to `PC`, proposed with the rule `unit.alias_without_class` and never replaced by a class default. Packaging units without a known factor (`CX`, `CT`, `JG`) are never converted. The report counts pending reasons by type. Select the rules with `CORRECTION_REPOSITORY`, default `head_noun_v1`.
 
 ## Local first
 
