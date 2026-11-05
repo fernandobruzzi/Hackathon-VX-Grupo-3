@@ -1,0 +1,48 @@
+# Ambiente local. O Plano B reaproveita as imagens e troca o db pelo RDS. Ver #29.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vx_materiais}
+      POSTGRES_USER: ${POSTGRES_USER:-vx}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vx_local_only}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      target: api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      AGENT_URL: http://agent:8001
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - agent
+
+  # Sem portas publicadas: acessivel somente pela API.
+  agent:
+    build:
+      context: .
+      target: agent
+    env_file:
+      - path: .env
+        required: false
+
+  batch:
+    profiles: [batch]
+    build:
+      context: .
+      target: batch
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      - db
+
+volumes:
+  db-data:
