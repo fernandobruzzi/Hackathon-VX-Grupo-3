@@ -1,5 +1,9 @@
+import csv
+import json
+
 import pytest
 
+import cli
 from domain.contracts import FieldStatus
 from repositories import normalization
 from repositories.normalization import REPOSITORIES, get_normalization_repository
@@ -103,3 +107,25 @@ def test_new_repository_replaces_active_one_while_previous_stays_registered(monk
     monkeypatch.setenv("NORMALIZATION_REPOSITORY", "alternative")
     assert get_normalization_repository().name == "alternative"
     assert get_normalization_repository("rule_based_v1").name == "rule_based_v1"
+
+
+def test_cli_report_counts_without_changing_source(tmp_path, capsys):
+    source = tmp_path / "base.csv"
+    with source.open("w", encoding="utf-8-sig", newline="") as target:
+        writer = csv.DictWriter(target, ["NCM", "UNIDADE_MEDIDA", "DESCRICAO_LONGA"])
+        writer.writeheader()
+        writer.writerow({"NCM": "84749000", "UNIDADE_MEDIDA": "CX", "DESCRICAO_LONGA": "PORCA"})
+        writer.writerow({"NCM": "", "UNIDADE_MEDIDA": "PC", "DESCRICAO_LONGA": "PORCA  M16"})
+    before = source.read_bytes()
+
+    assert cli.main(["normalization-report", str(source)]) == 0
+
+    report = json.loads(capsys.readouterr().out)
+    assert report["repository"] == "rule_based_v1"
+    assert report["rows"] == 2
+    assert report["fields"]["ncm"] == {
+        "MISSING rule_based_v1/ncm.missing": 1,
+        "NORMALIZED rule_based_v1/ncm.format": 1,
+    }
+    assert report["fields"]["unit"]["UNRESOLVED rule_based_v1/unit.packaging_without_factor"] == 1
+    assert source.read_bytes() == before
