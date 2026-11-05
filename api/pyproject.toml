@@ -10,11 +10,13 @@ dependencies = [
     "psycopg[binary]>=3.2",
     "sqlalchemy>=2.0",
     "uvicorn>=0.34",
+    "vx-materials-back",
 ]
 
 [project.scripts]
 vx-api = "vx_materials_api.main:main"
 vx-db = "vx_materials_api.db.cli:main"
+vx-bootstrap = "vx_materials_api.bootstrap:main"
 
 [dependency-groups]
 dev = ["httpx>=0.28", "pytest>=8"]
@@ -31,3 +33,6 @@ include = ["vx_materials_api*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv.sources]
+vx-materials-back = { workspace = true }

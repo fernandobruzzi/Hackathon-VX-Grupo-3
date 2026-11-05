@@ -29,3 +29,8 @@ def database_url() -> str:
 def migration_database_url() -> str:
     """Conexao das migracoes, com a credencial migration_user."""
     return _required("MIGRATION_DATABASE_URL")
+
+
+def data_dir() -> str:
+    """Pasta com os arquivos originais do kit."""
+    return os.environ.get("DATA_DIR", "data/desafio01")
