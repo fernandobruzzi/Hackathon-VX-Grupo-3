@@ -27,5 +27,6 @@ export type EnrichmentProposal = components["schemas"]["EnrichmentProposal"];
 export type OrderStatus = components["schemas"]["OrderStatus"];
 export type RegistrationOrder = components["schemas"]["RegistrationOrder"];
 export type BatchJob = components["schemas"]["BatchJob"];
+export type BatchJobList = components["schemas"]["BatchJobList"];
 export type AuditEvent = components["schemas"]["AuditEvent"];
 export type DashboardMetrics = components["schemas"]["DashboardMetrics"];
