@@ -59,6 +59,7 @@ _POOL_REFERENCE = re.compile(
 _POOL_BEARING = re.compile(r"\b\d{4,5}[A-Z]*(?:[\s\-/]*(?:2RS|ZZ))?(?:[\s\-/]*C3)?\b")
 
 _WORD_ALIASES = {"FEM": "FEMEA", "AC": "ACO"}
+_MIN_UNLABELED_REFERENCE = 4
 _FRACTION_FROM_DECIMAL = {"5": "1/2", "25": "1/4", "75": "3/4"}
 _PSI_PER_BAR = 14.5038
 _REFERENCE_ATTRIBUTES = ("REFERENCIA FABRICANTE",)
@@ -154,7 +155,7 @@ def _contained_value(attribute: PdmAttribute, raw: str) -> str | None:
 
 
 def _compact(value: str) -> str:
-    return re.sub(r"[\s\-]", "", value)
+    return re.sub(r"[\s\-/]", "", value)
 
 
 def _loose_value(attribute: PdmAttribute, raw: str) -> tuple[str, str] | None:
@@ -348,7 +349,7 @@ class RuleBasedV1ExtractionRepository:
             body = re.escape(phrase)
             if any(c.isdigit() for c in phrase):
                 # Modelos e normas aparecem com ou sem separador: TC-12 e TC12.
-                body = re.sub(r"\\[ \-]", r"[\\s\\-]?", body)
+                body = re.sub(r"\\[ \-]|/", r"[\\s\\-/]?", body)
             pattern = rf"(?<![\w./\-]){body}(?![\w./\-])"
             match = re.search(pattern, pool)
             if not match:
@@ -484,6 +485,9 @@ class RuleBasedV1ExtractionRepository:
         if len(matches) != 1:
             return pool
         code = matches[0][0].strip()
+        # Código curto como 6-4 costuma ser medida ou modelo, não referência.
+        if len(re.sub(r"[\s.\-/]", "", code)) < _MIN_UNLABELED_REFERENCE:
+            return pool
         work.set("REFERENCIA FABRICANTE", code, code, "reference.unlabeled")
         return pool[: matches[0].start()] + pool[matches[0].end() :]
 
