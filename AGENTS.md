@@ -70,6 +70,12 @@ TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0
 MIGRATION_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materiais uv run vx-db upgrade
 ```
 
+Load the data kit, from `api/`, with `DATABASE_URL` set to the `api_user` connection. Repeating it duplicates nothing, and `docker compose up` already runs it:
+
+```bash
+uv run vx-bootstrap --data-dir ../data/desafio01
+```
+
 Schema changes need a new migration in `api/vx_materials_api/db/migrations/versions/`. Tests fail if models and migrations differ.
 
 Report, from `back/`:
@@ -369,6 +375,8 @@ The API serves the static build from the same origin, so there's no SSR, route h
 ## Data
 
 - `data/desafio01/` is original input. Never edit it.
+- `vx-bootstrap` loads values exactly as they came, and copies the original files to storage. Corrections only happen later, through approved proposals.
+- Files go through `clients/storage.py`, using a local folder by default and S3 with `STORAGE_BACKEND=s3`. Stored files are immutable.
 - Data stays in the repo so anyone, judges included, can run the project from a clone. Review this once the database exists.
 - Data is synthetic, except that the last 15 base records are real products. Those are the only ones to enrich from public sources, and each value must record its source.
 
