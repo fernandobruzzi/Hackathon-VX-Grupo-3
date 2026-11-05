@@ -107,6 +107,27 @@ def test_tokens_require_no_conflict_on_known_attributes(catalog):
     assert compare_attributes(pdm_class, first, second) == (["BITOLA"], 1)
 
 
+HOSE = (
+    'MANGUEIRA HIDRAULICA, PADRAO: SAE 100R2AT, DIAMETRO INTERNO: 2", PRESSAO TRABALHO: {pressure}, '
+    "REFORCO: 2 TRAMAS ACO, MATERIAL COBERTURA: BORRACHA SINTETICA ANTIABRASAO"
+)
+
+
+def test_different_psi_pressures_do_not_share_an_identity(catalog, tools):
+    """#82: 145 e 150 PSI viravam 10BAR por arredondamento e geravam merge verificado."""
+    first = material(catalog, tools, "1", HOSE.format(pressure="145PSI"))
+    second = material(catalog, tools, "2", HOSE.format(pressure="150PSI"))
+    assert first.identity_key and first.identity_key != second.identity_key
+    assert group_for("exact_identity_v1", catalog, [first, second]) == []
+
+
+def test_psi_from_whole_bar_still_matches_the_bar_spelling(catalog, tools):
+    first = material(catalog, tools, "1", HOSE.format(pressure="145PSI"))
+    second = material(catalog, tools, "2", HOSE.format(pressure="10BAR"))
+    assert first.identity_key == second.identity_key
+    assert group_for("exact_identity_v1", catalog, [first, second])[0].identity_verified
+
+
 def proposal_for(catalog, tools, *members):
     group = group_for("exact_identity_v1", catalog, list(members))[0]
     by_code = {member.record.code: member for member in members}

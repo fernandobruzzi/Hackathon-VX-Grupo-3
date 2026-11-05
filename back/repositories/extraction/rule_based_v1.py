@@ -62,6 +62,8 @@ _WORD_ALIASES = {"FEM": "FEMEA", "AC": "ACO"}
 _MIN_UNLABELED_REFERENCE = 4
 _FRACTION_FROM_DECIMAL = {"5": "1/2", "25": "1/4", "75": "3/4"}
 _PSI_PER_BAR = 14.5038
+# A base grava pressões em bar inteiro convertidas para PSI e arredondadas a 5 PSI (145PSI é 10BAR).
+_PSI_STEP = 5
 _REFERENCE_ATTRIBUTES = ("REFERENCIA FABRICANTE",)
 _REFERENCE_LABELS = frozenset(
     {
@@ -95,6 +97,19 @@ def _decimal(number: str) -> str:
     return value
 
 
+def _whole_bar_from_psi(number: str) -> int | None:
+    """Bar inteiro que, convertido e arredondado a 5 PSI como na base, volta ao mesmo valor.
+
+    Arredondar qualquer PSI para bar juntaria pressões diferentes: 145 e 150 PSI dariam 10BAR (#82).
+    Sem esse caminho de volta exato, a pressão fica sem valor e vai para revisão.
+    """
+    psi = float(number.replace(",", "."))
+    bar = round(psi / _PSI_PER_BAR)
+    if bar <= 0 or round(bar * _PSI_PER_BAR / _PSI_STEP) * _PSI_STEP != psi:
+        return None
+    return bar
+
+
 def _inches_from_sixteenths(size: int) -> str:
     """Bitola de mangueira: o tamanho -8 significa 8/16 de polegada, o padrão SAE que a própria base usa."""
     whole, fraction = divmod(Fraction(size, 16), 1)
@@ -114,8 +129,8 @@ def _measure_candidates(raw: str) -> list[tuple[str, str]]:
         candidates.append((f"{_decimal(match[1])}M", "measure.meters"))
     if match := _BAR.match(raw):
         candidates.append((f"{_decimal(match[1])}BAR", "measure.bar"))
-    if match := _PSI.match(raw):
-        candidates.append((f"{round(float(match[1].replace(',', '.')) / _PSI_PER_BAR)}BAR", "measure.psi_to_bar"))
+    if (match := _PSI.match(raw)) and (bar := _whole_bar_from_psi(match[1])) is not None:
+        candidates.append((f"{bar}BAR", "measure.psi_to_bar"))
     if match := _AMPS.match(raw):
         candidates.append((f"{_decimal(match[1])}A", "measure.amps"))
     if match := _WATTS.match(raw):
@@ -222,7 +237,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "1"
+    revision = "2"
 
     def extract(
         self,
