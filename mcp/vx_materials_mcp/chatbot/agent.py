@@ -9,12 +9,11 @@ import time
 from typing import Any, Protocol
 
 from domain.contracts import ClassificationStatus, PdmClass
+from vx_materials_mcp.chatbot.candidates import DuplicateDecision, decide, existing_message
 from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import (
     AgentRunRequest,
     AgentRunResponse,
-    ExistingMatch,
-    InventoryRow,
     MaterialCard,
     NcmCard,
     ToolCallRecord,
@@ -92,47 +91,13 @@ def _summarize_search(result: dict[str, Any]) -> dict[str, Any]:
             {
                 "material_code": item["material_code"],
                 "status": item["status"],
+                "active_code_target": item["active_code_target"],
                 "identity_verified": item["identity_verified"],
                 "match_type": item["match_type"],
             }
             for item in result["candidates"]
         ],
     }
-
-
-def _existing(search: dict[str, Any]) -> ExistingMatch | None:
-    """Primeiro item com a mesma identidade que pode ser reutilizado.
-
-    Ativo é oferecido como está; bloqueado só pelo código ativo de destino; obsoleto nunca.
-    """
-    for item in search["candidates"]:
-        if not item["identity_verified"]:
-            continue
-        if item["status"] == "ATIVO":
-            code, reason = item["material_code"], "Mesmo item pela regra de identidade do PDM."
-        elif item["status"] == "BLOQUEADO" and item["active_code_target"]:
-            code = item["active_code_target"]
-            reason = f"O código {item['material_code']} está bloqueado: use o código ativo {code}."
-        else:
-            continue
-        return ExistingMatch(
-            material_code=code,
-            status="ATIVO",
-            pdm_description=item["description"] or "",
-            match_type=item["match_type"],
-            reason=reason,
-            inventory=[
-                InventoryRow(center_code=row["center_code"], quantity=row["quantity"], unit=row["unit"] or "")
-                for row in item["inventory"]
-            ],
-        )
-    return None
-
-
-def _existing_message(existing: ExistingMatch) -> str:
-    stock = ", ".join(f"{row.quantity} {row.unit} no centro {row.center_code}".strip() for row in existing.inventory)
-    where = f" Estoque nos seus centros: {stock}." if stock else " Sem estoque nos seus centros."
-    return f"Esse item já existe: use o código {existing.material_code}. {existing.reason}{where}"
 
 
 async def _search(
@@ -160,15 +125,21 @@ def _suggested_ncm(template: dict[str, Any] | None) -> str | None:
     return next(iter(codes)) if len(codes) == 1 else None
 
 
-def _no_class_response(context: TurnContext, recorder: ToolRecorder, search: dict[str, Any] | None) -> AgentRunResponse:
+def _candidates_patch(decision: DuplicateDecision) -> dict[str, Any]:
+    return {"offered_material_codes": decision.offered, "dismissed_material_codes": decision.dismissed}
+
+
+def _no_class_response(
+    context: TurnContext, recorder: ToolRecorder, search: dict[str, Any] | None, decision: DuplicateDecision
+) -> AgentRunResponse:
     candidates = context.classification.candidate_class_ids
-    existing = _existing(search) if search else None
-    if existing is not None:
+    if decision.existing is not None or decision.similar:
         # Em classes de referência, fabricante e referência bastam para achar o item, mesmo sem a classe.
+        message = existing_message(decision.existing) if decision.existing else decision.message
         return AgentRunResponse(
-            assistant_message=_existing_message(existing),
+            assistant_message=message,
             tool_calls=recorder.calls,
-            context_patch={"planner": PLANNER, "pdm_class_id": search["pdm_class_id"]},
+            context_patch={"planner": PLANNER, "pdm_class_id": search["pdm_class_id"], **_candidates_patch(decision)},
             material_card=MaterialCard(
                 pdm_class_id=search["pdm_class_id"],
                 attributes=dict(search["query_attributes"]),
@@ -176,8 +147,9 @@ def _no_class_response(context: TurnContext, recorder: ToolRecorder, search: dic
                 validation_status="INCOMPLETE",
                 missing_attributes=[],
                 ncm=NcmCard(suggested=None, status="PENDING_VALIDATION"),
-                duplicate_check_status="MATCH_FOUND",
-                existing=existing,
+                duplicate_check_status=decision.status,
+                existing=decision.existing,
+                similar_candidates=decision.similar,
                 can_submit=False,
             ),
         )
@@ -194,7 +166,12 @@ def _no_class_response(context: TurnContext, recorder: ToolRecorder, search: dic
     return AgentRunResponse(
         assistant_message=message,
         tool_calls=recorder.calls,
-        context_patch={"planner": PLANNER, "pdm_class_id": None, "candidate_class_ids": list(candidates)},
+        context_patch={
+            "planner": PLANNER,
+            "pdm_class_id": None,
+            "candidate_class_ids": list(candidates),
+            **_candidates_patch(decision),
+        },
         material_card=MaterialCard(
             pdm_class_id=None,
             attributes={},
@@ -229,8 +206,10 @@ def _message_for(validation: dict[str, Any] | None, class_name: str) -> str:
 
 async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: ToolRecorder) -> AgentRunResponse:
     """Um turno: consulta o modelo da classe, valida a ficha e procura o item na base, com as tools MCP."""
+    offered, dismissed = request.context.offered_material_codes, request.context.dismissed_material_codes
     if context.pdm_class is None:
-        return _no_class_response(context, recorder, await _search(recorder, request, context, None))
+        search = await _search(recorder, request, context, None)
+        return _no_class_response(context, recorder, search, decide(search, request.message, offered, dismissed))
 
     pdm_class = context.pdm_class
     version = request.context.pdm_version
@@ -252,17 +231,13 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     status = validation["status"] if validation else "INCOMPLETE"
     missing = [item["name"] for item in validation["missing_attributes"]] if validation else []
     message = _message_for(validation, _class_name(pdm_class, context.item_name))
-    existing = _existing(search) if search else None
-    if existing is not None:
-        duplicate, message = "MATCH_FOUND", _existing_message(existing)
-    elif search is None:
-        # Sem a verificação, o pedido nunca fica pronto: juntar itens diferentes custa mais que esperar.
-        duplicate = "PENDING"
-        message += " Não consegui verificar se o item já existe na base: tente enviar de novo em instantes."
-    else:
-        duplicate = "NO_MATCH"
-        if status == "VALID":
-            message += " Não encontrei item igual na base: o pedido pode ser enviado para revisão."
+    decision = decide(search, request.message, offered, dismissed)
+    if decision.existing is not None:
+        message = existing_message(decision.existing)
+    elif decision.message:
+        message += " " + decision.message
+    elif status == "VALID":
+        message += " Não encontrei item igual na base: o pedido pode ser enviado para revisão."
     return AgentRunResponse(
         assistant_message=message,
         tool_calls=recorder.calls,
@@ -273,6 +248,7 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
             "confirmed_attributes": {name: value for name, value in context.attributes.items() if value},
             "validation_status": status,
             "missing_attributes": missing,
+            **_candidates_patch(decision),
         },
         material_card=MaterialCard(
             pdm_class_id=pdm_class.id,
@@ -282,8 +258,9 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
             validation_status=status,
             missing_attributes=missing,
             ncm=NcmCard(suggested=_suggested_ncm(template), status="PENDING_VALIDATION"),
-            duplicate_check_status=duplicate,
-            existing=existing,
-            can_submit=status == "VALID" and duplicate == "NO_MATCH",
+            duplicate_check_status=decision.status,
+            existing=decision.existing,
+            similar_candidates=decision.similar,
+            can_submit=status == "VALID" and decision.status == "NO_MATCH",
         ),
     )

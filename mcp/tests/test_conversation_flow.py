@@ -13,7 +13,14 @@ from fastapi.testclient import TestClient
 from domain.pdm_loader import load_pdm
 from vx_materials_mcp.app import create_app
 from vx_materials_mcp.chatbot import mcp_client
-from vx_materials_mcp.chatbot.agent import ToolLimitExceeded, ToolRecorder, _existing
+from vx_materials_mcp.chatbot.agent import ToolLimitExceeded, ToolRecorder
+from vx_materials_mcp.chatbot.candidates import (
+    DISMISS_MESSAGE,
+    decide,
+    is_dismissal,
+    picked_code,
+    verified_existing,
+)
 from vx_materials_mcp.security import caller_to_environment
 
 PDM = str(Path(__file__).parents[2] / "data" / "desafio01" / "03_padrao_cadastro_PDM.xlsx")
@@ -84,7 +91,7 @@ def token(**overrides):
     return jwt.encode({**claims, **overrides}, SECRET, algorithm="HS256")
 
 
-def run(client, message, history=(), confirmed=None, bearer=None):
+def run(client, message, history=(), confirmed=None, bearer=None, offered=(), dismissed=()):
     body = {
         "turn_id": str(uuid.uuid4()),
         "session_id": str(uuid.uuid4()),
@@ -99,6 +106,8 @@ def run(client, message, history=(), confirmed=None, bearer=None):
                 for author, text in history
             ],
             "confirmed_attributes": confirmed or {},
+            "offered_material_codes": list(offered),
+            "dismissed_material_codes": list(dismissed),
         },
     }
     headers = {"X-Request-ID": "req-test", "Authorization": f"Bearer {bearer or token()}"}
@@ -173,13 +182,101 @@ def test_existing_item_is_shown_with_authorized_stock(db_client):
     assert "16031971" in body["assistant_message"]
 
 
-def test_complete_card_without_match_can_be_submitted(db_client):
-    body = run(db_client, "Parafuso sextavado M36x333, classe A4-70, aço inox 316, oxidado preto, DIN 931").json()
+NEW_BOLT = "Parafuso sextavado M36x333, classe A4-70, aço inox 316, oxidado preto, DIN 931"
+
+
+def _next(client, history, body, message):
+    """Turno seguinte, com o contexto que a API persistiria."""
+    patch = body["context_patch"]
+    history = [*history, ("assistant", body["assistant_message"])]
+    return run(
+        client,
+        message,
+        history,
+        patch.get("confirmed_attributes"),
+        offered=patch["offered_material_codes"],
+        dismissed=patch["dismissed_material_codes"],
+    ).json()
+
+
+def test_only_similar_items_ask_the_requester(db_client):
+    body = run(db_client, NEW_BOLT).json()
 
     card = body["material_card"]
-    assert card["validation_status"] == "VALID", card
-    assert card["duplicate_check_status"] == "NO_MATCH"
-    assert card["can_submit"] is True
+    assert card["validation_status"] == "VALID"
+    assert card["duplicate_check_status"] == "PENDING" and card["can_submit"] is False
+    assert card["similar_candidates"]
+    assert all(item["status"] != "OBSOLETO" for item in card["similar_candidates"])
+    offered = body["context_patch"]["offered_material_codes"]
+    assert offered == [item["material_code"] for item in card["similar_candidates"]]
+    assert all(code in body["assistant_message"] for code in offered)
+
+
+def test_dismissing_the_similar_items_releases_submission(db_client):
+    first = run(db_client, NEW_BOLT).json()
+
+    second = _next(db_client, [("user", NEW_BOLT)], first, DISMISS_MESSAGE)
+
+    card = second["material_card"]
+    assert card["duplicate_check_status"] == "NO_MATCH" and card["can_submit"] is True
+    assert card["similar_candidates"] == []
+    assert set(second["context_patch"]["dismissed_material_codes"]) == set(
+        first["context_patch"]["offered_material_codes"]
+    )
+
+
+def test_picking_a_similar_item_shows_it_as_existing(db_client):
+    first = run(db_client, NEW_BOLT).json()
+    chosen = first["material_card"]["similar_candidates"][0]
+
+    second = _next(db_client, [("user", NEW_BOLT)], first, f"É o item {chosen['material_code']}")
+
+    existing = second["material_card"]["existing"]
+    assert existing["material_code"] == (chosen["active_code_target"] or chosen["material_code"])
+    assert second["material_card"]["duplicate_check_status"] == "MATCH_FOUND"
+    assert "Confirmado pelo solicitante" in existing["reason"]
+
+
+def test_code_never_offered_is_not_accepted_as_a_pick(db_client):
+    first = run(db_client, NEW_BOLT).json()
+
+    second = _next(
+        db_client,
+        [("user", NEW_BOLT)],
+        {**first, "context_patch": {**first["context_patch"], "offered_material_codes": []}},
+        "É o item 99999999",
+    )
+
+    assert "existing" not in second["material_card"]
+    assert second["material_card"]["duplicate_check_status"] == "PENDING"
+
+
+@pytest.mark.parametrize(
+    "text", [DISMISS_MESSAGE, "nenhum desses", "Não é nenhum desses.", "É outro item", "item diferente"]
+)
+def test_dismissal_variants(text):
+    assert is_dismissal(text)
+
+
+@pytest.mark.parametrize("text", ["nenhum desses tem rosca fina", "parafuso diferente", "8.8"])
+def test_descriptions_are_not_dismissals(text):
+    assert not is_dismissal(text)
+
+
+@pytest.mark.parametrize(
+    ("text", "code"), [("É o item 16031971", "16031971"), ("16031971", "16031971"), ("código 16031971.", "16031971")]
+)
+def test_pick_variants(text, code):
+    assert picked_code(text) == code
+
+
+def test_new_candidates_after_a_dismissal_are_asked_again():
+    search = {"candidates": [_candidate("1", "ATIVO", verified=False), _candidate("2", "ATIVO", verified=False)]}
+
+    decision = decide(search, "classe 10.9", offered_before=["1"], dismissed_before=["1"])
+
+    assert decision.status == "PENDING"
+    assert decision.offered == ["2"]
 
 
 def _candidate(code, status, verified=True, target=None):
@@ -205,7 +302,7 @@ def _candidate(code, status, verified=True, target=None):
     ],
 )
 def test_only_reusable_identity_matches_are_offered(candidates, code):
-    existing = _existing({"candidates": candidates})
+    existing = verified_existing({"candidates": candidates})
 
     assert (existing.material_code if existing else None) == code
     if existing:
