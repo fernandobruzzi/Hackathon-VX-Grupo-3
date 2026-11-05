@@ -13,7 +13,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
-| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over two tools, rest placeholders |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat turns with a local test session, rest placeholders |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
@@ -396,7 +396,9 @@ To change the default, measure against `back/tests/fixtures/merge_review.json`. 
 
 `search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Embeddings aren't used yet.
 
-The API passes the validated caller to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock.
+The Agent passes the caller validated from the internal token to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock. The token carries the user's permissions and authorized centers, and stock outside those centers never reaches the chat.
+
+In chat, a complete card is ready to submit only after the search ran and found no reusable item. If the search fails, the turn stays `NEEDS_INPUT`, because merging different items costs more than waiting. A verified match shows the active code instead: a blocked item points to its active target, and an obsolete one is never offered.
 
 ## Correction proposals
 
