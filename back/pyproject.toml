@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Pipeline batch e regras de dominio do cadastro de materiais"
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.35",
     "openpyxl>=3.1.5",
 ]
 
@@ -11,7 +12,10 @@ dependencies = [
 vx-back = "cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [
+    "moto[s3]>=5",
+    "pytest>=8",
+]
 
 [build-system]
 requires = ["setuptools>=75"]
