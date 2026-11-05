@@ -113,7 +113,7 @@ def client(factory, identity, agent, monkeypatch):
     return TestClient(app)
 
 
-def send(client, message="parafuso M12", session_id=None, version=0, client_message_id=None):
+def send(client, message="parafuso M12", session_id=None, version=0, client_message_id=None, action=None):
     body = {
         "session_id": str(session_id) if session_id else None,
         "client_message_id": str(client_message_id or uuid.uuid4()),
@@ -121,6 +121,8 @@ def send(client, message="parafuso M12", session_id=None, version=0, client_mess
         "message": message,
         "center_code": "1200",
     }
+    if action is not None:
+        body["action"] = action
     return client.post(
         "/api/v1/chat/message",
         json=body,
@@ -376,6 +378,76 @@ def test_picked_code_must_have_been_offered(client, agent):
     agent.result = agent_result(picked, search_call(similar("777")))
 
     assert send(client, "É o item 777", first["session_id"], version=1).json()["status"] == "EXISTING"
+
+
+def _offer(client, agent, code="777"):
+    """Primeiro turno: a busca acha um item parecido e o Agent o oferece."""
+    pending = {**VALID_CARD, "duplicate_check_status": "PENDING"}
+    agent.result = agent_result(pending, search_call(similar(code)), patch={"offered_material_codes": [code]})
+    return send(client).json()
+
+
+@pytest.mark.parametrize(
+    "action",
+    [{"type": "PICK_CANDIDATE", "material_code": "999"}, {"type": "PICK_CANDIDATE"}],
+)
+def test_pick_action_for_code_never_offered_gets_422(client, agent, action):
+    first = _offer(client, agent)
+    calls = len(agent.requests)
+
+    response = send(client, "É este", first["session_id"], version=1, action=action)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_ACTION"
+    assert len(agent.requests) == calls
+
+
+def test_dismiss_action_without_offered_items_gets_422(client, agent):
+    response = send(client, "Nenhum", action={"type": "DISMISS_CANDIDATES"})
+
+    assert response.status_code == 422
+    assert agent.requests == []
+
+
+def test_dismiss_action_reuses_saved_check_without_search(client, agent):
+    first = _offer(client, agent)
+    # Mesma ficha, sem nova busca: vale a verificação salva do turno anterior.
+    agent.result = agent_result(VALID_CARD, patch={"dismissed_material_codes": ["777"]})
+
+    second = send(client, "texto do botão", first["session_id"], version=1, action={"type": "DISMISS_CANDIDATES"})
+
+    sent = agent.payload()
+    assert sent["action"] == {"type": "DISMISS_CANDIDATES", "material_code": None}
+    assert sent["context"]["duplicate_check"]["similar_candidates"] == []
+    assert "candidates" not in sent["context"]["duplicate_check"]
+    assert second.json()["status"] == "READY_TO_SUBMIT"
+
+
+def test_picked_item_is_kept_on_later_turns(client, agent):
+    first = _offer(client, agent)
+    picked = {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": {**EXISTING, "material_code": "777"}}
+    agent.result = agent_result(picked, search_call(similar("777")))
+    pick = {"type": "PICK_CANDIDATE", "material_code": "777"}
+    assert send(client, "É este", first["session_id"], version=1, action=pick).json()["status"] == "EXISTING"
+
+    # Turno seguinte sem busca: a escolha salva continua valendo para a mesma ficha.
+    agent.result = agent_result(picked)
+    third = send(client, "preciso de 20 unidades", first["session_id"], version=2).json()
+
+    assert agent.payload()["context"]["duplicate_check"]["existing"]["material_code"] == "777"
+    assert third["status"] == "EXISTING"
+    assert third["material_card"]["existing"]["material_code"] == "777"
+
+
+def test_saved_check_does_not_cover_a_changed_card(client, agent):
+    first = _offer(client, agent)
+    changed = {**VALID_CARD, "attributes": {"BITOLA": "M16", "CLASSE RESISTENCIA": "8.8"}}
+    agent.result = agent_result(changed, patch={"dismissed_material_codes": ["777"]})
+
+    second = send(client, "na verdade M16", first["session_id"], version=1)
+
+    assert second.json()["status"] == "NEEDS_INPUT"
+    assert second.json()["material_card"]["can_submit"] is False
 
 
 def test_validating_in_chat_publishes_nothing(client, agent, factory, identity):
