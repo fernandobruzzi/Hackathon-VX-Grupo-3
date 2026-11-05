@@ -58,6 +58,9 @@ async def connect(
         (PDM_PATH_VARIABLE, pdm_path or os.environ.get(PDM_PATH_VARIABLE)),
         ("DATABASE_URL", database_url or os.environ.get("DATABASE_URL")),
         (CALLER_VARIABLE, caller or os.environ.get(CALLER_VARIABLE)),
+        ("SEARCH_REPOSITORY", os.environ.get("SEARCH_REPOSITORY")),
+        ("EMBEDDING_REPOSITORY", os.environ.get("EMBEDDING_REPOSITORY")),
+        ("OLLAMA_URL", os.environ.get("OLLAMA_URL")),
     ):
         if value:
             env[variable] = value

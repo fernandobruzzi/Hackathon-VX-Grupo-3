@@ -4,6 +4,7 @@ import os
 from collections.abc import Callable
 from typing import Protocol
 
+from vx_materials_mcp.repositories.search.hybrid_embeddings_v1 import HybridEmbeddingsV1SearchRepository
 from vx_materials_mcp.repositories.search.hybrid_v1 import HybridV1SearchRepository, SearchQuery
 
 
@@ -19,6 +20,7 @@ class SearchRepository(Protocol):
 DEFAULT_REPOSITORY = HybridV1SearchRepository.name
 
 REPOSITORIES: dict[str, Callable[..., SearchRepository]] = {
+    HybridEmbeddingsV1SearchRepository.name: HybridEmbeddingsV1SearchRepository,
     HybridV1SearchRepository.name: HybridV1SearchRepository,
 }
 
