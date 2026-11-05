@@ -1,0 +1,93 @@
+import type { AuditEvent, BatchJob, DashboardMetrics, EnrichmentProposal, MaterialStatus, RegistrationOrder, InventoryRow } from "@/types/api";
+
+/** Dados fictícios de demonstração (kit do desafio). Números do dashboard vêm do contrato 6.4. */
+
+export interface MaterialRow {
+  material_code: string;
+  status: MaterialStatus;
+  description: string;
+  pdm_class: string;
+  unit: string;
+  ncm: string | null;
+  active_code_target: string | null;
+  inventory: InventoryRow[];
+  flags: ("SEM_NCM" | "DUPLICIDADE_SUSPEITA" | "UNIDADE_NAO_CANONICA" | "ATRIBUTO_FALTANDO")[];
+}
+
+export const materials: MaterialRow[] = [
+  { material_code: "10293847", status: "ATIVO", description: "VALVULA ESFERA 2POL INOX 316 ROSCA NPT", pdm_class: "VALVULA ESFERA", unit: "PC", ncm: "8481.80.95", active_code_target: null, inventory: [{ center_code: "1100", quantity: "6", unit: "PC" }], flags: ["DUPLICIDADE_SUSPEITA"] },
+  { material_code: "20384756", status: "ATIVO", description: "VALV ESF 2\" AISI 316 NPT", pdm_class: "VALVULA ESFERA", unit: "PC", ncm: "8481.80.95", active_code_target: null, inventory: [{ center_code: "2100", quantity: "3", unit: "PC" }], flags: ["DUPLICIDADE_SUSPEITA"] },
+  { material_code: "10482213", status: "ATIVO", description: "VALVULA DE ESFERA DN 50 CORPO INOX 316 EXTREMIDADE NPT", pdm_class: "VALVULA ESFERA", unit: "PC", ncm: null, active_code_target: null, inventory: [{ center_code: "1200", quantity: "2", unit: "PC" }], flags: ["DUPLICIDADE_SUSPEITA", "SEM_NCM"] },
+  { material_code: "17730415", status: "ATIVO", description: "PARAFUSO SEXTAVADO M12X50 ZINCADO", pdm_class: "PARAFUSO SEXTAVADO", unit: "CX", ncm: "7318.15.00", active_code_target: null, inventory: [{ center_code: "1100", quantity: "12", unit: "CX" }], flags: ["ATRIBUTO_FALTANDO", "UNIDADE_NAO_CANONICA"] },
+  { material_code: "24019866", status: "ATIVO", description: "PORCA SEXTAVADA M16 CLASSE 8 ZINCADA", pdm_class: "PORCA SEXTAVADA", unit: "PC", ncm: "7318.15.00", active_code_target: null, inventory: [{ center_code: "1300", quantity: "420", unit: "PC" }], flags: [] },
+  { material_code: "16031971", status: "ATIVO", description: "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009", pdm_class: "FILTRO OLEO", unit: "PC", ncm: "8421.23.00", active_code_target: null, inventory: [{ center_code: "1200", quantity: "4", unit: "PC" }], flags: ["DUPLICIDADE_SUSPEITA"] },
+  { material_code: "27841570", status: "ATIVO", description: "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD", pdm_class: "FILTRO OLEO", unit: "PC", ncm: "8421.23.00", active_code_target: null, inventory: [{ center_code: "2200", quantity: "7", unit: "PC" }], flags: ["DUPLICIDADE_SUSPEITA"] },
+  { material_code: "31880021", status: "ATIVO", description: "ROL 6206-2RSH SKF", pdm_class: "ROLAMENTO RIGIDO ESFERAS", unit: "PC", ncm: "8482.10.10", active_code_target: null, inventory: [{ center_code: "1100", quantity: "18", unit: "PC" }, { center_code: "9000", quantity: "4", unit: "PC" }], flags: ["ATRIBUTO_FALTANDO"] },
+  { material_code: "12007731", status: "BLOQUEADO", description: "ROLAMENTO 6206 2RS", pdm_class: "ROLAMENTO RIGIDO ESFERAS", unit: "PC", ncm: "8482.10.10", active_code_target: "31880021", inventory: [], flags: [] },
+  { material_code: "09981230", status: "OBSOLETO", description: "LUVA RASPA CANO CURTO", pdm_class: "LUVA PROTECAO", unit: "PR", ncm: "4203.29.00", active_code_target: null, inventory: [], flags: [] },
+];
+
+export const orders: RegistrationOrder[] = [
+  { id: "o-001", origin: "CHAT", requester: "Operação Demo", original_text: "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933.", center_code: "1200", pdm_class_id: "PDM001", status: "INCOMPLETE", missing_attributes: ["CLASSE RESISTENCIA"], material_code: null, updated_at: "2026-11-07T15:02:00Z" },
+  { id: "o-002", origin: "CHAT", requester: "Operação Demo", original_text: "filtro Fleetguard LF 9009", center_code: "1200", pdm_class_id: "PDM100", status: "EXISTING", missing_attributes: [], material_code: "16031971", updated_at: "2026-11-07T14:40:00Z" },
+  { id: "o-003", origin: "CHAT", requester: "Operação Demo", original_text: "preciso de 10 parafuso sextavado m16 x 60 galvanizado 8.8 din 933 pra peneira", center_code: "1300", pdm_class_id: "PDM001", status: "READY_FOR_REVIEW", missing_attributes: [], material_code: null, updated_at: "2026-11-07T13:10:00Z" },
+  { id: "o-004", origin: "IMPORT", requester: null, original_text: "ROL 6206 2RS SKF P/ MOTOR BOMBA", center_code: "1100", pdm_class_id: "PDM020", status: "EXISTING", missing_attributes: [], material_code: "31880021", updated_at: "2026-11-07T11:00:00Z" },
+  { id: "o-005", origin: "CHAT", requester: "Operação Demo", original_text: "cadeira de escritório ergonômica", center_code: "9000", pdm_class_id: null, status: "OUT_OF_SCOPE", missing_attributes: [], material_code: null, updated_at: "2026-11-07T10:30:00Z" },
+  { id: "o-006", origin: "CHAT", requester: "Operação Demo", original_text: "porca sextavada M20 classe 10 zincada", center_code: "1300", pdm_class_id: "PDM002", status: "PENDING_FISCAL", missing_attributes: [], material_code: null, updated_at: "2026-11-07T09:45:00Z" },
+];
+
+export const enrichment: EnrichmentProposal[] = [
+  {
+    proposal_id: "e-rolamento-skf",
+    version: 1,
+    material_code: "31880021",
+    original_description: "ROL 6206-2RSH SKF",
+    proposed_description: "ROLAMENTO RIGIDO ESFERAS; REFERENCIA: 6206-2RSH; DIAMETRO INTERNO: 30MM; DIAMETRO EXTERNO: 62MM; LARGURA: 16MM; VEDACAO: 2RSH; FABRICANTE: SKF",
+    pdm_class_id: "PDM020",
+    status: "PENDING",
+    evidence: [
+      { attribute: "DIAMETRO INTERNO", current_value: null, proposed_value: "30MM", source_title: "Catálogo de rolamentos SKF · 6206-2RSH", source_url: "https://www.skf.com/", source_excerpt: "d 30 mm · D 62 mm · B 16 mm", source_page: "ficha do produto", confidence: "ALTA", divergence: null },
+      { attribute: "DIAMETRO EXTERNO", current_value: null, proposed_value: "62MM", source_title: "Catálogo de rolamentos SKF · 6206-2RSH", source_url: "https://www.skf.com/", source_excerpt: "d 30 mm · D 62 mm · B 16 mm", source_page: "ficha do produto", confidence: "ALTA", divergence: null },
+      { attribute: "LARGURA", current_value: null, proposed_value: "16MM", source_title: "Catálogo de rolamentos SKF · 6206-2RSH", source_url: "https://www.skf.com/", source_excerpt: "d 30 mm · D 62 mm · B 16 mm", source_page: "ficha do produto", confidence: "ALTA", divergence: null },
+      { attribute: "VEDACAO", current_value: "2RSH", proposed_value: "2RSH (contato, dois lados)", source_title: "Catálogo de rolamentos SKF · sufixos", source_url: "https://www.skf.com/", source_excerpt: "2RSH: vedação de contato em ambos os lados", source_page: "tabela de sufixos", confidence: "MEDIA", divergence: "Pedido importado o-004 cita \"2RS\": confirmar se é o mesmo sufixo." },
+    ],
+  },
+  {
+    proposal_id: "e-valvula-classe",
+    version: 1,
+    material_code: "10293847",
+    original_description: "VALVULA ESFERA 2POL INOX 316 ROSCA NPT",
+    proposed_description: "VALVULA ESFERA; DIAMETRO NOMINAL: 2POL; CLASSE PRESSAO: 800#; MATERIAL CORPO: ACO INOX FORJADO A182 F316; EXTREMIDADE: ROSCA NPT",
+    pdm_class_id: "PDM045",
+    status: "PENDING",
+    evidence: [
+      { attribute: "CLASSE PRESSAO", current_value: null, proposed_value: "800#", source_title: "Catálogo do fabricante (exemplo)", source_url: "https://example.com/catalogo", source_excerpt: "Class 800 forged steel ball valve, NPT ends", source_page: "p. 12", confidence: "MEDIA", divergence: null },
+      { attribute: "MATERIAL CORPO", current_value: "INOX 316", proposed_value: "ACO INOX FORJADO A182 F316", source_title: "Catálogo do fabricante (exemplo)", source_url: "https://example.com/catalogo", source_excerpt: "Body: ASTM A182 F316", source_page: "p. 12", confidence: "ALTA", divergence: null },
+    ],
+  },
+];
+
+export const batchJobs: BatchJob[] = [
+  { id: "job-0007", job_type: "SANITIZE", status: "RUNNING", requested_by: "Fernanda · Cadastro", pdm_version: "pdm-kit-v1", ncm_version: "ncm-demo-v1", progress: { processed: 15780, total: 23554 }, counts: { proposals: 1284, merges: 611, ncm: 402, enrichment: 15 }, started_at: "2026-11-07T22:05:00Z", finished_at: null },
+  { id: "job-0006", job_type: "ENRICH_REAL_PRODUCTS", status: "SUCCEEDED", requested_by: "Fernanda · Cadastro", pdm_version: "pdm-kit-v1", ncm_version: "ncm-demo-v1", progress: { processed: 15, total: 15 }, counts: { proposals: 15, merges: 0, ncm: 3, enrichment: 15 }, started_at: "2026-11-07T17:20:00Z", finished_at: "2026-11-07T17:31:00Z" },
+  { id: "job-0005", job_type: "IMPORT_ORDERS", status: "SUCCEEDED", requested_by: "Fernanda · Cadastro", pdm_version: "pdm-kit-v1", ncm_version: "ncm-demo-v1", progress: { processed: 520, total: 520 }, counts: { proposals: 0, merges: 0, ncm: 0, enrichment: 0 }, started_at: "2026-11-07T12:40:00Z", finished_at: "2026-11-07T12:46:00Z" },
+  { id: "job-0004", job_type: "SANITIZE", status: "FAILED", requested_by: "Fernanda · Cadastro", pdm_version: "pdm-kit-v1", ncm_version: "ncm-demo-v1", progress: { processed: 2210, total: 23554 }, counts: { proposals: 96, merges: 41, ncm: 30, enrichment: 0 }, started_at: "2026-11-07T11:02:00Z", finished_at: "2026-11-07T11:09:00Z" },
+];
+
+export const audit: AuditEvent[] = [
+  { id: "a-9", actor: "Auditoria Fiscal", effective_role: "ROLE_AUDITOR_FISCAL", action: "NCM_REVIEW_APPROVE", entity: "proposta p-porca-ncm", reason: "Classificação conferida com a referência aplicável.", request_id: "req-approval-019", created_at: "2026-11-07T15:31:00Z" },
+  { id: "a-8", actor: "Fernanda · Cadastro", effective_role: "ROLE_GOVERNANCA_PDM", action: "MERGE_APPROVE", entity: "proposta p-rolamento-merge", reason: "Mesmo fabricante e referência confirmados nas evidências.", request_id: "req-approval-018", created_at: "2026-11-07T15:20:00Z" },
+  { id: "a-7", actor: "Fernanda · Cadastro", effective_role: "ROLE_GOVERNANCA_PDM", action: "MERGE_REJECT", entity: "proposta p-filtro-diferente", reason: "Fabricantes diferentes: PDM100 exige mesma referência.", request_id: "req-approval-017", created_at: "2026-11-07T15:02:00Z" },
+  { id: "a-6", actor: "Operação Demo", effective_role: "ROLE_SOLICITANTE", action: "ORDER_SUBMIT", entity: "pedido o-003", reason: null, request_id: "req-order-011", created_at: "2026-11-07T13:10:00Z" },
+  { id: "a-5", actor: "Fernanda · Cadastro", effective_role: "ROLE_GOVERNANCA_PDM", action: "BATCH_START", entity: "job job-0007", reason: "Saneamento completo após correção do parser PDM.", request_id: "req-batch-004", created_at: "2026-11-07T22:05:00Z" },
+];
+
+export const dashboard: DashboardMetrics = {
+  dataset_id: "88888888-8888-4888-8888-888888888888",
+  comparison_status: "AFTER_SNAPSHOT_NOT_AVAILABLE",
+  before: { materials_total: 23554, active: 20014, blocked: 2331, obsolete: 1209, missing_ncm: 1173, noncanonical_unit: 2030 },
+  after: null,
+  pipeline: { proposals_total: 1284, pending: 1102, applied: 151, rejected: 27, stale: 4 },
+  evaluation: { reviewed_pairs: 180, merge_precision: 0.967, duplicate_recall: null },
+  financial: { currency: "BRL", data_origin: "SYNTHETIC_CHALLENGE_DATA", inventory_book_value: "200874691.83", realized_savings: null, estimated_savings: null },
+};
