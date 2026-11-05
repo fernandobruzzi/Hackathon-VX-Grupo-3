@@ -760,6 +760,7 @@ export interface components {
       expected_session_version: number;
       message: string;
       center_code: string;
+      action?: components["schemas"]["ChatAction"];
     };
     ProposalDecisionRequest: {
       expected_version: number;
@@ -850,6 +851,7 @@ export interface components {
       session_id: string;
       session_version: number;
       message: string;
+      action?: components["schemas"]["ChatAction"] | null;
       context: {
         pdm_version: string;
         ncm_version: string;
@@ -862,6 +864,8 @@ export interface components {
         offered_material_codes?: string[];
         /** @description Códigos que o solicitante confirmou não serem o item dele, validados pela API. */
         dismissed_material_codes?: string[];
+        /** @description Lida pela API do contexto persistido. Enquanto a ficha não muda, o Agent decide sem nova busca. */
+        duplicate_check?: components["schemas"]["DuplicateCheckState"] | null;
       };
     };
     AgentRunResponse: {
@@ -901,6 +905,21 @@ export interface components {
       quantity: components["schemas"]["Decimal"];
       unit: string;
       total_value?: components["schemas"]["Decimal"] | null;
+    };
+    /** @description Ação dos botões do chat. Só vale para códigos oferecidos antes nesta conversa; o texto exibido no botão não importa. */
+    ChatAction: {
+      /** @enum {string} */
+      type: "PICK_CANDIDATE" | "DISMISS_CANDIDATES";
+      /** @description Obrigatório em PICK_CANDIDATE. */
+      material_code?: string | null;
+    };
+    /** @description Última verificação de duplicidade aceita pela API, com a assinatura da ficha (classe e atributos preenchidos). Vale só enquanto a ficha não muda. */
+    DuplicateCheckState: {
+      signature: string;
+      /** @enum {string} */
+      status: "PENDING" | "NO_MATCH" | "MATCH_FOUND";
+      existing?: components["schemas"]["ExistingMatch"];
+      similar_candidates?: components["schemas"]["SimilarCandidate"][];
     };
   };
   responses: never;

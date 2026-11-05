@@ -4052,6 +4052,9 @@
           },
           "center_code": {
             "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ChatAction"
           }
         },
         "required": [
@@ -4475,6 +4478,16 @@
             "type": "string",
             "minLength": 1
           },
+          "action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChatAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "context": {
             "type": "object",
             "properties": {
@@ -4519,6 +4532,17 @@
                   "type": "string"
                 },
                 "description": "Códigos que o solicitante confirmou não serem o item dele, validados pela API."
+              },
+              "duplicate_check": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DuplicateCheckState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lida pela API do contexto persistido. Enquanto a ficha não muda, o Agent decide sem nova busca."
               }
             },
             "required": [
@@ -4696,6 +4720,65 @@
           "center_code",
           "quantity",
           "unit"
+        ],
+        "additionalProperties": false
+      },
+      "ChatAction": {
+        "type": "object",
+        "description": "Ação dos botões do chat. Só vale para códigos oferecidos antes nesta conversa; o texto exibido no botão não importa.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PICK_CANDIDATE",
+              "DISMISS_CANDIDATES"
+            ]
+          },
+          "material_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Obrigatório em PICK_CANDIDATE."
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "DuplicateCheckState": {
+        "type": "object",
+        "description": "Última verificação de duplicidade aceita pela API, com a assinatura da ficha (classe e atributos preenchidos). Vale só enquanto a ficha não muda.",
+        "properties": {
+          "signature": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "NO_MATCH",
+              "MATCH_FOUND"
+            ]
+          },
+          "existing": {
+            "$ref": "#/components/schemas/ExistingMatch"
+          },
+          "similar_candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SimilarCandidate"
+            }
+          }
+        },
+        "required": [
+          "signature",
+          "status"
         ],
         "additionalProperties": false
       }

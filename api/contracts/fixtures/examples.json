@@ -275,6 +275,106 @@
     }
   },
   {
+    "name": "chat-pick-candidate",
+    "path": "/api/v1/chat/message",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "client_message_id": "66666666-6666-4666-8666-666666666666",
+      "expected_session_version": 1,
+      "message": "É este",
+      "center_code": "1200",
+      "action": {
+        "type": "PICK_CANDIDATE",
+        "material_code": "12456213"
+      }
+    },
+    "response": {
+      "request_id": "req-chat-003",
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "session_version": 2,
+      "order_id": null,
+      "status": "EXISTING",
+      "assistant_message": "Esse item já existe: use o código 12456213. Confirmado pelo solicitante como o mesmo item. Estoque nos seus centros: 40 PC no centro 1200.",
+      "tool_calls": [
+        {
+          "id": "tool-call-001",
+          "name": "get_pdm_template",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1"
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "required_attributes_count": 7
+          }
+        },
+        {
+          "id": "tool-call-002",
+          "name": "validate_and_format_pdm",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1",
+            "attributes": {
+              "ROSCA": "METRICA GROSSA",
+              "BITOLA": "M12",
+              "COMPRIMENTO": "50MM",
+              "MATERIAL": "ACO CARBONO",
+              "ACABAMENTO": "ZINCADO BRANCO",
+              "NORMA": "DIN 933"
+            }
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "validation_status": "INCOMPLETE",
+            "missing_attributes": [
+              "CLASSE RESISTENCIA"
+            ]
+          }
+        }
+      ],
+      "material_card": {
+        "pdm_class_id": "PDM001",
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M12",
+          "COMPRIMENTO": "50MM",
+          "CLASSE RESISTENCIA": "8.8",
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO BRANCO",
+          "NORMA": "DIN 933"
+        },
+        "pdm_description": "PARAFUSO SEXTAVADO; ROSCA: METRICA GROSSA; BITOLA: M12; COMPRIMENTO: 50MM; CLASSE RESISTENCIA: 8.8; MATERIAL: ACO CARBONO; ACABAMENTO: ZINCADO BRANCO; NORMA: DIN 933",
+        "validation_status": "VALID",
+        "missing_attributes": [],
+        "ncm": {
+          "suggested": "7318.15.00",
+          "status": "PENDING_VALIDATION"
+        },
+        "duplicate_check_status": "MATCH_FOUND",
+        "can_submit": false,
+        "similar_candidates": [],
+        "existing": {
+          "material_code": "12456213",
+          "status": "ATIVO",
+          "pdm_description": "PARAFUSO SEXTAVADO M12X50 8.8 ZINCADO",
+          "match_type": "TEXT_SIMILARITY",
+          "reason": "Confirmado pelo solicitante como o mesmo item.",
+          "inventory": [
+            {
+              "center_code": "1200",
+              "quantity": "40",
+              "unit": "PC"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
     "name": "queue",
     "path": "/api/v1/sanitization/queue",
     "method": "get",
