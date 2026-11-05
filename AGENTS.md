@@ -150,7 +150,7 @@ Each piece of work follows the same path:
 1. **Issue:** claim the issue, as described in [Claiming an issue](#claiming-an-issue). If none exists for the work, create one and assign it first. Nothing else starts before this.
 2. **Branch:** create a branch for it from an up-to-date `main`.
 3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
-4. **PR:** open a pull request to `main`, closing the issue.
+4. **PR:** [update and rebase on `main`](#before-opening-a-pr), then open a pull request, closing the issue.
 5. **Merge:** rebase-merge once checks pass, and delete the branch.
 
 ## Issues and milestones
@@ -242,12 +242,31 @@ through an explicit table and reject unknown or inconsistent content.
 - **Title:** same format as a commit, in English.
 - **Description:** in Portuguese, covering what changed, how you verified it, and `Closes #<n>`.
 
-**Before merging**, the author must:
+### Before opening a PR
+
+**Required for people and agents. Never open a PR from a branch that isn't rebased on the latest `main`.** Others merge all the time, so this finds conflicts on your branch instead of on `main`.
+
+1. Commit your work, because a rebase needs a clean tree. Then pull `main` and rebase your branch on it, in one command that also works in worktrees:
+
+   ```bash
+   git pull --rebase origin main
+   ```
+
+2. Resolve conflicts by keeping both sides' intent. If you can't tell what the other change meant, run `git rebase --abort` and ask its author. For lockfiles, follow [Code style and avoiding conflicts](#code-style-and-avoiding-conflicts).
+3. Run the local checks again, listed under [Commands](#commands), because the combined code hasn't been tested yet.
+4. Push. After a rebase, use `git push --force-with-lease`, on your own branch only.
+5. Create the PR.
+
+Never merge `main` into your branch, and never skip these steps to save time.
+
+### Before merging
+
+The author must:
 
 1. Run style and the local checks for each area touched, listed under [Commands](#commands). Docker changes are checked by CI's image builds.
 2. Confirm every acceptance criterion of the issue is met.
 3. Confirm CI is green.
-4. Rebase on `main` if it moved: `git fetch origin && git rebase origin/main`, then `git push --force-with-lease` on your own branch only.
+4. Repeat [the rebase and checks](#before-opening-a-pr) if `main` moved after the PR opened.
 
 Authors may merge their own PRs, and reviews are welcome when a change is risky. Merge with rebase, to keep atomic commits on a linear `main`:
 
