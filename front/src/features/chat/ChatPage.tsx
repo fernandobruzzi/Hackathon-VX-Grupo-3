@@ -1,19 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, RotateCcw } from "lucide-react";
 import { Button, Eyebrow, Select, Tabs, Seta } from "@/components/ui";
 import { cn } from "@/lib/format";
+import { ApiError, createApiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { initialChatState, runMockTurn, SUGGESTIONS, type ChatState } from "@/mocks/chat";
 import type { ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
 import { MaterialCard } from "./MaterialCard";
 import { ToolCallsPanel } from "./ToolCallsPanel";
 
+const SUGGESTIONS = [
+  "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933.",
+  "Rolamento rígido de esferas 6205 2RS",
+];
+
+function errorMessage(error: unknown) {
+  if (error instanceof ApiError && error.status === 409)
+    return "Esta conversa mudou em outra aba ou ainda está processando. Comece uma nova conversa.";
+  if (error instanceof ApiError && error.status === 503)
+    return "O assistente não respondeu a tempo. Tente enviar de novo.";
+  if (error instanceof ApiError) return error.message;
+  return "Não foi possível falar com o servidor.";
+}
+
 export function ChatPage() {
   const { me } = useAuth();
+  // O getter lê a sessão atual a cada chamada, nunca um token CSRF antigo.
+  const api = useMemo(() => createApiClient({ getCsrfToken: () => me?.csrf_token ?? null }), [me]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [state, setState] = useState<ChatState>(initialChatState);
+  const [session, setSession] = useState<{ id: string; version: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [last, setLast] = useState<ChatTurnResponse | null>(null);
   const [calls, setCalls] = useState<{ turn: number; call: ToolCall }[]>([]);
   const [text, setText] = useState("");
@@ -26,20 +43,28 @@ export function ChatPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, busy]);
 
-  const send = (msg: string) => {
+  const send = async (msg: string) => {
     const content = msg.trim();
     if (!content || busy) return;
-    const now = new Date().toISOString();
+    const clientMessageId = crypto.randomUUID();
     setMessages((m) => [
       ...m,
-      { id: crypto.randomUUID(), author: "user", content, created_at: now },
+      { id: clientMessageId, author: "user", content, created_at: new Date().toISOString() },
     ]);
     setText("");
+    setError(null);
     setBusy(true);
-    // Integração: POST /api/v1/chat/message { session_id, client_message_id, expected_session_version, message, center_code }
-    setTimeout(() => {
-      const { res, next } = runMockTurn(state, content);
-      setState(next);
+    try {
+      const res = await api.request("post", "/api/v1/chat/message", {
+        body: {
+          session_id: session?.id ?? null,
+          client_message_id: clientMessageId,
+          expected_session_version: session?.version ?? 0,
+          message: content,
+          center_code: center,
+        },
+      });
+      setSession({ id: res.session_id, version: res.session_version });
       setLast(res);
       setCalls((c) => [
         ...c,
@@ -54,13 +79,20 @@ export function ChatPage() {
           created_at: new Date().toISOString(),
         },
       ]);
+    } catch (e) {
+      // A mensagem não foi gravada: sai da conversa e volta para a caixa de texto.
+      setMessages((m) => m.filter((item) => item.id !== clientMessageId));
+      setText(content);
+      setError(errorMessage(e));
+    } finally {
       setBusy(false);
-    }, 650);
+    }
   };
 
   const reset = () => {
     setMessages([]);
-    setState(initialChatState);
+    setSession(null);
+    setError(null);
     setLast(null);
     setCalls([]);
     setSubmitted(false);
@@ -157,6 +189,11 @@ export function ChatPage() {
           }}
           className="border-t border-surface-2 p-4"
         >
+          {error && (
+            <p role="alert" className="mx-auto mb-2 max-w-2xl text-sm text-alerta">
+              {error}
+            </p>
+          )}
           <div className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde">
             <textarea
               value={text}
@@ -169,8 +206,8 @@ export function ChatPage() {
               }}
               rows={2}
               placeholder={
-                state.step === "parafuso_needs_class"
-                  ? "Ex.: 8.8"
+                last?.material_card.missing_attributes.length
+                  ? `Ex.: ${last.material_card.missing_attributes[0].toLowerCase()}…`
                   : "Ex.: preciso de 10 parafusos sextavados M16 x 60 galvanizados…"
               }
               aria-label="Mensagem"
