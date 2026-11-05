@@ -18,6 +18,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `api/contracts/` | OpenAPI and fixtures | Empty contract |
 | `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
+| `design/` | Presentation template and design system, source for brand values | Reference |
 | `Dockerfile`, `docker-compose.yml`, `.env.example` | Images `api`, `agent`, `batch`, and local setup | Ready for integration |
 | `data/` | Challenge data kit ([details](data/README.md)) | Read-only input |
 | `docs/arquitetura.md` | Full architecture and JSON contracts | Reference |
@@ -152,7 +153,7 @@ Finish `P0` issues first. If scope changes or an issue is blocked, comment on it
 
 - **Atomic:** one logical change per commit, and tests pass at each commit that changes behavior.
 - **[Conventional Commits](https://www.conventionalcommits.org/):** `type(scope): subject`, in English and imperative mood.
-- **Scopes:** `front`, `back`, `mcp`, `api`, `data`, `docs`, `ci`.
+- **Scopes:** `front`, `back`, `mcp`, `api`, `data`, `design`, `docs`, `ci`.
 - **Body:** explain why when it isn't obvious from the subject.
 - **No AI mentions:** never cite AI coding agents in commit messages, trailers, branch names, PRs, issues or comments. That means no `Co-Authored-By` for agents and no "Generated with" lines.
 
