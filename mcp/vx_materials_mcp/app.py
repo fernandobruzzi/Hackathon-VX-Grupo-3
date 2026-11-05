@@ -19,10 +19,17 @@ from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.agent import TURN_TIMEOUT_SECONDS, ToolLimitExceeded, ToolRecorder, run_turn
 from vx_materials_mcp.chatbot.session_manager import build_turn_context
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
-from vx_materials_mcp.security import INTERNAL_TOKEN_SECRET_VARIABLE, InvalidInternalToken, verify_internal_token
+from vx_materials_mcp.security import (
+    INTERNAL_TOKEN_SECRET_VARIABLE,
+    Caller,
+    InvalidInternalToken,
+    caller_to_environment,
+    verify_internal_token,
+)
 from vx_materials_mcp.server import DEFAULT_PDM_PATH, PDM_PATH_VARIABLE
 
-Connect = Callable[[], AbstractAsyncContextManager[Any]]
+# Abre o servidor MCP de um turno, já vinculado à identidade validada.
+Connect = Callable[[Caller], AbstractAsyncContextManager[Any]]
 
 
 class AgentError(Exception):
@@ -70,14 +77,14 @@ def create_app(
             raise AgentError(401, "UNAUTHENTICATED", "Token interno ausente.")
         try:
             # A identidade fica vinculada à execução; nenhum parâmetro das tools a carrega.
-            verify_internal_token(token, token_secret)
+            caller = verify_internal_token(token, token_secret)
         except InvalidInternalToken as error:
             raise AgentError(401, "UNAUTHENTICATED", "Token interno inválido.") from error
 
         context = build_turn_context(payload, catalog.classes, classifier, extractor)
 
         async def execute() -> AgentRunResponse:
-            async with connect() as client:
+            async with connect(caller) as client:
                 return await run_turn(payload, context, ToolRecorder(client))
 
         try:
@@ -95,5 +102,9 @@ def main() -> None:
     if not secret:
         raise RuntimeError(f"Variavel de ambiente ausente: {INTERNAL_TOKEN_SECRET_VARIABLE}")
     pdm_path = os.environ.get(PDM_PATH_VARIABLE, DEFAULT_PDM_PATH)
-    app = create_app(load_pdm(pdm_path), secret, lambda: mcp_client.connect(pdm_path))
+    app = create_app(
+        load_pdm(pdm_path),
+        secret,
+        lambda caller: mcp_client.connect(pdm_path, caller=caller_to_environment(caller)),
+    )
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("AGENT_PORT", "8001")))

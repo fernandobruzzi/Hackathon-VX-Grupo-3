@@ -57,6 +57,23 @@ class NcmCard(_Contract):
     status: Literal["PENDING_VALIDATION", "CONSISTENT", "REVIEW_REQUIRED"]
 
 
+class InventoryRow(_Contract):
+    """Estoque autorizado. Preço e valor não entram na ficha, mesmo para quem pode vê-los."""
+
+    center_code: str
+    quantity: str
+    unit: str
+
+
+class ExistingMatch(_Contract):
+    material_code: str
+    status: Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]
+    pdm_description: str
+    match_type: str
+    reason: str
+    inventory: list[InventoryRow]
+
+
 class MaterialCard(_Contract):
     pdm_class_id: str | None
     # Opcional no contrato e nunca nulo: fica fora do JSON quando a classe é desconhecida.
@@ -67,6 +84,7 @@ class MaterialCard(_Contract):
     missing_attributes: list[str]
     ncm: NcmCard
     duplicate_check_status: Literal["PENDING", "NO_MATCH", "MATCH_FOUND"]
+    existing: ExistingMatch | None = Field(default=None, exclude_if=lambda value: value is None)
     can_submit: bool
 
 

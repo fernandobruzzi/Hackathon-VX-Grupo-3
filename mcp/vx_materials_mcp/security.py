@@ -57,10 +57,27 @@ def verify_internal_token(token: str, secret: str) -> Caller:
         )
     except jwt.PyJWTError as error:
         raise InvalidInternalToken(str(error)) from error
-    permissions = claims.get("permissions", [])
-    if not isinstance(permissions, list) or not all(isinstance(item, str) for item in permissions):
-        raise InvalidInternalToken("permissions inválidas")
-    return Caller(user_id=claims["sub"], permissions=frozenset(permissions))
+    permissions = _string_list(claims, "permissions")
+    center_codes = _string_list(claims, "center_codes")
+    return Caller(user_id=claims["sub"], permissions=frozenset(permissions), center_codes=frozenset(center_codes))
+
+
+def _string_list(claims: dict, name: str) -> list[str]:
+    value = claims.get(name, [])
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise InvalidInternalToken(f"{name} inválido")
+    return value
+
+
+def caller_to_environment(caller: Caller) -> str:
+    """Serializa a identidade validada para `VX_CALLER`, lida pelo servidor MCP."""
+    return json.dumps(
+        {
+            "user_id": caller.user_id,
+            "permissions": sorted(caller.permissions),
+            "center_codes": sorted(caller.center_codes),
+        }
+    )
 
 
 def caller_from_environment() -> Caller | None:

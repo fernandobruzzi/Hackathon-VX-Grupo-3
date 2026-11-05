@@ -13,7 +13,8 @@ from fastapi.testclient import TestClient
 from domain.pdm_loader import load_pdm
 from vx_materials_mcp.app import create_app
 from vx_materials_mcp.chatbot import mcp_client
-from vx_materials_mcp.chatbot.agent import ToolLimitExceeded, ToolRecorder
+from vx_materials_mcp.chatbot.agent import ToolLimitExceeded, ToolRecorder, _existing
+from vx_materials_mcp.security import caller_to_environment
 
 PDM = str(Path(__file__).parents[2] / "data" / "desafio01" / "03_padrao_cadastro_PDM.xlsx")
 SECRET = "test-only-internal-secret-with-32-bytes"
@@ -42,10 +43,28 @@ def executed():
 
 
 @pytest.fixture
-def client(catalog, executed):
+def callers():
+    return []
+
+
+@pytest.fixture
+def client(catalog, executed, callers):
+    """Sem banco: a busca de duplicidade falha, como numa queda do catálogo."""
+
     @asynccontextmanager
-    async def connect():
-        async with mcp_client.connect(PDM) as real:
+    async def connect(caller):
+        callers.append(caller)
+        async with mcp_client.connect(PDM, caller=caller_to_environment(caller)) as real:
+            yield SpyClient(real, executed)
+
+    return TestClient(create_app(catalog, SECRET, connect))
+
+
+@pytest.fixture
+def db_client(catalog, executed, database):
+    @asynccontextmanager
+    async def connect(caller):
+        async with mcp_client.connect(PDM, database["reader"], caller_to_environment(caller)) as real:
             yield SpyClient(real, executed)
 
     return TestClient(create_app(catalog, SECRET, connect))
@@ -53,7 +72,15 @@ def client(catalog, executed):
 
 def token(**overrides):
     now = int(time.time())
-    claims = {"iss": "vx-api", "aud": "vx-agent", "sub": "user-1", "iat": now, "exp": now + 60, "permissions": []}
+    claims = {
+        "iss": "vx-api",
+        "aud": "vx-agent",
+        "sub": "user-1",
+        "iat": now,
+        "exp": now + 60,
+        "permissions": ["chat:use", "inventory:read"],
+        "center_codes": ["1100", "1200"],
+    }
     return jwt.encode({**claims, **overrides}, SECRET, algorithm="HS256")
 
 
@@ -94,7 +121,9 @@ def test_panel_calls_are_the_executed_mcp_calls(client, executed):
     calls = run(client, BOLT).json()["tool_calls"]
 
     assert [(call["name"], call["input"]) for call in calls] == executed
-    assert all(call["transport"] == "MCP_STDIO" and call["status"] == "SUCCEEDED" for call in calls)
+    assert all(call["transport"] == "MCP_STDIO" for call in calls)
+    # Sem banco, a busca falha e aparece como falha no painel, não some.
+    assert [call["status"] for call in calls] == ["SUCCEEDED", "SUCCEEDED", "FAILED"]
     assert calls[1]["result"]["validation_status"] == "INCOMPLETE"
 
 
@@ -110,7 +139,9 @@ def test_follow_up_answer_completes_the_card(client):
     assert card["validation_status"] == "VALID"
     assert card["pdm_description"]
     # Sem verificação de duplicidade, o chat não libera o envio.
+    # A busca falhou (sem banco): a ficha completa não libera o envio.
     assert card["duplicate_check_status"] == "PENDING" and card["can_submit"] is False
+    assert "Não consegui verificar" in second["assistant_message"]
 
 
 def test_unknown_material_is_a_business_result(client, executed):
@@ -118,7 +149,67 @@ def test_unknown_material_is_a_business_result(client, executed):
 
     assert response.status_code == 200
     assert response.json()["material_card"]["validation_status"] == "OUT_OF_SCOPE"
-    assert executed == []
+    assert [name for name, _ in executed] == ["search_similar_materials"]
+
+
+def test_validated_identity_reaches_the_server_not_the_tools(client, callers, executed):
+    run(client, BOLT)
+
+    assert callers[0].user_id == "user-1"
+    assert callers[0].center_codes == frozenset({"1100", "1200"})
+    forbidden = {"user", "user_id", "role", "permissions", "center_codes", "tenant", "actor_id"}
+    assert all(not forbidden & set(arguments) for _, arguments in executed)
+
+
+def test_existing_item_is_shown_with_authorized_stock(db_client):
+    body = run(db_client, "filtro Fleetguard LF 9009").json()
+
+    card = body["material_card"]
+    assert card["duplicate_check_status"] == "MATCH_FOUND"
+    assert card["existing"]["material_code"] == "16031971"
+    assert card["can_submit"] is False
+    assert {row["center_code"] for row in card["existing"]["inventory"]} <= {"1100", "1200"}
+    assert all(set(row) == {"center_code", "quantity", "unit"} for row in card["existing"]["inventory"])
+    assert "16031971" in body["assistant_message"]
+
+
+def test_complete_card_without_match_can_be_submitted(db_client):
+    body = run(db_client, "Parafuso sextavado M36x333, classe A4-70, aço inox 316, oxidado preto, DIN 931").json()
+
+    card = body["material_card"]
+    assert card["validation_status"] == "VALID", card
+    assert card["duplicate_check_status"] == "NO_MATCH"
+    assert card["can_submit"] is True
+
+
+def _candidate(code, status, verified=True, target=None):
+    return {
+        "material_code": code,
+        "status": status,
+        "active_code_target": target,
+        "description": f"ITEM {code}",
+        "match_type": "EXACT_IDENTITY",
+        "identity_verified": verified,
+        "inventory": [{"center_code": "1200", "quantity": "3", "unit": "PC"}],
+    }
+
+
+@pytest.mark.parametrize(
+    ("candidates", "code"),
+    [
+        ([_candidate("1", "ATIVO")], "1"),
+        ([_candidate("2", "BLOQUEADO", target="9")], "9"),
+        ([_candidate("3", "OBSOLETO"), _candidate("4", "ATIVO")], "4"),
+        ([_candidate("5", "BLOQUEADO")], None),
+        ([_candidate("6", "ATIVO", verified=False)], None),
+    ],
+)
+def test_only_reusable_identity_matches_are_offered(candidates, code):
+    existing = _existing({"candidates": candidates})
+
+    assert (existing.material_code if existing else None) == code
+    if existing:
+        assert existing.status == "ATIVO"
 
 
 @pytest.mark.parametrize(
@@ -148,7 +239,7 @@ def test_rejects_identity_fields_in_payload(client):
 
 def test_turn_deadline_returns_503(catalog):
     @asynccontextmanager
-    async def slow():
+    async def slow(caller):
         await asyncio.sleep(1)
         yield None
 
