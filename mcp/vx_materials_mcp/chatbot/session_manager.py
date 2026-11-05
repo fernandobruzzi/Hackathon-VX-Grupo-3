@@ -34,7 +34,9 @@ def user_messages(request: AgentRunRequest) -> list[str]:
     busca do turno repetir a anterior e reencontrar os códigos oferecidos.
     """
     texts = [message.content for message in request.context.history if message.author == "user"]
-    described = [text for text in [*texts, request.message] if not is_reply_to_candidates(text)]
+    # Mensagem de botão não descreve o item, qualquer que seja o texto exibido.
+    current = [] if request.action is not None else [request.message]
+    described = [text for text in [*texts, *current] if not is_reply_to_candidates(text)]
     return described or [request.message]
 
 

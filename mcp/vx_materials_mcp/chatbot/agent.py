@@ -9,7 +9,14 @@ import time
 from typing import Any, Protocol
 
 from domain.contracts import ClassificationStatus, PdmClass
-from vx_materials_mcp.chatbot.candidates import DuplicateDecision, decide, existing_message
+from vx_materials_mcp.chatbot.candidates import (
+    DuplicateDecision,
+    card_signature,
+    decide,
+    existing_message,
+    needs_search,
+    reuse,
+)
 from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import (
     AgentRunRequest,
@@ -209,7 +216,8 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     offered, dismissed = request.context.offered_material_codes, request.context.dismissed_material_codes
     if context.pdm_class is None:
         search = await _search(recorder, request, context, None)
-        return _no_class_response(context, recorder, search, decide(search, request.message, offered, dismissed))
+        decision = decide(search, request.message, offered, dismissed, request.action)
+        return _no_class_response(context, recorder, search, decision)
 
     pdm_class = context.pdm_class
     version = request.context.pdm_version
@@ -224,14 +232,19 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     if context.item_name:
         arguments["item_name"] = context.item_name
     validation = await recorder.call("validate_and_format_pdm", arguments, _summarize_validation)
-    search = await _search(recorder, request, context, pdm_class.id)
 
     template_names = [attribute["name"] for attribute in (template or {}).get("attributes", [])]
     card_attributes = {name: context.attributes.get(name) for name in template_names} or dict(context.attributes)
+    previous = request.context.duplicate_check
+    if needs_search(previous, card_signature(pdm_class.id, card_attributes), request.action, request.message):
+        search = await _search(recorder, request, context, pdm_class.id)
+        decision = decide(search, request.message, offered, dismissed, request.action)
+    else:
+        # Mesma ficha da última verificação: mantém a escolha do solicitante sem consultar a base de novo.
+        decision = reuse(previous, request.message, offered, dismissed, request.action)
     status = validation["status"] if validation else "INCOMPLETE"
     missing = [item["name"] for item in validation["missing_attributes"]] if validation else []
     message = _message_for(validation, _class_name(pdm_class, context.item_name))
-    decision = decide(search, request.message, offered, dismissed)
     if decision.existing is not None:
         message = existing_message(decision.existing)
     elif decision.message:
