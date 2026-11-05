@@ -56,7 +56,7 @@ Tests, from `back/`, `mcp/` or `api/`:
 uv run pytest
 ```
 
-Database, from the repo root. The first command starts Postgres on port 5432, and the rest run from `api/`. Tests recreate the `_test` database, and they're skipped without this variable:
+Database, from the repo root. The first command starts Postgres on port 5432, and the rest run from `api/`. Tests recreate the `_test` database, and they're skipped without this variable. Roles and passwords are global to the server, so tests never change `api_user`, `batch_user` or `mcp_reader`: they log in through `temporary_login`, a disposable member role dropped at the end. Give each concurrent run its own `_test` database name:
 
 ```bash
 docker compose up -d --wait db

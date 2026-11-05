@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.engine import make_url
 
 from clients.storage import LocalObjectStore
 from pipelines.full_run import run_sanitize
 from repositories.batch_repository import JobNotRunnable
 from vx_materials_api.batch_job_cli import create_job, main
 from vx_materials_api.bootstrap import bootstrap
+from vx_materials_api.db.temporary_login import temporary_login
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
 PDM = str(KIT / "03_padrao_cadastro_PDM.xlsx")
@@ -37,14 +37,11 @@ def base(migrated_url, tmp_path_factory):
         connection.execute(
             text("TRUNCATE datasets, reference_versions, materials_master, sanitization_proposals, batch_jobs CASCADE")
         )
-        connection.execute(text("ALTER ROLE api_user LOGIN PASSWORD 'batch_job_test'"))
-        connection.execute(text("ALTER ROLE batch_user LOGIN PASSWORD 'batch_job_test'"))
-    url = make_url(migrated_url)
-    api = create_engine(url.set(username="api_user", password="batch_job_test"))
-    bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("kit")))
-    api.dispose()
-    batch_url = url.set(username="batch_user", password="batch_job_test").render_as_string(hide_password=False)
-    yield admin, batch_url
+    with temporary_login(migrated_url, "api_user") as api_url, temporary_login(migrated_url, "batch_user") as batch_url:
+        api = create_engine(api_url)
+        bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("kit")))
+        api.dispose()
+        yield admin, batch_url
     admin.dispose()
 
 
