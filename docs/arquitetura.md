@@ -5,6 +5,7 @@
 > - **Front:** usa Next.js com export estático, não uma SPA React. A estrutura real está em [`front/README.md`](../front/README.md). A API continua servindo o build na mesma origem; a pasta é `front/out`.
 > - **Propriedade do código (seção 7):** qualquer pessoa pode trabalhar em qualquer área. Ver [`AGENTS.md`](../AGENTS.md).
 > - **Dados:** enquanto não há banco, o kit fica em [`data/`](../data/README.md).
+> - **Local first:** todo o fluxo roda localmente com `docker compose` antes da AWS. Ver [`AGENTS.md`](../AGENTS.md).
 > - **Pacotes Python (seção 4):** `mcp` e `api` ficam em `mcp/vx_materials_mcp/` e `api/vx_materials_api/`, em um único workspace uv com `uv.lock` na raiz.
 > - **Normalização (seção 4):** fica em `back/repositories/normalization/`, não em `domain/normalization.py`, para permitir a troca de algoritmos.
 > - **Aprovação automática:** a decisão está em aberto na [issue #36](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/36).
