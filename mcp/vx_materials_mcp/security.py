@@ -1,13 +1,19 @@
 """Autorização do Agent e do MCP: token interno emitido pela API e visão de estoque."""
 
+import json
+import os
 from dataclasses import dataclass
 
 import jwt
 
 FINANCIAL_PERMISSION = "metrics:financial"
+INVENTORY_PERMISSION = "inventory:read"
 
 INVENTORY_VIEW = "mcp_inventory"
 INVENTORY_FINANCIAL_VIEW = "mcp_inventory_financial"
+
+# A API inicia o servidor por sessão e passa aqui a identidade já validada. Ver #17.
+CALLER_VARIABLE = "VX_CALLER"
 
 
 @dataclass(frozen=True)
@@ -16,6 +22,7 @@ class Caller:
 
     user_id: str
     permissions: frozenset[str]
+    center_codes: frozenset[str] = frozenset()
 
 
 def inventory_view(caller: Caller) -> str:
@@ -54,3 +61,16 @@ def verify_internal_token(token: str, secret: str) -> Caller:
     if not isinstance(permissions, list) or not all(isinstance(item, str) for item in permissions):
         raise InvalidInternalToken("permissions inválidas")
     return Caller(user_id=claims["sub"], permissions=frozenset(permissions))
+
+
+def caller_from_environment() -> Caller | None:
+    """Sem identidade, nenhuma tool devolve estoque."""
+    raw = os.environ.get(CALLER_VARIABLE)
+    if not raw:
+        return None
+    data = json.loads(raw)
+    return Caller(
+        user_id=data["user_id"],
+        permissions=frozenset(data.get("permissions", [])),
+        center_codes=frozenset(data.get("center_codes", [])),
+    )
