@@ -202,3 +202,69 @@ class ExtractionRepository(Protocol):
         manufacturer: str | None = None,
         manufacturer_reference: str | None = None,
     ) -> ExtractionResult: ...
+
+
+@dataclass(frozen=True)
+class MaterialRecord:
+    """Material como está no cadastro, antes de qualquer correção."""
+
+    code: str
+    status: str
+    description: str
+    short_description: str = ""
+    group: str = ""
+    manufacturer: str = ""
+    reference: str = ""
+    unit: str = ""
+    ncm: str = ""
+    version: int = 1
+    total_value: str = "0"
+    inventory: tuple[dict, ...] = ()
+    database_id: str | None = None
+
+
+@dataclass(frozen=True)
+class AnalyzedMaterial:
+    record: MaterialRecord
+    pdm_class_id: str | None
+    item_name: str | None
+    attributes: dict[str, str]
+    identity_key: str | None
+
+
+class MatchType(StrEnum):
+    EXACT_IDENTITY = "EXACT_IDENTITY"
+    COMPATIBLE_ATTRIBUTES = "COMPATIBLE_ATTRIBUTES"
+
+
+@dataclass(frozen=True)
+class CandidateGroup:
+    """Materiais que podem ser o mesmo item. Só `identity_verified` satisfaz a regra do PDM."""
+
+    codes: tuple[str, ...]
+    match_type: MatchType
+    identity_verified: bool
+    score: float
+
+
+class CandidateRepository(Protocol):
+    """Um algoritmo de geração de candidatos. Para testar outro, crie um novo repositório em
+    repositories/candidates e registre-o; os existentes permanecem no código."""
+
+    name: str
+
+    def find(self, materials: list[AnalyzedMaterial], catalog: PdmCatalog) -> list[CandidateGroup]: ...
+
+
+@dataclass(frozen=True)
+class MergeProposal:
+    id: str
+    proposal_type: str
+    material_codes: tuple[str, ...]
+    suggested_primary_code: str
+    members: tuple[dict, ...]
+    changeset: dict
+    changeset_hash: str
+    conflicts: tuple[str, ...]
+    fiscal_review_required: bool
+    ranking_score: float
