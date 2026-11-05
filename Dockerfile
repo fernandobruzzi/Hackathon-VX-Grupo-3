@@ -19,6 +19,7 @@ FROM python-base AS api
 RUN uv sync --locked --no-dev --no-editable --package vx-materials-api
 COPY --from=front-build /app/front/out /app/front_dist
 ENV FRONT_DIST_DIR=/app/front_dist
+RUN mkdir /storage && chown app /storage
 USER app
 EXPOSE 8000
 CMD ["vx-api"]

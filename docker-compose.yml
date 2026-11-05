@@ -31,6 +31,25 @@ services:
       db:
         condition: service_healthy
 
+  # Carrega o kit de dados. Pode repetir: nada é duplicado.
+  bootstrap:
+    build:
+      context: .
+      target: api
+    environment:
+      DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
+      DATA_DIR: /data/desafio01
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_LOCAL_DIR: /storage
+      S3_BUCKET: ${S3_BUCKET:-}
+    command: ["vx-bootstrap"]
+    volumes:
+      - ./data:/data:ro
+      - storage-data:/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   api:
     build:
       context: .
@@ -44,7 +63,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      migrate:
+      bootstrap:
         condition: service_completed_successfully
       agent:
         condition: service_started
@@ -76,3 +95,4 @@ services:
 
 volumes:
   db-data:
+  storage-data:
