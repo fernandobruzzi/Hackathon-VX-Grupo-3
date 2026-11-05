@@ -35,6 +35,11 @@ def sanitized(migrated_url, tmp_path_factory):
     admin.dispose()
 
 
+def total(result):
+    """Unificações mais correções, todas gravadas na mesma tabela."""
+    return result["proposals"] + sum(result["corrections"]["proposals"].values())
+
+
 def scalar(engine, query):
     with engine.connect() as connection:
         return connection.execute(text(query)).scalar_one()
@@ -42,14 +47,15 @@ def scalar(engine, query):
 
 def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
     first, _, admin, _ = sanitized
-    assert first["inserted"] == first["proposals"] > 1000
-    assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == first["proposals"]
+    assert first["proposals"] > 1000
+    assert first["inserted"] == total(first)
+    assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == total(first)
     with admin.connect() as connection:
         row = connection.execute(
             text(
                 "SELECT p.proposal_type, p.status, p.members, p.changeset, p.fiscal_review_status, "
                 "m.material_code FROM sanitization_proposals p JOIN materials_master m ON m.id = p.primary_material_id "
-                "WHERE jsonb_array_length(p.changeset->'conflicts') > 0 LIMIT 1"
+                "WHERE p.proposal_type = 'MERGE' AND jsonb_array_length(p.changeset->'conflicts') > 0 LIMIT 1"
             )
         ).one()
     assert (row[0], row[1]) == ("MERGE", "PENDING")
@@ -61,8 +67,8 @@ def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
 def test_running_again_duplicates_nothing(sanitized):
     first, second, admin, _ = sanitized
     assert second["inserted"] == 0
-    assert second["proposals"] == first["proposals"]
-    assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == first["proposals"]
+    assert total(second) == total(first)
+    assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == total(first)
 
 
 def test_master_data_stays_untouched(sanitized):
@@ -92,5 +98,28 @@ def test_batch_credential_cannot_change_master(sanitized):
 def test_packaging_units_are_flagged_in_saved_proposals(sanitized):
     first, _, admin, _ = sanitized
     assert first["conflicts"]["UNIDADE_SEM_FATOR"] > 0
-    query = "SELECT count(*) FROM sanitization_proposals WHERE changeset::text LIKE '%UNIDADE_SEM_FATOR%'"
+    query = (
+        "SELECT count(*) FROM sanitization_proposals "
+        "WHERE proposal_type = 'MERGE' AND changeset::text LIKE '%UNIDADE_SEM_FATOR%'"
+    )
     assert scalar(admin, query) == first["conflicts"]["UNIDADE_SEM_FATOR"]
+
+
+def test_corrections_are_saved_with_before_after_and_rule(sanitized):
+    first, _, admin, _ = sanitized
+    with admin.connect() as connection:
+        rows = connection.execute(
+            text(
+                "SELECT proposal_type, count(*) FROM sanitization_proposals "
+                "WHERE proposal_type <> 'MERGE' AND fiscal_review_status = 'NOT_REQUIRED' GROUP BY 1"
+            )
+        )
+        saved = {row[0]: row[1] for row in rows}
+    assert saved == first["corrections"]["proposals"]
+    assert set(saved) == {"PDM_CORRECTION", "UNIT_CORRECTION"}
+    query = (
+        "SELECT count(*) FROM sanitization_proposals p, jsonb_array_elements(p.changeset->'changes') change "
+        "WHERE p.proposal_type <> 'MERGE' AND (change->>'after' IS NULL OR change->>'source' IS NULL "
+        "OR NOT change ? 'before')"
+    )
+    assert scalar(admin, query) == 0

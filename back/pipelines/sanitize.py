@@ -1,4 +1,4 @@
-"""Saneamento: analisa os materiais e propõe unificações. Nada é aplicado: quem decide é uma pessoa.
+"""Saneamento: analisa os materiais e propõe unificações e correções. Nada é aplicado: quem decide é uma pessoa.
 
 Etapas: classe do PDM, extração de atributos, validação e identidade, candidatos, verificação e
 proposta. Cada etapa vem de um repositório trocável por configuração.
@@ -34,9 +34,11 @@ from domain.identity import compare_attributes, partial_identity_key
 from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
+from pipelines.corrections import propose_corrections, summarize_corrections
 from repositories.batch_repository import read_materials, save_proposals, single_tenant
 from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
+from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
 from repositories.normalization import get_normalization_repository
 
@@ -174,6 +176,15 @@ def propose_merges(
     normalizer: NormalizationRepository,
 ) -> list[MergeProposal]:
     analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
+    return merge_proposals(analyzed, catalog, candidates, normalizer)
+
+
+def merge_proposals(
+    analyzed: list[AnalyzedMaterial],
+    catalog: PdmCatalog,
+    candidates: CandidateRepository,
+    normalizer: NormalizationRepository,
+) -> list[MergeProposal]:
     by_code = {material.record.code: material for material in analyzed}
     groups = candidates.find(analyzed, catalog)
     proposals = [build_proposal(group, by_code, catalog, normalizer) for group in groups]
@@ -204,15 +215,21 @@ def _catalog(pdm_workbook: str | None) -> PdmCatalog:
     return load_pdm(pdm_workbook or os.environ.get("PDM_WORKBOOK_PATH", default))
 
 
-def _propose(records: list[MaterialRecord], catalog: PdmCatalog, repository_name: str | None) -> list[MergeProposal]:
-    return propose_merges(
-        records,
-        catalog,
-        get_classification_repository(catalog),
-        get_extraction_repository(),
-        get_candidate_repository(repository_name),
-        get_normalization_repository(),
+def _propose(
+    records: list[MaterialRecord],
+    catalog: PdmCatalog,
+    repository_name: str | None,
+    correction_repository: str | None = None,
+) -> tuple[list[MergeProposal], list[MergeProposal], Counter[str]]:
+    """Analisa cada material uma vez e gera as unificações e as correções."""
+    classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
+    normalizer = get_normalization_repository()
+    analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
+    merges = merge_proposals(analyzed, catalog, get_candidate_repository(repository_name), normalizer)
+    corrections, pending = propose_corrections(
+        analyzed, catalog, normalizer, get_correction_repository(correction_repository)
     )
+    return merges, corrections, pending
 
 
 def summarize(proposals: list[MergeProposal]) -> dict:
@@ -228,9 +245,15 @@ def summarize(proposals: list[MergeProposal]) -> dict:
     }
 
 
-def sanitize_report(path: str, pdm_workbook: str | None = None, repository_name: str | None = None) -> dict:
+def sanitize_report(
+    path: str,
+    pdm_workbook: str | None = None,
+    repository_name: str | None = None,
+    correction_repository: str | None = None,
+) -> dict:
     catalog = _catalog(pdm_workbook)
-    return summarize(_propose(read_csv_records(path), catalog, repository_name))
+    merges, corrections, pending = _propose(read_csv_records(path), catalog, repository_name, correction_repository)
+    return {**summarize(merges), "corrections": summarize_corrections(corrections, pending)}
 
 
 def run_sanitize(
@@ -238,6 +261,7 @@ def run_sanitize(
     job_id: str | None = None,
     repository_name: str | None = None,
     database_url: str | None = None,
+    correction_repository: str | None = None,
 ) -> dict:
     url = database_url or os.environ.get("DATABASE_URL")
     if not url:
@@ -247,8 +271,8 @@ def run_sanitize(
         catalog = _catalog(pdm_workbook)
         tenant_id = single_tenant(engine)
         records = read_materials(engine, tenant_id)
-        proposals = _propose(records, catalog, repository_name)
-        inserted = save_proposals(engine, proposals, records, tenant_id, job_id)
+        merges, corrections, pending = _propose(records, catalog, repository_name, correction_repository)
+        inserted = save_proposals(engine, merges + corrections, records, tenant_id, job_id)
     finally:
         engine.dispose()
-    return {**summarize(proposals), "inserted": inserted}
+    return {**summarize(merges), "corrections": summarize_corrections(corrections, pending), "inserted": inserted}
