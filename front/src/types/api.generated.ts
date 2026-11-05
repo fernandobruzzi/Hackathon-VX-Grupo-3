@@ -424,6 +424,7 @@ export interface components {
       /** @enum {string} */
       duplicate_check_status: "PENDING" | "NO_MATCH" | "MATCH_FOUND";
       existing?: components["schemas"]["ExistingMatch"];
+      similar_candidates?: components["schemas"]["SimilarCandidate"][];
       can_submit: boolean;
     };
     ChatMessage: {
@@ -794,6 +795,10 @@ export interface components {
         confirmed_attributes: {
           [key: string]: string | null;
         };
+        /** @description Códigos parecidos mostrados no turno anterior, lidos do contexto persistido pela API. */
+        offered_material_codes?: string[];
+        /** @description Códigos que o solicitante confirmou não serem o item dele, validados pela API. */
+        dismissed_material_codes?: string[];
       };
     };
     AgentRunResponse: {
@@ -803,6 +808,13 @@ export interface components {
         [key: string]: unknown;
       };
       material_card: components["schemas"]["MaterialCardData"];
+    };
+    /** @description Item parecido, sem identidade verificada, que o solicitante confirma ou descarta. Obsoletos nunca aparecem. */
+    SimilarCandidate: {
+      material_code: string;
+      status: components["schemas"]["MaterialStatus"];
+      pdm_description: string;
+      active_code_target: string | null;
     };
   };
   responses: never;

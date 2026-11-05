@@ -12,6 +12,7 @@ export type ChatStatus = components["schemas"]["ChatStatus"];
 export type ToolCall = components["schemas"]["ToolCall"];
 export type InventoryRow = components["schemas"]["InventoryRow"];
 export type ExistingMatch = components["schemas"]["ExistingMatch"];
+export type SimilarCandidate = components["schemas"]["SimilarCandidate"];
 export type MaterialCardData = components["schemas"]["MaterialCardData"];
 export type ChatMessage = components["schemas"]["ChatMessage"];
 export type ChatTurnResponse = components["schemas"]["ChatTurnResponse"];

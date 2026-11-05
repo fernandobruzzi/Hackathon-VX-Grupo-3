@@ -186,6 +186,95 @@
     }
   },
   {
+    "name": "chat-similar-candidates",
+    "path": "/api/v1/chat/message",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "session_id": null,
+      "client_message_id": "22222222-2222-4222-8222-222222222222",
+      "expected_session_version": 0,
+      "message": "Parafuso sextavado M12x50, classe 8.8, aço carbono, zincado branco, DIN 933",
+      "center_code": "1200"
+    },
+    "response": {
+      "request_id": "req-chat-002",
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "session_version": 1,
+      "order_id": "44444444-4444-4444-8444-444444444444",
+      "status": "NEEDS_INPUT",
+      "assistant_message": "Encontrei itens parecidos na base: 12456213 (PARAFUSO SEXTAVADO M12X50 8.8 ZINCADO). O seu item é um desses, ou é um item diferente?",
+      "tool_calls": [
+        {
+          "id": "tool-call-001",
+          "name": "get_pdm_template",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1"
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "required_attributes_count": 7
+          }
+        },
+        {
+          "id": "tool-call-002",
+          "name": "validate_and_format_pdm",
+          "transport": "MCP_STDIO",
+          "input": {
+            "pdm_class_id": "PDM001",
+            "pdm_version": "pdm-kit-v1",
+            "attributes": {
+              "ROSCA": "METRICA GROSSA",
+              "BITOLA": "M12",
+              "COMPRIMENTO": "50MM",
+              "MATERIAL": "ACO CARBONO",
+              "ACABAMENTO": "ZINCADO BRANCO",
+              "NORMA": "DIN 933"
+            }
+          },
+          "status": "SUCCEEDED",
+          "result": {
+            "validation_status": "INCOMPLETE",
+            "missing_attributes": [
+              "CLASSE RESISTENCIA"
+            ]
+          }
+        }
+      ],
+      "material_card": {
+        "pdm_class_id": "PDM001",
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M12",
+          "COMPRIMENTO": "50MM",
+          "CLASSE RESISTENCIA": "8.8",
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO BRANCO",
+          "NORMA": "DIN 933"
+        },
+        "pdm_description": "PARAFUSO SEXTAVADO; ROSCA: METRICA GROSSA; BITOLA: M12; COMPRIMENTO: 50MM; CLASSE RESISTENCIA: 8.8; MATERIAL: ACO CARBONO; ACABAMENTO: ZINCADO BRANCO; NORMA: DIN 933",
+        "validation_status": "VALID",
+        "missing_attributes": [],
+        "ncm": {
+          "suggested": "7318.15.00",
+          "status": "PENDING_VALIDATION"
+        },
+        "duplicate_check_status": "PENDING",
+        "can_submit": false,
+        "similar_candidates": [
+          {
+            "material_code": "12456213",
+            "status": "ATIVO",
+            "pdm_description": "PARAFUSO SEXTAVADO M12X50 8.8 ZINCADO",
+            "active_code_target": null
+          }
+        ]
+      }
+    }
+  },
+  {
     "name": "queue",
     "path": "/api/v1/sanitization/queue",
     "method": "get",
