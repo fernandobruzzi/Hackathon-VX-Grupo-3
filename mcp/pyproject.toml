@@ -3,10 +3,16 @@ name = "vx-materials-mcp"
 version = "0.1.0"
 description = "Servidor MCP e chatbot do cadastro de materiais"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.115", "uvicorn>=0.34", "vx-materials-back"]
+dependencies = [
+    "fastapi>=0.115",
+    "mcp>=2.3,<3",
+    "uvicorn>=0.34",
+    "vx-materials-back",
+]
 
 [project.scripts]
 vx-agent = "vx_materials_mcp.app:main"
+vx-mcp-server = "vx_materials_mcp.server:main"
 
 [dependency-groups]
 dev = ["httpx>=0.28", "pytest>=8"]
