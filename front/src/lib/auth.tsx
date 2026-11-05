@@ -23,8 +23,18 @@ const Ctx = createContext<AuthCtx | null>(null);
 const KEY = "vx-demo-persona";
 const THEME_KEY = "vx-theme";
 
-function read(key: string) { try { return localStorage.getItem(key); } catch { return null; } }
-function write(key: string, v: string | null) { try { v === null ? localStorage.removeItem(key) : localStorage.setItem(key, v); } catch {} }
+function read(key: string) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function write(key: string, v: string | null) {
+  try {
+    v === null ? localStorage.removeItem(key) : localStorage.setItem(key, v);
+  } catch {}
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
@@ -40,9 +50,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
-  const signIn = useCallback((persona: PersonaLabel = "SOLICITANTE_OPERACAO") => { write(KEY, persona); setMe(meFor(persona)); }, []);
-  const switchPersona = useCallback((persona: PersonaLabel) => { write(KEY, persona); setMe(meFor(persona)); }, []);
-  const signOut = useCallback(() => { write(KEY, null); setMe(null); }, []);
+  const signIn = useCallback((persona: PersonaLabel = "SOLICITANTE_OPERACAO") => {
+    write(KEY, persona);
+    setMe(meFor(persona));
+  }, []);
+  const switchPersona = useCallback((persona: PersonaLabel) => {
+    write(KEY, persona);
+    setMe(meFor(persona));
+  }, []);
+  const signOut = useCallback(() => {
+    write(KEY, null);
+    setMe(null);
+  }, []);
   const toggleTheme = useCallback(() => {
     setTheme((t) => {
       const n = t === "light" ? "dark" : "light";
@@ -52,7 +71,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  return <Ctx.Provider value={{ me, ready, signIn, switchPersona, signOut, theme, toggleTheme }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ me, ready, signIn, switchPersona, signOut, theme, toggleTheme }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAuth() {

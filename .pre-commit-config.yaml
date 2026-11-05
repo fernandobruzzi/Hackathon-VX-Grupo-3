@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --group dev ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --group dev ruff format
+        language: system
+        types: [python]
+      - id: prettier
+        name: prettier
+        entry: scripts/prettier_front.sh
+        language: system
+        files: ^front/.*\.(ts|tsx|mjs|css|json)$
+        exclude: ^front/package-lock\.json$

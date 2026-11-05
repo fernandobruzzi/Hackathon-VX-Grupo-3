@@ -37,7 +37,8 @@ export interface Me {
 
 export type MaterialStatus = "ATIVO" | "BLOQUEADO" | "OBSOLETO";
 export type ValidationStatus = "VALID" | "INCOMPLETE" | "INVALID" | "OUT_OF_SCOPE";
-export type ChatStatus = "NEEDS_INPUT" | "EXISTING" | "READY_TO_SUBMIT" | "SUBMITTED" | "OUT_OF_SCOPE";
+export type ChatStatus =
+  "NEEDS_INPUT" | "EXISTING" | "READY_TO_SUBMIT" | "SUBMITTED" | "OUT_OF_SCOPE";
 
 export interface ToolCall {
   id: string;
@@ -54,7 +55,11 @@ export interface ToolCall {
   result: Record<string, unknown>;
 }
 
-export interface InventoryRow { center_code: string; quantity: string; unit: string }
+export interface InventoryRow {
+  center_code: string;
+  quantity: string;
+  unit: string;
+}
 
 export interface ExistingMatch {
   material_code: string;
@@ -72,7 +77,10 @@ export interface MaterialCardData {
   pdm_description: string | null;
   validation_status: ValidationStatus;
   missing_attributes: string[];
-  ncm: { suggested: string | null; status: "PENDING_VALIDATION" | "CONSISTENT" | "REVIEW_REQUIRED" };
+  ncm: {
+    suggested: string | null;
+    status: "PENDING_VALIDATION" | "CONSISTENT" | "REVIEW_REQUIRED";
+  };
   duplicate_check_status: "PENDING" | "NO_MATCH" | "MATCH_FOUND";
   existing?: ExistingMatch;
   can_submit: boolean;
@@ -96,7 +104,8 @@ export interface ChatTurnResponse {
   material_card: MaterialCardData;
 }
 
-export type ProposalType = "MERGE" | "PDM_CORRECTION" | "UNIT_CORRECTION" | "NCM_CORRECTION" | "ENRICHMENT" | "COMPOSITE";
+export type ProposalType =
+  "MERGE" | "PDM_CORRECTION" | "UNIT_CORRECTION" | "NCM_CORRECTION" | "ENRICHMENT" | "COMPOSITE";
 export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED" | "NOT_REQUIRED";
 export type ProposalStatus = "PENDING" | "APPLIED" | "REJECTED" | "STALE";
 
@@ -120,7 +129,12 @@ export interface Proposal {
   suggested_primary_code: string | null;
   identity: { mode: "MANUFACTURER_REFERENCE" | "TECHNICAL_ATTRIBUTES"; summary: string };
   members: ProposalMember[];
-  after: { description: string; ncm: string | null; unit: string; attributes: Record<string, string> };
+  after: {
+    description: string;
+    ncm: string | null;
+    unit: string;
+    attributes: Record<string, string>;
+  };
   changes: { field: string; before: string | null; after: string; source: string }[];
   technical_review_status: ReviewStatus;
   fiscal_review_status: ReviewStatus;
@@ -153,8 +167,14 @@ export interface EnrichmentProposal {
 }
 
 export type OrderStatus =
-  | "DRAFT" | "INCOMPLETE" | "READY_FOR_REVIEW" | "EXISTING" | "OUT_OF_SCOPE"
-  | "PENDING_FISCAL" | "REGISTERED" | "REJECTED";
+  | "DRAFT"
+  | "INCOMPLETE"
+  | "READY_FOR_REVIEW"
+  | "EXISTING"
+  | "OUT_OF_SCOPE"
+  | "PENDING_FISCAL"
+  | "REGISTERED"
+  | "REJECTED";
 
 export interface RegistrationOrder {
   id: string;
@@ -196,9 +216,32 @@ export interface AuditEvent {
 export interface DashboardMetrics {
   dataset_id: string;
   comparison_status: "AFTER_SNAPSHOT_NOT_AVAILABLE" | "AVAILABLE";
-  before: { materials_total: number; active: number; blocked: number; obsolete: number; missing_ncm: number; noncanonical_unit: number };
+  before: {
+    materials_total: number;
+    active: number;
+    blocked: number;
+    obsolete: number;
+    missing_ncm: number;
+    noncanonical_unit: number;
+  };
   after: DashboardMetrics["before"] | null;
-  pipeline: { proposals_total: number; pending: number; applied: number; rejected: number; stale: number };
-  evaluation: { reviewed_pairs: number; merge_precision: number | null; duplicate_recall: number | null };
-  financial: { currency: "BRL"; data_origin: string; inventory_book_value: string; realized_savings: string | null; estimated_savings: string | null };
+  pipeline: {
+    proposals_total: number;
+    pending: number;
+    applied: number;
+    rejected: number;
+    stale: number;
+  };
+  evaluation: {
+    reviewed_pairs: number;
+    merge_precision: number | null;
+    duplicate_recall: number | null;
+  };
+  financial: {
+    currency: "BRL";
+    data_origin: string;
+    inventory_book_value: string;
+    realized_savings: string | null;
+    estimated_savings: string | null;
+  };
 }

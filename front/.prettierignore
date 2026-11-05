@@ -1,0 +1,9 @@
+.next/
+out/
+node_modules/
+public/
+docs/
+pitch/
+package-lock.json
+next-env.d.ts
+*.md

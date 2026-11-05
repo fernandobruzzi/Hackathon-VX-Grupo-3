@@ -10,11 +10,11 @@
   --surface-2: #e3ded2;
   --text: #102c26;
   --text-muted: #4f5e57;
-  --verde: #0a6e48;        /* verde como TEXTO (5,7:1 no off-white) */
+  --verde: #0a6e48; /* verde como TEXTO (5,7:1 no off-white) */
   --verde-glow: #085a3b;
-  --esmeralda: #16c784;    /* forma: seta, barras, CTA — nunca texto no claro */
+  --esmeralda: #16c784; /* forma: seta, barras, CTA — nunca texto no claro */
   --on-esmeralda: #102c26;
-  --profundo: #102c26;     /* blocos de destaque */
+  --profundo: #102c26; /* blocos de destaque */
   --apoio: #0d4939;
   --on-profundo: #f5f3ed;
   --serie-1: #0c8a5a;
@@ -66,8 +66,14 @@
   --radius-lg: 24px;
 }
 
-html { background: var(--ink); color: var(--text); }
-body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+html {
+  background: var(--ink);
+  color: var(--text);
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;

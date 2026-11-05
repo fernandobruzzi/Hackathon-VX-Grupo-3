@@ -10,22 +10,52 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 |---|---|---|
 | `front/` | Next.js static export with mock data ([details](front/README.md)) | Prototype |
 | `back/domain/` | Shared rules and contracts, used by batch and MCP | In progress |
-| `back/repositories/` | Swappable algorithms | In progress |
-| `back/cli.py` | Batch command line | In progress |
+| `back/repositories/` | Swappable algorithms and batch persistence | In progress |
+| `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Placeholders |
+| `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Health check and placeholders |
+| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Health check and placeholders |
+| `api/contracts/` | OpenAPI and fixtures | Empty contract |
+| `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
+| `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
+| `Dockerfile`, `docker-compose.yml`, `.env.example` | Images `api`, `agent`, `batch`, and local setup | Ready for integration |
 | `data/` | Challenge data kit ([details](data/README.md)) | Read-only input |
 | `docs/arquitetura.md` | Full architecture and JSON contracts | Reference |
 | `docs/brainstorm.md` | Product reasoning | Reference |
-| `mcp/`, `api/`, `scripts/` | Planned in the architecture | Not created yet |
+
+Placeholder modules hold only a docstring naming their issue. Replace them as you take that issue, and don't add stubs that pretend to work.
 
 Read the relevant section of [`docs/arquitetura.md`](docs/arquitetura.md) before working on an area. When code and that document disagree, the note at its top lists known differences. Otherwise raise it on the issue instead of guessing.
 
 ## Commands
 
-Back, from `back/` (Python 3.12+, [uv](https://docs.astral.sh/uv/)):
+Setup, once from the repo root (Python 3.12, [uv](https://docs.astral.sh/uv/)):
+
+```bash
+uv sync --all-packages
+```
+
+```bash
+uv run pre-commit install
+```
+
+Style, from the repo root:
+
+```bash
+uv run ruff check --fix .
+```
+
+```bash
+uv run ruff format .
+```
+
+Tests, from `back/`, `mcp/` or `api/`:
 
 ```bash
 uv run pytest
 ```
+
+Report, from `back/`:
 
 ```bash
 uv run python cli.py normalization-report ../data/desafio01/01_base_materiais.csv
@@ -46,7 +76,21 @@ npm run build
 ```
 
 ```bash
+npm run format
+```
+
+```bash
 npm run dev
+```
+
+Everything together, from the repo root (needs Docker):
+
+```bash
+docker compose up --build
+```
+
+```bash
+scripts/smoke_test.sh
 ```
 
 ## Workflow
@@ -127,7 +171,7 @@ through an explicit table and reject unknown or inconsistent content.
 
 **Before merging**, the author must:
 
-1. Run the local checks for each area touched, listed under [Commands](#commands).
+1. Run style and the local checks for each area touched, listed under [Commands](#commands). Docker changes are checked by CI's image builds.
 2. Confirm every acceptance criterion of the issue is met.
 3. Confirm CI is green.
 4. Rebase on `main` if it moved: `git fetch origin && git rebase origin/main`, then `git push --force-with-lease` on your own branch only.
@@ -140,6 +184,34 @@ gh pr merge <n> --rebase --delete-branch
 
 Never force-push `main` or a branch someone else is using.
 
+## Code style and avoiding conflicts
+
+Formatting is automatic, so style never causes a conflict. CI rejects unformatted code.
+
+- **Python:** Ruff, configured in the root `pyproject.toml`.
+- **Front:** Prettier, which also sorts Tailwind classes.
+- **All files:** `.editorconfig` and `.gitattributes` fix UTF-8 and LF line endings.
+- **Commit hook:** `pre-commit` formats staged files. Install it once, as shown in [Commands](#commands).
+
+To keep conflicts rare:
+
+- Keep PRs small and rebase on `main` often, at least before you start each day and before merging.
+- Check who is assigned to neighbouring issues before touching shared files.
+- Add new behavior in new modules, and keep registration lists sorted, one entry per line.
+- Never mix reformatting or unrelated renames into a feature PR.
+
+Lockfiles are generated, so never merge them by hand. On conflict, take `main`'s version and regenerate:
+
+```bash
+git checkout origin/main -- uv.lock && uv lock
+```
+
+```bash
+git checkout origin/main -- front/package-lock.json && (cd front && npm install)
+```
+
+During a rebase, `origin/main` is still the right source, then continue with `git add` and `git rebase --continue`.
+
 ## Language
 
 | Text | Language |
@@ -150,6 +222,8 @@ Never force-push `main` or a branch someone else is using.
 Domain terms keep their PDM spelling: uppercase, no accents, as in `CLASSE RESISTENCIA`.
 
 ## Architecture
+
+The Python modules form one uv workspace with a single `uv.lock` at the root. `mcp` depends on `back` for shared rules. `mcp` and `api` use the namespaces `vx_materials_mcp` and `vx_materials_api`, so nothing collides with the official `mcp` package. Never import from repo-root paths.
 
 ```
 Browser → API (FastAPI, serves front build) → RDS PostgreSQL + pgvector

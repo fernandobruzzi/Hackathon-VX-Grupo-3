@@ -7,26 +7,79 @@ export const proposals: Proposal[] = [
     version: 1,
     proposal_type: "COMPOSITE",
     status: "PENDING",
-    title: "Válvula esfera 2\" inox 316 NPT — 3 códigos",
+    title: 'Válvula esfera 2" inox 316 NPT — 3 códigos',
     material_codes: ["10293847", "20384756", "10482213"],
     suggested_primary_code: "10293847",
-    identity: { mode: "TECHNICAL_ATTRIBUTES", summary: "DN 50 = 2POL = 2\" · INOX 316 = AISI 316 · extremidade NPT" },
+    identity: {
+      mode: "TECHNICAL_ATTRIBUTES",
+      summary: 'DN 50 = 2POL = 2" · INOX 316 = AISI 316 · extremidade NPT',
+    },
     members: [
-      { material_code: "10293847", status: "ATIVO", description: "VALVULA ESFERA 2POL INOX 316 ROSCA NPT", unit: "PC", ncm: "8481.80.95", inventory: [{ center_code: "1100", quantity: "6", unit: "PC" }], value_brl: "14820.00" },
-      { material_code: "20384756", status: "ATIVO", description: "VALV ESF 2\" AISI 316 NPT", unit: "PC", ncm: "8481.80.95", inventory: [{ center_code: "2100", quantity: "3", unit: "PC" }], value_brl: "7410.00" },
-      { material_code: "10482213", status: "ATIVO", description: "VALVULA DE ESFERA DN 50 CORPO INOX 316 EXTREMIDADE NPT", unit: "PC", ncm: null, inventory: [{ center_code: "1200", quantity: "2", unit: "PC" }], value_brl: "4940.00" },
+      {
+        material_code: "10293847",
+        status: "ATIVO",
+        description: "VALVULA ESFERA 2POL INOX 316 ROSCA NPT",
+        unit: "PC",
+        ncm: "8481.80.95",
+        inventory: [{ center_code: "1100", quantity: "6", unit: "PC" }],
+        value_brl: "14820.00",
+      },
+      {
+        material_code: "20384756",
+        status: "ATIVO",
+        description: 'VALV ESF 2" AISI 316 NPT',
+        unit: "PC",
+        ncm: "8481.80.95",
+        inventory: [{ center_code: "2100", quantity: "3", unit: "PC" }],
+        value_brl: "7410.00",
+      },
+      {
+        material_code: "10482213",
+        status: "ATIVO",
+        description: "VALVULA DE ESFERA DN 50 CORPO INOX 316 EXTREMIDADE NPT",
+        unit: "PC",
+        ncm: null,
+        inventory: [{ center_code: "1200", quantity: "2", unit: "PC" }],
+        value_brl: "4940.00",
+      },
     ],
     after: {
-      description: "VALVULA ESFERA; DIAMETRO NOMINAL: 2POL; CLASSE PRESSAO: 800#; MATERIAL CORPO: ACO INOX FORJADO A182 F316; EXTREMIDADE: ROSCA NPT",
+      description:
+        "VALVULA ESFERA; DIAMETRO NOMINAL: 2POL; CLASSE PRESSAO: 800#; MATERIAL CORPO: ACO INOX FORJADO A182 F316; EXTREMIDADE: ROSCA NPT",
       ncm: "8481.80.95",
       unit: "PC",
-      attributes: { "DIAMETRO NOMINAL": "2POL", "CLASSE PRESSAO": "800#", "MATERIAL CORPO": "ACO INOX FORJADO A182 F316", EXTREMIDADE: "ROSCA NPT" },
+      attributes: {
+        "DIAMETRO NOMINAL": "2POL",
+        "CLASSE PRESSAO": "800#",
+        "MATERIAL CORPO": "ACO INOX FORJADO A182 F316",
+        EXTREMIDADE: "ROSCA NPT",
+      },
     },
     changes: [
-      { field: "DIAMETRO NOMINAL", before: "2POL / 2\" / DN 50", after: "2POL", source: "Normalização de aliases (regra PDM)" },
-      { field: "CLASSE PRESSAO", before: null, after: "800#", source: "Catálogo do fabricante · evidência ev-valv-01" },
-      { field: "MATERIAL CORPO", before: "INOX 316", after: "ACO INOX FORJADO A182 F316", source: "Catálogo do fabricante · evidência ev-valv-02" },
-      { field: "NCM", before: "sem NCM (10482213)", after: "8481.80.95", source: "Tabela NCM oficial · ncm-demo-v1" },
+      {
+        field: "DIAMETRO NOMINAL",
+        before: '2POL / 2" / DN 50',
+        after: "2POL",
+        source: "Normalização de aliases (regra PDM)",
+      },
+      {
+        field: "CLASSE PRESSAO",
+        before: null,
+        after: "800#",
+        source: "Catálogo do fabricante · evidência ev-valv-01",
+      },
+      {
+        field: "MATERIAL CORPO",
+        before: "INOX 316",
+        after: "ACO INOX FORJADO A182 F316",
+        source: "Catálogo do fabricante · evidência ev-valv-02",
+      },
+      {
+        field: "NCM",
+        before: "sem NCM (10482213)",
+        after: "8481.80.95",
+        source: "Tabela NCM oficial · ncm-demo-v1",
+      },
     ],
     technical_review_status: "PENDING",
     fiscal_review_status: "PENDING",
@@ -42,18 +95,45 @@ export const proposals: Proposal[] = [
     title: "Filtro de óleo Fleetguard LF9009 — 2 códigos",
     material_codes: ["27841570", "16031971"],
     suggested_primary_code: "16031971",
-    identity: { mode: "MANUFACTURER_REFERENCE", summary: "Fabricante FLEETGUARD + referência LF9009" },
+    identity: {
+      mode: "MANUFACTURER_REFERENCE",
+      summary: "Fabricante FLEETGUARD + referência LF9009",
+    },
     members: [
-      { material_code: "16031971", status: "ATIVO", description: "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009", unit: "PC", ncm: "8421.23.00", inventory: [{ center_code: "1200", quantity: "4", unit: "PC" }], value_brl: "1352.00" },
-      { material_code: "27841570", status: "ATIVO", description: "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD", unit: "PC", ncm: "8421.23.00", inventory: [{ center_code: "2200", quantity: "7", unit: "PC" }], value_brl: "2366.00" },
+      {
+        material_code: "16031971",
+        status: "ATIVO",
+        description: "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009",
+        unit: "PC",
+        ncm: "8421.23.00",
+        inventory: [{ center_code: "1200", quantity: "4", unit: "PC" }],
+        value_brl: "1352.00",
+      },
+      {
+        material_code: "27841570",
+        status: "ATIVO",
+        description: "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD",
+        unit: "PC",
+        ncm: "8421.23.00",
+        inventory: [{ center_code: "2200", quantity: "7", unit: "PC" }],
+        value_brl: "2366.00",
+      },
     ],
     after: {
-      description: "FILTRO OLEO LUBRIFICANTE; FABRICANTE: FLEETGUARD; REFERENCIA FABRICANTE: LF9009",
+      description:
+        "FILTRO OLEO LUBRIFICANTE; FABRICANTE: FLEETGUARD; REFERENCIA FABRICANTE: LF9009",
       ncm: "8421.23.00",
       unit: "PC",
       attributes: { FABRICANTE: "FLEETGUARD", "REFERENCIA FABRICANTE": "LF9009" },
     },
-    changes: [{ field: "Descrição", before: "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD", after: "padrão PDM100", source: "Formatador PDM" }],
+    changes: [
+      {
+        field: "Descrição",
+        before: "ELEM FILTRANTE OLEO LF 9009 FLEETGUARD",
+        after: "padrão PDM100",
+        source: "Formatador PDM",
+      },
+    ],
     technical_review_status: "PENDING",
     fiscal_review_status: "NOT_REQUIRED",
     conflicts: [],
@@ -70,10 +150,31 @@ export const proposals: Proposal[] = [
     suggested_primary_code: "24019866",
     identity: { mode: "TECHNICAL_ATTRIBUTES", summary: "Item único; correção fiscal" },
     members: [
-      { material_code: "24019866", status: "ATIVO", description: "PORCA SEXTAVADA M16 CLASSE 8 ZINCADA", unit: "PC", ncm: "7318.15.00", inventory: [{ center_code: "1300", quantity: "420", unit: "PC" }], value_brl: "1176.00" },
+      {
+        material_code: "24019866",
+        status: "ATIVO",
+        description: "PORCA SEXTAVADA M16 CLASSE 8 ZINCADA",
+        unit: "PC",
+        ncm: "7318.15.00",
+        inventory: [{ center_code: "1300", quantity: "420", unit: "PC" }],
+        value_brl: "1176.00",
+      },
     ],
-    after: { description: "PORCA SEXTAVADA; ROSCA: METRICA GROSSA; BITOLA: M16; CLASSE RESISTENCIA: 8; ACABAMENTO: ZINCADO", ncm: "7318.16.00", unit: "PC", attributes: { BITOLA: "M16", "CLASSE RESISTENCIA": "8" } },
-    changes: [{ field: "NCM", before: "7318.15.00 (parafusos)", after: "7318.16.00 (porcas)", source: "Tabela NCM oficial · regra PDM da classe PORCA" }],
+    after: {
+      description:
+        "PORCA SEXTAVADA; ROSCA: METRICA GROSSA; BITOLA: M16; CLASSE RESISTENCIA: 8; ACABAMENTO: ZINCADO",
+      ncm: "7318.16.00",
+      unit: "PC",
+      attributes: { BITOLA: "M16", "CLASSE RESISTENCIA": "8" },
+    },
+    changes: [
+      {
+        field: "NCM",
+        before: "7318.15.00 (parafusos)",
+        after: "7318.16.00 (porcas)",
+        source: "Tabela NCM oficial · regra PDM da classe PORCA",
+      },
+    ],
     technical_review_status: "APPROVED",
     fiscal_review_status: "PENDING",
     conflicts: [],
@@ -90,12 +191,31 @@ export const proposals: Proposal[] = [
     suggested_primary_code: "17730415",
     identity: { mode: "TECHNICAL_ATTRIBUTES", summary: "Item único; unidade não canônica" },
     members: [
-      { material_code: "17730415", status: "ATIVO", description: "PARAFUSO SEXTAVADO M12X50 ZINCADO", unit: "CX", ncm: "7318.15.00", inventory: [{ center_code: "1100", quantity: "12", unit: "CX" }], value_brl: "936.00" },
+      {
+        material_code: "17730415",
+        status: "ATIVO",
+        description: "PARAFUSO SEXTAVADO M12X50 ZINCADO",
+        unit: "CX",
+        ncm: "7318.15.00",
+        inventory: [{ center_code: "1100", quantity: "12", unit: "CX" }],
+        value_brl: "936.00",
+      },
     ],
-    after: { description: "PARAFUSO SEXTAVADO; BITOLA: M12; COMPRIMENTO: 50MM; CLASSE RESISTENCIA: ?; ACABAMENTO: ZINCADO", ncm: "7318.15.00", unit: "PC", attributes: {} },
+    after: {
+      description:
+        "PARAFUSO SEXTAVADO; BITOLA: M12; COMPRIMENTO: 50MM; CLASSE RESISTENCIA: ?; ACABAMENTO: ZINCADO",
+      ncm: "7318.15.00",
+      unit: "PC",
+      attributes: {},
+    },
     changes: [
       { field: "Unidade", before: "CX", after: "PC", source: "PDM: unidade padrão PC" },
-      { field: "CLASSE RESISTENCIA", before: null, after: "pendente de confirmação", source: "Atributo obrigatório ausente" },
+      {
+        field: "CLASSE RESISTENCIA",
+        before: null,
+        after: "pendente de confirmação",
+        source: "Atributo obrigatório ausente",
+      },
     ],
     technical_review_status: "PENDING",
     fiscal_review_status: "NOT_REQUIRED",
@@ -111,23 +231,46 @@ export const proposals: Proposal[] = [
     title: "Filtro de ar — fabricantes diferentes",
     material_codes: ["30117742", "30117759"],
     suggested_primary_code: null,
-    identity: { mode: "MANUFACTURER_REFERENCE", summary: "Referências equivalentes, fabricantes diferentes" },
+    identity: {
+      mode: "MANUFACTURER_REFERENCE",
+      summary: "Referências equivalentes, fabricantes diferentes",
+    },
     members: [
-      { material_code: "30117742", status: "ATIVO", description: "FILTRO AR DONALDSON P181052", unit: "PC", ncm: "8421.31.00", inventory: [{ center_code: "1200", quantity: "2", unit: "PC" }], value_brl: "1580.00" },
-      { material_code: "30117759", status: "ATIVO", description: "FILTRO AR FLEETGUARD AF25139M", unit: "PC", ncm: "8421.31.00", inventory: [{ center_code: "1200", quantity: "1", unit: "PC" }], value_brl: "742.00" },
+      {
+        material_code: "30117742",
+        status: "ATIVO",
+        description: "FILTRO AR DONALDSON P181052",
+        unit: "PC",
+        ncm: "8421.31.00",
+        inventory: [{ center_code: "1200", quantity: "2", unit: "PC" }],
+        value_brl: "1580.00",
+      },
+      {
+        material_code: "30117759",
+        status: "ATIVO",
+        description: "FILTRO AR FLEETGUARD AF25139M",
+        unit: "PC",
+        ncm: "8421.31.00",
+        inventory: [{ center_code: "1200", quantity: "1", unit: "PC" }],
+        value_brl: "742.00",
+      },
     ],
     after: { description: "—", ncm: "8421.31.00", unit: "PC", attributes: {} },
     changes: [],
     technical_review_status: "REJECTED",
     fiscal_review_status: "NOT_REQUIRED",
-    conflicts: ["PDM100 exige fabricante + referência iguais: equivalentes de fabricantes diferentes ficam separados."],
+    conflicts: [
+      "PDM100 exige fabricante + referência iguais: equivalentes de fabricantes diferentes ficam separados.",
+    ],
     ranking_score: 0.81,
     created_at: "2026-11-07T13:58:00Z",
   },
 ];
 
-export const needsTechnical = (p: Proposal) => p.status === "PENDING" && p.technical_review_status === "PENDING";
-export const needsFiscal = (p: Proposal) => p.status === "PENDING" && p.fiscal_review_status === "PENDING";
+export const needsTechnical = (p: Proposal) =>
+  p.status === "PENDING" && p.technical_review_status === "PENDING";
+export const needsFiscal = (p: Proposal) =>
+  p.status === "PENDING" && p.fiscal_review_status === "PENDING";
 
 export const pendingCounts = {
   technical: proposals.filter(needsTechnical).length,

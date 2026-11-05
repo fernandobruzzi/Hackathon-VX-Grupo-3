@@ -23,6 +23,4 @@ def get_normalization_repository(name: str | None = None) -> NormalizationReposi
         return REPOSITORIES[selected]()
     except KeyError:
         available = ", ".join(sorted(REPOSITORIES))
-        raise ValueError(
-            f"Repositorio de normalizacao desconhecido: {selected!r}. Disponiveis: {available}"
-        ) from None
+        raise ValueError(f"Repositorio de normalizacao desconhecido: {selected!r}. Disponiveis: {available}") from None

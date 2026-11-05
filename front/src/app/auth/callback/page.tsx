@@ -10,7 +10,10 @@ import { Seta } from "@/components/ui";
  */
 export default function CallbackPage() {
   const router = useRouter();
-  useEffect(() => { const t = setTimeout(() => router.replace("/chat/"), 700); return () => clearTimeout(t); }, [router]);
+  useEffect(() => {
+    const t = setTimeout(() => router.replace("/chat/"), 700);
+    return () => clearTimeout(t);
+  }, [router]);
   return (
     <div className="grid min-h-dvh place-items-center">
       <div className="flex flex-col items-center gap-4">
