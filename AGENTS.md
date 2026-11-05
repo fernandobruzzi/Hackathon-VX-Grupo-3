@@ -398,7 +398,9 @@ To change the default, measure against `back/tests/fixtures/merge_review.json`. 
 
 The Agent passes the caller validated from the internal token to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock. The token carries the user's permissions and authorized centers, and stock outside those centers never reaches the chat.
 
-In chat, a complete card is ready to submit only after the search ran and found no reusable item. If the search fails, the turn stays `NEEDS_INPUT`, because merging different items costs more than waiting. A verified match shows the active code instead: a blocked item points to its active target, and an obsolete one is never offered.
+In chat, a complete card is ready to submit only after the search ran, found no item with the same identity, and the requester dismissed every similar item shown. If the search fails, the turn stays `NEEDS_INPUT`, because merging different items costs more than waiting. A verified match shows the active code instead: a blocked item points to its active target, and an obsolete one is never offered.
+
+Similar items without verified identity are listed for the requester to pick one or answer "Nenhum desses é o meu item". The agent reads those replies deterministically, so the front buttons send fixed phrases that must match the agent. A dismissal covers only the codes shown: new candidates are asked about again. The API accepts a dismissal or a pick only for codes it stored as offered in an earlier turn of the same session. `READY_TO_SUBMIT` registers nothing: submitting and publishing an order belong to the approval flow.
 
 ## Correction proposals
 
