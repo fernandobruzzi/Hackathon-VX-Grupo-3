@@ -15,6 +15,7 @@ from domain.contracts import (
     ExtractionRepository,
     PdmClass,
 )
+from vx_materials_mcp.chatbot.candidates import is_reply_to_candidates
 from vx_materials_mcp.schemas.agent import AgentRunRequest
 
 
@@ -27,9 +28,14 @@ class TurnContext:
 
 
 def user_messages(request: AgentRunRequest) -> list[str]:
-    """Mensagens do usuário em ordem, terminando na atual."""
-    previous = [message.content for message in request.context.history if message.author == "user"]
-    return [*previous, request.message]
+    """Mensagens do usuário que descrevem o item, em ordem.
+
+    Respostas aos candidatos ("É o item 123", "Nenhum desses é o meu item") ficam de fora, para a
+    busca do turno repetir a anterior e reencontrar os códigos oferecidos.
+    """
+    texts = [message.content for message in request.context.history if message.author == "user"]
+    described = [text for text in [*texts, request.message] if not is_reply_to_candidates(text)]
+    return described or [request.message]
 
 
 def _classify(messages: list[str], classifier: ClassificationRepository) -> ClassificationResult:

@@ -32,6 +32,9 @@ class AgentContext(_Contract):
     center_code: str
     history: list[HistoryMessage]
     confirmed_attributes: dict[str, str | None]
+    # Lidos pela API do contexto persistido da sessão, nunca do retorno anterior do Agent sem validação.
+    offered_material_codes: list[str] = Field(default_factory=list)
+    dismissed_material_codes: list[str] = Field(default_factory=list)
 
 
 class AgentRunRequest(_Contract):
@@ -74,6 +77,15 @@ class ExistingMatch(_Contract):
     inventory: list[InventoryRow]
 
 
+class SimilarCandidate(_Contract):
+    """Item parecido, sem identidade verificada, que o solicitante confirma ou descarta."""
+
+    material_code: str
+    status: Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]
+    pdm_description: str
+    active_code_target: str | None
+
+
 class MaterialCard(_Contract):
     pdm_class_id: str | None
     # Opcional no contrato e nunca nulo: fica fora do JSON quando a classe é desconhecida.
@@ -85,6 +97,7 @@ class MaterialCard(_Contract):
     ncm: NcmCard
     duplicate_check_status: Literal["PENDING", "NO_MATCH", "MATCH_FOUND"]
     existing: ExistingMatch | None = Field(default=None, exclude_if=lambda value: value is None)
+    similar_candidates: list[SimilarCandidate] = Field(default_factory=list)
     can_submit: bool
 
 
