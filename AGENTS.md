@@ -98,7 +98,7 @@ scripts/smoke_test.sh
 
 Each piece of work follows the same path:
 
-1. **Issue:** self-assign an issue. If none exists for the work, create one first.
+1. **Issue:** claim the issue, as described in [Claiming an issue](#claiming-an-issue). If none exists for the work, create one and assign it first. Nothing else starts before this.
 2. **Branch:** create a branch for it from an up-to-date `main`.
 3. **Develop:** make atomic commits. Run the local checks.
 4. **PR:** open a pull request to `main`, closing the issue.
@@ -108,18 +108,39 @@ Each piece of work follows the same path:
 
 The team plans in advance on [GitHub](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues), so anyone can see where to help.
 
-**Picking work**
+### Picking work
 
 - Anyone can work on any area.
-- Choose the highest-priority issue whose "Bloqueado por" list is finished, then assign yourself before starting: `gh issue edit <n> --add-assignee "@me"`.
-- Never take an issue assigned to someone else without asking them.
+- Choose the highest-priority unassigned issue whose "Bloqueado por" list is finished.
 
-**Creating issues**
+### Claiming an issue
+
+**Required for people and agents.** Claim the issue before creating a branch, editing files or writing a plan for it. This keeps two people from doing the same work. Agents assign the person they are working for, which is the authenticated `gh` user. Assigning is part of starting, so don't wait for separate permission.
+
+1. Check who has it:
+
+   ```bash
+   gh issue view <n> --json state,assignees --jq '{state, assignees: [.assignees[].login]}'
+   ```
+
+2. If it's closed or assigned to someone else, **stop and tell the person you work for.** Continue only if they confirm the current assignee agreed, and never remove someone's assignment on your own.
+3. If it's unassigned or already yours, assign yourself:
+
+   ```bash
+   gh issue edit <n> --add-assignee "@me"
+   ```
+
+4. Repeat step 1. If anyone else now appears, stop as in step 2: GitHub doesn't lock issues, so two people can claim one at the same moment.
+
+Repeat the check when resuming work on an issue. If you stop working on one, unassign yourself with `--remove-assignee "@me"` and comment on where it stands.
+
+### Creating issues
 
 - New work gets an issue before it starts. Also add issues for work you discover but won't do now.
 - Write them in Portuguese with these sections: `## O que construir`, `## Critérios de aceite` (checkboxes), `## Bloqueado por`.
 - Describe behavior and how to verify it. Avoid file paths, which go stale.
 - Apply one milestone, at least one `area:*` label, one priority and one size.
+- If you'll work on it right away, create it with `--assignee "@me"`. Otherwise leave it unassigned, so others can take it.
 
 | Label | Meaning |
 |---|---|
@@ -129,7 +150,9 @@ The team plans in advance on [GitHub](https://github.com/fernandobruzzi/Hackatho
 | `P2` | Only if time remains |
 | `size:S`, `size:M`, `size:L` | Estimated effort |
 
-**Milestones** match integration checkpoints, in BRT:
+### Milestones
+
+Milestones match integration checkpoints, in BRT:
 
 | Milestone | Checkpoint | Goal |
 |---|---|---|
