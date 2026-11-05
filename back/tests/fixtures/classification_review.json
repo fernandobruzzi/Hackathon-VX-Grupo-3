@@ -1,0 +1,666 @@
+{
+  "label_method": "Rotulacao por inspecao das descricoes originais e dos nomes do PDM; rotulos independentes das previsoes. Nao e validacao de especialista nem estimativa de acuracia da base inteira.",
+  "selection": "Primeiros dois materiais de cada grupo ERP em ordem alfabetica do grupo, mais os primeiros 20 pedidos na ordem do arquivo. Inclui abreviacoes, anexos e grupos incorretos; sem filtrar pelo acerto do algoritmo. Mais cinco pedidos de controles negativos: cadeira, toner, notebook, cafe e agua mineral.",
+  "cases": [
+    {
+      "id": "22071112",
+      "source_kind": "materials",
+      "expected_class_id": "PDM063",
+      "review_note": "CONT AC3 e tensao de comando identificam contator.",
+      "input": {
+        "description": "CONT AC3 65A COM TENSAO COMANDO 24VCC COM CONTATOS AUXILIARES 2NA+2NF",
+        "short_description": "CONT AC3 65A COM TENSAO COMANDO 24VCC CO",
+        "merchandise_group": "ELE01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "17321551",
+      "source_kind": "materials",
+      "expected_class_id": "PDM065",
+      "review_note": "LAMP LED tubular identifica lampada LED.",
+      "input": {
+        "description": "LAMP LED TUBULAR T8 9 W 220V G13 5000K",
+        "short_description": "LAMP LED TUBULAR T8 9 W 220V G13 5000K",
+        "merchandise_group": "ELE01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "26472037",
+      "source_kind": "materials",
+      "expected_class_id": "PDM072",
+      "review_note": "Nome explicito OCULOS SEGURANCA.",
+      "input": {
+        "description": "OCULOS SEGURANCA LENTE DE INCOLOR TRATAMENTO DE ANTIEMBACANTE MODELO DE SOBREPOR 27331",
+        "short_description": "OCULOS SEG LENTE DE INCOLOR TRATAMENTO D",
+        "merchandise_group": "EPI01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "25730690",
+      "source_kind": "materials",
+      "expected_class_id": "PDM071",
+      "review_note": "CALCADO SEG, modelo botina e CA identificam calcado de seguranca.",
+      "input": {
+        "description": "CALCADO SEG, MODELO:BOTINA ELASTICO, TAMANHO:37, BICO:COMPOSITO, PU BIDENSIDADE, CA NR:16152",
+        "short_description": "CALCADO SEG MODELO BOTINA ELASTICO TAMAN",
+        "merchandise_group": "EPI01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "14221576",
+      "source_kind": "materials",
+      "expected_class_id": "PDM082",
+      "review_note": "Nome explicito BROCA HELICOIDAL.",
+      "input": {
+        "description": "BROCA HELICOIDAL HSS 13,5MM DIN 340",
+        "short_description": "BROCA HELICOIDAL HSS 13,5MM DIN 340",
+        "merchandise_group": "FER01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "19964267",
+      "source_kind": "materials",
+      "expected_class_id": "PDM082",
+      "review_note": "Nome explicito BROCA HELICOIDAL, HSS-CO.",
+      "input": {
+        "description": "BROCA HELICOIDAL, TIPO: HSS-CO, DIAMETRO: 18 MM, NORMA: DIN 340",
+        "short_description": "BROCA HELICOIDAL TIPO HSS-CO D 18 MM NOR",
+        "merchandise_group": "FER01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "20019238",
+      "source_kind": "materials",
+      "expected_class_id": "PDM100",
+      "review_note": "FILT AR e referencia do fabricante identificam filtro de ar.",
+      "input": {
+        "description": "FILT AR, PART NUMBER: CA95120, FAB: FRAM, VEICULO LEVE",
+        "short_description": "FILT AR PART NUMBER CA95120 FAB FRAM VEI",
+        "merchandise_group": "FIL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "12864167",
+      "source_kind": "materials",
+      "expected_class_id": "PDM110",
+      "review_note": "CONTRAEIXO e nome do catalogo de sobressalentes, apesar do grupo FIL01.",
+      "input": {
+        "description": "CONTRAEIXO APLIC BRITADOR CONICO, EQUIP DE RAPTOR 450, FLSMIDTH, COD FABRICANTE 1498169442",
+        "short_description": "CONTRAEIXO APLIC BRITADOR CONICO EQUIP D",
+        "merchandise_group": "FIL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "25780747",
+      "source_kind": "materials",
+      "expected_class_id": "PDM002",
+      "review_note": "Cabeca ALLEN cilindrica identifica sextavado interno, nao sextavado externo.",
+      "input": {
+        "description": "PARAFUSO CAB SEXTAVADA ALLEN - CILINDRICA - BITOLA:M14 - COMP:50MM - GRAU:A4-70 - MATERIAL:INOX - ACABAMENTO:NATURAL",
+        "short_description": "PARAF CAB SEXTAVADA ALLEN - CILINDRICA -",
+        "merchandise_group": "FIX01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "16279976",
+      "source_kind": "materials",
+      "expected_class_id": "PDM004",
+      "review_note": "ARRUELA LISA; parafuso aparece apenas como aplicacao.",
+      "input": {
+        "description": "ARRUELA LISA, PARA PARAFUSO:M36, DIAMETRO INTERNO:39MM, DIAM EXTERNO:110 MM, E:8 MM, MATERIAL:CARBONO, ACAB:GEOMET, PADRAO:DIN 9021",
+        "short_description": "ARRUELA LISA PARA PARAF M36 D INT 39MM D",
+        "merchandise_group": "FIX01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "19714647",
+      "source_kind": "materials",
+      "expected_class_id": "PDM067",
+      "review_note": "MANOMETRO, diametro e faixa de pressao.",
+      "input": {
+        "description": "MANOMETRO 63MM 0-250BAR 1/4POL NPT TRASEIRA GLICERINA",
+        "short_description": "MANOMETRO 63MM 0-250BAR 1/4POL NPT TRASE",
+        "merchandise_group": "INS01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "21006668",
+      "source_kind": "materials",
+      "expected_class_id": "PDM067",
+      "review_note": "MANOMETRO, diametro e faixa de pressao.",
+      "input": {
+        "description": "MANOMETRO  63MM 0-160BAR 1/4POL NPT TRASEIRA ACO INOX 304 GLICERINA ASHCROFT",
+        "short_description": "MANOMETRO 63MM 0-160BAR 1/4POL NPT TRASE",
+        "merchandise_group": "INS01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "11127626",
+      "source_kind": "materials",
+      "expected_class_id": "PDM090",
+      "review_note": "OLEO LUBRIFICANTE para aplicacao hidraulica.",
+      "input": {
+        "description": "OLEO LUBRIFICANTE;APLIC:HIDRAULICO;ISO VG:ISO VG 46;EMB:CONTAINER 1000L",
+        "short_description": "OLEO LUBR APLIC HIDRAULICO ISO VG ISO VG",
+        "merchandise_group": "LUB01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "22650792",
+      "source_kind": "materials",
+      "expected_class_id": "PDM090",
+      "review_note": "OLEO LUBRIFICANTE para motor diesel.",
+      "input": {
+        "description": "OLEO LUBRIFICANTE MOTOR DIESEL SAE 10W30 CONTAINER 1000L",
+        "short_description": "OLEO LUBR MOTOR DIESEL SAE 10W30 CONTAIN",
+        "merchandise_group": "LUB01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "11153902",
+      "source_kind": "materials",
+      "expected_class_id": "PDM011",
+      "review_note": "MANGUEIRA MONTADA HIDRAULICA com dois terminais.",
+      "input": {
+        "description": "MANGUEIRA MONTADA HIDRAULICA SAE 100R1AT DN12 1960PSI 2500MM BSP MACHO BSP MACHO ACO CARBONO ZINCADO",
+        "short_description": "MANG MONT HIDR SAE 100R1AT DN12 1960PSI",
+        "merchandise_group": "MAN01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "25182998",
+      "source_kind": "materials",
+      "expected_class_id": "PDM011",
+      "review_note": "MANGUEIRA MONTADA HIDRAULICA com terminais A e B.",
+      "input": {
+        "description": "MANGUEIRA MONTADA HIDRAULICA, EN 856 4SP, D.I.:DN25, PRESSAO TRAB:280BAR, C:6000 MM, TERMINAL A:FEMEA RETA DKO, LADO B:FEMEA GIRATORIA JIC, ACO CARBONO ZINCADO",
+        "short_description": "MANG MONT HIDR EN 856 4SP D.I. DN25 P TR",
+        "merchandise_group": "MAN01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "17197742",
+      "source_kind": "materials",
+      "expected_class_id": "PDM021",
+      "review_note": "ROLAMENTO AUTOCOMP ROLOS, referencia 22217E.",
+      "input": {
+        "description": "ROLAMENTO AUTOCOMP ROLOS, REFERENCIA: 22217E, DIAMETRO INTERNO: 85MM, DIAM EXTERNO: 150MM, L: 36MM, FURO: CILINDRICO, NORMAL",
+        "short_description": "ROL AUTOCOMP ROLOS REF 22217E D INT 85MM",
+        "merchandise_group": "ROL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "20095446",
+      "source_kind": "materials",
+      "expected_class_id": "PDM110",
+      "review_note": "Tensora com fabricante e referencia para peneira: sobressalente, apesar do grupo ROL01.",
+      "input": {
+        "description": "VERGALHAO TENSORA, FABRICANTE:FLSMIDTH, MODELO EQUIPAMENTO:LUDOWICI 3.6X8.5, APLICACAO:PENEIRA VIBRATORIA, P/N:7823559159",
+        "short_description": "VERGALHAO TENSORA FLSMIDTH MODELO EQUIPA",
+        "merchandise_group": "ROL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "27827726",
+      "source_kind": "materials",
+      "expected_class_id": "PDM110",
+      "review_note": "ANEL EXPULSOR e nome do catalogo de sobressalentes.",
+      "input": {
+        "description": "ANEL EXPULSOR, APLIC: BOMBA POLPA, MODELO EQUIPAMENTO: MM400, FABRICANTE: METSO, COD FABRICANTE: MM2905816",
+        "short_description": "ANEL EXPULSOR APLIC BOMBA POLPA MODELO E",
+        "merchandise_group": "SOB01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "24794045",
+      "source_kind": "materials",
+      "expected_class_id": "PDM110",
+      "review_note": "AMORTECEDOR com referencia e aplicacao em peneira.",
+      "input": {
+        "description": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "short_description": "AMORTECEDOR PART NUMBER MM7843033 MODELO",
+        "merchandise_group": "SOB01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "27018543",
+      "source_kind": "materials",
+      "expected_class_id": "PDM080",
+      "review_note": "Nome explicito ELETRODO REVESTIDO.",
+      "input": {
+        "description": "ELETRODO REVESTIDO;CLASSIFICACAO: ENICRFE 3;D: 3,25MM;REVESTIMENTO: BASICO",
+        "short_description": "ELETRODO REVESTIDO CLASSIFICACAO ENICRFE",
+        "merchandise_group": "SOL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "16813320",
+      "source_kind": "materials",
+      "expected_class_id": "PDM031",
+      "review_note": "ANEL ORING e vedacao elastomerica, apesar do grupo SOL01.",
+      "input": {
+        "description": "ANEL ORING, DIAM INT:52MM, SECAO NOMINAL:2MM, FKM (VITON), 70 SHORE A",
+        "short_description": "ANEL ORING DIAM INT 52MM SECAO 2MM FKM (",
+        "merchandise_group": "SOL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "19570982",
+      "source_kind": "materials",
+      "expected_class_id": "PDM030",
+      "review_note": "Nome explicito CORREIA TRAPEZOIDAL.",
+      "input": {
+        "description": "CORREIA TRAPEZOIDAL B, B127, COMPRIMENTO EXTERNO 3295MM",
+        "short_description": "CORREIA TRAPEZOIDAL B B127 C EXT 3295MM",
+        "merchandise_group": "TRA01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "20354066",
+      "source_kind": "materials",
+      "expected_class_id": "PDM003",
+      "review_note": "PORCA autotravante, apesar do grupo TRA01.",
+      "input": {
+        "description": "PORCA; TIPO: AUTOTRAVANTE; ROSCA: METRICA GROSSA; BITOLA: M8; CLASSE RESISTENCIA: 10; MATERIAL: ACO CARBONO; ACABAMENTO: ZINCADO AMARELO; NORMA: DIN 985",
+        "short_description": "PORCA TIPO AUTOTRAVANTE ROSCA METRICA GR",
+        "merchandise_group": "TRA01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "25571564",
+      "source_kind": "materials",
+      "expected_class_id": "PDM050",
+      "review_note": "UNIAO e nome da lista de conexoes de tubulacao.",
+      "input": {
+        "description": "UNIAO DIAM NOMINAL 1.1/4POL, 3000#, MAT ACO CARBONO, ROSCA, ASME B16.11",
+        "short_description": "UNIAO DIAM 1.1/4POL 3000# MAT ACO CARBON",
+        "merchandise_group": "TUB01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "12711820",
+      "source_kind": "materials",
+      "expected_class_id": "PDM032",
+      "review_note": "RET., dimensoes e tipo BASL identificam retentor; grupo TUB01 esta divergente.",
+      "input": {
+        "description": "RET. 110MM 15MM BASL NBR",
+        "short_description": "RET. 110MM 15MM BASL NBR",
+        "merchandise_group": "TUB01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "15261413",
+      "source_kind": "materials",
+      "expected_class_id": "PDM042",
+      "review_note": "Nome explicito VALVULA GLOBO.",
+      "input": {
+        "description": "VALVULA GLOBO, DIAM: 1 1/2 POL, CLASSE PRESSAO: 600#, MATERIAL: ACO CARBONO FUNDIDO A216 WCB, PONTAS CHANFRADAS, ACIONAMENTO: VOLANTE",
+        "short_description": "VALV GLOBO DIAM 1 1/2 POL CL P 600# ACO",
+        "merchandise_group": "VAL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "21486757",
+      "source_kind": "materials",
+      "expected_class_id": "PDM041",
+      "review_note": "Nome explicito VALVULA GAVETA.",
+      "input": {
+        "description": "VALVULA GAVETA - DN:DN 50 - CLASSE PRESSAO:300# - SOLDA TOPO - CORPO:ACO FUNDIDO - CASTELO:APARAFUSADO - ACIONAMENTO:MANUAL",
+        "short_description": "VALV GAVETA - DN DN 50 - CL P 300# - SOL",
+        "merchandise_group": "VAL01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "11287821",
+      "source_kind": "materials",
+      "expected_class_id": "PDM032",
+      "review_note": "RET., tipo B1 e diametros de eixo/alojamento identificam retentor.",
+      "input": {
+        "description": "RET., B1, DIAM ALOJ: 37MM, ESPESSURA: 12 MM, DIAMETRO EIXO: 22MM, MATERIAL: NBR",
+        "short_description": "RET. B1 DIAM ALOJ 37MM ESPESSURA 12 MM D",
+        "merchandise_group": "VED01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "13031016",
+      "source_kind": "materials",
+      "expected_class_id": "PDM031",
+      "review_note": "O-RING com secao transversal e dureza.",
+      "input": {
+        "description": "O-RING, SECAO TRANSV:2MM, FKM (VITON), DUREZA:70 SHORE A",
+        "short_description": "O-RING SECAO TRANSV 2MM FKM (VITON) DURE",
+        "merchandise_group": "VED01",
+        "attachment_text": null
+      }
+    },
+    {
+      "id": "SC-202600001",
+      "source_kind": "orders",
+      "expected_class_id": "PDM110",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "favor cadastrar bucha excentrico britador conico RAPTOR 450 flsmidth 1626003064 bronze tm23 para a parada programada",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600002",
+      "source_kind": "orders",
+      "expected_class_id": "PDM032",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Segue ficha técnica em anexo.",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": "FICHA TÉCNICA\nProduto: Retentor\nDiametro eixo: 60 mm\nDiametro alojamento: 80 mm\nLargura: 15mm\nTipo: ba\nFabricante: FREUDENBERG"
+      }
+    },
+    {
+      "id": "SC-202600003",
+      "source_kind": "orders",
+      "expected_class_id": "PDM032",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "precisamos de retentor 75 mm 100 mm 13 mm ba nbr pra bomba da barragem",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600004",
+      "source_kind": "orders",
+      "expected_class_id": "PDM002",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Item novo, ficha do fornecedor anexa.",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": "FICHA TÉCNICA\nProduto: Parafuso Sextavado Interno\nTipo cabeca: cilindrica\nBitola: M14\nComprimento: 120 mm\nClasse: a4-70\nMaterial: aco inox 316\nAcabamento: NATURAL"
+      }
+    },
+    {
+      "id": "SC-202600005",
+      "source_kind": "orders",
+      "expected_class_id": "PDM060",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Favor cadastrar cabo elétrico flexivel 1,5mm2 1 450/750v pvc azul para o painel do ccm 3",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600006",
+      "source_kind": "orders",
+      "expected_class_id": "PDM110",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Segue ficha técnica em anexo.",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": "FICHA TÉCNICA\nProduto: Revestimento\nAplicação: moinho bolas\nEquipamento: MB 5.0X7.6\nFabricante: metso\nCódigo do fabricante: N59815007\nMaterial: aco liga"
+      }
+    },
+    {
+      "id": "SC-202600007",
+      "source_kind": "orders",
+      "expected_class_id": "PDM081",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "favor cadastrar disco abrasivo flap 115mm aco carbono e inox 80 para a correia TC-04",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600008",
+      "source_kind": "orders",
+      "expected_class_id": "PDM032",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Bom dia,\n\nPreciso que seja cadastrado retentor, com as seguintes características:\n- Diametro eixo: 120 mm\n- Diametro alojamento: 142 mm\n- Largura: 12mm\n- Tipo: basl\n- Material: fkm (viton)\n\nAtt,\nFernanda",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600009",
+      "source_kind": "orders",
+      "expected_class_id": "PDM100",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Item novo, ficha do fornecedor anexa.",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": "FICHA TÉCNICA\nProduto: Filtro Separador Ar/Óleo\nAplicação: compressor\nFabricante: mann\nCódigo do fabricante: LE 1380"
+      }
+    },
+    {
+      "id": "SC-202600010",
+      "source_kind": "orders",
+      "expected_class_id": "PDM100",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Preciso cadastrar filtro combustivel perfuratriz fram g2021 para reposição de estoque",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600011",
+      "source_kind": "orders",
+      "expected_class_id": "PDM001",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Precisamos de parafuso sextavado metrica fina 180 mm 8.8 aco carbono galvanizado a fogo din 933 para a correia tc-04",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600012",
+      "source_kind": "orders",
+      "expected_class_id": "PDM100",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Cadastrar filtro hidraulico unidade hidraulica hydac 0158 d 058 bn4hc para a próxima preventiva",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600013",
+      "source_kind": "orders",
+      "expected_class_id": "PDM110",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Item luva eixo METSO MM1830058 do MM400, peça nova, equipamento recém-chegado",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600014",
+      "source_kind": "orders",
+      "expected_class_id": "PDM044",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Boa tarde,\n\nPreciso que seja cadastrado válvula borboleta, com as seguintes características:\n- Diâmetro nominal: 10\" (DN 250)\n- Tipo corpo: wafer\n- Material do corpo: aco inox fundido a351 cf8m\n- Material disco: aco inox fundido a351 cf8m\n- Vedacao sede: epdm\n- Acionamento: ATUADOR ELETRICO\n\nGrato,\nMarcos",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600015",
+      "source_kind": "orders",
+      "expected_class_id": "PDM110",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "favor cadastrar mandibula movel BRITADOR MANDIBULA CJ412 SANDVIK 145.5321-72 para a próxima preventiva",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600016",
+      "source_kind": "orders",
+      "expected_class_id": "PDM040",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Novo item, linha do catálogo abaixo.",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": "Generic | Ball valve | 1POL, 150#, A216 WCB, RF flanged, reduced bore, metal-metal, lever"
+      }
+    },
+    {
+      "id": "SC-202600017",
+      "source_kind": "orders",
+      "expected_class_id": "PDM001",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Cadastrar parafuso sextavado metrica grossa m24 80 mm 10.9 aco carbono sem acabamento din 933 pro britador primário",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600018",
+      "source_kind": "orders",
+      "expected_class_id": "PDM110",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Bom dia,\n\nSolicito o cadastro de viga, com as seguintes características:\n- Aplicação: peneira vibratoria\n- Equipamento: LH 8X20\n- Fabricante: METSO\n- Código do fabricante: MM3318364\n\nGrato,\nSérgio",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600019",
+      "source_kind": "orders",
+      "expected_class_id": "PDM110",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Boa tarde,\n\nSolicito o cadastro de pistao, com as seguintes características:\n- Aplicação: PERFURATRIZ\n- Equipamento: FLEXIROC T45\n- Fabricante: epiroc\n- Código do fabricante: 2259 7129 12\n\nGrato,\nRafael",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600020",
+      "source_kind": "orders",
+      "expected_class_id": "PDM011",
+      "review_note": "Nome do produto conferido no texto do pedido e no anexo. Ball valve corresponde a VALVULA ESFERA quando presente.",
+      "input": {
+        "description": "Boa tarde,\n\nPeço por favor cadastrar mangueira hidráulica montada, com as seguintes características:\n- Norma: EN 856 4SP\n- Diâmetro interno: 1/2 pol\n- Pressão de trabalho: 6.000 psi\n- Comprimento: 500 mm\n- Terminal a: femea curva 45 graus jic\n- Terminal b: FEMEA RETA ORFS\n- Material terminais: ACO CARBONO ZINCADO\n\nGrato,\nJuliana",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600021",
+      "source_kind": "orders",
+      "expected_class_id": null,
+      "review_note": "Produto de escritorio ou consumo fora das 44 classes do PDM.",
+      "input": {
+        "description": "Cadeira de escritório giratória com braço, para a sala de controle",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600094",
+      "source_kind": "orders",
+      "expected_class_id": null,
+      "review_note": "Produto de escritorio ou consumo fora das 44 classes do PDM.",
+      "input": {
+        "description": "Toner para impressora da portaria",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600170",
+      "source_kind": "orders",
+      "expected_class_id": null,
+      "review_note": "Produto de escritorio ou consumo fora das 44 classes do PDM.",
+      "input": {
+        "description": "notebook 16gb ram para o técnico de automação",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600236",
+      "source_kind": "orders",
+      "expected_class_id": null,
+      "review_note": "Produto de escritorio ou consumo fora das 44 classes do PDM.",
+      "input": {
+        "description": "Café em pó 500g para o refeitório da mina",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    },
+    {
+      "id": "SC-202600458",
+      "source_kind": "orders",
+      "expected_class_id": null,
+      "review_note": "Produto de escritorio ou consumo fora das 44 classes do PDM.",
+      "input": {
+        "description": "galão de água mineral 20l",
+        "short_description": null,
+        "merchandise_group": null,
+        "attachment_text": ""
+      }
+    }
+  ]
+}

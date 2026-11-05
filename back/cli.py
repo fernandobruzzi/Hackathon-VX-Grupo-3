@@ -7,6 +7,7 @@ import sys
 from collections import Counter
 
 from domain.contracts import NormalizedField
+from pipelines.classify import classification_evaluation, classification_report
 from repositories.normalization import get_normalization_repository
 
 
@@ -39,9 +40,26 @@ def main(argv: list[str] | None = None) -> int:
     report = commands.add_parser("normalization-report", help="Resume a normalizacao da base de materiais")
     report.add_argument("csv_path", help="Caminho de 01_base_materiais.csv")
     report.add_argument("--repository", help="Algoritmo; padrao: NORMALIZATION_REPOSITORY ou rule_based_v1")
+    classify = commands.add_parser(
+        "classification-report", help="Classifica cada material ou pedido sem alterar a base"
+    )
+    classify.add_argument("csv_path")
+    classify.add_argument("--input-kind", choices=["materials", "orders"], required=True)
+    classify.add_argument("--pdm-workbook", required=True)
+    classify.add_argument("--repository", help="Padrao: CLASSIFICATION_REPOSITORY ou rule_based_v1")
+    evaluate = commands.add_parser("classification-evaluate", help="Mede precisao e cobertura na amostra rotulada")
+    evaluate.add_argument("sample_path")
+    evaluate.add_argument("--pdm-workbook", required=True)
+    evaluate.add_argument("--repository")
     args = parser.parse_args(argv)
 
-    json.dump(normalization_report(args.csv_path, args.repository), sys.stdout, ensure_ascii=False, indent=2)
+    if args.command == "normalization-report":
+        result = normalization_report(args.csv_path, args.repository)
+    elif args.command == "classification-report":
+        result = classification_report(args.csv_path, args.pdm_workbook, args.input_kind, args.repository)
+    else:
+        result = classification_evaluation(args.sample_path, args.pdm_workbook, args.repository)
+    json.dump(result, sys.stdout, ensure_ascii=False, indent=2)
     print()
     return 0
 

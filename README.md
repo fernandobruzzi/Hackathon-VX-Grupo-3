@@ -34,6 +34,7 @@ docker compose up --build
 
 - [Guia do time e dos agentes](AGENTS.md)
 - [Arquitetura](docs/arquitetura.md)
+- [Classificação PDM e avaliação](docs/classificacao.md)
 - [Brainstorm](docs/brainstorm.md)
 - [Front](front/README.md)
 - [Dados](data/README.md)

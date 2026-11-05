@@ -11,7 +11,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `front/` | Next.js static export with mock data ([details](front/README.md)) | Prototype |
 | `back/domain/` | Shared rules and contracts, used by batch and MCP | In progress |
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
-| `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Placeholders |
+| `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | First tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Health check and placeholders |
@@ -83,6 +83,22 @@ Report, from `back/`:
 ```bash
 uv run python cli.py normalization-report ../data/desafio01/01_base_materiais.csv
 ```
+
+Classification, from `back/` (details and evaluation limits in
+[`docs/classificacao.md`](docs/classificacao.md)):
+
+```bash
+uv run vx-back classification-report ../data/desafio01/01_base_materiais.csv --input-kind materials --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
+```bash
+uv run vx-back classification-evaluate tests/fixtures/classification_review.json --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
+Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`. Every input
+record gets a result with its original values and evidence; reports do not change
+the master data. An `OUT_OF_SCOPE` classification can be a false negative and must
+not automatically reject an order.
 
 Front, from `front/` (Node 20.9+):
 
