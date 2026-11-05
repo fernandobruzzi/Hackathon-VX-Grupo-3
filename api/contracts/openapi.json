@@ -427,6 +427,10 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
           }
         ],
         "parameters": [
@@ -545,6 +549,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -697,7 +704,22 @@
             "in": "query",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/ProposalStatus"
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "APPLIED",
+                "REJECTED",
+                "STALE",
+                "DECIDED"
+              ]
+            }
+          },
+          {
+            "name": "proposal_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProposalType"
             }
           }
         ],
@@ -798,6 +820,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -909,6 +934,10 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
           }
         ],
         "parameters": [
@@ -1035,6 +1064,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -1150,6 +1182,10 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
           }
         ],
         "parameters": [
@@ -1267,6 +1303,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -1377,6 +1416,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -1506,6 +1548,10 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
           }
         ],
         "parameters": [
@@ -1633,6 +1679,10 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
           }
         ],
         "parameters": [
@@ -1759,6 +1809,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -1879,6 +1932,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -1989,6 +2045,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -2125,6 +2184,9 @@
           },
           {
             "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
           }
         ],
         "parameters": [
@@ -2333,6 +2395,121 @@
           },
           "503": {
             "description": "Erro interno padronizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/local-logout": {
+      "post": {
+        "operationId": "logoutLocalSession",
+        "summary": "Revogar sessao de teste local.",
+        "tags": [
+          "auth-local"
+        ],
+        "security": [
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sessao local revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalLogoutResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2835,7 +3012,10 @@
             "type": "string"
           },
           "unit": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "ncm": {
             "anyOf": [
@@ -2850,7 +3030,7 @@
           "inventory": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/InventoryRow"
+              "$ref": "#/components/schemas/ProposalInventoryRow"
             }
           },
           "value_brl": {
@@ -2994,7 +3174,15 @@
             }
           },
           "ranking_score": {
-            "type": "number"
+            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "created_at": {
             "$ref": "#/components/schemas/UtcDateTime"
@@ -3004,6 +3192,23 @@
             "items": {
               "$ref": "#/components/schemas/Decision"
             }
+          },
+          "consolidated_inventory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsolidatedInventoryRow"
+            }
+          },
+          "consolidated_value_brl": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omitido sem metrics:financial; nulo se o valor nao estiver disponivel."
           }
         },
         "required": [
@@ -3414,6 +3619,14 @@
           },
           "created_at": {
             "$ref": "#/components/schemas/UtcDateTime"
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "required": [
@@ -3763,6 +3976,22 @@
             "items": {
               "$ref": "#/components/schemas/Decision"
             }
+          },
+          "title": {
+            "type": "string"
+          },
+          "ranking_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/UtcDateTime"
           }
         },
         "required": [
@@ -3964,11 +4193,16 @@
             "$ref": "#/components/schemas/Decision"
           },
           "primary_material_code": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "reason": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S"
           }
         },
         "required": [
@@ -4527,6 +4761,59 @@
           "logged_out"
         ],
         "additionalProperties": false
+      },
+      "ProposalInventoryRow": {
+        "type": "object",
+        "properties": {
+          "center_code": {
+            "type": "string"
+          },
+          "quantity": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "center_code",
+          "quantity",
+          "unit"
+        ],
+        "additionalProperties": false
+      },
+      "ConsolidatedInventoryRow": {
+        "type": "object",
+        "properties": {
+          "center_code": {
+            "type": "string"
+          },
+          "quantity": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "total_value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "center_code",
+          "quantity",
+          "unit"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {
@@ -4573,6 +4860,12 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "description": "JWT interno emitido pela API com audience exclusiva do Agent e validade curta; nunca token do usuário."
+      },
+      "localSessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "vx_local_session",
+        "description": "Somente sessao de teste local em HTTP. Em HTTPS usa __Host-vx_session. Desabilitada fora de APP_ENV=local."
       }
     }
   }

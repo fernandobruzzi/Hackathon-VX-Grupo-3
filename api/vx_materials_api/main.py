@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from vx_materials_api import settings
 from vx_materials_api.db.session import make_engine, make_session_factory
-from vx_materials_api.errors import register_error_handlers
-from vx_materials_api.routes import auth, chat
+from vx_materials_api.errors import register_error_handlers, request_id
+from vx_materials_api.routes import auth, chat, sanitization
 from vx_materials_api.security.cognito import CognitoClient, CognitoConfig
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.local_session import local_identity
@@ -65,11 +65,14 @@ def create_app(
         app.state.request_identity_provider = local_identity
         app.include_router(auth.local_router)
     app.state.agent_client = agent_client or AgentClient(settings.agent_url())
+    app.state.pdm_catalog = None
     register_error_handlers(app)
 
     @app.middleware("http")
     async def private_auth_responses(request, call_next):
+        rid = request_id(request)
         response = await call_next(request)
+        response.headers["X-Request-ID"] = rid
         if request.url.path.startswith("/api/v1/auth/"):
             response.headers["Cache-Control"] = "no-store"
             response.headers["Pragma"] = "no-cache"
@@ -82,6 +85,7 @@ def create_app(
 
     app.include_router(chat.router)
     app.include_router(auth.router)
+    app.include_router(sanitization.router)
 
     # Montado por ultimo: as rotas da API tem prioridade sobre os arquivos estaticos.
     if front_dist:

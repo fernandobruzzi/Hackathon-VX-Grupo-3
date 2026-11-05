@@ -4,6 +4,7 @@ import uuid
 import psycopg
 import pytest
 from alembic import command
+from approval_fixtures import approval_case as approval_case
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 

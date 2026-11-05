@@ -328,6 +328,11 @@
       "proposal_type": "MERGE",
       "status": "PENDING",
       "title": "Filtro de óleo Fleetguard LF9009 — 2 códigos",
+      "consolidated_inventory": [
+        {"center_code": "1200", "quantity": "4", "unit": "PC", "total_value": "1352.00"},
+        {"center_code": "2200", "quantity": "7", "unit": "PC", "total_value": "2366.00"}
+      ],
+      "consolidated_value_brl": "3718.00",
       "material_codes": [
         "27841570",
         "16031971"
@@ -875,6 +880,8 @@
           "action": "NCM_REVIEW_APPROVE",
           "entity": "proposta p-porca-ncm",
           "reason": "Classificação conferida com a referência aplicável.",
+          "before": {"ncm": "7318.16.00", "version": 1},
+          "after": {"ncm": "7318.16.00", "fiscal_review_status": "APPROVED", "version": 2},
           "request_id": "req-approval-019",
           "created_at": "2026-11-07T15:31:00Z"
         }

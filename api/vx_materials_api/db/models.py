@@ -410,3 +410,18 @@ class OperationRequest(Base):
     resource_id: Mapped[str | None] = mapped_column(Text)
     response: Mapped[Any | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = _created_at()
+
+
+class InventoryConsolidation(Base):
+    __tablename__ = "inventory_consolidations"
+    __table_args__ = (CheckConstraint("factor > 0", name="positive_factor"),)
+
+    source_snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("material_inventory_snapshots.id"), primary_key=True
+    )
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    primary_material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sanitization_proposals.id"), nullable=False)
+    factor: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    unit: Mapped[str] = mapped_column(Text, nullable=False)
+    conversion_source: Mapped[str] = mapped_column(Text, nullable=False)

@@ -5,12 +5,20 @@ import uuid
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DBAPIError
 
 
 class ApiProblem(Exception):
-    def __init__(self, status: int, code: str, message: str, details: dict | None = None) -> None:
+    def __init__(self, status: int, code: str, message: str, details: dict | None = None, **fields) -> None:
         super().__init__(message)
-        self.status, self.code, self.message, self.details = status, code, message, details or {}
+        self.status, self.code, self.message, self.details = status, code, message, (details or {}) | fields
+
+
+ApiError = ApiProblem
+
+
+def error_body(code: str, message: str, request_id: str, **details) -> dict:
+    return {"error": {"code": code, "message": message, "request_id": request_id, "details": details}}
 
 
 def request_id(request: Request) -> str:
@@ -25,6 +33,12 @@ def _body(request: Request, code: str, message: str, details: dict) -> dict:
 
 
 def register_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(DBAPIError)
+    async def database_unavailable(request: Request, error: DBAPIError) -> JSONResponse:
+        return JSONResponse(
+            _body(request, "DATABASE_UNAVAILABLE", "Banco temporariamente indisponível.", {}), status_code=503
+        )
+
     @app.exception_handler(ApiProblem)
     async def problem(request: Request, error: ApiProblem) -> JSONResponse:
         return JSONResponse(_body(request, error.code, error.message, error.details), status_code=error.status)
