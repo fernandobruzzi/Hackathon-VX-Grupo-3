@@ -39,6 +39,21 @@ class NcmCard(_Contract):
     status: Literal["PENDING_VALIDATION", "CONSISTENT", "REVIEW_REQUIRED"]
 
 
+class InventoryRow(_Contract):
+    center_code: str
+    quantity: str
+    unit: str
+
+
+class ExistingMatch(_Contract):
+    material_code: str
+    status: Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]
+    pdm_description: str
+    match_type: str
+    reason: str
+    inventory: list[InventoryRow]
+
+
 class MaterialCard(_Contract):
     pdm_class_id: str | None
     pdm_class_name: str | None = Field(default=None, exclude_if=lambda value: value is None)
@@ -48,6 +63,7 @@ class MaterialCard(_Contract):
     missing_attributes: list[str]
     ncm: NcmCard
     duplicate_check_status: Literal["PENDING", "NO_MATCH", "MATCH_FOUND"]
+    existing: ExistingMatch | None = Field(default=None, exclude_if=lambda value: value is None)
     can_submit: bool
 
 

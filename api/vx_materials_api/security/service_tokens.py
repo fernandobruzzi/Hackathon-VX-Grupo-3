@@ -10,7 +10,9 @@ AGENT_AUDIENCE = "vx-agent"
 TTL_SECONDS = 60
 
 
-def issue_agent_token(user_id: uuid.UUID, permissions: frozenset[str], secret: str) -> str:
+def issue_agent_token(
+    user_id: uuid.UUID, permissions: frozenset[str], center_codes: frozenset[str], secret: str
+) -> str:
     now = int(time.time())
     claims = {
         "iss": ISSUER,
@@ -20,5 +22,6 @@ def issue_agent_token(user_id: uuid.UUID, permissions: frozenset[str], secret: s
         "exp": now + TTL_SECONDS,
         "jti": str(uuid.uuid4()),
         "permissions": sorted(permissions),
+        "center_codes": sorted(center_codes),
     }
     return jwt.encode(claims, secret, algorithm="HS256")

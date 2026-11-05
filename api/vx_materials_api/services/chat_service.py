@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from domain.pdm_loader import DEFAULT_PDM_VERSION
 from vx_materials_api.db.models import ChatMessage, ChatSession
 from vx_materials_api.errors import ApiProblem
-from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse
+from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
 
 NCM_VERSION = "ncm-demo-v1"
@@ -38,7 +38,21 @@ CONTEXT_KEYS = frozenset(
         "validation_status",
     }
 )
-_STATUS_BY_VALIDATION = {"VALID": "READY_TO_SUBMIT", "OUT_OF_SCOPE": "OUT_OF_SCOPE"}
+
+
+def turn_status(card: MaterialCard) -> str:
+    """Status do turno, derivado pela API da ficha, nunca informado pelo Agent.
+
+    Pronto para envio exige ficha válida e duplicidade verificada sem item igual. Se a verificação
+    falhou, o pedido continua aguardando, mesmo com a ficha completa.
+    """
+    if card.existing is not None:
+        return "EXISTING"
+    if card.validation_status == "OUT_OF_SCOPE":
+        return "OUT_OF_SCOPE"
+    if card.validation_status == "VALID" and card.duplicate_check_status == "NO_MATCH":
+        return "READY_TO_SUBMIT"
+    return "NEEDS_INPUT"
 
 
 @dataclass(frozen=True)
@@ -176,7 +190,10 @@ def complete_turn(
         ]
     )
     patch = {key: value for key, value in result.context_patch.items() if key in CONTEXT_KEYS}
-    card = result.material_card.model_dump(mode="json")
+    status = turn_status(result.material_card)
+    # O envio só é liberado quando a API concorda que o pedido está pronto.
+    material_card = result.material_card.model_copy(update={"can_submit": status == "READY_TO_SUBMIT"})
+    card = material_card.model_dump(mode="json")
     session.context = {**(session.context or {}), **patch, "material_card": card}
     session.version += 1
     session.active_turn_id = None
@@ -188,8 +205,8 @@ def complete_turn(
         session_version=session.version,
         # Validar no chat não cria pedido nem material: o envio é uma ação explícita, fora deste turno.
         order_id=None,
-        status=_STATUS_BY_VALIDATION.get(result.material_card.validation_status, "NEEDS_INPUT"),
+        status=status,
         assistant_message=result.assistant_message,
         tool_calls=result.tool_calls,
-        material_card=result.material_card,
+        material_card=material_card,
     )

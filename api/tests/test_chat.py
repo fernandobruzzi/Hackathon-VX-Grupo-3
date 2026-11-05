@@ -81,7 +81,13 @@ def _new_identity(factory, permissions=SOLICITANTE) -> Identity:
             {"t": tenant, "s": str(uuid.uuid4())},
         ).scalar_one()
         db.commit()
-    return Identity(user_id=user_id, tenant_id=tenant, roles=("ROLE_SOLICITANTE",), permissions=permissions)
+    return Identity(
+        user_id=user_id,
+        tenant_id=tenant,
+        roles=("ROLE_SOLICITANTE",),
+        permissions=permissions,
+        center_codes=frozenset({"1100", "1200"}),
+    )
 
 
 @pytest.fixture
@@ -144,6 +150,7 @@ def test_agent_receives_short_internal_token_and_no_identity_fields(client, agen
         request.headers["Authorization"].removeprefix("Bearer "), SECRET, algorithms=["HS256"], audience="vx-agent"
     )
     assert claims["sub"] == str(identity.user_id)
+    assert claims["center_codes"] == ["1100", "1200"]
     assert claims["exp"] - claims["iat"] <= 60
     assert request.headers["X-Request-ID"].startswith("req-")
     assert not {"role", "roles", "actor_id", "user_id", "tenant_id"} & set(agent.payload())
@@ -226,6 +233,58 @@ def test_without_chat_permission_gets_403(factory, agent, monkeypatch):
     assert agent.requests == []
 
 
+def test_center_outside_scope_gets_403(client, agent):
+    body = {
+        "session_id": None,
+        "client_message_id": str(uuid.uuid4()),
+        "expected_session_version": 0,
+        "message": "parafuso",
+        "center_code": "9000",
+    }
+
+    response = client.post("/api/v1/chat/message", json=body)
+
+    assert response.status_code == 403
+    assert agent.requests == []
+
+
+EXISTING = {
+    "material_code": "16031971",
+    "status": "ATIVO",
+    "pdm_description": "FILTRO OLEO LUBRIFICANTE",
+    "match_type": "EXACT_MANUFACTURER_REFERENCE",
+    "reason": "Mesmo item pela regra de identidade do PDM.",
+    "inventory": [{"center_code": "1200", "quantity": "4", "unit": "PC"}],
+}
+
+
+@pytest.mark.parametrize(
+    ("card", "status", "can_submit"),
+    [
+        ({"validation_status": "VALID", "duplicate_check_status": "NO_MATCH"}, "READY_TO_SUBMIT", True),
+        # Busca falhou: a ficha completa continua aguardando.
+        ({"validation_status": "VALID", "duplicate_check_status": "PENDING"}, "NEEDS_INPUT", False),
+        ({"duplicate_check_status": "MATCH_FOUND", "existing": EXISTING}, "EXISTING", False),
+        # O Agent não libera o envio sozinho.
+        (
+            {"validation_status": "INCOMPLETE", "duplicate_check_status": "NO_MATCH", "can_submit": True},
+            "NEEDS_INPUT",
+            False,
+        ),
+    ],
+)
+def test_api_derives_status_and_submission_from_the_card(client, card, status, can_submit):
+    AGENT_RESULT["material_card"] = {**CARD, **card}
+    try:
+        body = send(client).json()
+    finally:
+        AGENT_RESULT["material_card"] = CARD
+
+    assert body["status"] == status
+    assert body["material_card"]["can_submit"] is can_submit
+    validator({"$ref": "#/components/schemas/ChatTurnResponse"}).validate(body)
+
+
 def test_validating_in_chat_publishes_nothing(client, factory, identity):
     def totals():
         return (
@@ -234,7 +293,12 @@ def test_validating_in_chat_publishes_nothing(client, factory, identity):
         )
 
     before = totals()
-    AGENT_RESULT["material_card"] = {**CARD, "validation_status": "VALID", "missing_attributes": []}
+    AGENT_RESULT["material_card"] = {
+        **CARD,
+        "validation_status": "VALID",
+        "missing_attributes": [],
+        "duplicate_check_status": "NO_MATCH",
+    }
     try:
         response = send(client)
     finally:
