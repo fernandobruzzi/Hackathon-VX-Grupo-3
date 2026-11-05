@@ -55,12 +55,13 @@ class FakeAgent:
     def __init__(self):
         self.requests: list[httpx.Request] = []
         self.status = 200
+        self.result: dict | None = None
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         if self.status != 200:
             return httpx.Response(self.status, json={"error": {"code": "AGENT_TIMEOUT"}})
-        return httpx.Response(200, json=AGENT_RESULT)
+        return httpx.Response(200, json=self.result or AGENT_RESULT)
 
     def payload(self, index=-1):
         return json.loads(self.requests[index].content)
@@ -136,7 +137,7 @@ def test_first_turn_creates_session_and_returns_agent_result(client, agent, fact
     assert body["status"] == "NEEDS_INPUT"
     assert body["order_id"] is None
     assert body["tool_calls"] == AGENT_RESULT["tool_calls"]
-    assert body["material_card"] == CARD
+    assert body["material_card"] == {**CARD, "similar_candidates": []}
     validator({"$ref": "#/components/schemas/ChatTurnResponse"}).validate(body)
     messages = "SELECT count(*) FROM chat_messages WHERE session_id = :s"
     assert count(factory, messages, s=body["session_id"]) == 2
@@ -258,34 +259,121 @@ EXISTING = {
 }
 
 
+def search_call(*candidates, status="SUCCEEDED"):
+    return {
+        "id": "tool-call-003",
+        "name": "search_similar_materials",
+        "transport": "MCP_STDIO",
+        "input": {"query": "parafuso"},
+        "status": status,
+        "duration_ms": 9.0,
+        "result": {"candidates": list(candidates)} if status == "SUCCEEDED" else {"error": "indisponivel"},
+    }
+
+
+def similar(code, status="ATIVO", verified=False, target=None):
+    return {
+        "material_code": code,
+        "status": status,
+        "active_code_target": target,
+        "identity_verified": verified,
+        "match_type": "TEXT_SIMILARITY",
+    }
+
+
+VALID_CARD = {**CARD, "validation_status": "VALID", "missing_attributes": [], "duplicate_check_status": "NO_MATCH"}
+
+
+def agent_result(card, *calls, patch=None):
+    return {**AGENT_RESULT, "tool_calls": list(calls), "material_card": card, "context_patch": patch or {}}
+
+
 @pytest.mark.parametrize(
-    ("card", "status", "can_submit"),
+    ("card", "calls", "status", "can_submit"),
     [
-        ({"validation_status": "VALID", "duplicate_check_status": "NO_MATCH"}, "READY_TO_SUBMIT", True),
-        # Busca falhou: a ficha completa continua aguardando.
-        ({"validation_status": "VALID", "duplicate_check_status": "PENDING"}, "NEEDS_INPUT", False),
-        ({"duplicate_check_status": "MATCH_FOUND", "existing": EXISTING}, "EXISTING", False),
-        # O Agent não libera o envio sozinho.
+        (VALID_CARD, [search_call()], "READY_TO_SUBMIT", True),
+        # Busca falhou ou não rodou: a ficha completa continua aguardando.
+        (VALID_CARD, [search_call(status="FAILED")], "NEEDS_INPUT", False),
+        (VALID_CARD, [], "NEEDS_INPUT", False),
+        # Item parecido ainda não descartado pelo solicitante.
+        (VALID_CARD, [search_call(similar("777"))], "NEEDS_INPUT", False),
+        # Obsoleto nunca precisa ser descartado: não é oferecido.
+        (VALID_CARD, [search_call(similar("778", status="OBSOLETO"))], "READY_TO_SUBMIT", True),
+        # Mesma identidade encontrada: o Agent não pode dizer que não há item igual.
+        (VALID_CARD, [search_call(similar("16031971", verified=True))], "NEEDS_INPUT", False),
         (
-            {"validation_status": "INCOMPLETE", "duplicate_check_status": "NO_MATCH", "can_submit": True},
+            {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": EXISTING},
+            [search_call(similar("16031971", verified=True))],
+            "EXISTING",
+            False,
+        ),
+        # Item existente que a busca deste turno não confirma.
+        (
+            {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": EXISTING},
+            [search_call()],
             "NEEDS_INPUT",
             False,
         ),
+        # O Agent não libera o envio sozinho.
+        ({**CARD, "duplicate_check_status": "NO_MATCH", "can_submit": True}, [search_call()], "NEEDS_INPUT", False),
     ],
 )
-def test_api_derives_status_and_submission_from_the_card(client, card, status, can_submit):
-    AGENT_RESULT["material_card"] = {**CARD, **card}
-    try:
-        body = send(client).json()
-    finally:
-        AGENT_RESULT["material_card"] = CARD
+def test_api_derives_status_and_submission(client, agent, card, calls, status, can_submit):
+    agent.result = agent_result(card, *calls)
+
+    body = send(client).json()
 
     assert body["status"] == status
     assert body["material_card"]["can_submit"] is can_submit
     validator({"$ref": "#/components/schemas/ChatTurnResponse"}).validate(body)
 
 
-def test_validating_in_chat_publishes_nothing(client, factory, identity):
+def test_dismissal_counts_only_for_codes_offered_before(client, agent, factory):
+    # O Agent afirma um descarte sem nunca ter oferecido o código: a API não aceita.
+    agent.result = agent_result(VALID_CARD, search_call(similar("777")), patch={"dismissed_material_codes": ["777"]})
+
+    first = send(client).json()
+
+    assert first["status"] == "NEEDS_INPUT"
+    stored = count(factory, "SELECT context FROM chat_sessions WHERE id = :s", s=first["session_id"])
+    assert stored["dismissed_material_codes"] == []
+
+
+def test_dismissing_offered_codes_releases_submission(client, agent, factory):
+    pending = {**VALID_CARD, "duplicate_check_status": "PENDING"}
+    agent.result = agent_result(pending, search_call(similar("777")), patch={"offered_material_codes": ["777"]})
+    first = send(client).json()
+    assert first["status"] == "NEEDS_INPUT"
+
+    agent.result = agent_result(
+        VALID_CARD,
+        search_call(similar("777")),
+        patch={"offered_material_codes": [], "dismissed_material_codes": ["777"]},
+    )
+    second = send(client, "Nenhum desses é o meu item", first["session_id"], version=1).json()
+
+    assert agent.payload()["context"]["offered_material_codes"] == ["777"]
+    assert second["status"] == "READY_TO_SUBMIT"
+    assert second["material_card"]["can_submit"] is True
+
+
+def test_picked_code_must_have_been_offered(client, agent):
+    picked = {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": {**EXISTING, "material_code": "777"}}
+    agent.result = agent_result(picked, search_call(similar("777")))
+    assert send(client).json()["status"] == "NEEDS_INPUT"
+
+    agent.result = agent_result(
+        {**VALID_CARD, "duplicate_check_status": "PENDING"},
+        search_call(similar("777")),
+        patch={"offered_material_codes": ["777"]},
+    )
+    first = send(client).json()
+    agent.result = agent_result(picked, search_call(similar("777")))
+
+    assert send(client, "É o item 777", first["session_id"], version=1).json()["status"] == "EXISTING"
+
+
+def test_validating_in_chat_publishes_nothing(client, agent, factory, identity):
     def totals():
         return (
             count(factory, "SELECT count(*) FROM materials_master WHERE tenant_id = :t", t=identity.tenant_id),
@@ -293,16 +381,9 @@ def test_validating_in_chat_publishes_nothing(client, factory, identity):
         )
 
     before = totals()
-    AGENT_RESULT["material_card"] = {
-        **CARD,
-        "validation_status": "VALID",
-        "missing_attributes": [],
-        "duplicate_check_status": "NO_MATCH",
-    }
-    try:
-        response = send(client)
-    finally:
-        AGENT_RESULT["material_card"] = CARD
+    agent.result = agent_result(VALID_CARD, search_call())
+
+    response = send(client)
 
     assert response.json()["status"] == "READY_TO_SUBMIT"
     assert totals() == before
