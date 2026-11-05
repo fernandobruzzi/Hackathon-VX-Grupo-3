@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.engine import make_url
 
 from clients.storage import LocalObjectStore
 from vx_materials_api.bootstrap import (
@@ -15,6 +14,7 @@ from vx_materials_api.bootstrap import (
     read_materials,
     resolve_redirect,
 )
+from vx_materials_api.db.temporary_login import temporary_login
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
 
@@ -58,13 +58,13 @@ def loaded(migrated_url, tmp_path_factory):
     admin = create_engine(migrated_url)
     with admin.begin() as connection:
         connection.execute(text("TRUNCATE datasets, reference_versions, materials_master CASCADE"))
-        connection.execute(text("ALTER ROLE api_user LOGIN PASSWORD 'bootstrap_test'"))
-    engine = create_engine(make_url(migrated_url).set(username="api_user", password="bootstrap_test"))
-    store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
-    first = bootstrap(KIT, engine, store)
-    second = bootstrap(KIT, engine, store)
-    yield first, second, store, admin
-    engine.dispose()
+    with temporary_login(migrated_url, "api_user") as api_url:
+        engine = create_engine(api_url)
+        store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
+        first = bootstrap(KIT, engine, store)
+        second = bootstrap(KIT, engine, store)
+        yield first, second, store, admin
+        engine.dispose()
     admin.dispose()
 
 

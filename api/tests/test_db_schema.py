@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
 
-from vx_materials_api.db.cli import alembic_config, set_passwords
+from vx_materials_api.db.cli import PASSWORD_VARIABLES, alembic_config, set_passwords
 from vx_materials_api.db.models import Base
 
 TABLES = {
@@ -217,16 +217,30 @@ def test_batch_can_write_proposals(connection, tenant):
     )
 
 
-def test_set_passwords_enables_login_only_with_the_right_password(migrated_url, monkeypatch):
-    monkeypatch.setenv("API_DB_PASSWORD", "it's-a-test")
-    monkeypatch.delenv("BATCH_DB_PASSWORD", raising=False)
-    monkeypatch.delenv("MCP_DB_PASSWORD", raising=False)
-    assert set_passwords(migrated_url) == ["api_user"]
+@pytest.fixture
+def disposable_role(migrated_url):
+    """Role NOLOGIN membro de api_user, apagada no fim: a senha de api_user nunca muda."""
+    name = f"vx_tmp_setpw_{uuid.uuid4().hex[:8]}"
+    admin = create_engine(migrated_url, isolation_level="AUTOCOMMIT")
+    with admin.connect() as conn:
+        conn.execute(text(f'CREATE ROLE "{name}" NOLOGIN INHERIT IN ROLE api_user'))
+    yield name
+    with admin.connect() as conn:
+        conn.execute(text("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename = :n"), {"n": name})
+        conn.execute(text(f'DROP ROLE IF EXISTS "{name}"'))
+    admin.dispose()
 
-    login = make_url(migrated_url).set(username="api_user", password="it's-a-test")
+
+def test_set_passwords_enables_login_only_with_the_right_password(migrated_url, monkeypatch, disposable_role):
+    monkeypatch.setenv("VX_TEST_ROLE_PASSWORD", "it's-a-test")
+    monkeypatch.delenv("VX_TEST_UNSET_PASSWORD", raising=False)
+    roles = {disposable_role: "VX_TEST_ROLE_PASSWORD", "mcp_reader": "VX_TEST_UNSET_PASSWORD"}
+    assert set_passwords(migrated_url, roles) == [disposable_role]
+
+    login = make_url(migrated_url).set(username=disposable_role, password="it's-a-test")
     engine = create_engine(login)
     with engine.connect() as conn:
-        assert conn.execute(text("SELECT current_user")).scalar_one() == "api_user"
+        assert conn.execute(text("SELECT current_user")).scalar_one() == disposable_role
         with pytest.raises(DBAPIError, match="permission denied"):
             conn.execute(text("DELETE FROM audit_logs"))
     engine.dispose()
@@ -235,3 +249,7 @@ def test_set_passwords_enables_login_only_with_the_right_password(migrated_url, 
     with pytest.raises(OperationalError, match="authentication failed"):
         engine.connect()
     engine.dispose()
+
+
+def test_set_passwords_targets_the_application_roles_by_default():
+    assert set(PASSWORD_VARIABLES) == {"api_user", "batch_user", "mcp_reader"}

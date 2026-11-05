@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 
 from clients.storage import LocalObjectStore
 from pipelines.full_run import run_sanitize
 from vx_materials_api.bootstrap import bootstrap
+from vx_materials_api.db.temporary_login import temporary_login
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
 PDM = str(KIT / "03_padrao_cadastro_PDM.xlsx")
@@ -22,16 +22,13 @@ def sanitized(migrated_url, tmp_path_factory):
         connection.execute(
             text("TRUNCATE datasets, reference_versions, materials_master, sanitization_proposals CASCADE")
         )
-        connection.execute(text("ALTER ROLE api_user LOGIN PASSWORD 'sanitize_test'"))
-        connection.execute(text("ALTER ROLE batch_user LOGIN PASSWORD 'sanitize_test'"))
-    url = make_url(migrated_url)
-    api = create_engine(url.set(username="api_user", password="sanitize_test"))
-    bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("storage")))
-    api.dispose()
-    batch_url = url.set(username="batch_user", password="sanitize_test").render_as_string(hide_password=False)
-    first = run_sanitize(PDM, database_url=batch_url)
-    second = run_sanitize(PDM, database_url=batch_url)
-    yield first, second, admin, batch_url
+    with temporary_login(migrated_url, "api_user") as api_url, temporary_login(migrated_url, "batch_user") as batch_url:
+        api = create_engine(api_url)
+        bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("storage")))
+        api.dispose()
+        first = run_sanitize(PDM, database_url=batch_url)
+        second = run_sanitize(PDM, database_url=batch_url)
+        yield first, second, admin, batch_url
     admin.dispose()
 
 

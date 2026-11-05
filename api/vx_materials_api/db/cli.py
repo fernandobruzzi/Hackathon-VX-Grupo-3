@@ -2,6 +2,7 @@
 
 import argparse
 import os
+from collections.abc import Mapping
 from pathlib import Path
 
 import psycopg
@@ -28,12 +29,15 @@ def alembic_config(url: str | None = None) -> Config:
     return config
 
 
-def set_passwords(url: str) -> list[str]:
-    """Habilita login nas credenciais com senha definida no ambiente e devolve quais mudaram."""
+def set_passwords(url: str, roles: Mapping[str, str] = PASSWORD_VARIABLES) -> list[str]:
+    """Habilita login nas credenciais com senha definida no ambiente e devolve quais mudaram.
+
+    `roles` mapeia role para variável de ambiente; testes passam uma role descartável.
+    """
     conninfo = make_url(url).set(drivername="postgresql").render_as_string(hide_password=False)
     changed = []
     with psycopg.connect(conninfo, autocommit=True) as connection:
-        for role, variable in PASSWORD_VARIABLES.items():
+        for role, variable in roles.items():
             password = os.environ.get(variable)
             if password:
                 statement = sql.SQL("ALTER ROLE {} LOGIN PASSWORD {}").format(
