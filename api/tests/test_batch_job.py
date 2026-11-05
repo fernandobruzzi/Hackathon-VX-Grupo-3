@@ -7,7 +7,8 @@ import pytest
 from sqlalchemy import create_engine, text
 
 from clients.storage import LocalObjectStore
-from pipelines.full_run import run_sanitize
+from pipelines import full_run
+from pipelines.full_run import AnalysisRulesChanged, run_sanitize
 from repositories.batch_repository import JobNotRunnable
 from vx_materials_api.batch_job_cli import create_job, main
 from vx_materials_api.bootstrap import bootstrap
@@ -150,6 +151,30 @@ def test_finished_job_cannot_run_again(resumed):
     _, batch_url, store, job_id, *_ = resumed
     with pytest.raises(JobNotRunnable):
         run_sanitize(PDM, job_id, database_url=batch_url, store=store)
+
+
+def test_resume_with_other_rules_fails_the_job_and_keeps_its_analysis(resumed, tmp_path, monkeypatch):
+    """#83: extração revisada entre a interrupção e a retomada. O job falha com o motivo, sem reanalisar."""
+    admin, batch_url, *_ = resumed
+    store = LocalObjectStore(tmp_path)
+    job_id = new_job(admin)
+    with pytest.raises(Interrupted):
+        run_sanitize(PDM, job_id, database_url=batch_url, store=store, on_step=stop_at("analysis", 1))
+    chunk = store.get(f"runs/{job_id}/analysis/chunk-0000.json")
+    current = full_run.get_extraction_repository()
+
+    class Revised(type(current)):
+        revision = current.revision + "-revisada"
+
+    monkeypatch.setattr(full_run, "get_extraction_repository", Revised)
+    with pytest.raises(AnalysisRulesChanged):
+        run_sanitize(PDM, job_id, database_url=batch_url, store=store)
+    row = job_row(admin, job_id)
+    assert row["status"] == "FAILED"
+    assert "novo job" in row["error_summary"]
+    assert row["checkpoint"]["analysis"]["chunks_done"] == 1
+    assert store.get(f"runs/{job_id}/analysis/chunk-0000.json") == chunk
+    assert proposals_of(admin, job_id) == 0
 
 
 def test_local_job_command_refuses_outside_local(monkeypatch):

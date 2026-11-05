@@ -4,7 +4,8 @@ Duas etapas retomáveis:
 
 1. Análise (classe, extração, identidade) em blocos de materiais. Cada bloco é gravado em
    `runs/{job_id}/analysis/` no armazenamento; ao retomar, blocos já gravados são lidos, não refeitos.
-   É a etapa que vai concentrar custo quando houver chamadas de modelo.
+   É a etapa que vai concentrar custo quando houver chamadas de modelo. Job e blocos guardam a assinatura
+   das regras (PDM e revisões); retomar com regras diferentes é recusado, e o caminho é um novo job.
 2. Gravação das propostas em lotes. Cada lote é gravado na mesma transação do checkpoint, então o
    checkpoint nunca aponta para algo que não foi salvo. Os ids das propostas vêm do conteúdo, e repetir
    um lote não duplica nada.
@@ -28,7 +29,7 @@ from sqlalchemy import Engine, create_engine
 from clients.storage import ObjectStore, get_object_store
 from domain.contracts import AnalyzedMaterial, MaterialRecord, MergeProposal, PdmCatalog
 from pipelines.corrections import propose_corrections, summarize_corrections
-from pipelines.sanitize import _catalog, analyze_material, merge_proposals, summarize
+from pipelines.sanitize import _catalog, analysis_signature, analyze_material, merge_proposals, summarize
 from repositories.batch_repository import (
     DEFAULT_STALE_SECONDS,
     claim_job,
@@ -57,6 +58,10 @@ OUTCOME_PROPOSAL = "PROPOSTA"
 OUTCOME_PENDING = "PENDENTE"
 OUTCOME_UNCHANGED = "SEM_ALTERACAO"
 OUTCOME_ERROR = "ERRO_ANALISE"
+
+
+class AnalysisRulesChanged(RuntimeError):
+    """O job foi analisado com outras regras. Misturar interpretações daria propostas incoerentes."""
 
 
 @dataclass
@@ -108,6 +113,11 @@ def analyze_all(
 ) -> tuple[list[AnalyzedMaterial], dict[str, str]]:
     """Analisa em blocos. Devolve os materiais analisados e os erros por código."""
     classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
+    signature = analysis_signature(catalog, classifier, extractor)
+    recorded = context.checkpoint.get("analysis_signature")
+    if recorded != signature and (recorded or "analysis" in context.checkpoint):
+        raise AnalysisRulesChanged(_rules_changed(recorded, signature))
+    context.checkpoint["analysis_signature"] = signature
     analyzed: list[AnalyzedMaterial] = []
     errors: dict[str, str] = {}
     chunks = [records[i : i + ANALYSIS_CHUNK] for i in range(0, len(records), ANALYSIS_CHUNK)]
@@ -115,7 +125,7 @@ def analyze_all(
     for index, chunk in enumerate(chunks):
         key = _analysis_key(context.job_id, index) if context.job_id and context.store else None
         digest = _chunk_hash(chunk)
-        stored = _load_chunk(context.store, key, digest) if key else None
+        stored = _load_chunk(context.store, key, digest, signature) if key else None
         if stored is not None:
             chunk_analyzed, chunk_errors = stored
             reused += 1
@@ -129,6 +139,7 @@ def analyze_all(
             if key:
                 content = {
                     "input_sha256": digest,
+                    "rules_signature": signature,
                     "materials": [_encode(m) for m in chunk_analyzed],
                     "errors": chunk_errors,
                 }
@@ -147,7 +158,14 @@ def analyze_all(
     return analyzed, errors
 
 
-def _load_chunk(store: ObjectStore, key: str, digest: str):
+def _rules_changed(recorded: str | None, current: str) -> str:
+    return (
+        f"Regras de análise mudaram desde o início do job (antes: {recorded or 'sem assinatura'}; "
+        f"agora: {current}). Os blocos gravados ficam como estão: crie um novo job."
+    )
+
+
+def _load_chunk(store: ObjectStore, key: str, digest: str, signature: str):
     try:
         content = json.loads(store.get(key))
     except FileNotFoundError:
@@ -158,6 +176,8 @@ def _load_chunk(store: ObjectStore, key: str, digest: str):
         raise
     if content["input_sha256"] != digest:
         raise RuntimeError(f"{key} foi gerado de outra entrada: a base mudou durante o job")
+    if content.get("rules_signature") != signature:
+        raise AnalysisRulesChanged(_rules_changed(content.get("rules_signature"), signature))
     return [_decode(m) for m in content["materials"]], content["errors"]
 
 
@@ -252,6 +272,7 @@ def run_full(
     return {
         "pipeline_version": PIPELINE_VERSION,
         "pdm_version": catalog.version,
+        "analysis_signature": context.checkpoint["analysis_signature"],
         # Campos do contrato BatchJob.counts; o detalhe fica ao lado.
         "proposals": len(proposals),
         "merges": by_type.get("MERGE", 0),
