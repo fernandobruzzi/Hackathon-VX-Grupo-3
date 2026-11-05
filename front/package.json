@@ -32,6 +32,11 @@
     "tsx": "^4.23.15",
     "typescript": "5.9.3"
   },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.31"
+    }
+  },
   "engines": {
     "node": ">=20.9"
   }
