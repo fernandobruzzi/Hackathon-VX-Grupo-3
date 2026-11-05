@@ -3,26 +3,13 @@ import type {
   BatchJob,
   DashboardMetrics,
   EnrichmentProposal,
-  MaterialStatus,
+  Material,
   RegistrationOrder,
-  InventoryRow,
 } from "@/types/api";
 
 /** Dados fictícios de demonstração (kit do desafio). Números do dashboard vêm do contrato 6.4. */
 
-export interface MaterialRow {
-  material_code: string;
-  status: MaterialStatus;
-  description: string;
-  pdm_class: string;
-  unit: string;
-  ncm: string | null;
-  active_code_target: string | null;
-  inventory: InventoryRow[];
-  flags: ("SEM_NCM" | "DUPLICIDADE_SUSPEITA" | "UNIDADE_NAO_CANONICA" | "ATRIBUTO_FALTANDO")[];
-}
-
-export const materials: MaterialRow[] = [
+export const materials: Material[] = [
   {
     material_code: "10293847",
     status: "ATIVO",
@@ -141,6 +128,7 @@ export const materials: MaterialRow[] = [
 export const orders: RegistrationOrder[] = [
   {
     id: "o-001",
+    version: 1,
     origin: "CHAT",
     requester: "Operação Demo",
     original_text: "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933.",
@@ -153,6 +141,7 @@ export const orders: RegistrationOrder[] = [
   },
   {
     id: "o-002",
+    version: 1,
     origin: "CHAT",
     requester: "Operação Demo",
     original_text: "filtro Fleetguard LF 9009",
@@ -165,6 +154,7 @@ export const orders: RegistrationOrder[] = [
   },
   {
     id: "o-003",
+    version: 1,
     origin: "CHAT",
     requester: "Operação Demo",
     original_text: "preciso de 10 parafuso sextavado m16 x 60 galvanizado 8.8 din 933 pra peneira",
@@ -177,6 +167,7 @@ export const orders: RegistrationOrder[] = [
   },
   {
     id: "o-004",
+    version: 1,
     origin: "IMPORT",
     requester: null,
     original_text: "ROL 6206 2RS SKF P/ MOTOR BOMBA",
@@ -189,6 +180,7 @@ export const orders: RegistrationOrder[] = [
   },
   {
     id: "o-005",
+    version: 1,
     origin: "CHAT",
     requester: "Operação Demo",
     original_text: "cadeira de escritório ergonômica",
@@ -201,6 +193,7 @@ export const orders: RegistrationOrder[] = [
   },
   {
     id: "o-006",
+    version: 1,
     origin: "CHAT",
     requester: "Operação Demo",
     original_text: "porca sextavada M20 classe 10 zincada",
@@ -318,6 +311,8 @@ export const batchJobs: BatchJob[] = [
     counts: { proposals: 1284, merges: 611, ncm: 402, enrichment: 15 },
     started_at: "2026-11-07T22:05:00Z",
     finished_at: null,
+    heartbeat_at: null,
+    error: null,
   },
   {
     id: "job-0006",
@@ -330,6 +325,8 @@ export const batchJobs: BatchJob[] = [
     counts: { proposals: 15, merges: 0, ncm: 3, enrichment: 15 },
     started_at: "2026-11-07T17:20:00Z",
     finished_at: "2026-11-07T17:31:00Z",
+    heartbeat_at: null,
+    error: null,
   },
   {
     id: "job-0005",
@@ -342,6 +339,8 @@ export const batchJobs: BatchJob[] = [
     counts: { proposals: 0, merges: 0, ncm: 0, enrichment: 0 },
     started_at: "2026-11-07T12:40:00Z",
     finished_at: "2026-11-07T12:46:00Z",
+    heartbeat_at: null,
+    error: null,
   },
   {
     id: "job-0004",
@@ -354,6 +353,8 @@ export const batchJobs: BatchJob[] = [
     counts: { proposals: 96, merges: 41, ncm: 30, enrichment: 0 },
     started_at: "2026-11-07T11:02:00Z",
     finished_at: "2026-11-07T11:09:00Z",
+    heartbeat_at: null,
+    error: null,
   },
 ];
 
@@ -410,7 +411,7 @@ export const audit: AuditEvent[] = [
   },
 ];
 
-export const dashboard: DashboardMetrics = {
+export const dashboard = {
   dataset_id: "88888888-8888-4888-8888-888888888888",
   comparison_status: "AFTER_SNAPSHOT_NOT_AVAILABLE",
   before: {
@@ -431,4 +432,4 @@ export const dashboard: DashboardMetrics = {
     realized_savings: null,
     estimated_savings: null,
   },
-};
+} satisfies DashboardMetrics;

@@ -1,0 +1,9 @@
+{
+  "job_id": "99999999-9999-4999-8999-999999999999",
+  "dataset_id": "88888888-8888-4888-8888-888888888888",
+  "pipeline_version": "batch-v1",
+  "pdm_version": "pdm-kit-v1",
+  "ncm_version": "ncm-demo-v1",
+  "input_manifest_key": "raw/88888888-8888-4888-8888-888888888888/manifest.json",
+  "output_prefix": "runs/99999999-9999-4999-8999-999999999999/"
+}

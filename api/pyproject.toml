@@ -19,7 +19,12 @@ vx-db = "vx_materials_api.db.cli:main"
 vx-bootstrap = "vx_materials_api.bootstrap:main"
 
 [dependency-groups]
-dev = ["httpx>=0.28", "pytest>=8"]
+dev = [
+    "httpx>=0.28",
+    "jsonschema[format]>=4.23",
+    "openapi-spec-validator>=0.7",
+    "pytest>=8",
+]
 
 [build-system]
 requires = ["setuptools>=75"]

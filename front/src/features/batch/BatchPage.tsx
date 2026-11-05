@@ -53,6 +53,8 @@ export function BatchPage() {
         counts: { proposals: 0, merges: 0, ncm: 0, enrichment: 0 },
         started_at: new Date().toISOString(),
         finished_at: null,
+        heartbeat_at: null,
+        error: null,
       },
       ...js,
     ]);
@@ -171,7 +173,7 @@ export function BatchPage() {
                 </Code>
               </Td>
               <Td>
-                <Code className="text-muted">{fmtDate(j.started_at)}</Code>
+                <Code className="text-muted">{j.started_at ? fmtDate(j.started_at) : "—"}</Code>
               </Td>
             </tr>
           ))}
