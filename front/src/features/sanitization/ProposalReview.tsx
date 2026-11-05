@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, Check, X } from "lucide-react";
 import { Badge, Button, Card, Code, Eyebrow, Field, Input, Table, Td, Th } from "@/components/ui";
 import {
@@ -12,24 +12,31 @@ import {
 } from "@/components/ui/status";
 import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { ApiError } from "@/lib/api";
 import { cn, fmtBRL } from "@/lib/format";
 import type { Proposal, ReviewStatus } from "@/types/api";
 
 /** Integração: POST /api/v1/sanitization/{id}/decide { expected_version, review_area, decision, primary_material_code, reason }. */
 export function ProposalReview({ proposal }: { proposal: Proposal }) {
-  const { me } = useAuth();
+  const { me, backend, api } = useAuth();
   const [p, setP] = useState(proposal);
   const [primary, setPrimary] = useState(p.suggested_primary_code);
   const [reason, setReason] = useState("");
   const [auditId, setAuditId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const operation = useRef<{ signature: string; key: string } | null>(null);
+  const financial = can(me, "metrics:financial");
 
   const isMerge = p.members.length > 1;
   const area: "TECHNICAL" | "FISCAL" | null =
-    can(me, "merge:decide", "enrichment:decide") && p.technical_review_status === "PENDING"
-      ? "TECHNICAL"
-      : can(me, "ncm:decide") && p.fiscal_review_status === "PENDING"
-        ? "FISCAL"
-        : null;
+    p.status !== "PENDING" || (backend && p.allowed_actions.length === 0)
+      ? null
+      : can(me, "merge:decide", "enrichment:decide") && p.technical_review_status === "PENDING"
+        ? "TECHNICAL"
+        : can(me, "ncm:decide") && p.fiscal_review_status === "PENDING"
+          ? "FISCAL"
+          : null;
   const blockedReason =
     p.status !== "PENDING"
       ? "Proposta já decidida."
@@ -44,21 +51,83 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
             : null;
 
   const consolidated = useMemo(() => {
+    if (backend)
+      return {
+        centers: (p.consolidated_inventory ?? []).map(
+          (row) => [row.center_code, { qty: row.quantity, unit: row.unit }] as const,
+        ),
+        total: p.consolidated_value_brl ?? null,
+      };
     const byCenter = new Map<string, { qty: number; unit: string }>();
     p.members.forEach((m) =>
       m.inventory.forEach((i) => {
         const cur = byCenter.get(i.center_code);
-        byCenter.set(i.center_code, { qty: (cur?.qty ?? 0) + Number(i.quantity), unit: i.unit });
+        byCenter.set(i.center_code, {
+          qty: (cur?.qty ?? 0) + Number(i.quantity),
+          unit: i.unit ?? "—",
+        });
       }),
     );
     const total = p.members.every((m) => m.value_brl !== undefined)
       ? p.members.reduce((s, m) => s + Number(m.value_brl), 0)
       : null;
     return { centers: [...byCenter.entries()], total };
-  }, [p.members]);
+  }, [backend, p.members, p.consolidated_inventory, p.consolidated_value_brl]);
 
-  const decide = (decision: "APPROVE" | "REJECT") => {
-    if (!area) return;
+  const decide = async (decision: "APPROVE" | "REJECT") => {
+    if (!area || busy) return;
+    if (backend) {
+      const body = {
+        expected_version: p.version,
+        review_area: area,
+        decision,
+        reason,
+        ...(area === "TECHNICAL" && primary ? { primary_material_code: primary } : {}),
+      };
+      const signature = JSON.stringify(body);
+      if (operation.current?.signature !== signature)
+        operation.current = { signature, key: crypto.randomUUID() };
+      setBusy(true);
+      setError(null);
+      try {
+        const result = await api.request("post", "/api/v1/sanitization/{id}/decide", {
+          params: { id: p.id },
+          body,
+          idempotencyKey: operation.current.key,
+        });
+        setP((previous) => ({
+          ...previous,
+          version: result.version,
+          status: result.status,
+          technical_review_status: result.technical_review_status,
+          fiscal_review_status: result.fiscal_review_status,
+          allowed_actions: [],
+        }));
+        setAuditId(result.audit_event_id);
+        setReason("");
+        operation.current = null;
+        try {
+          setP(await api.request("get", "/api/v1/sanitization/{id}", { params: { id: p.id } }));
+        } catch {
+          setError("Decisão registrada. Recarregue a página para consultar o estado atualizado.");
+        }
+      } catch (error) {
+        setError(
+          error instanceof ApiError
+            ? error.message
+            : "Não foi possível confirmar a decisão. Você pode repetir a solicitação.",
+        );
+        if (error instanceof ApiError && error.status === 409) {
+          setReason("");
+          try {
+            setP(await api.request("get", "/api/v1/sanitization/{id}", { params: { id: p.id } }));
+          } catch {}
+        }
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     const r: ReviewStatus = decision === "APPROVE" ? "APPROVED" : "REJECTED";
     setP((cur) => {
       const tech = area === "TECHNICAL" ? r : cur.technical_review_status;
@@ -130,7 +199,7 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
               <Th>Un.</Th>
               <Th>NCM</Th>
               <Th>Estoque</Th>
-              <Th className="text-right">Valor</Th>
+              {financial && <Th className="text-right">Valor</Th>}
             </tr>
           </thead>
           <tbody>
@@ -147,7 +216,7 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
                       aria-label={`Manter ${m.material_code} como principal`}
                       checked={primary === m.material_code}
                       onChange={() => setPrimary(m.material_code)}
-                      disabled={!area}
+                      disabled={!area || busy}
                       className="size-4 accent-[var(--verde)]"
                     />
                   </Td>
@@ -168,7 +237,7 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
                 <Td>
                   {m.inventory.length ? (
                     m.inventory.map((i) => (
-                      <Code key={i.center_code} className="block">
+                      <Code key={`${i.center_code}:${i.unit}`} className="block">
                         {i.center_code}: {i.quantity} {i.unit}
                       </Code>
                     ))
@@ -176,9 +245,11 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
                     <span className="text-muted">—</span>
                   )}
                 </Td>
-                <Td className="text-right">
-                  <Code>{fmtBRL(m.value_brl ?? null)}</Code>
-                </Td>
+                {financial && (
+                  <Td className="text-right">
+                    <Code>{fmtBRL(m.value_brl ?? null)}</Code>
+                  </Td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -220,10 +291,12 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
               </Code>
             </div>
           ))}
-          <div className="mt-auto flex justify-between border-t border-surface-2 pt-3 text-sm font-bold">
-            <span>Valor total conservado</span>
-            <Code>{fmtBRL(consolidated.total)}</Code>
-          </div>
+          {financial && (
+            <div className="mt-auto flex justify-between border-t border-surface-2 pt-3 text-sm font-bold">
+              <span>Valor total conservado</span>
+              <Code>{fmtBRL(consolidated.total)}</Code>
+            </div>
+          )}
           <p className="text-xs text-muted">
             Os saldos originais ficam imutáveis; a visão consolidada só aponta para o principal.
           </p>
@@ -279,6 +352,7 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
                   label={`Justificativa (${area === "TECHNICAL" ? "revisão técnica" : "revisão fiscal"})`}
                 >
                   <Input
+                    disabled={busy}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     placeholder={
@@ -289,12 +363,21 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
                   />
                 </Field>
               </div>
-              <Button variant="danger" onClick={() => decide("REJECT")} disabled={!reason.trim()}>
+              <Button
+                variant="danger"
+                onClick={() => decide("REJECT")}
+                disabled={busy || !reason.trim()}
+              >
                 <X className="size-4" /> Rejeitar
               </Button>
               <Button
                 onClick={() => decide("APPROVE")}
-                disabled={!reason.trim() || (isMerge && !primary)}
+                disabled={
+                  busy ||
+                  !reason.trim() ||
+                  (isMerge && !primary) ||
+                  (backend && !p.allowed_actions.includes("APPROVE"))
+                }
               >
                 <Check className="size-4" /> Aprovar
               </Button>
@@ -303,6 +386,16 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
             <p className="flex-1 text-sm text-muted">{blockedReason}</p>
           )}
         </div>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-alerta">
+            {error}
+          </p>
+        )}
+        {busy && (
+          <p role="status" className="mt-3 text-sm text-muted">
+            Registrando decisão…
+          </p>
+        )}
         {auditId && (
           <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <Badge tone={p.status === "REJECTED" ? "danger" : "success"}>

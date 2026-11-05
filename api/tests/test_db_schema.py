@@ -26,6 +26,7 @@ TABLES = {
     "material_search_index",
     "batch_jobs",
     "operation_requests",
+    "inventory_consolidations",
 }
 VIEWS = {
     "mcp_catalog",

@@ -16,3 +16,9 @@ class Identity:
     csrf_token: str = ""
     persona: str | None = None
     authentication_method: str = "cookie"
+
+    @property
+    def financial(self) -> bool:
+        from vx_materials_api.security.rbac import has_permission
+
+        return has_permission(self, "metrics:financial")

@@ -89,7 +89,9 @@ Campos financeiros (`financial` e `members[].value_brl`) só são enviados com
 ordena. A decisão aprova valores persistidos, nunca um novo valor no payload.
 Chat incompleto retorna 200 com pendências e nunca publica um material.
 
-As telas continuam usando mocks enquanto as issues de implementação estão abertas.
+Fila, revisão e auditoria podem usar a API com `NEXT_PUBLIC_DATA_SOURCE=api` no
+build; sessão local e contrato privado do produtor estão descritos em
+[`docs/aprovacoes.md`](../../docs/aprovacoes.md). As demais telas usam mocks.
 Os mocks têm IDs amigáveis para o export estático; as fixtures de integração usam
 UUIDs. A troca do provedor de sessão está em #7 e a ligação das telas ocorre nas
 issues de cada fluxo.

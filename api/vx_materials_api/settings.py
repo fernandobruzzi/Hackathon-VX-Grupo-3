@@ -64,7 +64,7 @@ def check_local_shortcuts() -> None:
         )
     )
     if local_test_session_enabled() and (app_env() != LOCAL_ENV or deployed):
-        raise RuntimeError("LOCAL_TEST_SESSION só pode ser ativada com APP_ENV=local")
+        raise RuntimeError("Sessões de teste exigem APP_ENV=local e não podem rodar na AWS")
     origin = urlsplit(application_origin())
     if local_test_session_enabled() and (
         origin.scheme not in {"http", "https"}

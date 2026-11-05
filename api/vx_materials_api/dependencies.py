@@ -31,3 +31,7 @@ def current_identity(request: Request, db: Annotated[Session, Depends(db_session
 
 def agent_client(request: Request) -> AgentClient:
     return request.app.state.agent_client
+
+
+# Aprovações e chat compartilham a mesma sessão e a mesma transação por requisição.
+get_db = db_session

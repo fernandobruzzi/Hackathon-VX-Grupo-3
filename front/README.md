@@ -32,8 +32,7 @@ no deploy nem no fluxo de sessão. Consequências:
 
 - Sem SSR, route handlers nem middleware: tudo que fala com a API é client component.
 - Rotas dinâmicas (`/saneamento/[id]`) usam `generateStaticParams` com os mocks.
-  Na integração, trocar por uma rota estática com query string
-  (`/saneamento/revisao?id=…`) ou um catch-all servido pelo FastAPI.
+  A revisão conectada usa `/saneamento/revisao/?id=…`, compatível com UUIDs reais.
 
 ## Telas e papéis
 

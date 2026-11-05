@@ -71,6 +71,9 @@ def test_authenticated_writes_require_csrf_and_idempotency():
                 refs = {p.get("$ref") for p in operation["parameters"]}
                 assert "#/components/parameters/CsrfToken" in refs
                 assert "#/components/parameters/IdempotencyKey" in refs
+                if operation["tags"] == ["auth-local"]:
+                    assert {"localSessionCookie": [], "csrfToken": []} in operation["security"]
+                    continue
                 assert {"sessionCookie": [], "csrfToken": []} in operation["security"]
                 assert {"cognitoAccessToken": []} in operation["security"]
 

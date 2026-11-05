@@ -14,7 +14,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
-| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, local opaque sessions and configurable Cognito BFF; other flows in progress |
+| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue and transactional audit |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data, policy check and HTTP smoke test | Deploy/demo scripts remain placeholders; checks implemented |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
@@ -371,6 +371,8 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - `ranking_score` only orders results. It never authorizes a merge.
 - Packaging units without a known factor block automatic quantity consolidation.
 - Original stock balances are immutable, and total value must be conserved.
+- Approved consolidation links original snapshots to their principal, with explicit
+  conversion factors and sources. MCP inventory views follow these links.
 - NCM changes require fiscal approval.
 - Keep the original value and the applied rule on every transformation. Every enriched value records its source.
 
