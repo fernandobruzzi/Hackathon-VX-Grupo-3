@@ -9,6 +9,7 @@ Um turno passa por duas transações curtas, e o Agent é chamado entre elas, se
 Se o Agent falhar, a reserva é liberada sem mudar a versão, e nada da mensagem fica gravado.
 """
 
+import json
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -44,14 +45,58 @@ CONTEXT_KEYS = frozenset(
 
 
 SEARCH_TOOL = "search_similar_materials"
+# Verificação de duplicidade aceita pela API. Só a API grava: o Agent não escreve nesta chave.
+DUPLICATE_CHECK = "duplicate_check"
+_NOT_RUN = object()
 
 
-def _search_candidates(result: AgentRunResponse) -> list[dict[str, Any]] | None:
-    """Candidatos da busca executada neste turno, ou None se ela não rodou ou falhou."""
+def card_signature(card: MaterialCard) -> str:
+    """Classe e atributos preenchidos da ficha. O Agent calcula igual para decidir se busca de novo."""
+    filled = {name: value for name, value in card.attributes.items() if value}
+    return json.dumps({"pdm_class_id": card.pdm_class_id, "attributes": filled}, sort_keys=True, ensure_ascii=False)
+
+
+def _search_candidates(result: AgentRunResponse) -> list[dict[str, Any]] | None | object:
+    """Candidatos da busca deste turno; None se ela falhou; `_NOT_RUN` se o turno não buscou."""
     for call in reversed(result.tool_calls):
         if call.name == SEARCH_TOOL:
             return call.result.get("candidates", []) if call.status == "SUCCEEDED" else None
-    return None
+    return _NOT_RUN
+
+
+def effective_candidates(
+    result: AgentRunResponse, saved: dict[str, Any] | None
+) -> tuple[list[dict[str, Any]] | None, bool]:
+    """Candidatos que valem para o turno e se vieram da verificação salva.
+
+    Sem busca neste turno, a verificação salva só vale se a ficha for a mesma que a gerou. Caso
+    contrário, o turno conta como sem verificação e o pedido não fica pronto.
+    """
+    search = _search_candidates(result)
+    if search is not _NOT_RUN:
+        return search, False
+    if saved and saved.get("signature") == card_signature(result.material_card):
+        return saved.get("candidates", []), True
+    return None, False
+
+
+def validate_action(context: dict[str, Any], request: ChatMessageRequest) -> None:
+    """Ações só valem para códigos oferecidos no turno anterior desta conversa."""
+    action = request.action
+    if action is None:
+        return
+    offered = context.get("offered_material_codes", [])
+    if action.type == "PICK_CANDIDATE" and action.material_code not in offered:
+        raise ApiProblem(422, "INVALID_ACTION", "Esse código não foi oferecido nesta conversa.")
+    if action.type == "DISMISS_CANDIDATES" and not offered:
+        raise ApiProblem(422, "INVALID_ACTION", "Não há itens parecidos para descartar nesta conversa.")
+
+
+def _agent_duplicate_check(saved: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not saved:
+        return None
+    keys = ("signature", "status", "existing", "similar_candidates")
+    return {key: saved[key] for key in keys if saved.get(key) is not None}
 
 
 def _code_to_use(candidate: dict[str, Any]) -> str | None:
@@ -85,6 +130,7 @@ def turn_status(
     search: list[dict[str, Any]] | None,
     dismissed: list[str],
     offered_before: list[str],
+    saved_existing_code: str | None = None,
 ) -> str:
     """Status do turno, derivado pela API da ficha e da busca deste turno, nunca informado pelo Agent.
 
@@ -94,7 +140,8 @@ def turn_status(
     verified = {_code_to_use(c) for c in search or [] if c.get("identity_verified") and _code_to_use(c)}
     if card.existing is not None:
         chosen = {_code_to_use(c) for c in search or [] if c.get("material_code") in offered_before}
-        return "EXISTING" if card.existing.material_code in (verified | chosen) - {None} else "NEEDS_INPUT"
+        accepted = (verified | chosen | {saved_existing_code}) - {None}
+        return "EXISTING" if card.existing.material_code in accepted else "NEEDS_INPUT"
     if card.validation_status == "OUT_OF_SCOPE":
         return "OUT_OF_SCOPE"
     if search is None or verified:
@@ -174,15 +221,19 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
         )
         if duplicate is not None:
             raise _conflict("DUPLICATE_MESSAGE", "Esta mensagem já foi processada.")
+        validate_action(session.context or {}, request)
         # `updated_at` muda junto (onupdate) e marca o horário da reserva.
         session.active_turn_id = turn_id
 
+    if request.session_id is None:
+        validate_action({}, request)
     context = session.context or {}
     payload = {
         "turn_id": str(turn_id),
         "session_id": str(session.id),
         "session_version": session.version,
         "message": request.message,
+        "action": request.action.model_dump() if request.action else None,
         "context": {
             "pdm_version": session.pdm_version or DEFAULT_PDM_VERSION,
             "ncm_version": session.ncm_version or NCM_VERSION,
@@ -191,6 +242,7 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
             "confirmed_attributes": context.get("confirmed_attributes", {}),
             "offered_material_codes": context.get("offered_material_codes", []),
             "dismissed_material_codes": context.get("dismissed_material_codes", []),
+            "duplicate_check": _agent_duplicate_check(context.get(DUPLICATE_CHECK)),
         },
     }
     reservation = Reservation(session.id, turn_id, session.version, payload)
@@ -242,13 +294,25 @@ def complete_turn(
     )
     context = session.context or {}
     patch = {key: value for key, value in result.context_patch.items() if key in CONTEXT_KEYS}
-    search = _search_candidates(result)
+    saved = context.get(DUPLICATE_CHECK)
+    search, reused = effective_candidates(result, saved)
     offered, dismissed = validated_candidate_codes(context, patch, search)
     patch |= {"offered_material_codes": offered, "dismissed_material_codes": dismissed}
-    status = turn_status(result.material_card, search, dismissed, context.get("offered_material_codes", []))
+    saved_existing = ((saved or {}).get("existing") or {}).get("material_code") if reused else None
+    status = turn_status(
+        result.material_card, search, dismissed, context.get("offered_material_codes", []), saved_existing
+    )
     # O envio só é liberado quando a API concorda que o pedido está pronto.
     material_card = result.material_card.model_copy(update={"can_submit": status == "READY_TO_SUBMIT"})
     card = material_card.model_dump(mode="json")
+    if search is not None:
+        patch[DUPLICATE_CHECK] = {
+            "signature": card_signature(material_card),
+            "candidates": search,
+            "status": material_card.duplicate_check_status,
+            "existing": card.get("existing") if status == "EXISTING" else None,
+            "similar_candidates": card["similar_candidates"],
+        }
     session.context = {**context, **patch, "material_card": card}
     session.version += 1
     session.active_turn_id = None

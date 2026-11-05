@@ -10,12 +10,20 @@ class _Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ChatAction(_Contract):
+    """Ação dos botões do front. O texto exibido no botão não importa: vale o tipo e o código."""
+
+    type: Literal["PICK_CANDIDATE", "DISMISS_CANDIDATES"]
+    material_code: str | None = None
+
+
 class ChatMessageRequest(_Contract):
     session_id: UUID | None
     client_message_id: UUID
     expected_session_version: int = Field(ge=0)
     message: str = Field(min_length=1)
     center_code: str
+    action: ChatAction | None = None
 
 
 class ToolCall(_Contract):
