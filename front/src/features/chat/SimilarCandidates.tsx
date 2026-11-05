@@ -1,10 +1,10 @@
 import { Button, Card, Code } from "@/components/ui";
 import { MaterialStatusBadge } from "@/components/ui/status";
-import type { SimilarCandidate } from "@/types/api";
+import type { ChatAction, SimilarCandidate } from "@/types/api";
 
-/** Frases fixas que o Agent reconhece. Mudanças aqui precisam acompanhar o Agent. */
-export const DISMISS_MESSAGE = "Nenhum desses é o meu item";
-export const pickMessage = (code: string) => `É o item ${code}`;
+/** Texto que aparece na conversa. O Agent decide pela ação, então o texto pode mudar livremente. */
+const DISMISS_MESSAGE = "Nenhum desses é o meu item";
+const pickMessage = (code: string) => `É o item ${code}`;
 
 /** Itens parecidos sem identidade verificada: o solicitante confirma um deles ou descarta todos. */
 export function SimilarCandidates({
@@ -13,7 +13,7 @@ export function SimilarCandidates({
   disabled,
 }: {
   candidates: SimilarCandidate[];
-  onReply: (message: string) => void;
+  onReply: (message: string, action: ChatAction) => void;
   disabled?: boolean;
 }) {
   return (
@@ -44,7 +44,12 @@ export function SimilarCandidates({
               size="sm"
               className="self-start"
               disabled={disabled}
-              onClick={() => onReply(pickMessage(item.material_code))}
+              onClick={() =>
+                onReply(pickMessage(item.material_code), {
+                  type: "PICK_CANDIDATE",
+                  material_code: item.material_code,
+                })
+              }
             >
               É este
             </Button>
@@ -56,7 +61,7 @@ export function SimilarCandidates({
         size="sm"
         className="self-start"
         disabled={disabled}
-        onClick={() => onReply(DISMISS_MESSAGE)}
+        onClick={() => onReply(DISMISS_MESSAGE, { type: "DISMISS_CANDIDATES" })}
       >
         Nenhum desses é o meu item
       </Button>

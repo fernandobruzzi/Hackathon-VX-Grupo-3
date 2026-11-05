@@ -6,7 +6,7 @@ import { Button, Eyebrow, Select, Tabs, Seta } from "@/components/ui";
 import { cn } from "@/lib/format";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
+import type { ChatAction, ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
 import { MaterialCard } from "./MaterialCard";
 import { ToolCallsPanel } from "./ToolCallsPanel";
 
@@ -41,7 +41,7 @@ export function ChatPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, busy]);
 
-  const send = async (msg: string) => {
+  const send = async (msg: string, action?: ChatAction) => {
     const content = msg.trim();
     if (!content || busy) return;
     const clientMessageId = crypto.randomUUID();
@@ -60,6 +60,7 @@ export function ChatPage() {
           expected_session_version: session?.version ?? 0,
           message: content,
           center_code: center,
+          ...(action ? { action } : {}),
         },
       });
       setSession({ id: res.session_id, version: res.session_version });
