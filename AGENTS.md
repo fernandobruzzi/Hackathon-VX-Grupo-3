@@ -415,6 +415,8 @@ uv run python -m vx_materials_mcp.evaluation --repository hybrid_embeddings_v1
 
 That runs from `mcp/`, needs `DATABASE_URL` and an index built with the same `EMBEDDING_REPOSITORY`. The local model runs with `docker compose --profile embeddings up -d embeddings`.
 
+The index version holds the PDM label and the workbook's SHA-256, each algorithm's name and `revision`, `IDENTITY_RULES_VERSION` and, when set, the embedding model's signature. Bump `revision` when you change a classifier's or extractor's rules or tables, `IDENTITY_RULES_VERSION` when identity rules change, and `INDEX_FORMAT` when the search text or tokens change. After any of these, or a new PDM workbook, search answers "Indice de busca ausente" until you rebuild the index with `docker compose run --rm batch`, or `uv run vx-back index` from `back/` with the `batch_user` connection.
+
 The Agent passes the caller validated from the internal token to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock. The token carries the user's permissions and authorized centers, and stock outside those centers never reaches the chat.
 
 In chat, a complete card is ready to submit only after the search ran, found no item with the same identity, and the requester dismissed every similar item shown. If the search fails, the turn stays `NEEDS_INPUT`, because merging different items costs more than waiting. A verified match shows the active code instead: a blocked item points to its active target, and an obsolete one is never offered.
