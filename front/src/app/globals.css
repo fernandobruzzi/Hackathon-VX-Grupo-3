@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/* Tema por atributo: <html data-theme="dark"> */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ===== Tokens — do-fundo-do-poco-design-system (identidade "Ascensão") ===== */
+:root {
+  --ink: #f5f3ed;
+  --surface: #ffffff;
+  --surface-2: #e3ded2;
+  --text: #102c26;
+  --text-muted: #4f5e57;
+  --verde: #0a6e48;        /* verde como TEXTO (5,7:1 no off-white) */
+  --verde-glow: #085a3b;
+  --esmeralda: #16c784;    /* forma: seta, barras, CTA — nunca texto no claro */
+  --on-esmeralda: #102c26;
+  --profundo: #102c26;     /* blocos de destaque */
+  --apoio: #0d4939;
+  --on-profundo: #f5f3ed;
+  --serie-1: #0c8a5a;
+  --alerta: #b3261e;
+  --aviso: #8a5a00;
+  --info: #1d5fa6;
+  --focus: #0a6e48;
+}
+[data-theme="dark"] {
+  --ink: #102c26;
+  --surface: #173b33;
+  --surface-2: #24503f;
+  --text: #f5f3ed;
+  --text-muted: #a9bdb3;
+  --verde: #16c784;
+  --verde-glow: #43d79b;
+  --profundo: #0d4939;
+  --serie-1: #16c784;
+  --alerta: #ff8a7a;
+  --aviso: #f5b35c;
+  --info: #8cbcf5;
+  --focus: #16c784;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-verde: var(--verde);
+  --color-verde-glow: var(--verde-glow);
+  --color-esmeralda: var(--esmeralda);
+  --color-on-esmeralda: var(--on-esmeralda);
+  --color-profundo: var(--profundo);
+  --color-apoio: var(--apoio);
+  --color-on-profundo: var(--on-profundo);
+  --color-serie-1: var(--serie-1);
+  --color-alerta: var(--alerta);
+  --color-aviso: var(--aviso);
+  --color-info: var(--info);
+  --color-focus: var(--focus);
+
+  --font-sans: var(--font-montserrat), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+}
+
+html { background: var(--ink); color: var(--text); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
