@@ -33,3 +33,64 @@ class NormalizationRepository(Protocol):
     def normalize_unit(self, raw: str | None) -> NormalizedField: ...
 
     def normalize_text(self, raw: str | None) -> NormalizedField: ...
+
+
+class ConditionOperator(StrEnum):
+    ALWAYS = "ALWAYS"
+    EQUALS = "EQUALS"
+    IN = "IN"
+    NOT_IN = "NOT_IN"
+
+
+# Sujeito de condicoes que dependem do nome do item (ex.: FLANGE), nao de um atributo.
+ITEM_NAME_SUBJECT = "SUBSTANTIVO"
+
+
+@dataclass(frozen=True)
+class Condition:
+    """Condicao controlada: nunca uma expressao livre vinda do arquivo."""
+
+    operator: ConditionOperator = ConditionOperator.ALWAYS
+    subject: str | None = None
+    values: tuple[str, ...] = ()
+
+
+class IdentityMode(StrEnum):
+    TECHNICAL_ATTRIBUTES = "TECHNICAL_ATTRIBUTES"
+    MANUFACTURER_REFERENCE = "MANUFACTURER_REFERENCE"
+
+
+@dataclass(frozen=True)
+class PdmAttribute:
+    name: str
+    order: int
+    required: bool
+    applies_when: Condition
+    format: str
+    allowed_values: tuple[str, ...] | None
+
+
+@dataclass(frozen=True)
+class NcmReference:
+    codes: tuple[str, ...]
+    rule: str
+
+
+@dataclass(frozen=True)
+class PdmClass:
+    id: str
+    noun: str | None  # None quando o nome vem de uma aba de substantivos
+    qualifiers: tuple[str, ...]
+    item_names: tuple[str, ...]
+    group: str
+    default_unit: str
+    identity_mode: IdentityMode
+    attributes: tuple[PdmAttribute, ...]
+    ncm_references: tuple[NcmReference, ...]
+
+
+@dataclass(frozen=True)
+class PdmCatalog:
+    version: str
+    source_sha256: str
+    classes: dict[str, PdmClass]
