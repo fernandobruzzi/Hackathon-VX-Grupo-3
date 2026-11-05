@@ -1,1 +1,254 @@
-"""Pipeline de saneamento em lote. Ver #19."""
+"""Saneamento: analisa os materiais e propõe unificações. Nada é aplicado: quem decide é uma pessoa.
+
+Etapas: classe do PDM, extração de atributos, validação e identidade, candidatos, verificação e
+proposta. Cada etapa vem de um repositório trocável por configuração.
+"""
+
+import csv
+import hashlib
+import json
+import os
+import re
+import uuid
+from collections import Counter
+from collections.abc import Iterable
+from decimal import Decimal
+
+from sqlalchemy import create_engine
+
+from domain.contracts import (
+    AnalyzedMaterial,
+    CandidateGroup,
+    CandidateRepository,
+    ClassificationInput,
+    ClassificationRepository,
+    ExtractionRepository,
+    FieldStatus,
+    IdentityMode,
+    MaterialRecord,
+    MergeProposal,
+    NormalizationRepository,
+    PdmCatalog,
+)
+from domain.identity import compare_attributes, partial_identity_key
+from domain.pdm_formatter import format_description
+from domain.pdm_loader import load_pdm
+from domain.pdm_validator import validate_pdm
+from repositories.batch_repository import read_materials, save_proposals, single_tenant
+from repositories.candidates import get_candidate_repository
+from repositories.classification import get_classification_repository
+from repositories.extraction import get_extraction_repository
+from repositories.normalization import get_normalization_repository
+
+_REDIRECT_PREFIX = re.compile(r"^NAO UTILIZAR - USAR COD \d+\s*-\s*")
+_NAMESPACE = uuid.UUID("0e1f2a54-9d3c-4b57-8a26-7c41d2f6b390")
+
+
+def analyze_material(
+    record: MaterialRecord,
+    catalog: PdmCatalog,
+    classifier: ClassificationRepository,
+    extractor: ExtractionRepository,
+) -> AnalyzedMaterial:
+    description = _REDIRECT_PREFIX.sub("", record.description)
+    classification = classifier.classify(
+        ClassificationInput(description, record.short_description or None, record.group or None)
+    )
+    class_id = classification.pdm_class_id
+    if class_id is None:
+        return AnalyzedMaterial(record, None, None, {}, None)
+    pdm_class = catalog.classes[class_id]
+    item_name = _item_name(pdm_class.item_names, [evidence.matched_name for evidence in classification.evidence])
+    extraction = extractor.extract(
+        pdm_class,
+        description,
+        manufacturer=record.manufacturer or None,
+        manufacturer_reference=record.reference or None,
+    )
+    attributes = {name: value.value for name, value in extraction.attributes.items()}
+    validation = validate_pdm(catalog, class_id, attributes, item_name=item_name)
+    identity_key = validation.identity_key or partial_identity_key(pdm_class, attributes)
+    return AnalyzedMaterial(record, class_id, item_name, attributes, identity_key)
+
+
+def _item_name(item_names: tuple[str, ...], evidence: Iterable[str]) -> str | None:
+    if len(item_names) == 1:
+        return item_names[0]
+    matches = [name for name in evidence if name in item_names]
+    return max(matches, key=len) if matches else None
+
+
+def build_proposal(
+    group: CandidateGroup,
+    materials: dict[str, AnalyzedMaterial],
+    catalog: PdmCatalog,
+    normalizer: NormalizationRepository,
+) -> MergeProposal:
+    members = [materials[code] for code in group.codes]
+    pdm_class = catalog.classes[members[0].pdm_class_id]
+    primary = _suggest_primary(members)
+    conflicts: list[str] = []
+    if not group.identity_verified:
+        conflicts.append("IDENTIDADE_NAO_VERIFICADA: faltam atributos para confirmar pela regra do PDM")
+
+    units = [normalizer.normalize_unit(member.record.unit) for member in members]
+    if any(unit.status is FieldStatus.UNRESOLVED for unit in units):
+        conflicts.append("UNIDADE_SEM_FATOR: consolidacao de quantidade bloqueada ate definir a conversao")
+    elif len({unit.value for unit in units}) > 1:
+        conflicts.append("UNIDADES_DIFERENTES: consolidacao de quantidade bloqueada ate definir a conversao")
+
+    ncms = [normalizer.normalize_ncm(member.record.ncm).value for member in members]
+    fiscal_required = len(set(ncms)) > 1
+    if fiscal_required:
+        conflicts.append("NCM_DIVERGENTE: exige revisao fiscal")
+
+    attributes = {name: value for name, value in primary.attributes.items()}
+    for member in members:
+        for name, value in member.attributes.items():
+            attributes.setdefault(name, value)
+    for other in members:
+        if other is not primary:
+            differing, _ = compare_attributes(pdm_class, primary.attributes, other.attributes)
+            conflicts.extend(f"ATRIBUTO_DIVERGENTE: {name}" for name in differing)
+    conflicts = list(dict.fromkeys(conflicts))
+
+    item_name = primary.item_name or next((m.item_name for m in members if m.item_name), None)
+    changeset = {
+        "match_type": group.match_type.value,
+        "identity_verified": group.identity_verified,
+        "identity_key": primary.identity_key if group.identity_verified else None,
+        "identity_mode": IdentityMode(pdm_class.identity_mode).value,
+        "pdm_class_id": pdm_class.id,
+        "pdm_version": catalog.version,
+        "primary_material_code": primary.record.code,
+        "blocked_material_codes": [m.record.code for m in members if m is not primary],
+        "conflicts": conflicts,
+        "ranking_score": group.score,
+        "after": {
+            "description": format_description(pdm_class, item_name, attributes) if item_name else None,
+            "attributes": attributes,
+        },
+    }
+    payload = json.dumps(changeset, sort_keys=True, ensure_ascii=False)
+    digest = hashlib.sha256(payload.encode()).hexdigest()
+    return MergeProposal(
+        id=str(uuid.uuid5(_NAMESPACE, f"{catalog.version}|{group.match_type.value}|{'|'.join(group.codes)}")),
+        proposal_type="MERGE",
+        material_codes=group.codes,
+        suggested_primary_code=primary.record.code,
+        members=tuple(_member(member) for member in members),
+        changeset=changeset,
+        changeset_hash=digest,
+        conflicts=tuple(conflicts),
+        fiscal_review_required=fiscal_required,
+        ranking_score=group.score,
+    )
+
+
+def _suggest_primary(members: list[AnalyzedMaterial]) -> AnalyzedMaterial:
+    """Mais estoque em valor; no empate, o código menor, para o resultado ser repetível."""
+    return min(members, key=lambda m: (-Decimal(m.record.total_value or "0"), m.record.code))
+
+
+def _member(member: AnalyzedMaterial) -> dict:
+    record = member.record
+    return {
+        "material_code": record.code,
+        "observed_version": record.version,
+        "status": record.status,
+        "description": record.description,
+        "unit": record.unit,
+        "ncm": record.ncm or None,
+        "value_brl": record.total_value,
+        "inventory": list(record.inventory),
+        "attributes": member.attributes,
+    }
+
+
+def propose_merges(
+    records: Iterable[MaterialRecord],
+    catalog: PdmCatalog,
+    classifier: ClassificationRepository,
+    extractor: ExtractionRepository,
+    candidates: CandidateRepository,
+    normalizer: NormalizationRepository,
+) -> list[MergeProposal]:
+    analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
+    by_code = {material.record.code: material for material in analyzed}
+    groups = candidates.find(analyzed, catalog)
+    proposals = [build_proposal(group, by_code, catalog, normalizer) for group in groups]
+    return sorted(proposals, key=lambda proposal: (-proposal.ranking_score, proposal.material_codes))
+
+
+def read_csv_records(path: str) -> list[MaterialRecord]:
+    with open(path, encoding="utf-8-sig", newline="") as source:
+        return [
+            MaterialRecord(
+                code=row["CODIGO_MATERIAL"],
+                status=row["STATUS"],
+                description=row["DESCRICAO_LONGA"],
+                short_description=row["DESCRICAO_CURTA"],
+                group=row["GRUPO_MERCADORIA"],
+                manufacturer=row["FABRICANTE"],
+                reference=row["REFERENCIA_FABRICANTE"],
+                unit=row["UNIDADE_MEDIDA"],
+                ncm=row["NCM"],
+                total_value=str(Decimal(row["ESTOQUE_ATUAL"]) * Decimal(row["PRECO_MEDIO_UNITARIO"])),
+            )
+            for row in csv.DictReader(source)
+        ]
+
+
+def _catalog(pdm_workbook: str | None) -> PdmCatalog:
+    default = "data/desafio01/03_padrao_cadastro_PDM.xlsx"
+    return load_pdm(pdm_workbook or os.environ.get("PDM_WORKBOOK_PATH", default))
+
+
+def _propose(records: list[MaterialRecord], catalog: PdmCatalog, repository_name: str | None) -> list[MergeProposal]:
+    return propose_merges(
+        records,
+        catalog,
+        get_classification_repository(catalog),
+        get_extraction_repository(),
+        get_candidate_repository(repository_name),
+        get_normalization_repository(),
+    )
+
+
+def summarize(proposals: list[MergeProposal]) -> dict:
+    conflicts: Counter[str] = Counter()
+    for proposal in proposals:
+        conflicts.update(conflict.split(":")[0] for conflict in proposal.conflicts)
+    return {
+        "proposals": len(proposals),
+        "materials": len({code for proposal in proposals for code in proposal.material_codes}),
+        "identity_verified": sum(proposal.changeset["identity_verified"] for proposal in proposals),
+        "fiscal_review_required": sum(proposal.fiscal_review_required for proposal in proposals),
+        "conflicts": dict(conflicts.most_common()),
+    }
+
+
+def sanitize_report(path: str, pdm_workbook: str | None = None, repository_name: str | None = None) -> dict:
+    catalog = _catalog(pdm_workbook)
+    return summarize(_propose(read_csv_records(path), catalog, repository_name))
+
+
+def run_sanitize(
+    pdm_workbook: str | None = None,
+    job_id: str | None = None,
+    repository_name: str | None = None,
+    database_url: str | None = None,
+) -> dict:
+    url = database_url or os.environ.get("DATABASE_URL")
+    if not url:
+        raise RuntimeError("Defina DATABASE_URL com a credencial batch_user")
+    engine = create_engine(url)
+    try:
+        catalog = _catalog(pdm_workbook)
+        tenant_id = single_tenant(engine)
+        records = read_materials(engine, tenant_id)
+        proposals = _propose(records, catalog, repository_name)
+        inserted = save_proposals(engine, proposals, records, tenant_id, job_id)
+    finally:
+        engine.dispose()
+    return {**summarize(proposals), "inserted": inserted}
