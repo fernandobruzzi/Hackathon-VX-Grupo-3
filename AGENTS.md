@@ -18,7 +18,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo reset implemented |
 | `deployment/` | Explicit AWS configuration and deployment runbook | Local preparation; account validation still required |
-| `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
+| `front/pitch/` | Market analysis, ROI scenarios, timed script, sources and rehearsal plan | Documents ready; integrated rehearsals and final metrics pending |
 | `design/` | Presentation template and design system, source for brand values | Reference |
 | `Dockerfile`, `docker-compose.yml`, `.env.example` | Images `api`, `agent`, `batch`, and local setup | Ready for integration |
 | `data/` | Challenge data kit ([details](data/README.md)) | Read-only input |

@@ -1,0 +1,114 @@
+{
+  "retrieved_on": "2026-11-05",
+  "source_url": "https://servicodados.ibge.gov.br/api/v3/agregados/10452/periodos/2024/variaveis/630?localidades=N1%5Ball%5D&classificacao=9117%5B99735%2C99736%2C99737%5D%7C319%5B7830%5D",
+  "metadata_url": "https://servicodados.ibge.gov.br/api/v3/agregados/10452/metadados",
+  "source": "IBGE / PIA-Empresa / SIDRA 10452",
+  "response": [
+    {
+      "id": "630",
+      "variavel": "Número de empresas",
+      "unidade": "Unidades",
+      "resultados": [
+        {
+          "classificacoes": [
+            {
+              "id": "9117",
+              "nome": "Tipo de indústria",
+              "categoria": {
+                "99735": "Total"
+              }
+            },
+            {
+              "id": "319",
+              "nome": "Faixas de pessoal ocupado",
+              "categoria": {
+                "7830": "500 ou mais"
+              }
+            }
+          ],
+          "series": [
+            {
+              "localidade": {
+                "id": "1",
+                "nivel": {
+                  "id": "N1",
+                  "nome": "Brasil"
+                },
+                "nome": "Brasil"
+              },
+              "serie": {
+                "2024": "2036"
+              }
+            }
+          ]
+        },
+        {
+          "classificacoes": [
+            {
+              "id": "9117",
+              "nome": "Tipo de indústria",
+              "categoria": {
+                "99736": "Indústrias extrativas"
+              }
+            },
+            {
+              "id": "319",
+              "nome": "Faixas de pessoal ocupado",
+              "categoria": {
+                "7830": "500 ou mais"
+              }
+            }
+          ],
+          "series": [
+            {
+              "localidade": {
+                "id": "1",
+                "nivel": {
+                  "id": "N1",
+                  "nome": "Brasil"
+                },
+                "nome": "Brasil"
+              },
+              "serie": {
+                "2024": "67"
+              }
+            }
+          ]
+        },
+        {
+          "classificacoes": [
+            {
+              "id": "9117",
+              "nome": "Tipo de indústria",
+              "categoria": {
+                "99737": "Indústrias de transformação"
+              }
+            },
+            {
+              "id": "319",
+              "nome": "Faixas de pessoal ocupado",
+              "categoria": {
+                "7830": "500 ou mais"
+              }
+            }
+          ],
+          "series": [
+            {
+              "localidade": {
+                "id": "1",
+                "nivel": {
+                  "id": "N1",
+                  "nome": "Brasil"
+                },
+                "nome": "Brasil"
+              },
+              "serie": {
+                "2024": "1969"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
