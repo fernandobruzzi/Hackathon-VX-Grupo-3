@@ -2,57 +2,27 @@
 
 Rodar em back/: `uv run python -m pipelines.measure_extraction`.
 
-A classe aqui é aproximada, pelo início da descrição, só para medir. A classificação real é a #15,
-e esse número é um indicativo, não a precisão da extração.
+Usa o classificador real, então materiais sem classe contam contra a cobertura. Esse número é um
+indicativo, não a precisão da extração.
 """
 
 import argparse
 import csv
 import json
 import re
-import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from domain.contracts import PdmCatalog, PdmClass, ValidationStatus
+from domain.contracts import ClassificationInput, ClassificationRepository, PdmCatalog, PdmClass, ValidationStatus
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import is_valid_value, validate_pdm
+from repositories.classification import get_classification_repository
 from repositories.extraction import get_extraction_repository
 
 DATA = Path(__file__).parents[2] / "data" / "desafio01"
-_ABBREVIATIONS = {
-    "ALLEN": "INTERNO",
-    "AUTO-COMPENSADOR": "AUTOCOMPENSADOR",
-    "AUTOCOMP": "AUTOCOMPENSADOR",
-    "BOTINA": "CALCADO",
-    "CONDUTOR": "CABO",
-    "ELET": "ELETRICO",
-    "ESF": "ESFERAS",
-    "ESFERA": "ESFERAS",
-    "FILT": "FILTRO",
-    "HID": "HIDRAULICA",
-    "HIDR": "HIDRAULICA",
-    "MANG": "MANGUEIRA",
-    "MANG.": "MANGUEIRA",
-    "MONT": "MONTADA",
-    "ORING": "O-RING",
-    "PARAF": "PARAFUSO",
-    "PARAF.": "PARAFUSO",
-    "PROTECAO": "SEGURANCA",
-    "RIG": "RIGIDO",
-    "ROL": "ROLAMENTO",
-    "ROL.": "ROLAMENTO",
-    "SEXT": "SEXTAVADO",
-    "SEXT.": "SEXTAVADO",
-    "SEXTAVADA": "SEXTAVADO",
-    "T": "TE",
-    "VALV": "VALVULA",
-    "VALV.": "VALVULA",
-}
-
-
 _REDIRECT = re.compile(r"USAR COD (\d+)\s*-\s*(.*)")
+_REDIRECT_PREFIX = re.compile(r"^NAO UTILIZAR - USAR COD \d+\s*-\s*")
 
 
 @dataclass(frozen=True)
@@ -80,32 +50,31 @@ def read_rows(path: Path = DATA / "01_base_materiais.csv") -> list[Row]:
         ]
 
 
-def approximate_class(catalog: PdmCatalog, row: Row) -> tuple[PdmClass, str] | None:
-    """Maior nome de item do grupo cujas palavras aparecem no início da descrição."""
-    decomposed = unicodedata.normalize("NFKD", re.split(r"[,;:]| - ", row.description)[0])
-    head = "".join(c for c in decomposed if not unicodedata.combining(c)).upper()
-    words = {_ABBREVIATIONS.get(word, word) for word in head.split()}
-    best = None
-    for pdm_class in catalog.classes.values():
-        if pdm_class.group == row.group:
-            for name in pdm_class.item_names:
-                if set(name.split()) <= words and (best is None or len(name) > len(best[1])):
-                    best = (pdm_class, name)
-    if best is None and row.group in ("FIL01", "SOB01"):
-        pdm_class = next(c for c in catalog.classes.values() if c.group == row.group)
+def classify_row(
+    catalog: PdmCatalog, classifier: ClassificationRepository, row: Row
+) -> tuple[PdmClass, str | None] | None:
+    """Classe e item, pelo mesmo classificador do saneamento."""
+    description = _REDIRECT_PREFIX.sub("", row.description)
+    result = classifier.classify(ClassificationInput(description, None, row.group))
+    if result.pdm_class_id is None:
+        return None
+    pdm_class = catalog.classes[result.pdm_class_id]
+    if len(pdm_class.item_names) == 1:
         return pdm_class, pdm_class.item_names[0]
-    return best
+    names = [evidence.matched_name for evidence in result.evidence if evidence.matched_name in pdm_class.item_names]
+    return pdm_class, max(names, key=len) if names else None
 
 
 def measure(catalog: PdmCatalog, rows: list[Row], repository_name: str | None = None) -> dict:
     repository = get_extraction_repository(repository_name)
+    classifier = get_classification_repository(catalog)
     statuses: Counter[str] = Counter()
     by_group: dict[str, Counter[str]] = defaultdict(Counter)
     missing: Counter[str] = Counter()
     rules: Counter[str] = Counter()
     invalid_values = 0
     for row in rows:
-        classified = approximate_class(catalog, row)
+        classified = classify_row(catalog, classifier, row)
         if classified is None:
             statuses["SEM_CLASSE"] += 1
             by_group[row.group]["SEM_CLASSE"] += 1
@@ -147,6 +116,7 @@ def _reference_key(value: str) -> str:
 def measure_against_columns(catalog: PdmCatalog, rows: list[Row], repository_name: str | None = None) -> dict:
     """Extrai só da descrição, escondendo as colunas, e usa as colunas como gabarito."""
     repository = get_extraction_repository(repository_name)
+    classifier = get_classification_repository(catalog)
     report = {}
     for attribute, column, same in (
         ("FABRICANTE", "manufacturer", str.__eq__),
@@ -157,7 +127,7 @@ def measure_against_columns(catalog: PdmCatalog, rows: list[Row], repository_nam
             truth = getattr(row, column)
             if not truth or row.group not in ("FIL01", "SOB01"):
                 continue
-            classified = approximate_class(catalog, row)
+            classified = classify_row(catalog, classifier, row)
             if classified is None or attribute not in {a.name for a in classified[0].attributes}:
                 continue
             total += 1
@@ -181,10 +151,11 @@ def measure_known_pairs(catalog: PdmCatalog, rows: list[Row], repository_name: s
     Mede duplicidades encontradas. Não mede junções erradas, que exigem pares revisados por pessoas.
     """
     repository = get_extraction_repository(repository_name)
+    classifier = get_classification_repository(catalog)
     by_code = {row.code: row for row in rows}
 
     def identity(row: Row, description: str) -> tuple[str | None, str | None]:
-        classified = approximate_class(catalog, replace(row, description=description))
+        classified = classify_row(catalog, classifier, replace(row, description=description))
         if classified is None:
             return None, None
         pdm_class, item = classified
