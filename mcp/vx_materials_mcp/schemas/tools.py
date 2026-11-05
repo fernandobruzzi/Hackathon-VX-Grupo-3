@@ -91,3 +91,23 @@ class SimilarMaterials(_Contract):
     query_attributes: dict[str, str]
     index_version: str
     candidates: list[SimilarCandidate]
+
+
+class NcmConsistency(_Contract):
+    input_ncm: str | None
+    normalized_ncm: str | None
+    syntax_valid: bool
+    exists_in_snapshot: bool | None
+    valid_in_snapshot: bool | None
+    technical_consistency: str
+    suggested_ncm_codes: list[str]
+    missing_attributes: list[str]
+    rule_id: str
+    requires_fiscal_review: bool
+    fiscal_approval_status: str
+    pdm_version: str
+    pdm_source_sha256: str
+    reference_source: str
+    rules_version: str
+    evaluation_hash: str
+    pending_checks: list[str]

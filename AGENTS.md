@@ -458,6 +458,14 @@ CREATE DATABASE vx_materiais OWNER migration_user;
 
 Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATABASE_URL`, `API_DB_PASSWORD`, `BATCH_DB_PASSWORD` and `MCP_DB_PASSWORD` set. These steps haven't been run on RDS yet, so [#6](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/6) must confirm them and correct this section if needed.
 
+## NCM consistency
+
+`back/domain/ncm_rules.py` and the MCP tool `check_ncm_consistency` evaluate syntax
+and PDM coherence without writing materials or approving changes. Without the
+official snapshot (#30), existence and validity are unknown, never inferred from
+the PDM. Evaluation hashes bind inputs and reference versions. Approval integration
+with #20 remains pending; see `docs/ncm.md` for behavior and local verification.
+
 ## Attribute extraction
 
 Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. PSI converts to BAR only when it is a whole bar written the kit's way, rounded to 5 PSI (`145PSI` is `10BAR`). Other PSI values, like `150PSI`, stay empty instead of rounding into another item's pressure. Tests hold real base rows with results checked by hand, so add one with each new rule.
