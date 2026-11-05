@@ -156,6 +156,10 @@ def _matches(condition: Condition, actual: str) -> bool:
     return actual in condition.values
 
 
+def is_valid_value(attribute: PdmAttribute, value: str) -> bool:
+    return _check_value(attribute, value) is None
+
+
 def _check_value(attribute: PdmAttribute, value: str) -> InvalidAttribute | None:
     if attribute.allowed_values is not None:
         if value not in attribute.allowed_values:

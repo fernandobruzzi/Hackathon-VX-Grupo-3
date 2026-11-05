@@ -171,3 +171,34 @@ class ClassificationRepository(Protocol):
     name: str
 
     def classify(self, item: ClassificationInput) -> ClassificationResult: ...
+
+
+@dataclass(frozen=True)
+class ExtractedAttribute:
+    """Valor no padrão do PDM, sempre com o texto de origem e a regra aplicada."""
+
+    value: str
+    original: str
+    rule: str
+
+
+@dataclass(frozen=True)
+class ExtractionResult:
+    attributes: dict[str, ExtractedAttribute]
+    unresolved: tuple[str, ...] = ()  # trechos que nenhuma regra segura interpretou
+
+
+class ExtractionRepository(Protocol):
+    """Um algoritmo de extração. Para testar outro, crie um novo repositório em
+    repositories/extraction e registre-o; os existentes permanecem no código."""
+
+    name: str
+
+    def extract(
+        self,
+        pdm_class: PdmClass,
+        description: str,
+        *,
+        manufacturer: str | None = None,
+        manufacturer_reference: str | None = None,
+    ) -> ExtractionResult: ...
