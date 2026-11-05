@@ -78,7 +78,19 @@ uv run vx-bootstrap --data-dir ../data/desafio01
 
 Schema changes need a new migration in `api/vx_materials_api/db/migrations/versions/`. Tests fail if models and migrations differ.
 
-Measure attribute extraction on the whole base, from `back/`. Its class detection is approximate until #15 lands:
+Propose merges without writing anything, from `back/`:
+
+```bash
+uv run vx-back sanitize-report ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
+Write proposals to the local database, from the repo root, after `docker compose up`:
+
+```bash
+docker compose run --rm batch
+```
+
+Measure attribute extraction on the whole base, from `back/`:
 
 ```bash
 uv run python -m pipelines.measure_extraction
@@ -373,6 +385,12 @@ Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATA
 ## Attribute extraction
 
 Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. Tests hold real base rows with results checked by hand, so add one with each new rule.
+
+## Duplicate proposals
+
+The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.
+
+To change the default, measure against `back/tests/fixtures/merge_review.json`. Those pairs were reviewed by reading descriptions during development, so add pairs reviewed by people who know the materials whenever possible.
 
 ## Local first
 
