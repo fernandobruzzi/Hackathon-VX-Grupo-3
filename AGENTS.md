@@ -17,7 +17,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat turns with a local test session, rest placeholders |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
-| `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
+| `front/pitch/` | Market analysis, ROI scenarios, timed script, sources and rehearsal plan | Documents ready; integrated rehearsals and final metrics pending |
 | `design/` | Presentation template and design system, source for brand values | Reference |
 | `Dockerfile`, `docker-compose.yml`, `.env.example` | Images `api`, `agent`, `batch`, and local setup | Ready for integration |
 | `data/` | Challenge data kit ([details](data/README.md)) | Read-only input |
