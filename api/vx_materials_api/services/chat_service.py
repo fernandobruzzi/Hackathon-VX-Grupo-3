@@ -30,6 +30,8 @@ ABANDONED_TURN_AFTER = timedelta(seconds=60)
 CONTEXT_KEYS = frozenset(
     {
         "candidate_class_ids",
+        "dismissed_material_codes",
+        "offered_material_codes",
         "confirmed_attributes",
         "item_name",
         "missing_attributes",
@@ -40,17 +42,64 @@ CONTEXT_KEYS = frozenset(
 )
 
 
-def turn_status(card: MaterialCard) -> str:
-    """Status do turno, derivado pela API da ficha, nunca informado pelo Agent.
+SEARCH_TOOL = "search_similar_materials"
 
-    Pronto para envio exige ficha válida e duplicidade verificada sem item igual. Se a verificação
-    falhou, o pedido continua aguardando, mesmo com a ficha completa.
+
+def _search_candidates(result: AgentRunResponse) -> list[dict[str, Any]] | None:
+    """Candidatos da busca executada neste turno, ou None se ela não rodou ou falhou."""
+    for call in reversed(result.tool_calls):
+        if call.name == SEARCH_TOOL:
+            return call.result.get("candidates", []) if call.status == "SUCCEEDED" else None
+    return None
+
+
+def _code_to_use(candidate: dict[str, Any]) -> str | None:
+    if candidate.get("status") == "ATIVO":
+        return candidate.get("material_code")
+    if candidate.get("status") == "BLOQUEADO":
+        return candidate.get("active_code_target")
+    return None
+
+
+def validated_candidate_codes(
+    context: dict[str, Any], patch: dict[str, Any], search: list[dict[str, Any]] | None
+) -> tuple[list[str], list[str]]:
+    """Códigos oferecidos e descartados que a sessão aceita, sem confiar só no retorno do Agent.
+
+    Um descarte só vale para códigos oferecidos num turno anterior desta sessão. Um código oferecido
+    precisa ter vindo da busca deste turno.
     """
+    offered_before = context.get("offered_material_codes", [])
+    dismissed = list(context.get("dismissed_material_codes", []))
+    for code in patch.get("dismissed_material_codes", []):
+        if code in offered_before and code not in dismissed:
+            dismissed.append(code)
+    shown = {candidate.get("material_code") for candidate in search or []}
+    offered = [code for code in patch.get("offered_material_codes", []) if code in shown]
+    return offered, dismissed
+
+
+def turn_status(
+    card: MaterialCard,
+    search: list[dict[str, Any]] | None,
+    dismissed: list[str],
+    offered_before: list[str],
+) -> str:
+    """Status do turno, derivado pela API da ficha e da busca deste turno, nunca informado pelo Agent.
+
+    Pronto para envio exige ficha válida, busca executada, nenhum item com a mesma identidade e todos
+    os itens parecidos descartados pelo solicitante. Se a busca falhou, o pedido continua aguardando.
+    """
+    verified = {_code_to_use(c) for c in search or [] if c.get("identity_verified") and _code_to_use(c)}
     if card.existing is not None:
-        return "EXISTING"
+        chosen = {_code_to_use(c) for c in search or [] if c.get("material_code") in offered_before}
+        return "EXISTING" if card.existing.material_code in (verified | chosen) - {None} else "NEEDS_INPUT"
     if card.validation_status == "OUT_OF_SCOPE":
         return "OUT_OF_SCOPE"
-    if card.validation_status == "VALID" and card.duplicate_check_status == "NO_MATCH":
+    if search is None or verified:
+        return "NEEDS_INPUT"
+    similar = [c for c in search if _code_to_use(c) and c.get("material_code") not in dismissed]
+    if card.validation_status == "VALID" and card.duplicate_check_status == "NO_MATCH" and not similar:
         return "READY_TO_SUBMIT"
     return "NEEDS_INPUT"
 
@@ -140,6 +189,8 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
             "center_code": request.center_code,
             "history": _history(db, session.id),
             "confirmed_attributes": context.get("confirmed_attributes", {}),
+            "offered_material_codes": context.get("offered_material_codes", []),
+            "dismissed_material_codes": context.get("dismissed_material_codes", []),
         },
     }
     reservation = Reservation(session.id, turn_id, session.version, payload)
@@ -189,12 +240,16 @@ def complete_turn(
             ),
         ]
     )
+    context = session.context or {}
     patch = {key: value for key, value in result.context_patch.items() if key in CONTEXT_KEYS}
-    status = turn_status(result.material_card)
+    search = _search_candidates(result)
+    offered, dismissed = validated_candidate_codes(context, patch, search)
+    patch |= {"offered_material_codes": offered, "dismissed_material_codes": dismissed}
+    status = turn_status(result.material_card, search, dismissed, context.get("offered_material_codes", []))
     # O envio só é liberado quando a API concorda que o pedido está pronto.
     material_card = result.material_card.model_copy(update={"can_submit": status == "READY_TO_SUBMIT"})
     card = material_card.model_dump(mode="json")
-    session.context = {**(session.context or {}), **patch, "material_card": card}
+    session.context = {**context, **patch, "material_card": card}
     session.version += 1
     session.active_turn_id = None
     db.commit()

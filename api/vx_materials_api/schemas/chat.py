@@ -54,6 +54,13 @@ class ExistingMatch(_Contract):
     inventory: list[InventoryRow]
 
 
+class SimilarCandidate(_Contract):
+    material_code: str
+    status: Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]
+    pdm_description: str
+    active_code_target: str | None
+
+
 class MaterialCard(_Contract):
     pdm_class_id: str | None
     pdm_class_name: str | None = Field(default=None, exclude_if=lambda value: value is None)
@@ -64,6 +71,7 @@ class MaterialCard(_Contract):
     ncm: NcmCard
     duplicate_check_status: Literal["PENDING", "NO_MATCH", "MATCH_FOUND"]
     existing: ExistingMatch | None = Field(default=None, exclude_if=lambda value: value is None)
+    similar_candidates: list[SimilarCandidate] = Field(default_factory=list)
     can_submit: bool
 
 
