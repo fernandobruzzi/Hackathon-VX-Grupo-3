@@ -5,16 +5,16 @@ description: "Build an interactive web pitch deck (single HTML, live demos, pres
 
 # Interactive deck — Do Fundo do Poço (hackathon, identidade "Ascensão")
 
-Use when Miguel asks for a presentation, pitch or demo deck for the **Do Fundo do Poço** team (hackathon: engineering problems solved with AI). It is the team-branded sibling of `/interactive-deck`: same engine, HUD, keyframe PDF export and Vercel packaging, with the Do Fundo do Poço identity and pitch-length timing. For Miguel's personal/academic talks use `/interactive-deck`. If the team wants slides to edit by hand instead, point to `do-fundo-do-poco-apresentacoes/google-slides/` (a .pptx template to import into Google Slides).
+Use when anyone on the team asks for a presentation, pitch or demo deck for the **Do Fundo do Poço** team (hackathon: engineering problems solved with AI). It builds a web deck with presenter HUD, keyframe PDF export and Vercel packaging, in the Do Fundo do Poço identity with pitch-length timing. If the team wants slides to edit by hand instead, point to `design/apresentacoes/google-slides/` (a .pptx template to import into Google Slides).
 
 ## 0. Load the identity first (folders win over this file)
 
-On Miguel's Mac, under `~/Documents/3-Recursos/`:
-- `do-fundo-do-poco-apresentacoes/README.md` — the presentation identity: concept, layouts, classes, HUD, timing table.
-- `do-fundo-do-poco-apresentacoes/template/` — the starter deck (`index.html` with the full engine, fonts and logos embedded inline; `fonts/`, `assets/logo/` originals; `vercel.json`; `demo_check.py`). **Always start a new deck by copying this folder**, never from scratch.
-- `do-fundo-do-poco-design-system/README.md` — color and type tokens (source of truth for values); `assets/logo/` holds the vector logo kit (`01`–`13_*.svg`, `LEIA-ME.txt`).
+In this repository:
+- `design/apresentacoes/README.md` — the presentation identity: concept, layouts, classes, HUD, timing table.
+- `design/apresentacoes/template/` — the starter deck (`index.html` with the full engine, fonts and logos embedded inline; `fonts/`, `assets/logo/` originals; `vercel.json`; `demo_check.py`). **Always start a new deck by copying this folder**, never from scratch.
+- `design/design-system/README.md` — color and type tokens (source of truth for values); `assets/logo/` holds the vector logo kit (`01`–`13_*.svg`, `LEIA-ME.txt`).
 
-If the computer is linked, request access to `~/Documents/3-Recursos` and read both READMEs and the template before writing anything. If unreachable, use the snapshot below, say so in one line, and rebuild the engine from section 3.
+Read both READMEs and the template before writing anything. If they are unreachable, use the snapshot below, say so in one line, and rebuild the engine from section 3.
 
 Snapshot:
 
@@ -61,7 +61,7 @@ Identity rules that apply to slides:
 ## 2. Time budget (pitch-length)
 
 - Every slide carries `data-min` in fractions of a minute: cover/agenda 0.25, divider 0.1, common slide 0.4–0.75, live demo 1–2, Q&A 0.
-- Sum to the official pitch time (leave ~10% slack). Print the table slide → minutes → planned start and show it to Miguel.
+- Sum to the official pitch time (leave ~10% slack). Print the table slide → minutes → planned start and show it to the presenter.
 - Default structure (map it to the judging criteria): cover → agenda → problem in one number → solution → how it works (pipeline) → **live demo** → results vs baseline → honest comparison (incl. when NOT to use ours) → next steps / feasibility → synthesis (4 takeaways tied to moments) → team + Q&A.
 - Slide text is short; talking points go in `data-notes`.
 - HUD pace tolerance is **max(5 s, 5% of total)** — keep it.
@@ -102,7 +102,7 @@ Identity rules that apply to slides:
 | **Data exploration** | the challenge dataset, before/after | Precomputed data + renderer sized to it |
 | **Impact calculator** | cost saved per month | Controls mapped to a visible change |
 
-Rules: canvas 2D (HiDPI, dpr ≤ 2) or inline SVG, WebGL only when needed; vendor every library inline or in the folder (no CDN at the venue). **Every control changes the picture.** Separate computed values from illustration and label honestly. Seeded RNG, reset button, keyframes defined while building. Show the "wrong" choice with a `.msg`. Verify numbers outside the browser (see `template/demo_check.py`) and write expected values in `data-notes`. Results slides use the team's real evaluation; mark placeholders until replaced. Large graphs/datasets: follow `/interactive-deck` section 4.
+Rules: canvas 2D (HiDPI, dpr ≤ 2) or inline SVG, WebGL only when needed; vendor every library inline or in the folder (no CDN at the venue). **Every control changes the picture.** Separate computed values from illustration and label honestly. Seeded RNG, reset button, keyframes defined while building. Show the "wrong" choice with a `.msg`. Verify numbers outside the browser (see `template/demo_check.py`) and write expected values in `data-notes`. Results slides use the team's real evaluation; mark placeholders until replaced. Large graphs/datasets: process offline, ship binary typed arrays or aggregated views instead of JSON, load lazily on `enter`, keep layout off the main thread, and state on the slide the real size and what is shown.
 
 ## 5. Verify
 
@@ -113,8 +113,8 @@ Rules: canvas 2D (HiDPI, dpr ≤ 2) or inline SVG, WebGL only when needed; vendo
 
 ## 6. Deliverables
 
-1. **Deck folder** in a connected folder on Miguel's computer (ask where; suggest `~/Documents/<hackathon>/deck/`): `index.html`, `assets/`, `fonts/`, `vercel.json`, `README.md` with deploy steps (`npm i -g vercel` → `vercel login` → `vercel --prod` → optional `vercel domains add <slug>.cerne.pro`). Claude cannot deploy: say so, remind him to redeploy after changes. No zip unless asked.
-2. **Preview** as a claude.ai Artifact when he wants to see it right away (everything already inline).
+1. **Deck folder** in the project, at `front/pitch/deck/` unless the user names another place: `index.html`, `assets/`, `fonts/`, `vercel.json`, `README.md` with deploy steps (`npm i -g vercel` → `vercel login` → `vercel --prod` → optional `vercel domains add <your-domain>`). Claude cannot deploy: say so, and remind the user to redeploy after changes. No zip unless asked.
+2. **Preview** as a claude.ai Artifact when the user wants to see it right away (everything already inline).
 3. **PDF for submission/judges** from the same keyframes.
 4. Offer in one line: a rehearsal script (who says what, timings, demo protocol, likely judge questions) and a backup slide if the demo fails.
 
