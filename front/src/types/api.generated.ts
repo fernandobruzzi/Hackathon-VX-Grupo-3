@@ -210,7 +210,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Listar os jobs mais recentes e o dataset que um novo job usaria. */
+    get: operations["listBatchJobs"];
     put?: never;
     /** Iniciar processamento por manifesto sem token do usuário. */
     post: operations["startBatchJob"];
@@ -231,6 +232,23 @@ export interface paths {
     get: operations["getBatchJob"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/batch/jobs/{id}/resume": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reprocessar um job que falhou, continuando dos checkpoints, sem token do usuário. */
+    post: operations["resumeBatchJob"];
     delete?: never;
     options?: never;
     head?: never;
@@ -630,6 +648,12 @@ export interface components {
         message: string;
       } | null;
     };
+    BatchJobList: {
+      items: components["schemas"]["BatchJob"][];
+      /** @description Dataset que um novo job usaria. */
+      latest_dataset_id: string | null;
+      next_cursor: string | null;
+    };
     AuditEvent: {
       /** Format: uuid */
       id: string;
@@ -795,6 +819,8 @@ export interface components {
         include_statuses: components["schemas"]["MaterialStatus"][];
       };
     };
+    /** @description Sem campos: o job reprocessado é o da rota. */
+    BatchJobResumeRequest: Record<string, never>;
     OrderSubmitRequest: {
       expected_version: number;
     };
@@ -1798,6 +1824,91 @@ export interface operations {
       };
     };
   };
+  listBatchJobs: {
+    parameters: {
+      query?: {
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BatchJobList"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
   startBatchJob: {
     parameters: {
       query?: never;
@@ -1903,6 +2014,100 @@ export interface operations {
     responses: {
       /** @description Resultado da operação. */
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BatchJob"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  resumeBatchJob: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BatchJobResumeRequest"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      202: {
         headers: {
           [name: string]: unknown;
         };
