@@ -1,0 +1,82 @@
+{
+  "classification": "PRELIMINARY_LOCAL_MEASUREMENT",
+  "measured_on": "2026-11-05",
+  "source_commit": "d11f13529f3436672a2145922e8d8509dede160d",
+  "final_run_issue": 32,
+  "final_run_completed": false,
+  "master_data_modified": false,
+  "financial_savings_measured": false,
+  "files_sha256": {
+    "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+  },
+  "algorithms": {
+    "pdm": "pdm-kit-v1",
+    "candidates": "exact_identity_v1",
+    "classification": "rule_based_v1",
+    "extraction": "rule_based_v1",
+    "normalization": "rule_based_v1",
+    "corrections": "head_noun_v1"
+  },
+  "commands_from_repository_root": [
+    "uv run vx-back sanitize-report data/desafio01/01_base_materiais.csv --pdm-workbook data/desafio01/03_padrao_cadastro_PDM.xlsx",
+    "uv run vx-back normalization-report data/desafio01/01_base_materiais.csv"
+  ],
+  "material_rows": 23554,
+  "sanitize_report": {
+    "proposals": 1147,
+    "materials": 2629,
+    "identity_verified": 1147,
+    "fiscal_review_required": 258,
+    "conflicts": {
+      "NCM_DIVERGENTE": 258,
+      "UNIDADE_SEM_FATOR": 108,
+      "UNIDADES_DIFERENTES": 40
+    },
+    "corrections": {
+      "proposals": {
+        "PDM_CORRECTION": 7202,
+        "UNIT_CORRECTION": 887
+      },
+      "materials": 7780,
+      "changes": {
+        "description": 6923,
+        "merchandise_group": 542,
+        "unit": 887
+      },
+      "pending": {
+        "DESCRICAO_FORA_DO_PADRAO": 5526,
+        "SEM_CLASSE_CONFIAVEL": 5255,
+        "MATERIAL_NAO_ATIVO": 3540,
+        "UNIDADE_SEM_FATOR": 624,
+        "UNIDADE_DIFERENTE_DA_CLASSE": 319,
+        "CLASSE_NAO_CONFIRMADA": 277
+      }
+    }
+  },
+  "normalization_report": {
+    "repository": "rule_based_v1",
+    "rows": 23554,
+    "fields": {
+      "ncm": {
+        "CANONICAL rule_based_v1/ncm.format": 13901,
+        "MISSING rule_based_v1/ncm.missing": 1173,
+        "NORMALIZED rule_based_v1/ncm.format": 8480
+      },
+      "unit": {
+        "CANONICAL rule_based_v1/unit.canonical": 21524,
+        "NORMALIZED rule_based_v1/unit.alias": 1052,
+        "UNRESOLVED rule_based_v1/unit.packaging_without_factor": 978
+      },
+      "text": {
+        "CANONICAL rule_based_v1/text.format": 22208,
+        "NORMALIZED rule_based_v1/text.format": 1346
+      }
+    }
+  },
+  "derived": {
+    "proposed_merge_members_percent": "11.1616",
+    "proposed_merge_members_percent_display": "11.2",
+    "proposal_total": 9236
+  }
+}
