@@ -296,3 +296,18 @@ class CorrectionRepository(Protocol):
     def correct(
         self, material: AnalyzedMaterial, catalog: PdmCatalog, normalizer: NormalizationRepository
     ) -> CorrectionResult: ...
+
+
+class EmbeddingRepository(Protocol):
+    """Um modelo de embeddings. `signature` identifica modelo, dimensão e versão: indexação e consulta
+    só se comparam com a mesma assinatura. Para testar outro, registre um novo repositório."""
+
+    name: str
+    model: str
+    dimensions: int
+    simulated: bool
+
+    @property
+    def signature(self) -> str: ...
+
+    def embed(self, texts: list[str], *, query: bool) -> list[list[float]]: ...
