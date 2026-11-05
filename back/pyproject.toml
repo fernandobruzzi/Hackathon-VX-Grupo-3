@@ -7,6 +7,9 @@ dependencies = [
     "openpyxl>=3.1.5",
 ]
 
+[project.scripts]
+vx-back = "cli:main"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 
@@ -18,7 +21,7 @@ build-backend = "setuptools.build_meta"
 py-modules = ["cli"]
 
 [tool.setuptools.packages.find]
-include = ["domain*", "repositories*"]
+include = ["clients*", "domain*", "enrichment*", "matching*", "pipelines*", "repositories*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

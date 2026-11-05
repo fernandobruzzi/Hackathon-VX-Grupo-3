@@ -1,0 +1,22 @@
+[project]
+name = "vx-materials-api"
+version = "0.1.0"
+description = "API do cadastro de materiais, que tambem serve o build do front"
+requires-python = ">=3.12"
+dependencies = ["fastapi>=0.115", "uvicorn>=0.34"]
+
+[project.scripts]
+vx-api = "vx_materials_api.main:main"
+
+[dependency-groups]
+dev = ["httpx>=0.28", "pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["vx_materials_api*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
