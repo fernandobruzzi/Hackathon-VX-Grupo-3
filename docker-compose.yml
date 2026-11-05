@@ -59,6 +59,10 @@ services:
         required: false
     environment:
       AGENT_URL: http://agent:8001
+      AGENT_INTERNAL_TOKEN_SECRET: ${AGENT_INTERNAL_TOKEN_SECRET:-local_only_agent_internal_token_secret}
+      # Sessao de teste da persona Solicitante, so local: a API recusa subir com ela fora de APP_ENV=local.
+      APP_ENV: ${APP_ENV:-local}
+      LOCAL_TEST_SESSION: ${LOCAL_TEST_SESSION:-true}
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
     ports:
       - "8000:8000"
@@ -79,6 +83,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://mcp_reader:${MCP_DB_PASSWORD:-local_only_mcp}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      AGENT_INTERNAL_TOKEN_SECRET: ${AGENT_INTERNAL_TOKEN_SECRET:-local_only_agent_internal_token_secret}
     volumes:
       - ./data:/data:ro
 

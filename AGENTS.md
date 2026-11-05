@@ -13,8 +13,8 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
-| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | First tools, rest placeholders |
-| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Health check and placeholders |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over two tools, rest placeholders |
+| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat turns with a local test session, rest placeholders |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data and smoke test | Placeholders, except `smoke_test.sh` |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
@@ -408,6 +408,8 @@ Every feature must run and pass its tests locally with `docker compose up`, with
 - Code reaches external services through small clients selected by environment variable, like [swappable algorithms](#swappable-algorithms).
 - Local shortcuts must be impossible to enable in deployed environments: the application refuses to start if they are on there.
 - Simulated results are always labeled as simulated.
+- The local test session is the Solicitante persona, enabled with `LOCAL_TEST_SESSION=true`. The API refuses to start with it unless `APP_ENV=local`, and `docker compose` turns it on. Real login (#7) replaces it.
+- API and Agent share `AGENT_INTERNAL_TOKEN_SECRET`. The API signs a 60-second token per chat turn, and the Agent rejects anything else.
 - Cognito and Bedrock have no faithful local version, so test them on real AWS before their milestones close.
 
 ## Swappable algorithms
