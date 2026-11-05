@@ -2578,6 +2578,12 @@
           "existing": {
             "$ref": "#/components/schemas/ExistingMatch"
           },
+          "similar_candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SimilarCandidate"
+            }
+          },
           "can_submit": {
             "type": "boolean"
           }
@@ -4270,6 +4276,20 @@
                     }
                   ]
                 }
+              },
+              "offered_material_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Códigos parecidos mostrados no turno anterior, lidos do contexto persistido pela API."
+              },
+              "dismissed_material_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Códigos que o solicitante confirmou não serem o item dele, validados pela API."
               }
             },
             "required": [
@@ -4317,6 +4337,38 @@
           "tool_calls",
           "context_patch",
           "material_card"
+        ],
+        "additionalProperties": false
+      },
+      "SimilarCandidate": {
+        "type": "object",
+        "description": "Item parecido, sem identidade verificada, que o solicitante confirma ou descarta. Obsoletos nunca aparecem.",
+        "properties": {
+          "material_code": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MaterialStatus"
+          },
+          "pdm_description": {
+            "type": "string"
+          },
+          "active_code_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "material_code",
+          "status",
+          "pdm_description",
+          "active_code_target"
         ],
         "additionalProperties": false
       }
