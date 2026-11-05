@@ -1,0 +1,10 @@
+DO FUNDO DO POÇO — ASCENSÃO
+
+Redesenho vetorial baseado na proposta visual 1. Não é uma vetorização automática pixel a pixel.
+Todos os SVGs são vetores reais, com letras em curvas e sem imagens incorporadas ou fontes externas.
+
+Paleta: verde escuro #102C26; esmeralda #16C784; off-white #F5F3ED.
+Arquivos 01–10: fundo transparente. 02 e 04: usar sobre fundo escuro. 08: ícone branco para fundo escuro.
+Arquivos 11–13: artes com fundo, para avatar, apresentação e referência da identidade.
+Fotos de camisetas e notebook da proposta original são mockups e não fazem parte dos vetores.
+Abra os SVGs no Figma, Illustrator, Inkscape ou navegador.
