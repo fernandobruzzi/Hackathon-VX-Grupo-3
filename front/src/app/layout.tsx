@@ -29,7 +29,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" data-theme="light" className={`${montserrat.variable} ${plexMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      data-theme="light"
+      className={`${montserrat.variable} ${plexMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="min-h-dvh bg-ink text-text">
         <AuthProvider>{children}</AuthProvider>
       </body>
