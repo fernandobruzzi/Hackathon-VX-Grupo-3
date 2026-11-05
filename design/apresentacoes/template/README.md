@@ -36,7 +36,7 @@ Sai sempre no tema claro, uma página por slide e uma por keyframe de demo.
 npm i -g vercel
 vercel login
 vercel --prod                        # dentro desta pasta
-vercel domains add <slug>.cerne.pro  # opcional; CNAME para cname.vercel-dns.com se o DNS não estiver no Vercel
+vercel domains add <dominio>         # opcional; CNAME para cname.vercel-dns.com se o DNS não estiver no Vercel
 ```
 
 Refaça `vercel --prod` depois de cada mudança.

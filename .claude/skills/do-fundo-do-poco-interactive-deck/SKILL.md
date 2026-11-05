@@ -1,11 +1,11 @@
 ---
 name: "do-fundo-do-poco-interactive-deck"
-description: "Build an interactive web pitch deck (single HTML, live demos, presenter HUD, PDF export with keyframes) in the Do Fundo do Poço \"Ascensão\" identity, packaged for Vercel. Use for any Do Fundo do Poço / hackathon presentation."
+description: "Build an interactive web pitch deck (single HTML, live demos, presenter HUD, PDF export with keyframes) in the Do Fundo do Poço \"Ascensão\" identity, packaged for the host the team chooses. Use for any Do Fundo do Poço / hackathon presentation."
 ---
 
 # Interactive deck — Do Fundo do Poço (hackathon, identidade "Ascensão")
 
-Use when anyone on the team asks for a presentation, pitch or demo deck for the **Do Fundo do Poço** team (hackathon: engineering problems solved with AI). It builds a web deck with presenter HUD, keyframe PDF export and Vercel packaging, in the Do Fundo do Poço identity with pitch-length timing. If the team wants slides to edit by hand instead, point to `design/apresentacoes/google-slides/` (a .pptx template to import into Google Slides).
+Use when anyone on the team asks for a presentation, pitch or demo deck for the **Do Fundo do Poço** team (hackathon: engineering problems solved with AI). It builds a web deck with presenter HUD, keyframe PDF export and deploy packaging, in the Do Fundo do Poço identity with pitch-length timing. If the team wants slides to edit by hand instead, point to `design/apresentacoes/google-slides/` (a .pptx template to import into Google Slides).
 
 ## 0. Load the identity first (folders win over this file)
 
@@ -56,7 +56,7 @@ Identity rules that apply to slides:
 - What the solution is and the source material (repo, notebook, results, dataset, challenge PDF).
 - Team members: names, roles, contacts for the cover and closing slide.
 - Which demos must be live and what kind (section 4). For AI demos: a real trained model to embed (ONNX, exported predictions) or simulated? For hardware: real or simulation only.
-- Hosting: Vercel subdomain (default `<slug>.cerne.pro`, or `<slug>.vercel.app` if a teammate deploys).
+- **Hosting and domain: always ask with AskUserQuestion, even if nothing else is missing. Never assume a host or domain.** The project runs on AWS and its domain may still be undecided. Offer: AWS, alongside the project's deployment; Vercel on `<slug>.vercel.app`; a domain the user names; or no hosting yet, opened locally. If the user doesn't know the domain, build the deck without one and leave it as an open item in the README.
 
 ## 2. Time budget (pitch-length)
 
@@ -113,7 +113,7 @@ Rules: canvas 2D (HiDPI, dpr ≤ 2) or inline SVG, WebGL only when needed; vendo
 
 ## 6. Deliverables
 
-1. **Deck folder** in the project, at `front/pitch/deck/` unless the user names another place: `index.html`, `assets/`, `fonts/`, `vercel.json`, `README.md` with deploy steps (`npm i -g vercel` → `vercel login` → `vercel --prod` → optional `vercel domains add <your-domain>`). Claude cannot deploy: say so, and remind the user to redeploy after changes. No zip unless asked.
+1. **Deck folder** in the project, at `front/pitch/deck/` unless the user names another place: `index.html`, `assets/`, `fonts/`, `vercel.json`, `README.md` with deploy steps for the chosen host. For Vercel: `npm i -g vercel` → `vercel login` → `vercel --prod` → optional `vercel domains add <domain>`, and keep `vercel.json`. For AWS or no hosting: drop `vercel.json`, and for AWS document how the static files get served. If a deploy can't be done from here, say so, and remind the user to redeploy after changes. No zip unless asked.
 2. **Preview** as a claude.ai Artifact when the user wants to see it right away (everything already inline).
 3. **PDF for submission/judges** from the same keyframes.
 4. Offer in one line: a rehearsal script (who says what, timings, demo protocol, likely judge questions) and a backup slide if the demo fails.
