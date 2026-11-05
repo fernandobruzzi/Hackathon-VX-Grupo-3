@@ -41,6 +41,32 @@ jobs:
       - run: uv sync --locked
       - run: uv run pytest
 
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: migration_user
+          POSTGRES_PASSWORD: ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U migration_user"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    defaults:
+      run:
+        working-directory: api
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://migration_user:ci_only@localhost:5432/vx_materials_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run pytest
+
   front:
     runs-on: ubuntu-latest
     defaults:

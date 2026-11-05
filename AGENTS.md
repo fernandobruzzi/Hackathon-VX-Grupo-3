@@ -56,6 +56,22 @@ Tests, from `back/`, `mcp/` or `api/`:
 uv run pytest
 ```
 
+Database, from the repo root. The first command starts Postgres on port 5432, and the rest run from `api/`. Tests recreate the `_test` database, and they're skipped without this variable:
+
+```bash
+docker compose up -d --wait db
+```
+
+```bash
+TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materials_test uv run pytest
+```
+
+```bash
+MIGRATION_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materiais uv run vx-db upgrade
+```
+
+Schema changes need a new migration in `api/vx_materials_api/db/migrations/versions/`. Tests fail if models and migrations differ.
+
 Report, from `back/`:
 
 ```bash
@@ -282,6 +298,19 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - Guards check both action and resource. The front hides controls, but the API is the authority.
 - Never commit secrets. Tokens, passwords and secrets never appear in logs.
 - Test sessions exist only in local environments.
+- Stock price and value are for `metrics:financial` only. MCP tools get the inventory view from `inventory_view(caller)` and never name it directly. The database can't enforce this per user, because MCP has one credential.
+
+## Database on AWS
+
+RDS needs setup that local Postgres doesn't, because `vx-db upgrade` creates roles and the `vector` extension. Run this once as the RDS master user, using a password from Secrets Manager:
+
+```sql
+CREATE ROLE migration_user LOGIN CREATEROLE PASSWORD '<from-secrets-manager>';
+GRANT rds_superuser TO migration_user;
+CREATE DATABASE vx_materiais OWNER migration_user;
+```
+
+Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATABASE_URL`, `API_DB_PASSWORD`, `BATCH_DB_PASSWORD` and `MCP_DB_PASSWORD` set. These steps haven't been run on RDS yet, so [#6](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/6) must confirm them and correct this section if needed.
 
 ## Local first
 
