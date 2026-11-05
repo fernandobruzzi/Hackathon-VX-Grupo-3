@@ -3,16 +3,21 @@ import { Badge, Button, Card, Code } from "@/components/ui";
 import { MaterialStatusBadge, ValidationBadge } from "@/components/ui/status";
 import { cn } from "@/lib/format";
 import type { MaterialCardData } from "@/types/api";
+import { SimilarCandidates } from "./SimilarCandidates";
 
 /** Ficha do pedido em construção. Espelha material_card do contrato 6.2. */
 export function MaterialCard({
   card,
   onSubmit,
   submitted,
+  onReply,
+  busy,
 }: {
   card: MaterialCardData;
   onSubmit?: () => void;
   submitted?: boolean;
+  onReply?: (message: string) => void;
+  busy?: boolean;
 }) {
   const entries = Object.entries(card.attributes);
   return (
@@ -46,6 +51,10 @@ export function MaterialCard({
             <Copy className="size-4" /> Copiar código
           </Button>
         </Card>
+      )}
+
+      {!card.existing && onReply && !!card.similar_candidates?.length && (
+        <SimilarCandidates candidates={card.similar_candidates} onReply={onReply} disabled={busy} />
       )}
 
       <Card className="flex flex-col gap-4">

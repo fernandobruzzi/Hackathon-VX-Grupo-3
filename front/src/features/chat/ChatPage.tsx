@@ -240,6 +240,8 @@ export function ChatPage() {
               card={last.material_card}
               submitted={submitted}
               onSubmit={() => setSubmitted(true)}
+              onReply={send}
+              busy={busy}
             />
           ) : (
             <div className="rounded-md bg-surface p-6 text-sm leading-6 text-muted">
