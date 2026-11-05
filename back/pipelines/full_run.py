@@ -15,7 +15,9 @@ Todo material termina com um desfecho registrado: proposta, pendência com motiv
 import hashlib
 import json
 import os
+import threading
 import time
+import uuid
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
@@ -28,9 +30,11 @@ from domain.contracts import AnalyzedMaterial, MaterialRecord, MergeProposal, Pd
 from pipelines.corrections import propose_corrections, summarize_corrections
 from pipelines.sanitize import _catalog, analyze_material, merge_proposals, summarize
 from repositories.batch_repository import (
+    DEFAULT_STALE_SECONDS,
     claim_job,
     fail_job,
     finish_job,
+    heartbeat,
     insert_proposals,
     read_materials,
     single_tenant,
@@ -43,6 +47,8 @@ from repositories.extraction import get_extraction_repository
 from repositories.normalization import get_normalization_repository
 
 PIPELINE_VERSION = "batch-v1"
+# Intervalo do sinal de vida entre checkpoints. Bem abaixo do prazo em que a API dá o job como parado.
+HEARTBEAT_SECONDS = 15
 ANALYSIS_CHUNK = 1000
 SAVE_BATCH = 500
 
@@ -268,6 +274,44 @@ def run_full(
     }
 
 
+class _Heartbeat:
+    """Mantém `heartbeat_at` atualizado enquanto o worker trabalha entre checkpoints."""
+
+    def __init__(self, engine: Engine, job_id: str, worker_id: str, interval: float) -> None:
+        self._engine, self._job_id, self._worker_id, self._interval = engine, job_id, worker_id, interval
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, name=f"heartbeat-{job_id}", daemon=True)
+        self.lost = False
+
+    def _run(self) -> None:
+        while not self._stop.wait(self._interval):
+            try:
+                if not heartbeat(self._engine, self._job_id, self._worker_id):
+                    # O próximo checkpoint do worker falha com LeaseLost e encerra a execução.
+                    self.lost = True
+                    return
+            except Exception:  # noqa: BLE001 - falha de rede passageira não derruba o job
+                continue
+
+    def __enter__(self) -> "_Heartbeat":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self._stop.set()
+        self._thread.join(timeout=self._interval)
+
+
+def check_manifest(store: ObjectStore, manifest_key: str, job_id: str, catalog: PdmCatalog) -> dict:
+    """Confere o manifesto que a API gravou para o job. Ele nunca traz credencial do usuário."""
+    manifest = json.loads(store.get(manifest_key))
+    if manifest["job_id"] != job_id:
+        raise RuntimeError(f"O manifesto {manifest_key} é de outro job")
+    if manifest["pdm_version"] != catalog.version:
+        raise RuntimeError(f"O manifesto pede o PDM {manifest['pdm_version']}, mas o carregado é {catalog.version}")
+    return manifest
+
+
 def run_sanitize(
     pdm_workbook: str | None = None,
     job_id: str | None = None,
@@ -276,6 +320,8 @@ def run_sanitize(
     correction_repository: str | None = None,
     store: ObjectStore | None = None,
     on_step: Callable[[str, int], None] | None = None,
+    manifest_key: str | None = None,
+    heartbeat_seconds: float | None = None,
 ) -> dict:
     """Saneamento da base gravada no banco. Com `job_id`, registra progresso e retoma do checkpoint."""
     url = database_url or os.environ.get("DATABASE_URL")
@@ -285,25 +331,32 @@ def run_sanitize(
     try:
         catalog = _catalog(pdm_workbook)
         tenant_id = single_tenant(engine)
-        context = RunContext(engine, tenant_id)
-        if job_id:
-            claimed = claim_job(engine, job_id)
-            if claimed["tenant_id"] != tenant_id:
-                raise RuntimeError("O job pertence a outra empresa")
-            context = RunContext(engine, tenant_id, job_id, store or get_object_store(), claimed["checkpoint"])
+        if not job_id:
+            context = RunContext(engine, tenant_id, on_step=on_step or (lambda stage, done: None))
+            return run_full(read_materials(engine, tenant_id), catalog, context, repository_name, correction_repository)
+
+        store = store or get_object_store()
+        if manifest_key:
+            check_manifest(store, manifest_key, job_id, catalog)
+        worker_id = str(uuid.uuid4())
+        stale = int(os.environ.get("BATCH_HEARTBEAT_TIMEOUT_SECONDS", DEFAULT_STALE_SECONDS))
+        claimed = claim_job(engine, job_id, worker_id, stale_seconds=stale)
+        if claimed["tenant_id"] != tenant_id:
+            raise RuntimeError("O job pertence a outra empresa")
+        context = RunContext(engine, tenant_id, job_id, store, claimed["checkpoint"])
         if on_step:
             context.on_step = on_step
-        records = read_materials(engine, tenant_id)
-        try:
-            metrics = run_full(records, catalog, context, repository_name, correction_repository)
-        except BaseException as error:
-            if job_id:
+        interval = heartbeat_seconds or float(os.environ.get("BATCH_HEARTBEAT_SECONDS", HEARTBEAT_SECONDS))
+        with _Heartbeat(engine, job_id, worker_id, interval):
+            try:
+                records = read_materials(engine, tenant_id)
+                metrics = run_full(records, catalog, context, repository_name, correction_repository)
+            except BaseException as error:
                 attempt = context.checkpoint.get("attempts", [{}])[-1]
                 attempt.update({"failed_at": _now(), "error": f"{type(error).__name__}: {error}"[:300]})
                 fail_job(engine, job_id, context.checkpoint, f"{type(error).__name__}: {error}")
-            raise
-        if job_id:
-            context.store.put_if_absent(
+                raise
+            store.put_if_absent(
                 f"runs/{job_id}/metrics.json", json.dumps(metrics, ensure_ascii=False, sort_keys=True).encode()
             )
             finish_job(engine, job_id, context.checkpoint, metrics)

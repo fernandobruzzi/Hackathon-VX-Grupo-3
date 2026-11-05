@@ -166,38 +166,74 @@ def insert_proposals(
 
 
 # Jobs: a API cria o registro (batch_user não insere); o batch só acompanha e conclui.
+#
+# Cada execução é um worker com id próprio, gravado em `checkpoint.lease`. Toda escrita do worker exige
+# que o job continue RUNNING e com o lease dele: se a API marcou o job como parado por falta de
+# heartbeat, ou se outro worker assumiu, a escrita não acontece e o worker para (`LeaseLost`).
 _LOAD_JOB = text(
-    "SELECT id::text, tenant_id::text, job_type, status, checkpoint FROM batch_jobs WHERE id = :id FOR UPDATE"
+    """
+    SELECT id::text, tenant_id::text, job_type, status, checkpoint,
+           heartbeat_at IS NOT NULL AND heartbeat_at > now() - make_interval(secs => :stale) AS alive
+    FROM batch_jobs WHERE id = :id FOR UPDATE
+    """
+)
+_CLAIM_JOB = text(
+    """
+    UPDATE batch_jobs
+    SET status = 'RUNNING', heartbeat_at = now(), checkpoint = CAST(:checkpoint AS jsonb), error_summary = NULL
+    WHERE id = :id
+    """
 )
 _UPDATE_JOB = text(
     """
     UPDATE batch_jobs
     SET status = :status, heartbeat_at = now(), checkpoint = CAST(:checkpoint AS jsonb),
         counts = COALESCE(CAST(:counts AS jsonb), counts), error_summary = :error
-    WHERE id = :id
+    WHERE id = :id AND status = 'RUNNING' AND checkpoint -> 'lease' ->> 'worker' = :worker
     """
 )
+_HEARTBEAT = text(
+    """
+    UPDATE batch_jobs SET heartbeat_at = now()
+    WHERE id = :id AND status = 'RUNNING' AND checkpoint -> 'lease' ->> 'worker' = :worker
+    """
+)
+# Sem heartbeat por mais que isso, o worker anterior é considerado parado e outro pode assumir.
+DEFAULT_STALE_SECONDS = 120
 
 
 class JobNotRunnable(ValueError):
-    """O job não existe, é de outro tipo ou já terminou com sucesso."""
+    """O job não existe, é de outro tipo, já terminou ou tem outro worker vivo."""
 
 
-def claim_job(engine: Engine, job_id: str, job_type: str = "SANITIZE") -> dict:
-    """Marca o job como RUNNING e devolve o checkpoint salvo, para continuar de onde parou."""
+class LeaseLost(RuntimeError):
+    """O job deixou de pertencer a este worker: foi dado como parado ou outro worker assumiu."""
+
+
+def claim_job(
+    engine: Engine, job_id: str, worker_id: str, job_type: str = "SANITIZE", stale_seconds: int = DEFAULT_STALE_SECONDS
+) -> dict:
+    """Marca o job como RUNNING para este worker e devolve o checkpoint salvo, para continuar de onde parou."""
     with engine.begin() as connection:
-        row = connection.execute(_LOAD_JOB, {"id": job_id}).mappings().first()
+        row = connection.execute(_LOAD_JOB, {"id": job_id, "stale": stale_seconds}).mappings().first()
         if row is None or row["job_type"] != job_type:
             raise JobNotRunnable(f"Job {job_id} inexistente ou de outro tipo")
         if row["status"] == "SUCCEEDED":
             raise JobNotRunnable(f"Job {job_id} já concluído")
+        if row["status"] == "RUNNING" and row["alive"]:
+            raise JobNotRunnable(f"Job {job_id} já está rodando em outro worker")
         checkpoint = dict(row["checkpoint"] or {})
-        _update(connection, job_id, "RUNNING", checkpoint)
+        checkpoint["lease"] = {"worker": worker_id}
+        connection.execute(_CLAIM_JOB, {"id": job_id, "checkpoint": json.dumps(checkpoint, ensure_ascii=False)})
     return {"tenant_id": row["tenant_id"], "checkpoint": checkpoint}
 
 
+def _worker(checkpoint: dict) -> str:
+    return checkpoint["lease"]["worker"]
+
+
 def _update(connection: Connection, job_id: str, status: str, checkpoint: dict, counts=None, error=None) -> None:
-    connection.execute(
+    result = connection.execute(
         _UPDATE_JOB,
         {
             "id": job_id,
@@ -205,8 +241,17 @@ def _update(connection: Connection, job_id: str, status: str, checkpoint: dict, 
             "checkpoint": json.dumps(checkpoint, ensure_ascii=False),
             "counts": None if counts is None else json.dumps(counts, ensure_ascii=False),
             "error": error,
+            "worker": _worker(checkpoint),
         },
     )
+    if result.rowcount != 1:
+        raise LeaseLost(f"Job {job_id} não pertence mais a este worker")
+
+
+def heartbeat(engine: Engine, job_id: str, worker_id: str) -> bool:
+    """Sinal de vida entre checkpoints. Falso quando o job não é mais deste worker."""
+    with engine.begin() as connection:
+        return connection.execute(_HEARTBEAT, {"id": job_id, "worker": worker_id}).rowcount == 1
 
 
 def update_job(connection: Connection, job_id: str, checkpoint: dict) -> None:
@@ -220,6 +265,9 @@ def finish_job(engine: Engine, job_id: str, checkpoint: dict, counts: dict) -> N
 
 
 def fail_job(engine: Engine, job_id: str, checkpoint: dict, error: str) -> None:
-    """Falha guarda o checkpoint: rodar de novo continua dele."""
-    with engine.begin() as connection:
-        _update(connection, job_id, "FAILED", checkpoint, error=error[:500])
+    """Falha guarda o checkpoint: rodar de novo continua dele. Sem o lease, não sobrescreve nada."""
+    try:
+        with engine.begin() as connection:
+            _update(connection, job_id, "FAILED", checkpoint, error=error[:500])
+    except LeaseLost:
+        pass

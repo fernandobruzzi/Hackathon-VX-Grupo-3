@@ -63,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     sanitize = commands.add_parser("sanitize", help="Grava propostas no banco, com a credencial batch_user")
     sanitize.add_argument("--pdm-workbook")
     sanitize.add_argument("--job-id")
+    sanitize.add_argument("--manifest-key", help="Manifesto gravado pela API para o job, no armazenamento")
     sanitize.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
     args = parser.parse_args(argv)
 
@@ -71,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "sanitize-report":
         result = sanitize_report(args.csv_path, args.pdm_workbook, args.repository)
     elif args.command == "sanitize":
-        result = run_sanitize(args.pdm_workbook, args.job_id, args.repository)
+        result = run_sanitize(args.pdm_workbook, args.job_id, args.repository, manifest_key=args.manifest_key)
     elif args.command == "normalization-report":
         result = normalization_report(args.csv_path, args.repository)
     elif args.command == "classification-report":
