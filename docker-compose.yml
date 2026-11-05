@@ -74,6 +74,15 @@ services:
       AUTH_BACKEND: ${AUTH_BACKEND:-disabled}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${API_BIND_PORT:-8000}}
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
+      # Batch disparado pela tela /batch: subprocesso local com a credencial propria do batch.
+      BATCH_RUNNER: ${BATCH_RUNNER:-local_process}
+      BATCH_DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
+      PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_LOCAL_DIR: /storage
+    volumes:
+      - ./data:/data:ro
+      - storage-data:/storage
     ports:
       - "127.0.0.1:${API_BIND_PORT:-8000}:8000"
     depends_on:

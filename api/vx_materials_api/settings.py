@@ -89,3 +89,18 @@ def agent_url() -> str:
 def agent_internal_token_secret() -> str:
     """Segredo compartilhado com o Agent para assinar o token interno de cada turno."""
     return _required("AGENT_INTERNAL_TOKEN_SECRET")
+
+
+def batch_runner() -> str | None:
+    """Como a API dispara o batch: `local_process` localmente. Sem valor, iniciar job responde 503."""
+    return os.environ.get("BATCH_RUNNER") or None
+
+
+def batch_database_url() -> str:
+    """Conexão que o batch disparado localmente recebe, com a credencial batch_user."""
+    return _required("BATCH_DATABASE_URL")
+
+
+def batch_heartbeat_timeout_seconds() -> int:
+    """Sem heartbeat por mais que isso, o job é dado como parado."""
+    return int(os.environ.get("BATCH_HEARTBEAT_TIMEOUT_SECONDS", "120"))
