@@ -7,16 +7,18 @@ from mcp.types import ToolAnnotations
 
 from domain.contracts import PdmCatalog
 from domain.pdm_loader import load_pdm
-from vx_materials_mcp.schemas.tools import PdmTemplate, PdmValidation
+from vx_materials_mcp.schemas.tools import PdmTemplate, PdmValidation, SimilarMaterials
+from vx_materials_mcp.security import caller_from_environment
 from vx_materials_mcp.tools import get_pdm_template as get_pdm_template_tool
 from vx_materials_mcp.tools import validate_and_format_pdm as validate_and_format_pdm_tool
+from vx_materials_mcp.tools.search_similar_materials import SimilarMaterialsSearch
 
 PDM_PATH_VARIABLE = "PDM_WORKBOOK_PATH"
 DEFAULT_PDM_PATH = "data/desafio01/03_padrao_cadastro_PDM.xlsx"
 _READ_ONLY = ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=False)
 
 
-def build_server(catalog: PdmCatalog) -> MCPServer:
+def build_server(catalog: PdmCatalog, search: SimilarMaterialsSearch | None = None) -> MCPServer:
     """Registra as tools. Parâmetros nunca incluem usuário, papel ou tenant: a identidade vem da API."""
     server = MCPServer(name="vx-materials")
 
@@ -39,12 +41,29 @@ def build_server(catalog: PdmCatalog) -> MCPServer:
         """
         return validate_and_format_pdm_tool.run(catalog, pdm_class_id, pdm_version, attributes, item_name, unit)
 
+    search = search or SimilarMaterialsSearch(catalog, None, None)
+
+    @server.tool(annotations=_READ_ONLY)
+    def search_similar_materials(
+        query: str,
+        pdm_class_id: str | None = None,
+        attributes: dict[str, str] | None = None,
+        limit: int = 5,
+    ) -> SimilarMaterials:
+        """Busca materiais já cadastrados parecidos com o pedido: identidade exata e texto.
+
+        `identity_verified` diz se é o mesmo item pela regra do PDM; `ranking_score` só ordena.
+        Bloqueados indicam o código ativo a usar; obsoletos não devem ser reutilizados.
+        """
+        return search.run(query, pdm_class_id, attributes, limit)
+
     return server
 
 
 def main() -> None:
     catalog = load_pdm(os.environ.get(PDM_PATH_VARIABLE, DEFAULT_PDM_PATH))
-    build_server(catalog).run("stdio")
+    search = SimilarMaterialsSearch(catalog, os.environ.get("DATABASE_URL"), caller_from_environment())
+    build_server(catalog, search).run("stdio")
 
 
 if __name__ == "__main__":

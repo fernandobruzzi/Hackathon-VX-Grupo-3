@@ -61,3 +61,33 @@ class PdmValidation(_Contract):
     formatted_description: str | None
     identity_key: str | None
     can_submit: bool
+
+
+class InventoryItem(BaseModel):
+    center_code: str
+    quantity: str
+    unit: str | None
+    unit_price: str | None = None
+    total_value: str | None = None
+
+
+class SimilarCandidate(_Contract):
+    material_code: str
+    status: str
+    active_code_target: str | None
+    description: str | None
+    match_type: str
+    identity_verified: bool
+    ranking_score: float
+    matching_attributes: list[str]
+    conflicts: list[str]
+    pending_checks: list[str]
+    inventory: list[InventoryItem]
+
+
+class SimilarMaterials(_Contract):
+    match_status: str
+    pdm_class_id: str | None
+    query_attributes: dict[str, str]
+    index_version: str
+    candidates: list[SimilarCandidate]
