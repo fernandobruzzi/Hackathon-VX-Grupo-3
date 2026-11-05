@@ -28,13 +28,16 @@ class SearchQuery:
 class HybridV1SearchRepository:
     name = "hybrid_v1"
 
-    def __init__(self, catalog, pdm_catalog: PdmCatalog, classifier, extractor, index_version: str, caller):
+    def __init__(
+        self, catalog, pdm_catalog: PdmCatalog, classifier, extractor, index_version: str, caller, embedder=None
+    ):
         self._catalog = catalog
         self._pdm = pdm_catalog
         self._classifier = classifier
         self._extractor = extractor
         self._version = index_version
         self._caller: Caller | None = caller
+        self._embedder = embedder
 
     def search(self, query: SearchQuery) -> dict:
         classification = None if query.pdm_class_id else self._classifier.classify(ClassificationInput(query.query))
@@ -55,12 +58,8 @@ class HybridV1SearchRepository:
             missing = [m.name for m in validation.missing_attributes]
 
         rows = {row["id"]: row for row in self._catalog.by_identity(key, self._version)} if key else {}
-        text_rows = self._catalog.full_text(
-            tokens(" ".join([query.query, *attributes.values()])), self._version, class_id, _TEXT_CANDIDATES
-        )
-        best = max((row["rank"] for row in text_rows), default=0) or 1
-        for row in text_rows:
-            rows.setdefault(row["id"], {**row, "rank": row["rank"] / best * _TEXT_SCORE_CEILING})
+        for row in self._similar_rows(query, attributes, class_id):
+            rows.setdefault(row["id"], row)
 
         candidates = [self._candidate(row, pdm_class, attributes, key, missing) for row in rows.values()]
         candidates.sort(key=lambda c: (-c["ranking_score"], c["material_code"]))
@@ -75,6 +74,14 @@ class HybridV1SearchRepository:
             "index_version": self._version,
             "candidates": candidates,
         }
+
+    def _similar_rows(self, query: SearchQuery, attributes: dict, class_id: str | None) -> list[dict]:
+        """Candidatos por texto, com nota normalizada abaixo da identidade exata."""
+        text_rows = self._catalog.full_text(
+            tokens(" ".join([query.query, *attributes.values()])), self._version, class_id, _TEXT_CANDIDATES
+        )
+        best = max((row["rank"] for row in text_rows), default=0) or 1
+        return [{**row, "rank": row["rank"] / best * _TEXT_SCORE_CEILING} for row in text_rows]
 
     def _reference_class(self, candidate_ids: tuple[str, ...], query: SearchQuery) -> str | None:
         """A única classe candidata de referência em que o texto traz fabricante e referência."""

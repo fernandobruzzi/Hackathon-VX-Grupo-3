@@ -49,6 +49,19 @@ class CatalogRepository:
         with self._engine.connect() as connection:
             return [dict(row) for row in connection.execute(query, params).mappings()]
 
+    def nearest(self, vector: list[float], version: str, class_id: str | None, limit: int) -> list[dict]:
+        """Vizinhos por similaridade de cosseno no pgvector."""
+        literal = "[" + ",".join(f"{value:.6f}" for value in vector) + "]"
+        query = text(
+            f"SELECT {_MATERIAL_COLUMNS}, 1 - (i.embedding <=> CAST(:vector AS vector)) AS rank {_FROM} "
+            "WHERE i.normalization_version = :version AND i.embedding IS NOT NULL "
+            "AND (CAST(:class_id AS text) IS NULL OR i.proposed_class_id = :class_id) "
+            "ORDER BY i.embedding <=> CAST(:vector AS vector), c.material_code LIMIT :limit"
+        )
+        params = {"vector": literal, "version": version, "class_id": class_id, "limit": limit}
+        with self._engine.connect() as connection:
+            return [dict(row) for row in connection.execute(query, params).mappings()]
+
     def inventory(self, material_ids: list[str], view: str, center_codes: frozenset[str]) -> dict[str, list[dict]]:
         if view not in (INVENTORY_VIEW, INVENTORY_FINANCIAL_VIEW):
             raise ValueError(f"View de estoque nao autorizada: {view}")

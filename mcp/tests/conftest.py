@@ -43,5 +43,5 @@ def database():
         bootstrap(KIT, api, LocalObjectStore(Path(os.environ.get("TMPDIR", "/tmp")) / "vx-search-test-storage"))
         api.dispose()
         indexed = run_index(PDM, database_url=batch_url)
-        yield {"admin": admin, "reader": reader_url, "indexed": indexed}
+        yield {"admin": admin, "reader": reader_url, "batch": batch_url, "indexed": indexed}
     admin.dispose()

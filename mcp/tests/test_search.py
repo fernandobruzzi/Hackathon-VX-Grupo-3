@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import text
 
+from pipelines.search_index import run_index
 from vx_materials_mcp.chatbot.mcp_client import McpToolError, connect
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
@@ -109,3 +110,22 @@ def test_query_and_index_must_share_the_same_version(database):
                 text("UPDATE material_search_index SET normalization_version = :v"),
                 {"v": database["indexed"]["index_version"]},
             )
+
+
+def test_embedding_search_needs_an_index_with_the_same_signature(database, monkeypatch):
+    """Índice sem embeddings não serve para consulta com embeddings: modelo, dimensão e versão precisam casar."""
+    monkeypatch.setenv("EMBEDDING_REPOSITORY", "simulated_v1")
+    monkeypatch.setenv("SEARCH_REPOSITORY", "hybrid_embeddings_v1")
+    with pytest.raises(McpToolError, match="simulated_v1:hashing-trigrams-v1:512"):
+        search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+
+
+def test_embedding_search_finds_the_existing_item(database, monkeypatch):
+    monkeypatch.setenv("EMBEDDING_REPOSITORY", "simulated_v1")
+    run_index(PDM, database_url=database["batch"])
+    monkeypatch.setenv("SEARCH_REPOSITORY", "hybrid_embeddings_v1")
+    result = search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+    assert result["index_version"].endswith("simulated_v1:hashing-trigrams-v1:512")
+    assert result["candidates"][0]["material_code"] == "16031971"
+    assert result["candidates"][0]["identity_verified"] is True
+    assert all(c["ranking_score"] < 1.0 for c in result["candidates"] if not c["identity_verified"])
