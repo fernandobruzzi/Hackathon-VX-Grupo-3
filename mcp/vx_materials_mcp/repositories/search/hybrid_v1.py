@@ -6,8 +6,8 @@ geral 10 do PDM; e mesmo assim a unificação de cadastro existentes só acontec
 
 from dataclasses import dataclass, field
 
-from domain.contracts import ClassificationInput, PdmCatalog
-from domain.identity import compare_attributes, partial_identity_key
+from domain.contracts import AnalyzedMaterial, ClassificationInput, MaterialRecord, PdmCatalog
+from domain.identity import compare_attributes, material_manufacturer, material_review_reasons, partial_identity_key
 from domain.pdm_validator import validate_pdm
 from repositories.candidates.tokens_v1 import tokens
 from vx_materials_mcp.security import INVENTORY_PERMISSION, Caller, inventory_view
@@ -61,7 +61,7 @@ class HybridV1SearchRepository:
         for row in self._similar_rows(query, attributes, class_id):
             rows.setdefault(row["id"], row)
 
-        candidates = [self._candidate(row, pdm_class, attributes, key, missing) for row in rows.values()]
+        candidates = [self._candidate(row, pdm_class, attributes, key, missing, query.query) for row in rows.values()]
         candidates.sort(key=lambda c: (-c["ranking_score"], c["material_code"]))
         candidates = candidates[: max(1, min(query.limit, 20))]
         self._attach_inventory(candidates)
@@ -98,13 +98,36 @@ class HybridV1SearchRepository:
     def _item(pdm_class) -> str | None:
         return pdm_class.item_names[0] if len(pdm_class.item_names) == 1 else None
 
-    def _candidate(self, row: dict, pdm_class, attributes: dict, key: str | None, missing: list[str]) -> dict:
-        verified = bool(key) and row["candidate_identity_key"] == key
+    def _candidate(
+        self, row: dict, pdm_class, attributes: dict, key: str | None, missing: list[str], query_text: str
+    ) -> dict:
         same_class = pdm_class is not None and row["proposed_class_id"] == pdm_class.id
         their = row["extracted_attributes"] or {}
         conflicts, matching = compare_attributes(pdm_class, attributes, their) if same_class else ([], 0)
+        review = []
+        if same_class:
+            requested = AnalyzedMaterial(MaterialRecord("", "ATIVO", query_text), pdm_class.id, None, attributes, key)
+            candidate = AnalyzedMaterial(
+                MaterialRecord(
+                    row["material_code"],
+                    row["status"],
+                    row["original_description_long"] or "",
+                    manufacturer=row.get("manufacturer") or "",
+                    reference=row.get("manufacturer_reference") or "",
+                ),
+                pdm_class.id,
+                None,
+                their,
+                row["candidate_identity_key"],
+            )
+            review.extend(material_review_reasons(requested, pdm_class))
+            review.extend(material_review_reasons(candidate, pdm_class))
+            if material_manufacturer(requested) != material_manufacturer(candidate):
+                review.append("FABRICANTE_DIFERENTE_OU_NAO_CONFIRMADO")
+        verified = bool(key) and row["candidate_identity_key"] == key and same_class and not review and not conflicts
         matching_names = [n for n in attributes if n in their and n not in conflicts] if same_class else []
         pending = [] if verified else [f"ATRIBUTO_AUSENTE: {name}" for name in missing]
+        pending.extend(dict.fromkeys(review))
         target = None
         inventory_id = row["id"]
         if row["status"] == "BLOQUEADO":

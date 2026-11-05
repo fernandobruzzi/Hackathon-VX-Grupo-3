@@ -20,7 +20,7 @@ from repositories.extraction.rule_based_v1_tables import (
 
 _NOISE = re.compile(
     r"\s*(?:(?<=\s)-\s*|,\s*)?\b(?:COMPRA LOCAL|VER DESENHO|CONF(?:ORME)? (?:AMOSTRA|CATALOGO)|ITEM CRITICO"
-    r"|P/ ?MANUTENCAO|APLICACAO GERAL|REF ANTIGA|REV [A-Z]\b)"
+    r"|P/ ?MANUTENCAO|APLICACAO GERAL|REF ANTIGA)"
 )
 _SEGMENTS = re.compile(r"\s*;\s*|,(?!\d)\s*|\s+-\s+")
 _CONNECTOR = re.compile(r"^(?:DE|COM|:)(?:\s+|$)|\s+(?:DE|COM|E)$")
@@ -237,7 +237,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "2"
+    revision = "3"
 
     def extract(
         self,
@@ -349,7 +349,7 @@ class RuleBasedV1ExtractionRepository:
         for attribute in work.open_attributes():
             for value in attribute.allowed_values or ():
                 # Valores curtos só com rótulo: "8" ou "C" aparecem em muitos outros contextos.
-                if len(value) < 3 or value.isdigit():
+                if len(value) < 3 or (value.isdigit() and attribute.name != "MODELO EQUIPAMENTO"):
                     continue
                 # Roscas ficam para a leitura de notação compacta: M16 pode ser M16 X 60.
                 if re.fullmatch(r"M\d.*", value):

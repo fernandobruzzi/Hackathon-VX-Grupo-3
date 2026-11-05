@@ -47,7 +47,7 @@ def test_group_interval_counts_groups_instead_of_expanding_correlated_pairs(eval
     assert evaluated["pairs"]["conditional_precision_interval"] is None
 
 
-def test_aliases_cohort_retains_its_labels_and_decided_precision(evaluated):
+def test_aliases_cohort_retains_labels_and_records_conservative_abstention(evaluated):
     import json
 
     from pipelines.evaluate_sanitization import cohort_data
@@ -59,5 +59,22 @@ def test_aliases_cohort_retains_its_labels_and_decided_precision(evaluated):
     assert sum(case["same_item"] is True for case in groups["reviewed"]) == 39
     report = compare_merges(evaluated["current_merges"], groups, pairs, cohort["review_additions"])["groups"]
     assert report["counts"]["reviewed"] == 38
-    assert report["precision"]["denominator"] >= 35
+    # identity-v2 retém seis positivos históricos, dois inconclusivos e o erro conhecido.
+    # Os rótulos não mudam para esconder essa perda de cobertura.
+    assert report["precision"]["denominator"] == 31
+    assert report["counts"]["wrong"] == 0
+    assert report["inconclusive_reviews"] == 2
+    assert report["positive_recovery_in_cohort"]["numerator"] == 31
+    assert report["positive_recovery_in_cohort"]["denominator"] == 37
+    assert report["algorithm_abstention"]["numerator"] == 9
     assert report["precision"]["value"] >= 0.95
+
+
+def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
+    import json
+
+    sample = json.loads((Path(__file__).parent / "fixtures/merge_identity_sample_73.json").read_text(encoding="utf-8"))
+    current = {tuple(sorted(proposal.material_codes)) for proposal in evaluated["current_merges"]}
+    assert sample["review_kind"] == "DEVELOPMENT_REGRESSION" and sample["independent"] is False
+    assert len(sample["reviewed"]) == 40
+    assert all(tuple(sorted(item["codes"])) in current and item["same_item"] is True for item in sample["reviewed"])

@@ -28,12 +28,19 @@ from domain.contracts import (
     NormalizationRepository,
     PdmCatalog,
 )
-from domain.identity import IDENTITY_RULES_VERSION, compare_attributes, partial_identity_key
+from domain.identity import (
+    IDENTITY_RULES_VERSION,
+    compare_attributes,
+    material_review_reasons,
+    merge_partition,
+    partial_identity_key,
+)
 from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
 from domain.proposal_validation import approval_blockers
 from pipelines.corrections import propose_corrections, summarize_corrections
+from pipelines.identity_review import identity_review_report
 from pipelines.ncm_corrections import propose_ncm_corrections
 from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
@@ -87,7 +94,10 @@ def analyze_material(
     attributes = {name: value.value for name, value in extraction.attributes.items()}
     validation = validate_pdm(catalog, class_id, attributes, item_name=item_name)
     identity_key = validation.identity_key or partial_identity_key(pdm_class, attributes)
-    return AnalyzedMaterial(record, class_id, item_name, attributes, identity_key)
+    material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key)
+    if material_review_reasons(material, pdm_class):
+        return AnalyzedMaterial(record, class_id, item_name, attributes, None)
+    return material
 
 
 def _item_name(item_names: tuple[str, ...], evidence: Iterable[str]) -> str | None:
@@ -105,6 +115,13 @@ def build_proposal(
 ) -> MergeProposal:
     members = [materials[code] for code in group.codes]
     pdm_class = catalog.classes[members[0].pdm_class_id]
+    if (
+        any(member.pdm_class_id != pdm_class.id or material_review_reasons(member, pdm_class) for member in members)
+        or len({(merge_partition(member)[1], member.item_name) for member in members}) != 1
+    ):
+        raise ValueError("MERGE recusado: fabricante, nome da peca ou referencia exige revisao")
+    if group.identity_verified and (not members[0].identity_key or len({m.identity_key for m in members}) != 1):
+        raise ValueError("MERGE recusado: identidade declarada nao confere com os membros")
     primary = _suggest_primary(members)
     conflicts: list[str] = []
     if not group.identity_verified:
@@ -145,6 +162,7 @@ def build_proposal(
     conflicts = list(dict.fromkeys(conflicts))
 
     changeset = {
+        "identity_rules_version": IDENTITY_RULES_VERSION,
         "match_type": group.match_type.value,
         "identity_verified": group.identity_verified,
         "identity_key": primary.identity_key if group.identity_verified else None,
@@ -256,11 +274,14 @@ def _propose(
     catalog: PdmCatalog,
     repository_name: str | None,
     correction_repository: str | None = None,
+    identity_review: dict | None = None,
 ) -> tuple[list[MergeProposal], list[MergeProposal], Counter[str]]:
     """Analisa cada material uma vez e gera as unificações e as correções."""
     classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
     normalizer = get_normalization_repository()
     analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
+    if identity_review is not None:
+        identity_review.update(identity_review_report(analyzed, catalog))
     merges = merge_proposals(analyzed, catalog, get_candidate_repository(repository_name), normalizer)
     corrections, pending = propose_corrections(
         analyzed, catalog, normalizer, get_correction_repository(correction_repository)
@@ -288,5 +309,8 @@ def sanitize_report(
     correction_repository: str | None = None,
 ) -> dict:
     catalog = _catalog(pdm_workbook)
-    merges, corrections, pending = _propose(read_csv_records(path), catalog, repository_name, correction_repository)
-    return {**summarize(merges), "corrections": summarize_corrections(corrections, pending)}
+    review = {}
+    merges, corrections, pending = _propose(
+        read_csv_records(path), catalog, repository_name, correction_repository, review
+    )
+    return {**summarize(merges), "corrections": summarize_corrections(corrections, pending), "identity_review": review}

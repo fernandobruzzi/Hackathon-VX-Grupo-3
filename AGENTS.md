@@ -488,6 +488,16 @@ Extraction prefers leaving a field empty to guessing, because a wrong value can 
 
 The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.
 
+Identity rules `identity-v2` also separate manufacturers in technical classes, even when the PDM has no manufacturer attribute. Unknown manufacturers never bridge named manufacturers. Different item names, equipment models used as part numbers, and unconfirmed part revisions cannot produce a merge. Revision markers such as `REV A` are preserved and sent to manual review, rather than stripped as noise.
+
+`sanitize-report` includes `identity_review`: technical equivalence candidates and manual review evidence, separate from applicable proposals. `sanitize` stores this report immutably through the storage client and returns `identity_review_key`. Equivalence is not approval to substitute or consolidate. See [the rules and measured limits](docs/identidade.md).
+
+After changing identity rules, rebuild the search index with `vx-back index`; an old index is refused. Re-evaluate the fixed reviewed cohort, from `back/`, with:
+
+```bash
+uv run python -m pipelines.measure_merge_identity ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
 To change the default, measure against `back/tests/fixtures/merge_review.json`. Those pairs were reviewed by reading descriptions during development, so add pairs reviewed by people who know the materials whenever possible.
 
 ## Similar material search

@@ -268,7 +268,7 @@ def test_structured_fields_win_and_keep_origin(catalog):
         manufacturer_reference="S9143E72 REV A",
     )
     reference = result.attributes["REFERENCIA FABRICANTE"]
-    assert reference.value == "S9143E72"
+    assert reference.value == "S9143E72 REV A"
     assert reference.original == "S9143E72 REV A"
     assert reference.rule == "field.manufacturer_reference"
     assert result.attributes["FABRICANTE"].rule == "field.manufacturer"

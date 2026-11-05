@@ -6,6 +6,7 @@ from vx_materials_mcp.security import INVENTORY_FINANCIAL_VIEW, INVENTORY_VIEW
 
 _MATERIAL_COLUMNS = """
     c.id::text AS id, c.material_code, c.status, c.original_description_long, c.pdm_description,
+    c.manufacturer, c.manufacturer_reference,
     t.material_code AS target_code, t.status AS target_status, t.id::text AS target_id,
     i.proposed_class_id, i.extracted_attributes, i.candidate_identity_key
 """

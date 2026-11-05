@@ -29,6 +29,7 @@ from sqlalchemy import Engine, create_engine
 from clients.storage import ObjectStore, get_object_store
 from domain.contracts import AnalyzedMaterial, MaterialRecord, MergeProposal, PdmCatalog
 from pipelines.corrections import propose_corrections, summarize_corrections
+from pipelines.identity_review import identity_review_report, store_identity_review
 from pipelines.ncm_corrections import propose_ncm_corrections
 from pipelines.sanitize import _catalog, analysis_signature, analyze_material, merge_proposals, summarize
 from repositories.batch_repository import (
@@ -263,6 +264,8 @@ def run_full(
         analyzed, catalog, normalizer, get_correction_repository(correction_repository), pending_by_code
     )
     corrections += propose_ncm_corrections(analyzed, catalog)
+    review = identity_review_report(analyzed, catalog)
+    review_key = store_identity_review(review, context.store or get_object_store(), context.tenant_id)
     proposals = merges + corrections
     propose_seconds = time.perf_counter() - started - analysis_seconds
 
@@ -275,6 +278,7 @@ def run_full(
         "pipeline_version": PIPELINE_VERSION,
         "pdm_version": catalog.version,
         "analysis_signature": context.checkpoint["analysis_signature"],
+        "identity_review_key": review_key,
         # Campos do contrato BatchJob.counts; o detalhe fica ao lado.
         "proposals": len(proposals),
         "merges": by_type.get("MERGE", 0),

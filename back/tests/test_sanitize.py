@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from domain.contracts import MatchType, MaterialRecord
-from domain.identity import compare_attributes, partial_identity_key
+from domain.identity import compare_attributes, material_review_reasons, partial_identity_key
 from domain.pdm_loader import load_pdm
 from pipelines.sanitize import analyze_material, build_proposal, propose_merges, read_csv_records
 from repositories import candidates
@@ -264,7 +264,19 @@ def precision(pairs):
 def test_exact_identity_precision_on_reviewed_pairs(catalog, whole_base):
     _, analyzed = whole_base
     value, decided = precision(proposed_pairs(group_for("exact_identity_v1", catalog, analyzed)))
-    assert decided >= 50
+    by_code = {m.record.code: m for m in analyzed}
+    held = [
+        pair
+        for pair in reviewed()
+        if pair["same_item"]
+        and any(
+            material_review_reasons(by_code[code], catalog.classes[by_code[code].pdm_class_id])
+            for code in pair["codes"]
+            if by_code[code].pdm_class_id
+        )
+    ]
+    # Revisões antes apagadas saem da unificação, sem desaparecer da cobertura avaliada.
+    assert decided + len(held) >= 50
     assert value == 1.0
 
 
@@ -294,7 +306,19 @@ def test_declared_duplicates_found(catalog, whole_base):
         and match[1] != record.code
     }
     assert len(declared) == 202
-    assert len(declared & pairs) >= 70
+    by_code = {m.record.code: m for m in active}
+    held = {
+        pair
+        for pair in declared
+        if any(
+            material_review_reasons(by_code[code], catalog.classes[by_code[code].pdm_class_id])
+            for code in pair
+            if by_code[code].pdm_class_id
+        )
+    }
+    assert not held & pairs
+    # A revisão explicitamente pendente conta como encaminhamento, nunca como duplicidade confirmada.
+    assert len((declared & pairs) | held) >= 70
 
 
 def test_whole_base_runs_end_to_end(catalog, tools, whole_base):
