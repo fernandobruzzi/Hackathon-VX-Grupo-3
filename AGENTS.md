@@ -408,6 +408,14 @@ The same batch run proposes `PDM_CORRECTION` (description in PDM format, merchan
 
 Only `ATIVO` materials are corrected, as with merges. Corrections also need a trusted class: classified, and the PDM item name opens the description. A class name found mid-text is usually an attribute of an abbreviated product, such as `PARAFUSO SEXT ... REVESTIMENTO`, so those materials only get a pending reason. The one exception is a unit alias of the same unit, like `PÇ` to `PC`, proposed with the rule `unit.alias_without_class` and never replaced by a class default. Packaging units without a known factor (`CX`, `CT`, `JG`) are never converted. The report counts pending reasons by type. Select the rules with `CORRECTION_REPOSITORY`, default `head_noun_v1`.
 
+## Full-base runs
+
+`vx-back sanitize --job-id <id>` runs a job the API created, and resumes from its checkpoint if it stopped. Analysis is saved in chunks of 1,000 materials under `runs/<job_id>/analysis/` in storage, and proposals are saved in batches of 500 in the same transaction as the checkpoint, so a rerun skips finished work and never duplicates a proposal. Without `--job-id` the run is in memory, with nothing to resume. Locally, `APP_ENV=local uv run vx-batch-job` (from `api/`, with the `api_user` connection) creates the job, until the batch screen (#21) does.
+
+A finished job stores its metrics in `batch_jobs.counts` and `runs/<job_id>/metrics.json`: the contract counts (`proposals`, `merges`, `ncm`, `enrichment`), counts by type, one outcome per material (`PROPOSTA`, `PENDENTE`, `SEM_ALTERACAO` or `ERRO_ANALISE`, always summing to the base), time per stage and attempt, and model usage. The batch doesn't call models yet, so usage is zero and says so.
+
+Merge precision is measured on a random sample of all merge proposals in `back/tests/fixtures/merge_precision_sample.json`, reviewed by reading descriptions. If proposals change, the test asks for a new sample and review.
+
 ## Local first
 
 Every feature must run and pass its tests locally with `docker compose up`, without an AWS account. AWS deployment proceeds in parallel, to surface its problems early, but doesn't block local work.
