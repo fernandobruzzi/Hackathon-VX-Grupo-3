@@ -92,11 +92,12 @@ _INSERT_INDEX = text(
     """
     INSERT INTO material_search_index (
         tenant_id, material_id, proposed_class_id, extracted_attributes, search_vector, normalization_version,
-        candidate_identity_key
+        candidate_identity_key, embedding, embedding_model
     )
     VALUES (
         :tenant_id, :material_id, :proposed_class_id, CAST(:extracted_attributes AS jsonb),
-        to_tsvector('simple', :search_text), :version, :candidate_identity_key
+        to_tsvector('simple', :search_text), :version, :candidate_identity_key, CAST(:embedding AS vector),
+        :embedding_model
     )
     """
 )
