@@ -99,13 +99,20 @@ def propose_corrections(
     catalog: PdmCatalog,
     normalizer: NormalizationRepository,
     corrector: CorrectionRepository,
+    pending_by_code: dict[str, tuple[str, ...]] | None = None,
 ) -> tuple[list[MergeProposal], Counter[str]]:
-    """Devolve as propostas e a contagem de pendências por motivo, que ficam sem correção automática."""
+    """Devolve as propostas e a contagem de pendências por motivo, que ficam sem correção automática.
+
+    `pending_by_code`, quando informado, recebe os motivos de cada material, para a cobertura do job.
+    """
     proposals: list[MergeProposal] = []
     pending: Counter[str] = Counter()
     for material in analyzed:
         result = corrector.correct(material, catalog, normalizer)
-        pending.update(reason.split(":")[0] for reason in result.pending)
+        reasons = tuple(dict.fromkeys(reason.split(":")[0] for reason in result.pending))
+        pending.update(reasons)
+        if pending_by_code is not None and reasons:
+            pending_by_code[material.record.code] = reasons
         proposals.extend(correction_proposals(material, result, catalog, corrector.name))
     return sorted(proposals, key=lambda p: (p.proposal_type, p.material_codes)), pending
 

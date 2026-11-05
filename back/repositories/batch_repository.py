@@ -6,7 +6,7 @@ O batch não altera a base mestre: só registra propostas, aplicadas depois pelo
 import json
 from decimal import Decimal
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Connection, Engine, text
 
 from domain.contracts import MaterialRecord, MergeProposal
 
@@ -120,31 +120,91 @@ def write_search_index(engine: Engine, tenant_id: str, version: str, rows: list[
     return len(rows)
 
 
-def save_proposals(
-    engine: Engine,
+def _proposal_row(proposal: MergeProposal, ids: dict[str, str | None], tenant_id: str, job_id: str | None) -> dict:
+    return {
+        "id": proposal.id,
+        "tenant_id": tenant_id,
+        "job_id": job_id,
+        "proposal_type": proposal.proposal_type,
+        "members": json.dumps(proposal.members, ensure_ascii=False),
+        "primary_material_id": ids[proposal.suggested_primary_code],
+        "changeset": json.dumps(proposal.changeset, ensure_ascii=False),
+        "changeset_hash": proposal.changeset_hash,
+        "fiscal_review_status": "PENDING" if proposal.fiscal_review_required else "NOT_REQUIRED",
+    }
+
+
+def insert_proposals(
+    connection: Connection,
     proposals: list[MergeProposal],
     records: list[MaterialRecord],
     tenant_id: str,
     job_id: str | None = None,
 ) -> int:
-    """Grava em uma transação. Os ids vêm do conteúdo, então repetir não duplica nada."""
+    """Insere na transação de quem chama. Os ids vêm do conteúdo, então repetir não duplica nada."""
     ids = {record.code: record.database_id for record in records}
     inserted = 0
-    with engine.begin() as connection:
-        for proposal in proposals:
-            result = connection.execute(
-                _INSERT_PROPOSAL,
-                {
-                    "id": proposal.id,
-                    "tenant_id": tenant_id,
-                    "job_id": job_id,
-                    "proposal_type": proposal.proposal_type,
-                    "members": json.dumps(proposal.members, ensure_ascii=False),
-                    "primary_material_id": ids[proposal.suggested_primary_code],
-                    "changeset": json.dumps(proposal.changeset, ensure_ascii=False),
-                    "changeset_hash": proposal.changeset_hash,
-                    "fiscal_review_status": "PENDING" if proposal.fiscal_review_required else "NOT_REQUIRED",
-                },
-            )
-            inserted += result.rowcount if result.rowcount > 0 else 0
+    for proposal in proposals:
+        result = connection.execute(_INSERT_PROPOSAL, _proposal_row(proposal, ids, tenant_id, job_id))
+        inserted += result.rowcount if result.rowcount > 0 else 0
     return inserted
+
+
+# Jobs: a API cria o registro (batch_user não insere); o batch só acompanha e conclui.
+_LOAD_JOB = text(
+    "SELECT id::text, tenant_id::text, job_type, status, checkpoint FROM batch_jobs WHERE id = :id FOR UPDATE"
+)
+_UPDATE_JOB = text(
+    """
+    UPDATE batch_jobs
+    SET status = :status, heartbeat_at = now(), checkpoint = CAST(:checkpoint AS jsonb),
+        counts = COALESCE(CAST(:counts AS jsonb), counts), error_summary = :error
+    WHERE id = :id
+    """
+)
+
+
+class JobNotRunnable(ValueError):
+    """O job não existe, é de outro tipo ou já terminou com sucesso."""
+
+
+def claim_job(engine: Engine, job_id: str, job_type: str = "SANITIZE") -> dict:
+    """Marca o job como RUNNING e devolve o checkpoint salvo, para continuar de onde parou."""
+    with engine.begin() as connection:
+        row = connection.execute(_LOAD_JOB, {"id": job_id}).mappings().first()
+        if row is None or row["job_type"] != job_type:
+            raise JobNotRunnable(f"Job {job_id} inexistente ou de outro tipo")
+        if row["status"] == "SUCCEEDED":
+            raise JobNotRunnable(f"Job {job_id} já concluído")
+        checkpoint = dict(row["checkpoint"] or {})
+        _update(connection, job_id, "RUNNING", checkpoint)
+    return {"tenant_id": row["tenant_id"], "checkpoint": checkpoint}
+
+
+def _update(connection: Connection, job_id: str, status: str, checkpoint: dict, counts=None, error=None) -> None:
+    connection.execute(
+        _UPDATE_JOB,
+        {
+            "id": job_id,
+            "status": status,
+            "checkpoint": json.dumps(checkpoint, ensure_ascii=False),
+            "counts": None if counts is None else json.dumps(counts, ensure_ascii=False),
+            "error": error,
+        },
+    )
+
+
+def update_job(connection: Connection, job_id: str, checkpoint: dict) -> None:
+    """Checkpoint e heartbeat, na mesma transação do trabalho que eles registram."""
+    _update(connection, job_id, "RUNNING", checkpoint)
+
+
+def finish_job(engine: Engine, job_id: str, checkpoint: dict, counts: dict) -> None:
+    with engine.begin() as connection:
+        _update(connection, job_id, "SUCCEEDED", checkpoint, counts)
+
+
+def fail_job(engine: Engine, job_id: str, checkpoint: dict, error: str) -> None:
+    """Falha guarda o checkpoint: rodar de novo continua dele."""
+    with engine.begin() as connection:
+        _update(connection, job_id, "FAILED", checkpoint, error=error[:500])

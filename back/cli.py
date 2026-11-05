@@ -8,7 +8,8 @@ from collections import Counter
 
 from domain.contracts import NormalizedField
 from pipelines.classify import classification_evaluation, classification_report
-from pipelines.sanitize import run_sanitize, sanitize_report
+from pipelines.full_run import run_sanitize
+from pipelines.sanitize import sanitize_report
 from pipelines.search_index import run_index
 from repositories.normalization import get_normalization_repository
 
