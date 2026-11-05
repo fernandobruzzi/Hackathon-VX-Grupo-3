@@ -59,7 +59,7 @@ def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
     assert (row[0], row[1]) == ("MERGE", "PENDING")
     assert row[3]["primary_material_code"] == row[5]
     assert row[3]["conflicts"]
-    assert all(member["observed_version"] == 1 and member["inventory"] for member in row[2])
+    assert all(member["expected_version"] == 1 and member["material_id"] for member in row[2])
 
 
 def test_running_again_duplicates_nothing(sanitized):
@@ -78,8 +78,8 @@ def test_master_data_stays_untouched(sanitized):
 def test_only_active_materials_are_proposed(sanitized):
     _, _, admin, _ = sanitized
     query = (
-        "SELECT count(*) FROM sanitization_proposals p, jsonb_array_elements(p.members) member "
-        "WHERE member->>'status' <> 'ATIVO'"
+        "SELECT count(*) FROM sanitization_proposals p, jsonb_array_elements(p.members) member, materials_master m "
+        "WHERE m.id = (member->>'material_id')::uuid AND m.status <> 'ATIVO'"
     )
     assert scalar(admin, query) == 0
 

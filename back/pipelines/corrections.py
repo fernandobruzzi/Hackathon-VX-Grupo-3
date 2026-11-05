@@ -37,6 +37,8 @@ def _member(material: AnalyzedMaterial) -> dict:
         "value_brl": record.total_value,
         "inventory": list(record.inventory),
         "attributes": material.attributes,
+        "pdm_class_id": material.pdm_class_id,
+        "item_name": material.item_name,
     }
 
 
@@ -55,6 +57,7 @@ def build_correction_proposal(
         "correction_repository": repository_name,
         "pdm_class_id": material.pdm_class_id,
         "pdm_version": catalog.version,
+        "pdm_source_sha256": catalog.source_sha256,
         "item_name": material.item_name,
         "material_code": record.code,
         "changes": [

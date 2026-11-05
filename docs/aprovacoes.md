@@ -1,9 +1,9 @@
 # Fila, aprovação e auditoria
 
 A #20 implementa a leitura de propostas persistidas, revisão técnica/fiscal e
-aplicação atômica. A produção das propostas pertence à #19. O login Cognito e a
+aplicação atômica. A produção das propostas usa o batch entregue na #19. O login Cognito e a
 política completa de autorização pertencem às #7 e #9; esta entrega permanece
-em rascunho até a integração dessas dependências.
+em rascunho até a integração dessas duas dependências.
 
 ## Rodar localmente
 
@@ -14,8 +14,14 @@ APP_ENV=local ENABLE_LOCAL_TEST_SESSIONS=true NEXT_PUBLIC_DATA_SOURCE=api docker
 ```
 
 Abra `http://localhost:8000`, entre como Governança ou Fiscal e abra Saneamento.
-O bootstrap carrega os materiais originais, mas não fabrica propostas: a fila
-fica vazia enquanto o produtor não gravar propostas válidas. Chat, pedidos,
+O bootstrap carrega os materiais originais. Para gerar propostas, execute:
+
+```bash
+APP_ENV=local ENABLE_LOCAL_TEST_SESSIONS=true NEXT_PUBLIC_DATA_SOURCE=api docker compose --profile batch run --rm --build batch
+```
+
+O batch grava o contrato `proposal-v1`, incluindo versões, referência PDM e hash
+compartilhado com a API. A repetição não duplica propostas. Chat, pedidos,
 enriquecimento e dashboard continuam demonstrativos, como informa a interface.
 Sem `NEXT_PUBLIC_DATA_SOURCE=api` no build, o front usa o protótipo com mocks.
 
@@ -32,6 +38,9 @@ A publicação local do Compose fica em `127.0.0.1:8000`.
 persistido. `members` registra os UUIDs, versões observadas e interpretações PDM.
 `changeset` usa `schema_version: proposal-v1`, dataset, versão e SHA-256 do PDM,
 estado final, fontes, conflitos, conversões e hashes das evidências.
+O MVP exige um único dataset por empresa para persistir as propostas de batch;
+mais de um exige seleção explícita antes de continuar. Propostas incompletas
+continuam visíveis na fila com conflitos e podem ser rejeitadas, mas não aplicadas.
 
 O produtor deve calcular `domain.proposals.proposal_hash(members, changeset,
 evidence_ids)`. A API recalcula o mesmo hash, sem depender da ordem das chaves do
@@ -39,10 +48,15 @@ JSON. O hash não torna uma sugestão correta: a API ainda valida PDM, identidad
 versões, escopo, principal, fontes e revisões. Scores nunca autorizam unificação.
 Para enriquecimento, cada evidência deve existir no banco e coincidir com o hash
 de seus fatos, calculado por `schemas.proposals.evidence_hash`.
+As conversões de aliases de unidade registram fator 1 e a regra da normalização;
+embalagens sem fator continuam bloqueadas. Normalizar o NCM original também
+exige revisão fiscal quando muda o valor persistido.
 
 Os estados persistidos dos membros são conferidos contra as interpretações;
 fabricantes diferentes, referências diferentes ou atributos contraditórios
 bloqueiam a aprovação. Mudanças conhecidas na base fiscal exigem revisão fiscal.
+Referências com separadores ou sufixo neutro seguem `domain.identity.reference_key`,
+a mesma regra usada pelo batch; a API não mantém um segundo normalizador.
 Uma correção exclusivamente fiscal não transforma o cadastro em principal
 canônico nem altera sua descrição ou estoque.
 

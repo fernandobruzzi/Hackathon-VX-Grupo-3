@@ -201,7 +201,9 @@ def test_divergent_ncm_requires_fiscal_review(catalog, tools):
         material(catalog, tools, "1", FILTER, ncm="84212300"),
         material(catalog, tools, "2", FILTER, ncm="8421.23.00"),
     )
-    assert same.fiscal_review_required is False
+    # Mesmo código fiscal, mas mudar a grafia persistida também exige autorização fiscal.
+    assert same.fiscal_review_required is True
+    assert not same.conflicts
 
 
 def test_redirect_prefix_is_ignored_when_analyzing(catalog, tools):

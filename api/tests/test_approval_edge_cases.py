@@ -3,6 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal, localcontext
 
+import pytest
 from approval_fixtures import decide, persist
 from sqlalchemy import func, select
 
@@ -16,6 +17,21 @@ from vx_materials_api.db.models import (
     SanitizationProposal,
 )
 from vx_materials_api.schemas.proposals import evidence_hash
+
+
+@pytest.mark.parametrize("reference", ["LF 9009", "LF-9009", "LF/9009", "LF9009-00"])
+def test_reference_variants_follow_shared_domain_identity(approval_case, reference):
+    case = approval_case
+    case["materials"][1].manufacturer_reference = reference
+    case["materials"][1].attributes = {"FABRICANTE": "FLEETGUARD", "REFERENCIA FABRICANTE": reference}
+    case["proposal"].members = [
+        case["proposal"].members[0],
+        case["proposal"].members[1] | {"attributes": case["materials"][1].attributes},
+    ]
+    persist(case)
+    response = decide(case)
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "APPLIED"
 
 
 def test_canonical_identity_collision_rolls_back_every_change(approval_case):
