@@ -29,13 +29,11 @@ class SimilarMaterialsSearch:
             classifier = get_classification_repository(self._pdm)
             extractor = get_extraction_repository()
             embedder = get_embedding_repository()
-            version = index_version(
-                self._pdm, classifier.name, extractor.name, embedder.signature if embedder else None
-            )
+            version = index_version(self._pdm, classifier, extractor, embedder.signature if embedder else None)
             catalog = CatalogRepository(self._engine)
             # Indexação e consulta precisam usar as mesmas regras, ou os tokens não se comparam.
             if catalog.indexed(version) == 0:
-                raise ToolError(f"Indice de busca ausente na versao {version}: rode `vx-back index`")
+                raise ToolError(f"Indice de busca ausente na versao {version}: reconstrua com `vx-back index`")
             self._repository = get_search_repository(
                 pdm_catalog=self._pdm,
                 catalog=catalog,

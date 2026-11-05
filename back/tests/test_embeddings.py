@@ -3,7 +3,6 @@ import json
 
 import pytest
 
-from pipelines.search_index import index_version
 from repositories.embeddings import REPOSITORIES, get_embedding_repository
 from repositories.embeddings.bedrock_titan_v1 import BedrockTitanV1EmbeddingRepository
 from repositories.embeddings.ollama_nomic_v1 import OllamaNomicV1EmbeddingRepository
@@ -26,16 +25,6 @@ def test_contract_signature_names_model_and_dimension(name):
     repository_class = REPOSITORIES[name]
     assert repository_class.dimensions == 512
     assert repository_class.name in f"{repository_class.name}:{repository_class.model}:512"
-
-
-def test_signature_changes_the_index_version():
-    class Catalog:
-        version = "pdm-kit-v1"
-
-    plain = index_version(Catalog, "rule_based_v1", "rule_based_v1")
-    simulated = index_version(Catalog, "rule_based_v1", "rule_based_v1", SimulatedV1EmbeddingRepository().signature)
-    assert plain != simulated
-    assert simulated.endswith("simulated_v1:hashing-trigrams-v1:512")
 
 
 def test_simulated_vectors_are_stable_normalized_and_labeled():

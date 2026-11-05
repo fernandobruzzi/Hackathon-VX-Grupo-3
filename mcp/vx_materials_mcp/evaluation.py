@@ -40,7 +40,7 @@ def evaluate(database_url: str, pdm_workbook: str, repository_name: str, limit: 
     classifier = get_classification_repository(catalog)
     extractor = get_extraction_repository()
     embedder = get_embedding_repository()
-    version = index_version(catalog, classifier.name, extractor.name, embedder.signature if embedder else None)
+    version = index_version(catalog, classifier, extractor, embedder.signature if embedder else None)
     repository = get_search_repository(
         repository_name,
         catalog=CatalogRepository(engine),
