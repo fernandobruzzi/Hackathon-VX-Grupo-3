@@ -251,14 +251,16 @@ class BatchJob(Base):
 class MaterialSearchIndex(Base):
     __tablename__ = "material_search_index"
     __table_args__ = (
-        UniqueConstraint("material_id", "job_id"),
+        # Um índice por versão: consulta e indexação precisam usar a mesma versão.
+        UniqueConstraint("material_id", "normalization_version"),
         Index("ix_material_search_index_search_vector", "search_vector", postgresql_using="gin"),
+        Index("ix_material_search_index_candidate_identity_key", "candidate_identity_key"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     tenant_id: Mapped[uuid.UUID] = _tenant()
     material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
-    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("batch_jobs.id"), nullable=False)
+    job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("batch_jobs.id"))
     proposed_class_id: Mapped[str | None] = mapped_column(Text)
     extracted_attributes: Mapped[Any] = _jsonb()
     search_vector: Mapped[Any | None] = mapped_column(TSVECTOR)
