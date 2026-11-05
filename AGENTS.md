@@ -100,7 +100,7 @@ Each piece of work follows the same path:
 
 1. **Issue:** claim the issue, as described in [Claiming an issue](#claiming-an-issue). If none exists for the work, create one and assign it first. Nothing else starts before this.
 2. **Branch:** create a branch for it from an up-to-date `main`.
-3. **Develop:** make atomic commits. Run the local checks.
+3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
 4. **PR:** open a pull request to `main`, closing the issue.
 5. **Merge:** rebase-merge once checks pass, and delete the branch.
 
@@ -282,6 +282,24 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - Guards check both action and resource. The front hides controls, but the API is the authority.
 - Never commit secrets. Tokens, passwords and secrets never appear in logs.
 - Test sessions exist only in local environments.
+
+## Local first
+
+Every feature must run and pass its tests locally with `docker compose up`, without an AWS account. AWS deployment proceeds in parallel, to surface its problems early, but doesn't block local work.
+
+| Need | Local | AWS |
+|---|---|---|
+| Services | Docker Compose | ECS Express |
+| Database | Postgres + pgvector container | RDS, with the same migrations |
+| Files | S3-compatible container or local folder | S3 |
+| Login | Local test session | Cognito |
+| Models | Simulated responses, or real Bedrock when needed | Bedrock |
+
+- What carries over to AWS is the same images, migrations and environment variables. Don't fork code by environment.
+- Code reaches external services through small clients selected by environment variable, like [swappable algorithms](#swappable-algorithms).
+- Local shortcuts must be impossible to enable in deployed environments: the application refuses to start if they are on there.
+- Simulated results are always labeled as simulated.
+- Cognito and Bedrock have no faithful local version, so test them on real AWS before their milestones close.
 
 ## Swappable algorithms
 
