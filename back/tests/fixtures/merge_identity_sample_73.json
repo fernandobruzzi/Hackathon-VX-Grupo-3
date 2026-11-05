@@ -1,0 +1,211 @@
+{
+  "description": "Amostra aleatoria com semente fixa, revisada lendo as descricoes e campos originais em 6/11/2026 apos identity-v2 e aliases_v1. Evidencia de desenvolvimento, nao validacao independente ou de especialista.",
+  "review_kind": "DEVELOPMENT_REGRESSION",
+  "independent": false,
+  "reviewed_on": "2026-11-06",
+  "seed": 32,
+  "size": 40,
+  "candidate_repository": "exact_identity_v1",
+  "reviewed": [
+    {
+      "codes": ["24137080", "26085504", "26548033"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FLSMIDTH e PN 7529464798 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11491473", "12300830"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante SANDVIK e PN 473.1206-35 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11503629", "17337241"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante SULZER e PN 455684-049 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11416625", "12352505"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante SANDVIK e PN 105.1615-07 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11666759", "21539720", "26480339"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante CATERPILLAR e PN 813-7178 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13219386", "22102605", "28523330"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FLSMIDTH e PN 9679799639 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11142864", "15490788"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante SANDVIK e PN 192.9157-26 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["23912924", "25013400"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante KOMATSU e PN 341-13-43346 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["14166921", "21874165"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante VOITH e PN 760.469.889 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13351250", "18755858"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FLSMIDTH e PN 4507805420 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["16082022", "26825961"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante EPIROC e PN 4488 3602 40 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["10899613", "24461750"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante METSO e PN N66522F36 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13137931", "15685705"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante ATLAS COPCO e PN 5847934435 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["17167534", "21980416"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante METSO e PN N85324376 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["12062733", "13177019", "16810946"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante METSO e PN MM3603666 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["18126148", "22592125", "22921157"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante SEW e PN 81806615 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["10769969", "14247571"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante METSO e PN N64967F03 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13032818", "22536926"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FLSMIDTH e PN 7387892545 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["16824859", "28801168"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante ATLAS COPCO e PN 5476877167 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11660327", "22236076"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante SANDVIK e PN 5309813-25 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["16800835", "22424010", "28920360"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante METSO e PN MM4039802 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13563770", "29792424"],
+      "same_item": true,
+      "note": "Mesmo TE 2.1/2POL, SCH 40, A234 WPB, solda topo BW e ASME B16.9; variacoes de notacao."
+    },
+    {
+      "codes": ["12580246", "16995398", "21897788"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante MARTIN ENGINEERING e PN 31219-SX nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["21702203", "27891177"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante WEG e PN 33898642 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13880237", "26086582"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FLSMIDTH e PN 9713662130 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["12175969", "28352664"],
+      "same_item": true,
+      "note": "Mesmo terminal pre-isolado olhal, cobre estanhado, secao 1,5MM2 e furo M6."
+    },
+    {
+      "codes": ["12964562", "21352174"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante ATLAS COPCO e PN 5678 4185 04 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13498080", "16117673"],
+      "same_item": true,
+      "note": "Mesmo parafuso sextavado UNC 1/4POL x 5POL, SAE grau 8, aco carbono, galvanizado a fogo e ASME B18.2.1."
+    },
+    {
+      "codes": ["26881312", "27557002"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante VOITH e PN 400901966 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["10841651", "19945658", "22401508", "26862484", "28664476"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FLSMIDTH e PN 3736932960 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["10519467", "12268800"],
+      "same_item": true,
+      "note": "Mesmo contator ABB, 25A, bobina 220VCA, auxiliares 2NA+2NF, descricoes identicas."
+    },
+    {
+      "codes": ["20372785", "23619718"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante VOITH e PN 707.562.167 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11835924", "18527956"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante KOMATSU e PN 160-98-21333 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["15615343", "23095510", "29822506"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante METSO e PN N74571278 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["10595393", "12976254", "26268763"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante CATERPILLAR e PN 404-5294 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["10860203", "14766145"],
+      "same_item": true,
+      "note": "Mesma bucha reducao 1.1/2POL para 3/4POL, 3000#, inox A182 F316, SW e ASME B16.11."
+    },
+    {
+      "codes": ["11647001", "21387324"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante CATERPILLAR e PN 645-9285 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["13197855", "15744276"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante FRAM e PN G6649 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["12346453", "19865013"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante KSB e PN 60344298 nas descricoes/colunas originais; separadores nao mudam a referencia."
+    },
+    {
+      "codes": ["11375285", "19758278"],
+      "same_item": true,
+      "note": "Mesmo nome de peca, fabricante WEG e PN 97201762 nas descricoes/colunas originais; separadores nao mudam a referencia. O sufixo -00 segue a regra neutra documentada da base."
+    }
+  ]
+}

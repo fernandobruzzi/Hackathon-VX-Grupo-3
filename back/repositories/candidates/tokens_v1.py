@@ -10,7 +10,7 @@ import unicodedata
 from collections import Counter, defaultdict
 
 from domain.contracts import AnalyzedMaterial, CandidateGroup, MatchType, PdmCatalog
-from domain.identity import compare_attributes
+from domain.identity import compare_attributes, material_manufacturer, material_review_reasons
 from repositories.candidates.exact_identity_v1 import ELIGIBLE_STATUS, ExactIdentityV1CandidateRepository
 
 _STOP_WORDS = frozenset({"A", "COM", "DA", "DE", "DO", "E", "O", "P/", "PARA"})
@@ -136,6 +136,10 @@ class TokensV1CandidateRepository:
 
     @staticmethod
     def _compatible(pdm_class, first: AnalyzedMaterial, second: AnalyzedMaterial) -> bool:
+        if material_manufacturer(first) != material_manufacturer(second):
+            return False
+        if material_review_reasons(first, pdm_class) or material_review_reasons(second, pdm_class):
+            return False
         if first.item_name and second.item_name and first.item_name != second.item_name:
             return False
         conflicts, matching = compare_attributes(pdm_class, first.attributes, second.attributes)
