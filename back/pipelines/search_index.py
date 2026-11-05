@@ -13,8 +13,7 @@ import os
 from sqlalchemy import create_engine
 
 from domain.contracts import AnalyzedMaterial, ClassificationRepository, ExtractionRepository, PdmCatalog
-from domain.identity import IDENTITY_RULES_VERSION
-from pipelines.sanitize import _REDIRECT_PREFIX, _catalog, analyze_material
+from pipelines.sanitize import _REDIRECT_PREFIX, _catalog, analysis_signature, analyze_material
 from repositories.batch_repository import read_materials, single_tenant, write_search_index
 from repositories.candidates.tokens_v1 import tokens
 from repositories.classification import get_classification_repository
@@ -31,14 +30,7 @@ def index_version(
     embedding_signature: str | None = None,
 ) -> str:
     """Assinatura comum a batch e consulta. Qualquer parte diferente torna o índice incompatível."""
-    parts = [
-        INDEX_FORMAT,
-        catalog.version,
-        f"pdm-sha256:{catalog.source_sha256}",
-        f"classifier:{classifier.name}@{classifier.revision}",
-        f"extractor:{extractor.name}@{extractor.revision}",
-        IDENTITY_RULES_VERSION,
-    ]
+    parts = [INDEX_FORMAT, analysis_signature(catalog, classifier, extractor)]
     if embedding_signature:
         parts.append(embedding_signature)
     return "|".join(parts)

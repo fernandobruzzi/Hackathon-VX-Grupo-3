@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from domain.pdm_loader import load_pdm
-from pipelines import search_index
+from pipelines import sanitize
 from pipelines.search_index import index_version
 from repositories import classification, extraction
 from repositories.embeddings.simulated_v1 import SimulatedV1EmbeddingRepository
@@ -54,7 +54,7 @@ def test_extractor_revision_changes_the_version_with_the_same_name(catalog, repo
 
 def test_identity_rules_revision_changes_the_version(catalog, repositories, monkeypatch):
     before = index_version(catalog, *repositories)
-    monkeypatch.setattr(search_index, "IDENTITY_RULES_VERSION", "identity-revisada")
+    monkeypatch.setattr(sanitize, "IDENTITY_RULES_VERSION", "identity-revisada")
     assert index_version(catalog, *repositories) != before
 
 

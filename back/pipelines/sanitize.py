@@ -28,7 +28,7 @@ from domain.contracts import (
     NormalizationRepository,
     PdmCatalog,
 )
-from domain.identity import compare_attributes, partial_identity_key
+from domain.identity import IDENTITY_RULES_VERSION, compare_attributes, partial_identity_key
 from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
@@ -41,6 +41,24 @@ from repositories.normalization import get_normalization_repository
 
 _REDIRECT_PREFIX = re.compile(r"^NAO UTILIZAR - USAR COD \d+\s*-\s*")
 _NAMESPACE = uuid.UUID("0e1f2a54-9d3c-4b57-8a26-7c41d2f6b390")
+
+
+def analysis_signature(
+    catalog: PdmCatalog, classifier: ClassificationRepository, extractor: ExtractionRepository
+) -> str:
+    """Regras que `analyze_material` usa: PDM pelo conteúdo, revisões dos algoritmos e da identidade.
+
+    Duas análises só se combinam com a mesma assinatura, no índice de busca e na retomada de um job.
+    """
+    return "|".join(
+        [
+            catalog.version,
+            f"pdm-sha256:{catalog.source_sha256}",
+            f"classifier:{classifier.name}@{classifier.revision}",
+            f"extractor:{extractor.name}@{extractor.revision}",
+            IDENTITY_RULES_VERSION,
+        ]
+    )
 
 
 def analyze_material(
