@@ -382,18 +382,28 @@ def run_sanitize(
             context.on_step = on_step
         interval = heartbeat_seconds or float(os.environ.get("BATCH_HEARTBEAT_SECONDS", HEARTBEAT_SECONDS))
         with _Heartbeat(engine, job_id, worker_id, interval):
+            finalization_attempt = None
             try:
-                records = read_materials(engine, tenant_id)
-                metrics = run_full(records, catalog, context, repository_name, correction_repository)
+                metrics = context.checkpoint.get("final_metrics")
+                if metrics is None:
+                    records = read_materials(engine, tenant_id)
+                    metrics = run_full(records, catalog, context, repository_name, correction_repository)
+                    # Persiste o conteúdo exato antes de publicar o artefato imutável.
+                    # A retomada repete só a publicação/conclusão, sem recalcular os tempos.
+                    context.checkpoint["final_metrics"] = metrics
+                finalization_attempt = {"started_at": _now()}
+                context.checkpoint.setdefault("finalization_attempts", []).append(finalization_attempt)
+                _save_checkpoint(context)
+                store.put_if_absent(
+                    f"runs/{job_id}/metrics.json", json.dumps(metrics, ensure_ascii=False, sort_keys=True).encode()
+                )
+                finalization_attempt["finished_at"] = _now()
+                finish_job(engine, job_id, context.checkpoint, metrics)
             except BaseException as error:
-                attempt = context.checkpoint.get("attempts", [{}])[-1]
+                attempt = finalization_attempt or context.checkpoint.get("attempts", [{}])[-1]
                 attempt.update({"failed_at": _now(), "error": f"{type(error).__name__}: {error}"[:300]})
                 fail_job(engine, job_id, context.checkpoint, f"{type(error).__name__}: {error}")
                 raise
-            store.put_if_absent(
-                f"runs/{job_id}/metrics.json", json.dumps(metrics, ensure_ascii=False, sort_keys=True).encode()
-            )
-            finish_job(engine, job_id, context.checkpoint, metrics)
         return metrics
     finally:
         engine.dispose()

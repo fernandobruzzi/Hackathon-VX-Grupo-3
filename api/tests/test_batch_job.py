@@ -181,3 +181,51 @@ def test_local_job_command_refuses_outside_local(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     with pytest.raises(RuntimeError, match="APP_ENV=local"):
         main([])
+
+
+@pytest.mark.parametrize("failure_point", ["before_storage", "after_storage", "finish"])
+def test_resume_after_metrics_finalization_failure(base, tmp_path, monkeypatch, failure_point):
+    """Análise, armazenamento e transações reais; só a finalização falha uma vez."""
+    admin, batch_url = base
+    job_id = new_job(admin)
+    store = LocalObjectStore(tmp_path)
+    original_read = full_run.read_materials
+    monkeypatch.setattr(full_run, "read_materials", lambda engine, tenant: original_read(engine, tenant)[:2])
+    original_put = store.put_if_absent
+    original_finish = full_run.finish_job
+    failed = False
+
+    def put(key, content):
+        nonlocal failed
+        if key.endswith("metrics.json") and not failed and failure_point != "finish":
+            failed = True
+            if failure_point == "after_storage":
+                original_put(key, content)
+            raise Interrupted(failure_point)
+        return original_put(key, content)
+
+    def finish(*args):
+        nonlocal failed
+        if not failed and failure_point == "finish":
+            failed = True
+            raise Interrupted(failure_point)
+        return original_finish(*args)
+
+    monkeypatch.setattr(store, "put_if_absent", put)
+    monkeypatch.setattr(full_run, "finish_job", finish)
+    with pytest.raises(Interrupted):
+        run_sanitize(PDM, job_id, database_url=batch_url, store=store)
+    interrupted = job_row(admin, job_id)
+    assert interrupted["status"] == "FAILED"
+    assert failure_point in interrupted["error_summary"]
+    count = proposals_of(admin)
+    checkpoint = interrupted["checkpoint"]
+    metrics = run_sanitize(PDM, job_id, database_url=batch_url, store=store)
+    completed = job_row(admin, job_id)
+    assert completed["status"] == "SUCCEEDED"
+    assert completed["counts"] == metrics == json.loads(store.get(f"runs/{job_id}/metrics.json"))
+    assert proposals_of(admin) == count
+    assert completed["checkpoint"]["save"] == checkpoint["save"]
+    assert completed["checkpoint"]["lease"]["worker"] != checkpoint["lease"]["worker"]
+    assert len(completed["checkpoint"]["finalization_attempts"]) == 2
+    assert "error" in completed["checkpoint"]["finalization_attempts"][0]
