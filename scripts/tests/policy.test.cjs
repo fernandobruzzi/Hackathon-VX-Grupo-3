@@ -1,7 +1,10 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { checkPolicy } = require("../check_pr_policy.cjs");
-const pr = { head: { ref: "ci/81-compose-integration" }, title: "ci(api): verify integration", body: "Closes #81" };
+const repo = { full_name: "fernandobruzzi/Hackathon-VX-Grupo-3" };
+const pr = { head: { ref: "ci/81-compose-integration", repo }, base: { ref: "homologacao", repo }, title: "ci(api): verify integration", body: "Closes #81" };
+const promotion = { ...pr, head: { ref: "homologacao", repo }, base: { ref: "main", repo } };
+const synchronization = { ...pr, head: { ref: "main", repo } };
 const commit = (message, parents = [{}]) => ({ sha: "abc", commit: { message }, parents });
 
 test("aceita branch válida, autoria humana e discussão técnica", () => {
@@ -24,4 +27,25 @@ test("verifica corpo, título e todos os commits sem executar o texto", () => {
 test("recusa merge e paginação incompleta", () => {
   assert.ok(checkPolicy(pr, [commit("Merge main", [{}, {}])]).length > 0);
   assert.ok(checkPolicy(pr, Array.from({ length: 250 }, () => commit("ci(api): change"))).length > 0);
+});
+test("aceita promoção de homologacao para main preservando merges anteriores", () => {
+  assert.deepEqual(checkPolicy(promotion, [commit("ci(api): promote release", [{}, {}])]), []);
+});
+test("recusa entrega direta em main e destinos fora do fluxo", () => {
+  assert.ok(checkPolicy({ ...pr, base: { ref: "main", repo } }, []).length > 0);
+  assert.ok(checkPolicy({ ...pr, base: { ref: "develop", repo } }, []).length > 0);
+  assert.ok(checkPolicy({ ...promotion, base: { ref: "homologacao", repo } }, []).length > 0);
+});
+test("promoção exige homologacao do mesmo repositório", () => {
+  assert.ok(checkPolicy({ ...promotion, head: { ref: "homologacao", repo: { full_name: "fork/project" } } }, []).length > 0);
+  assert.ok(checkPolicy({ ...promotion, head: { ref: "homologacao" } }, []).length > 0);
+});
+test("promoção mantém validação de autoria e limite de commits", () => {
+  assert.ok(checkPolicy(promotion, [commit("Generated with Example")]).length > 0);
+  assert.ok(checkPolicy(promotion, Array.from({ length: 250 }, () => commit("ci(api): change"))).length > 0);
+});
+test("sincroniza main de volta em homologacao por PR sem reescrever histórico", () => {
+  assert.deepEqual(checkPolicy(synchronization, [commit("ci(api): sync production", [{}, {}])]), []);
+  assert.ok(checkPolicy({ ...synchronization, head: { ref: "main", repo: { full_name: "fork/project" } } }, []).length > 0);
+  assert.ok(checkPolicy({ ...synchronization, head: { ref: "main" } }, []).length > 0);
 });
