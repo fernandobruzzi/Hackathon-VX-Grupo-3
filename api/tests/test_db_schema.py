@@ -10,6 +10,7 @@ from vx_materials_api.db.cli import PASSWORD_VARIABLES, alembic_config, set_pass
 from vx_materials_api.db.models import Base
 
 TABLES = {
+    "login_transactions",
     "users_sso",
     "auth_sessions",
     "audit_logs",

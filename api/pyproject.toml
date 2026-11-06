@@ -5,11 +5,12 @@ description = "API do cadastro de materiais, que tambem serve o build do front"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.14",
+    "cryptography>=44",
     "fastapi>=0.115",
     "httpx>=0.28",
     "pgvector>=0.3",
     "psycopg[binary]>=3.2",
-    "pyjwt>=2.10",
+    "pyjwt[crypto]>=2.10",
     "sqlalchemy>=2.0",
     "uvicorn>=0.34",
     "vx-materials-back",

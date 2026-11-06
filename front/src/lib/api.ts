@@ -54,9 +54,11 @@ function isErrorEnvelope(value: unknown): value is components["schemas"]["ApiErr
 export function createApiClient({
   getCsrfToken,
   fetch: transport = globalThis.fetch,
+  onUnauthorized,
 }: {
   getCsrfToken: () => string | null;
   fetch?: typeof globalThis.fetch;
+  onUnauthorized?: () => void;
 }) {
   return {
     async request<
@@ -85,7 +87,7 @@ export function createApiClient({
       if (method === "post") {
         headers.set("Content-Type", "application/json");
         headers.set("Idempotency-Key", options?.idempotencyKey ?? crypto.randomUUID());
-        if (path !== "/api/v1/auth/sso-callback") {
+        if (path !== "/api/v1/auth/sso-callback" && path !== "/api/v1/auth/local-session") {
           const token = getCsrfToken();
           if (!token)
             throw new Error("Sessão sem token CSRF. Consulte /auth/me antes de escrever.");
@@ -108,6 +110,7 @@ export function createApiClient({
         // Respostas de proxy podem não seguir o contrato JSON.
       }
       if (!response.ok) {
+        if (response.status === 401) onUnauthorized?.();
         throw new ApiError(
           response.status,
           isErrorEnvelope(data)

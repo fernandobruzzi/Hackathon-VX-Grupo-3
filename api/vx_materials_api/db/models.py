@@ -120,6 +120,16 @@ class AuthSession(Base):
     demo_label: Mapped[str | None] = mapped_column(Text)
 
 
+class LoginTransaction(Base):
+    __tablename__ = "login_transactions"
+
+    state_hash: Mapped[str] = mapped_column(Text, primary_key=True)
+    browser_context_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_ciphertext: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

@@ -3,6 +3,31 @@ import { test } from "node:test";
 import { ApiError, createApiClient } from "../src/lib/api";
 
 const id = "66666666-6666-4666-8666-666666666666";
+
+test("sessão expirada avisa o provedor sem repetir a operação", async () => {
+  let invalidations = 0;
+  let calls = 0;
+  const api = createApiClient({
+    getCsrfToken: () => "csrf",
+    onUnauthorized: () => {
+      invalidations++;
+    },
+    fetch: async () => {
+      calls++;
+      return new Response("{}", { status: 401 });
+    },
+  });
+  await assert.rejects(api.request("get", "/api/v1/auth/me"), ApiError);
+  assert.equal(invalidations, 1);
+  assert.equal(calls, 1);
+});
+
+test("criar sessão local usa cookie sem exigir CSRF de sessão anterior", async () => {
+  const { api, calls } = setup(new Response("{}"), null);
+  await api.request("post", "/api/v1/auth/local-session", { body: { persona: "GESTOR_CADASTRO" } });
+  assert.equal(calls[0].init.credentials, "include");
+  assert.equal(new Headers(calls[0].init.headers).has("X-CSRF-Token"), false);
+});
 const decision = {
   expected_version: 1,
   review_area: "TECHNICAL" as const,

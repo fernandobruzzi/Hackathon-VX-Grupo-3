@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM node:20-slim AS front-build
+ARG NEXT_PUBLIC_DATA_SOURCE=api
+ENV NEXT_PUBLIC_DATA_SOURCE=$NEXT_PUBLIC_DATA_SOURCE
 WORKDIR /app/front
 COPY front/package.json front/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUp, RotateCcw } from "lucide-react";
 import { Button, Eyebrow, Select, Tabs, Seta } from "@/components/ui";
 import { cn } from "@/lib/format";
-import { ApiError, createApiClient } from "@/lib/api";
+import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
 import { MaterialCard } from "./MaterialCard";
@@ -25,9 +25,7 @@ function errorMessage(error: unknown) {
 }
 
 export function ChatPage() {
-  const { me } = useAuth();
-  // O getter lê a sessão atual a cada chamada, nunca um token CSRF antigo.
-  const api = useMemo(() => createApiClient({ getCsrfToken: () => me?.csrf_token ?? null }), [me]);
+  const { me, api } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [session, setSession] = useState<{ id: string; version: number } | null>(null);
   const [error, setError] = useState<string | null>(null);

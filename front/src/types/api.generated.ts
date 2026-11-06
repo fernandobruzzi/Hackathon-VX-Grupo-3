@@ -16,6 +16,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/auth/config": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** getAuthConfig */
+    get: operations["getAuthConfig"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/auth/local-session": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** createLocalSession */
+    post: operations["createLocalSession"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/auth/logout": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** logout */
+    post: operations["logout"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/auth/sso-callback": {
     parameters: {
       query?: never;
@@ -363,7 +414,7 @@ export interface components {
       };
       demo: {
         enabled: boolean;
-        active_persona: components["schemas"]["PersonaLabel"];
+        active_persona: components["schemas"]["PersonaLabel"] | null;
       };
       csrf_token: string;
     };
@@ -816,6 +867,18 @@ export interface components {
       pdm_description: string;
       active_code_target: string | null;
     };
+    AuthConfig: {
+      /** @enum {unknown} */
+      mode: "disabled" | "local" | "cognito";
+    };
+    LocalSessionRequest: {
+      persona: components["schemas"]["PersonaLabel"];
+    };
+    EmptyRequest: Record<string, never>;
+    LogoutResponse: {
+      /** @constant */
+      logged_out: true;
+    };
   };
   responses: never;
   parameters: {
@@ -909,6 +972,79 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getAuthConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AuthConfig"];
+        };
+      };
+    };
+  };
+  createLocalSession: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LocalSessionRequest"];
+      };
+    };
+    responses: {
+      /** @description Sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Me"];
+        };
+      };
+    };
+  };
+  logout: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EmptyRequest"];
+      };
+    };
+    responses: {
+      /** @description Sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LogoutResponse"];
         };
       };
     };

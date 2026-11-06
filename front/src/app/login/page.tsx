@@ -12,11 +12,10 @@ import type { PersonaLabel } from "@/types/api";
  * No wireframe, o clique já cria a sessão da persona escolhida.
  */
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, authMode, backend, error, ready } = useAuth();
   const router = useRouter();
-  const go = (p?: PersonaLabel) => {
-    signIn(p);
-    router.push("/auth/callback/");
+  const go = async (p?: PersonaLabel) => {
+    if (await signIn(p)) router.push("/chat/");
   };
 
   return (
@@ -47,27 +46,36 @@ export default function LoginPage() {
             Peça itens em linguagem natural, encontre o que já existe e saneie duplicidades, NCM e
             descrições com revisão humana e trilha de auditoria.
           </p>
-          <Button size="lg" className="mt-8" onClick={() => go()}>
-            <LogIn className="size-5" /> Entrar com SSO corporativo
+          <Button size="lg" className="mt-8" disabled={!ready} onClick={() => go()}>
+            <LogIn className="size-5" />{" "}
+            {authMode === "local" ? "Entrar na sessão local" : "Entrar com Cognito"}
           </Button>
           <p className="mt-3 text-xs text-muted">
-            Login gerenciado pelo Cognito. Seus tokens ficam no servidor; o navegador recebe só um
-            cookie de sessão.
+            {authMode === "local"
+              ? "Ambiente local de teste. A identidade e as permissões vêm do servidor."
+              : "Seus tokens ficam no servidor; o navegador recebe só um cookie de sessão."}
           </p>
+          {error && (
+            <p role="alert" className="mt-3 text-sm text-alerta">
+              {error}
+            </p>
+          )}
         </div>
 
-        <div className="rounded-md bg-surface p-4">
-          <p className="text-[11px] font-extrabold tracking-[0.08em] text-muted uppercase">
-            Modo demo · entrar como
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {PERSONAS.map((p) => (
-              <Button key={p.label} variant="ghost" size="sm" onClick={() => go(p.label)}>
-                {p.short}
-              </Button>
-            ))}
+        {(!backend || authMode === "local") && (
+          <div className="rounded-md bg-surface p-4">
+            <p className="text-[11px] font-extrabold tracking-[0.08em] text-muted uppercase">
+              {backend ? "Sessões de teste locais · entrar como" : "Protótipo · entrar como"}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {PERSONAS.map((p) => (
+                <Button key={p.label} variant="ghost" size="sm" onClick={() => go(p.label)}>
+                  {p.short}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       <section aria-hidden className="relative hidden bg-profundo lg:block">
