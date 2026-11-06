@@ -79,4 +79,8 @@ def approval_payload(proposal, ids, dataset_id):
             changeset[field] = proposal.changeset[field]
     if proposal.proposal_type == "NCM_CORRECTION":
         changeset["sources"]["ncm"] = next(change["source"] for change in changes if change["field"] == "ncm")
+    lane = proposal.changeset.get("review_lane")
+    if lane is not None:
+        # Como revisar: em lote após amostra (níveis 1 e 2) ou item a item (nível 3). Decisão da #36.
+        changeset["review_lane"] = lane
     return members, changeset, proposal_hash(members, changeset)

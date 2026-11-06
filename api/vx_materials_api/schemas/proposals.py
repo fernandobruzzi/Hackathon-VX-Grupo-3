@@ -64,6 +64,14 @@ class StoredChange(StrictModel):
     source: Reason
 
 
+class ReviewLane(StrictModel):
+    """Nível de revisão gravado pelo batch (#119): 1 e 2 podem ir em lote após amostra, 3 é item a item."""
+
+    tier: Literal[1, 2, 3]
+    lot_key: str
+    reasons: list[str] = Field(default_factory=list)
+
+
 class ProposalChangeset(StrictModel):
     schema_version: Literal["proposal-v1"]
     dataset_id: UUID
@@ -79,6 +87,7 @@ class ProposalChangeset(StrictModel):
     changes: list[StoredChange] = Field(default_factory=list)
     ncm_assessment: dict[str, Any] | None = None
     ncm_before_assessment: dict[str, Any] | None = None
+    review_lane: ReviewLane | None = None
 
 
 def evidence_hash(source) -> str:
