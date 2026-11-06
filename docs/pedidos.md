@@ -48,3 +48,30 @@ docker compose run --rm bootstrap vx-import-orders
 Os 520 pedidos entram com `origin=IMPORT` e sem solicitante. Repetir não duplica. Na base do kit,
 com as regras atuais: 169 prontos para revisão, 205 incompletos, 86 fora de escopo e 60 já
 existentes.
+
+
+## Enviar uma ficha do chat
+
+O botão “Enviar pedido para revisão” chama `POST /api/v1/chat/{session_id}/submit`,
+com `expected_session_version`, CSRF e `Idempotency-Key`. O corpo não aceita classe,
+atributos, centro nem identidade: a API usa a ficha e o centro do último turno
+concluído, confere o dono, valida o PDM atual e consulta novamente a identidade no
+cadastro. Sem índice da versão atual, o envio é recusado.
+
+A transação cria um pedido `CHAT`, vincula a conversa e grava a auditoria e o
+resultado idempotente. O pedido fica `READY_FOR_REVIEW`, ou `EXISTING` se um ativo
+igual surgiu desde a última busca. Em ambos os casos a resposta traz `order_id`;
+a interface só confirma o envio depois desse sucesso. Uma resposta perdida pode
+ser recuperada repetindo a mesma chave e o mesmo corpo. A mesma conversa gera no
+máximo um pedido, inclusive com duas requisições simultâneas ou chaves diferentes.
+
+O texto original reúne as mensagens do solicitante, na ordem da conversa. A
+classe, o nome do item e os atributos confirmados ficam separados: aprovações
+revalidam essa ficha estruturada no PDM atual, sem reextrair uma informação antiga
+que já foi corrigida na conversa. Pedidos legados sem nome do item continuam com
+a análise textual anterior. A migração acrescenta esse nome sem alterar os dados
+originais do kit.
+
+Depois do envio, a conversa fica disponível como evidência e não aceita novos
+turnos que poderiam mudar a ficha encaminhada; para outro item, use “Nova conversa”.
+A Governança e o Fiscal continuam aprovando pelo fluxo de pedidos existente.

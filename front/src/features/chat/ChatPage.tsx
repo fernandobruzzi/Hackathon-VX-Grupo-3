@@ -35,7 +35,14 @@ export function ChatPage() {
   const [busy, setBusy] = useState(false);
   const [center, setCenter] = useState("1200");
   const [panel, setPanel] = useState<"ficha" | "mcp">("ficha");
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<{
+    id: string;
+    status: "READY_FOR_REVIEW" | "EXISTING";
+  } | null>(null);
+  const submissionAttempt = useRef<{ sessionId: string; version: number; key: string } | null>(
+    null,
+  );
+  const operationBusy = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
   const height = useViewportHeight();
   useEffect(() => {
@@ -47,7 +54,8 @@ export function ChatPage() {
 
   const send = async (msg: string, action?: ChatAction) => {
     const content = msg.trim();
-    if (!content || busy) return;
+    if (!content || operationBusy.current || submitted) return;
+    operationBusy.current = true;
     const clientMessageId = crypto.randomUUID();
     setMessages((m) => [
       ...m,
@@ -88,6 +96,42 @@ export function ChatPage() {
       setText(content);
       setError(errorMessage(e));
     } finally {
+      operationBusy.current = false;
+      setBusy(false);
+    }
+  };
+
+  const submit = async () => {
+    if (!session || operationBusy.current || submitted || !last?.material_card.can_submit) return;
+    operationBusy.current = true;
+    setBusy(true);
+    setError(null);
+    const previous = submissionAttempt.current;
+    const attempt =
+      previous?.sessionId === session.id && previous.version === session.version
+        ? previous
+        : { sessionId: session.id, version: session.version, key: crypto.randomUUID() };
+    submissionAttempt.current = attempt;
+    try {
+      const response = await api.request("post", "/api/v1/chat/{session_id}/submit", {
+        params: { session_id: attempt.sessionId },
+        body: { expected_session_version: attempt.version },
+        idempotencyKey: attempt.key,
+      });
+      setSession({ id: response.session_id, version: response.session_version });
+      setLast(
+        (current) =>
+          current && {
+            ...current,
+            order_id: response.order_id,
+            session_version: response.session_version,
+          },
+      );
+      setSubmitted({ id: response.order_id, status: response.status });
+    } catch (error) {
+      setError(errorMessage(error));
+    } finally {
+      operationBusy.current = false;
       setBusy(false);
     }
   };
@@ -98,7 +142,8 @@ export function ChatPage() {
     setError(null);
     setLast(null);
     setCalls([]);
-    setSubmitted(false);
+    setSubmitted(null);
+    submissionAttempt.current = null;
     setPanel("ficha");
   };
 
@@ -119,6 +164,7 @@ export function ChatPage() {
               Centro
             </label>
             <Select
+              disabled={busy || session !== null}
               id="center"
               value={center}
               onChange={(e) => setCenter(e.target.value)}
@@ -128,7 +174,7 @@ export function ChatPage() {
                 <option key={c}>{c}</option>
               ))}
             </Select>
-            <Button variant="ghost" size="sm" onClick={reset}>
+            <Button variant="ghost" size="sm" disabled={busy} onClick={reset}>
               <RotateCcw className="size-4" /> Nova conversa
             </Button>
           </div>
@@ -203,6 +249,7 @@ export function ChatPage() {
           )}
           <div className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde">
             <textarea
+              disabled={busy || submitted !== null}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
@@ -220,7 +267,12 @@ export function ChatPage() {
               aria-label="Mensagem"
               className="flex-1 resize-none bg-transparent px-2 py-1.5 text-[15px] outline-none placeholder:text-muted"
             />
-            <Button type="submit" size="sm" disabled={!text.trim() || busy} aria-label="Enviar">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!text.trim() || busy || submitted !== null}
+              aria-label="Enviar"
+            >
               <ArrowUp className="size-4" />
             </Button>
           </div>
@@ -245,10 +297,10 @@ export function ChatPage() {
           last ? (
             <MaterialCard
               card={last.material_card}
-              submitted={submitted}
-              onSubmit={() => setSubmitted(true)}
+              submitted={submitted ?? undefined}
+              onSubmit={submit}
               onReply={send}
-              busy={busy}
+              busy={busy || submitted !== null}
             />
           ) : (
             <div className="rounded-md bg-surface p-6 text-sm leading-6 text-muted">

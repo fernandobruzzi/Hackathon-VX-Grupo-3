@@ -1518,5 +1518,23 @@
     "response": {
       "logged_out": true
     }
+  },
+  {
+    "name": "chat-submit",
+    "path": "/api/v1/chat/{session_id}/submit",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "session_id": "33333333-3333-4333-8333-333333333333"
+    },
+    "request": {
+      "expected_session_version": 3
+    },
+    "response": {
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "session_version": 4,
+      "order_id": "44444444-4444-4444-8444-444444444444",
+      "status": "READY_FOR_REVIEW"
+    }
   }
 ]

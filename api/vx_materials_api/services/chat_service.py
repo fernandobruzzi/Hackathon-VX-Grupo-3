@@ -209,6 +209,8 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
         db.flush()
     else:
         session = _locked_session(db, identity, request.session_id)
+        if session.registration_order_id is not None:
+            raise _conflict("CHAT_ALREADY_SUBMITTED", "Esta conversa já gerou um pedido. Inicie uma nova conversa.")
         abandoned = session.updated_at < datetime.now(UTC) - ABANDONED_TURN_AFTER
         if session.active_turn_id is not None and not abandoned:
             raise _conflict("TURN_IN_PROGRESS", "Já existe um turno em processamento nesta conversa.")
@@ -313,7 +315,7 @@ def complete_turn(
             "existing": card.get("existing") if status == "EXISTING" else None,
             "similar_candidates": card["similar_candidates"],
         }
-    session.context = {**context, **patch, "material_card": card}
+    session.context = {**context, **patch, "material_card": card, "center_code": request.center_code}
     session.version += 1
     session.active_turn_id = None
     db.commit()

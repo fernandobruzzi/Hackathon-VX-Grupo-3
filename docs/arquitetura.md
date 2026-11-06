@@ -16,6 +16,7 @@
 > - **Normalização (seção 4):** fica em `back/repositories/normalization/`, não em `domain/normalization.py`, para permitir a troca de algoritmos.
 > - **Classificação (seção 4):** contrato compartilhado em `back/domain/contracts.py`, algoritmos em `back/repositories/classification/` e relatório por registro em `back/pipelines/classify.py`. Seleção por `CLASSIFICATION_REPOSITORY`; regras e limites da avaliação em [`classificacao.md`](classificacao.md).
 > - **Aprovação automática:** a decisão está em aberto na [issue #36](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/36).
+> - **Envio do chat (#136):** a confirmação explícita persiste um pedido vinculado à conversa, com a ficha estruturada revalidada e auditoria transacional. O nome do item é preservado no pedido; validar um turno continua sem criar pedido nem material. Ver [`pedidos.md`](pedidos.md).
 > - **Aprovação local (#20):** fila, decisão transacional e auditoria usam propostas persistidas. A consolidação mantém vínculos para os snapshots originais e altera as views MCP, sem editar saldos. Contrato do produtor e limites de integração em [`aprovacoes.md`](aprovacoes.md); login/RBAC reais continuam nas #7/#9.
 
 ## 1. Diagrama e fluxo de arquitetura na AWS
