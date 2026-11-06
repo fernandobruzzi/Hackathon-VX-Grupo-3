@@ -34,7 +34,7 @@ Read the relevant section of [`docs/arquitetura.md`](docs/arquitetura.md) before
 Setup, once from the repo root (Python 3.12, [uv](https://docs.astral.sh/uv/)):
 
 ```bash
-uv sync --all-packages
+uv sync --all-packages --locked
 ```
 
 ```bash
@@ -51,24 +51,42 @@ uv run ruff check --fix .
 uv run ruff format .
 ```
 
-Tests, from `back/`, `mcp/` or `api/`:
+Tests are local gates before opening or merging a PR. Run each affected Python module
+separately from the repo root; changes to shared rules require all three:
 
 ```bash
-uv run pytest
+(cd back && uv run --locked pytest)
+(cd mcp && uv run --locked pytest)
+(cd api && uv run --locked pytest)
 ```
 
-Database, from the repo root. The first command starts Postgres on port 5432, and the rest run from `api/`. Tests recreate the `_test` database, and they're skipped without this variable. Roles and passwords are global to the server, so tests never change `api_user`, `batch_user` or `mcp_reader`: they log in through `temporary_login`, a disposable member role dropped at the end. Give each concurrent run its own `_test` database name:
+Run a focused test while developing, then the affected module's complete suite.
+Root-level `pytest` collects colliding test filenames across modules and is not supported.
+For CI, policy or operational scripts, also run from the repo root:
+
+```bash
+uv run --locked --package vx-materials-back pytest scripts/tests
+node --test scripts/tests/*.test.cjs
+```
+
+Record exact commands, pass/fail counts and skips in the PR. A skipped database test
+is not evidence that the database behavior passed. Changes to persistence, migrations
+or search must also pass the database-backed API and MCP suites below. Opening a PR
+is for reviewing work that has already passed local checks.
+
+Database, from the repo root. Start Postgres on port 5432, then run the API and MCP suites separately with `TEST_DATABASE_URL`. Tests recreate the `_test` database, and they're skipped without this variable. Roles and passwords are global to the server, so tests never change `api_user`, `batch_user` or `mcp_reader`: they log in through `temporary_login`, a disposable member role dropped at the end. Give each concurrent run its own `_test` database name:
 
 ```bash
 docker compose up -d --wait db
 ```
 
 ```bash
-TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materials_test uv run pytest
+(cd api && TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materials_test uv run --locked pytest)
+(cd mcp && TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materials_test uv run --locked pytest)
 ```
 
 ```bash
-MIGRATION_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materiais uv run vx-db upgrade
+(cd api && MIGRATION_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materiais uv run --locked vx-db upgrade)
 ```
 
 Load the data kit, from `api/`, with `DATABASE_URL` set to the `api_user` connection. Repeating it duplicates nothing, and `docker compose up` already runs it:
@@ -149,7 +167,8 @@ npm run api:check
 npm test
 ```
 
-`api:check`, front tests and API contract tests run in CI. Contract files describe the
+`api:check`, front tests and API contract tests run locally before the PR and again
+in the production promotion CI. Contract files describe the
 integration target; an endpoint is available only after its implementation issue is delivered.
 
 ```bash
@@ -202,13 +221,15 @@ Nothing in this flow calls Bedrock: chat plans with rules, the batch reports zer
 model usage and says so, and embeddings stay off. The only model-backed option,
 embeddings, has `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
 
-CI runs the same flow in an isolated Compose project, with cached images that
-include the original data kit. `DB_PORT` and `API_BIND_PORT` choose local ports;
-published ports bind to loopback. CI also checks branch/commit policy and runs the
-installed migration command twice. A newer push to the same PR or to `main` cancels
-the older CI run, so the CI workflow must never deploy or migrate anything outside the
-runner; real deploys keep their own S3 lock. Operational limits, authenticated smoke usage
-and required GitHub admin settings are in [`docs/devops.md`](docs/devops.md).
+Full CI and the remote repository policy run only for PRs targeting `main`.
+Work PRs to `homologacao` and pushes to either branch start no validation workflow.
+Production CI builds cached images in an isolated Compose project and runs the local
+smoke mode, not the full `flow` mode. `DB_PORT` and `API_BIND_PORT` choose local ports;
+published ports bind to loopback. It also runs the installed migration command twice.
+A newer update to the same production PR cancels its older CI run. CI must never
+deploy or migrate outside the runner; real deploys keep their own S3 lock.
+Promotion, administrative setup and migration of existing PRs are in
+[`docs/devops.md`](docs/devops.md).
 
 AWS preparation runs offline without credentials by default:
 
@@ -236,10 +257,11 @@ limits are documented in [`docs/ec2.md`](docs/ec2.md); live validation remains #
 Each piece of work follows the same path:
 
 1. **Issue:** claim the issue, as described in [Claiming an issue](#claiming-an-issue). If none exists for the work, create one and assign it first. Nothing else starts before this.
-2. **Branch:** create a branch for it from an up-to-date `main`.
-3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
-4. **PR:** [update and rebase on `main`](#before-opening-a-pr), then open a pull request, closing the issue.
-5. **Merge:** rebase-merge once checks pass, and delete the branch.
+2. **Branch:** create a branch for it from an up-to-date `homologacao`.
+3. **Develop:** work [local first](#local-first), make atomic commits and run the local checks.
+4. **PR:** [rebase on `homologacao`](#before-opening-a-pr), then open a PR targeting `homologacao` with local validation evidence.
+5. **Integrate:** rebase-merge after the local gates pass, then delete only the work branch.
+6. **Promote:** open `homologacao` → `main` in the same repository, run full CI and merge with a merge commit. Follow the [promotion runbook](docs/devops.md#promover-para-produção).
 
 ## Issues and milestones
 
@@ -304,9 +326,9 @@ Finish `P0` issues first. If scope changes or an issue is blocked, comment on it
 
 ## Branches
 
-- Branch from an up-to-date `main`, one branch per issue: `<type>/<issue>-<slug>`.
+- Branch from an up-to-date `homologacao`, one branch per issue: `<type>/<issue>-<slug>`.
 - `<type>` is a Conventional Commit type. Example: `feat/13-pdm-validator`.
-- Never commit directly to `main`.
+- `homologacao` is the shared integration branch; `main` is production. Changes reach both through PRs. Keep both, and never force-push or delete them. The promotion runbook defines the synchronization PR from `main` back to `homologacao`.
 - Never put an AI agent's name in a branch name. Rename any tool-generated branch, such as `claude/*`, before pushing.
 
 ## Commits
@@ -326,43 +348,48 @@ through an explicit table and reject unknown or inconsistent content.
 
 ## Pull requests
 
-- One issue per PR.
+- One issue per work PR, targeting `homologacao` explicitly.
 - **Title:** same format as a commit, in English.
-- **Description:** in Portuguese, covering what changed, how you verified it, and `Closes #<n>`.
+- **Description:** in Portuguese, covering what changed, exact local validation commands and results, any skips or checks not run, and `Closes #<n>`.
+- Closing keywords apply only when merging into GitHub's default branch. Until the default is `homologacao`, close the issue manually after integration, with the merged PR as evidence.
+- Production promotion PRs target `main`, originate from this repository's `homologacao` and list the included deliveries and local integration checks. Synchronization PRs go from `main` back to `homologacao` in the same repository.
 
 ### Before opening a PR
 
-**Required for people and agents. Never open a PR from a branch that isn't rebased on the latest `main`.** Others merge all the time, so this finds conflicts on your branch instead of on `main`.
+**Required for people and agents. Work branches must be rebased on the latest `homologacao`.**
 
-1. Commit your work, because a rebase needs a clean tree. Then pull `main` and rebase your branch on it, in one command that also works in worktrees:
+1. Commit your work, because a rebase needs a clean tree. Then update it:
 
    ```bash
-   git pull --rebase origin main
+   git pull --rebase origin homologacao
    ```
 
-2. Resolve conflicts by keeping both sides' intent. If you can't tell what the other change meant, run `git rebase --abort` and ask its author. For lockfiles, follow [Code style and avoiding conflicts](#code-style-and-avoiding-conflicts).
-3. Run the local checks again, listed under [Commands](#commands), because the combined code hasn't been tested yet.
-4. Push. After a rebase, use `git push --force-with-lease`, on your own branch only.
-5. Create the PR.
+2. Resolve conflicts by keeping both sides' intent. If you cannot establish the other change's intent, abort with `git rebase --abort` and ask its author. For lockfiles, follow [Code style and avoiding conflicts](#code-style-and-avoiding-conflicts).
+3. Run the local checks for each affected area under [Commands](#commands) again, because the combined code has not been tested yet. Front changes require format, types, API generation consistency, tests and build; Docker/integration changes require local Compose build and smoke.
+4. Push the work branch. After a rebase, `git push --force-with-lease` is allowed only on your own unshared work branch.
+5. Open the PR with `gh pr create --base homologacao`, and include command/results evidence from step 3.
 
-Never merge `main` into your branch, and never skip these steps to save time.
+PRs to `homologacao` have no remote CI checks. A PR or an empty checks page does not
+replace local validation. Production promotions and synchronization PRs follow the
+runbook instead of rebasing the shared branches.
 
 ### Before merging
 
-The author must:
-
-1. Run style and the local checks for each area touched, listed under [Commands](#commands). Docker changes are checked by CI's image builds.
-2. Confirm every acceptance criterion of the issue is met.
-3. Confirm CI is green.
-4. Repeat [the rebase and checks](#before-opening-a-pr) if `main` moved after the PR opened.
-
-Authors may merge their own PRs, and reviews are welcome when a change is risky. Merge with rebase, to keep atomic commits on a linear `main`:
+For work PRs, confirm all acceptance criteria, review the local evidence and repeat
+the rebase and local checks if `homologacao` moved. Authors may merge their own PRs;
+review is welcome when a change is risky. Integrate with rebase:
 
 ```bash
 gh pr merge <n> --rebase --delete-branch
 ```
 
-Never force-push `main` or a branch someone else is using.
+For `homologacao` → `main`, freeze integration, require all production CI and policy
+checks to pass, then use `gh pr merge <n> --merge` **without** `--delete-branch`.
+Open the synchronization PR `main` → `homologacao` and merge it the same way; it
+runs no remote CI. Merge commits preserve the shared branches' ancestry across
+repeated promotions. Reopen integration after synchronizing, as the runbook describes.
+
+Never force-push `main`, `homologacao` or a branch someone else is using.
 
 ## Code style and avoiding conflicts
 
@@ -375,22 +402,22 @@ Formatting is automatic, so style never causes a conflict. CI rejects unformatte
 
 To keep conflicts rare:
 
-- Keep PRs small and rebase on `main` often, at least before you start each day and before merging.
+- Keep work PRs small and rebase on `homologacao` often, at least before you start each day and before merging.
 - Check who is assigned to neighbouring issues before touching shared files.
 - Add new behavior in new modules, and keep registration lists sorted, one entry per line.
 - Never mix reformatting or unrelated renames into a feature PR.
 
-Lockfiles are generated, so never merge them by hand. On conflict, take `main`'s version and regenerate:
+Lockfiles are generated, so never merge them by hand. On a work-branch conflict, take `homologacao`'s version and regenerate:
 
 ```bash
-git checkout origin/main -- uv.lock && uv lock
+git checkout origin/homologacao -- uv.lock && uv lock
 ```
 
 ```bash
-git checkout origin/main -- front/package-lock.json && (cd front && npm install)
+git checkout origin/homologacao -- front/package-lock.json && (cd front && npm install)
 ```
 
-During a rebase, `origin/main` is still the right source, then continue with `git add` and `git rebase --continue`.
+During a work-branch rebase, use `origin/homologacao`, then continue with `git add` and `git rebase --continue`.
 
 ## Language
 

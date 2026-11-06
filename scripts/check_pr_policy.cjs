@@ -2,7 +2,18 @@
 function checkPolicy(pr, commits) {
   const problems = [];
   const branch = pr.head.ref;
-  if (!/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\/[0-9]+-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(branch)) {
+  const promotion = pr.base.ref === "main" && branch === "homologacao";
+  const synchronization = pr.base.ref === "homologacao" && branch === "main";
+  const permanentBranches = promotion || synchronization;
+  if (pr.base.ref === "main" && !promotion) {
+    problems.push("PRs para main devem promover homologacao.");
+  } else if (pr.base.ref !== "homologacao" && !promotion) {
+    problems.push("PRs de trabalho devem ter homologacao como destino.");
+  }
+  if (permanentBranches && (!pr.head.repo?.full_name || pr.head.repo.full_name !== pr.base.repo?.full_name)) {
+    problems.push("A promoção e a sincronização devem usar branches do mesmo repositório.");
+  }
+  if (!permanentBranches && !/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\/[0-9]+-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(branch)) {
     problems.push("A branch deve usar <type>/<issue>-<slug>.");
   }
   if (/(^|[\/_-])(claude|codex|copilot|chatgpt|cursor)([\/_-]|$)/i.test(branch)) {
@@ -22,7 +33,7 @@ function checkPolicy(pr, commits) {
       problems.push(`${label}: atribuição automática proibida.`);
     }
   }
-  if (commits.some(c => c.parents.length > 1)) {
+  if (!permanentBranches && commits.some(c => c.parents.length > 1)) {
     problems.push("PR contém merge commit; atualize por rebase.");
   }
   return problems;
