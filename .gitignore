@@ -10,3 +10,33 @@ build/
 .storage/
 deployment/generated/
 deployment/aws.local.json
+
+# Ambiente e segredos: o repositório é público. Só os exemplos ficam versionados.
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+credentials.json
+service-account*.json
+.aws/
+.npmrc
+.pypirc
+.netrc
+secrets/
+*.secret
+*.secrets
+
+# Configurações locais de ferramentas e editores
+.claude/settings.local.json
+.agents/
+.vscode/
+.idea/
