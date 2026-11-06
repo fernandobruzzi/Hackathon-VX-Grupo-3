@@ -189,7 +189,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main key={me.user.id} className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8 lg:px-10">
           {backend && (
             <p className="mb-4 text-xs text-muted">
-              Chat, saneamento e auditoria usam dados persistidos. Demais telas em demonstração.
+              Chat, saneamento, batch, dashboard e auditoria usam dados persistidos. Demais telas em
+              demonstração.
             </p>
           )}
           {authMode === "local" && (

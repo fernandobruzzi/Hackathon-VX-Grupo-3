@@ -692,7 +692,7 @@ export interface components {
         missing_ncm: number;
         noncanonical_unit: number;
       } | null;
-      pipeline?: {
+      pipeline: {
         proposals_total: number;
         pending: number;
         applied: number;
@@ -709,7 +709,8 @@ export interface components {
         /** @constant */
         currency: "BRL";
         data_origin: string;
-        inventory_book_value: components["schemas"]["Decimal"];
+        /** @description Soma dos valores originais dos centros autorizados; indisponível se qualquer valor faltar. */
+        inventory_book_value: components["schemas"]["Decimal"] | null;
         realized_savings: components["schemas"]["Decimal"] | null;
         estimated_savings: components["schemas"]["Decimal"] | null;
         assumptions?: string[];
@@ -1743,6 +1744,8 @@ export interface operations {
     parameters: {
       query?: {
         view?: "quality" | "executive";
+        /** @description Dataset importado; por padrão, o mais recente visível nos centros da sessão. */
+        dataset_id?: string;
       };
       header?: never;
       path?: never;

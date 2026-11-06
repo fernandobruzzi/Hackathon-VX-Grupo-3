@@ -14,7 +14,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
-| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue and transactional audit |
+| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data, policy check and HTTP smoke test | Deploy/demo scripts remain placeholders; checks implemented |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
@@ -488,6 +488,15 @@ Any algorithm whose results may disappoint, such as preprocessing, extraction, c
 4. Parametrize contract tests over every registered repository, so new ones meet the same bar.
 
 `back/repositories/normalization/` and `back/repositories/extraction/` are reference examples. Deterministic parsing with one correct answer, like the PDM loader, doesn't need this.
+
+## Dashboard
+
+`GET /api/v1/dashboard/metrics` reads the original inventory snapshots and the
+persisted proposal funnel, scoped by tenant, dataset and authorized centers.
+Quality requires `metrics:quality`; executive values require `metrics:financial`.
+The quality view never returns financial values. Missing evaluations, savings or
+approved after snapshots stay unavailable; applying proposals does not imply
+savings or an independent accuracy measurement. See [`docs/dashboard.md`](docs/dashboard.md).
 
 ## Frontend
 
