@@ -46,15 +46,15 @@ turnos. A busca usou o banco local com o kit de 23.554 materiais e seu índice r
 O planejador foi `rule_based_v1`; não houve chamadas a Bedrock nem respostas
 simuladas de ferramentas.
 
-| Observação | Rodada 1 | Rodada 2 |
-|---|---:|---:|
-| Atendidas / ocupadas | 2 / 6 | 2 / 6 |
-| Latência p50 dos atendidos | 15,728 s | 6,447 s |
-| Latência p95 dos atendidos | 15,782 s | 6,451 s |
-| Servidores MCP antes / pico / depois | 0 / 2 / 0 | 0 / 2 / 0 |
-| Processos Agent + descendentes antes / pico / depois | 1 / 3 / 1 | 1 / 3 / 1 |
-| Soma RSS no pico | 355,17 MiB | 355,70 MiB |
-| Memória do cgroup no pico | 308,40 MiB | 308,52 MiB |
+| Observação                                           |   Rodada 1 |   Rodada 2 |
+| ---------------------------------------------------- | ---------: | ---------: |
+| Atendidas / ocupadas                                 |      2 / 6 |      2 / 6 |
+| Latência p50 dos atendidos                           |   15,728 s |    6,447 s |
+| Latência p95 dos atendidos                           |   15,782 s |    6,451 s |
+| Servidores MCP antes / pico / depois                 |  0 / 2 / 0 |  0 / 2 / 0 |
+| Processos Agent + descendentes antes / pico / depois |  1 / 3 / 1 |  1 / 3 / 1 |
+| Soma RSS no pico                                     | 355,17 MiB | 355,70 MiB |
+| Memória do cgroup no pico                            | 308,40 MiB | 308,52 MiB |
 
 O p95 usa o posto mais próximo; cada rodada tem só dois turnos atendidos.
 Estes números são observações locais, não um SLA ou limite universal. Outros
@@ -81,6 +81,43 @@ construa a imagem `agent` e use `--init --cpus=1 --memory=512m --pids-limit=64`,
 do Postgres local. O medidor não imprime tokens, variáveis de ambiente ou DSNs.
 O CI executa a mesma carga no stack isolado e falha se ultrapassar o limite,
 não houver resposta de sucesso ou restarem processos depois dos cancelamentos.
+
+## Interpretar a memória coletada
+
+O medidor resolve `/proc/self/cgroup` e `/proc/self/mountinfo` para ler o cgroup
+em que ele executa. Rode-o dentro do container Agent, como no comando acima:
+executá-lo no host não mede o mesmo escopo. São aceitos cgroup v2
+(`memory.current`) e v1 (`memory.usage_in_bytes`), inclusive montagens de subárvore
+e namespaces de cgroup. O medidor não usa o total da raiz do host quando o Agent
+pertence a um cgroup filho.
+
+Em `before` e `after`, `container_memory_kib` é o contador convertido para KiB
+(bytes divididos por 1024, truncados). `container_memory_source` informa o caminho
+do contador utilizado ou tentado. `container_memory_unavailable_reason` é `null`
+quando a leitura funciona; caso contrário, o valor da memória é `null`, nunca zero:
+
+| Motivo                      | Interpretação                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| `metadata_unreadable`       | Não foi possível ler os metadados de cgroup/montagem no `/proc`.                |
+| `no_matching_memory_cgroup` | Não foi possível associar a participação do processo a uma montagem de memória. |
+| `counter_unreadable`        | O contador está ausente ou não pode ser lido, por exemplo por permissão.        |
+| `counter_invalid`           | O contador não contém um inteiro não negativo.                                  |
+
+`peak.container_memory_kib` é o maior valor **observado nas amostras disponíveis**,
+não o pico histórico do kernel. `peak.container_memory_sources` lista as fontes
+das leituras válidas; `peak.container_memory_unavailable_samples` conta as amostras
+sem leitura. Se esse contador for maior que zero, a observação de memória tem
+lacunas, mesmo que `before` e `after` sejam válidos. Se nenhuma amostra tiver leitura,
+o pico fica `null` e a lista de fontes fica vazia. Zero KiB continua sendo uma
+leitura válida. Os picos de processos, RSS e memória podem ocorrer em instantes
+diferentes.
+
+Memória de cgroup inclui o medidor e caches; RSS soma Agent e descendentes e pode
+contar páginas compartilhadas mais de uma vez. Uma medida não substitui a outra.
+Um relatório com memória indisponível ainda verifica processos e respostas, mas
+não comprova margem de memória nem ausência de OOM. Os resultados locais já
+registrados acima permanecem observações locais; este diagnóstico não substitui
+a homologação da task AWS da #107 nem altera recursos ou limites do deploy.
 
 A suíte MCP cobre rajada, timeout, cancelamento da tarefa HTTP, desconexão ASGI,
 shutdown do lifespan e SIGTERM de um servidor Uvicorn real, conferindo a saída
