@@ -126,7 +126,7 @@ uv run vx-back classification-report ../data/desafio01/01_base_materiais.csv --i
 uv run vx-back classification-evaluate tests/fixtures/classification_review.json --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`. Every input
+Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`; the default, `aliases_v1`, expands unambiguous technical aliases like `VALV ESF` first. Every input
 record gets a result with its original values and evidence; reports do not change
 the master data. An `OUT_OF_SCOPE` classification can be a false negative and must
 not automatically reject an order.
@@ -449,7 +449,7 @@ To change the default, measure against `back/tests/fixtures/merge_review.json`. 
 
 ## Similar material search
 
-`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Embeddings are optional, set with `EMBEDDING_REPOSITORY`, and stay off by default. On the 202 pairs the base declares identical, a local model (`ollama_nomic_v1`) found 126 in the top 10 against 124 without embeddings, at three times the cost. Titan on AWS is still to be measured. Compare any change with:
+`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Changing classification or extraction rules changes that version, so rebuild the index after pulling such a change: `docker compose build batch`, then `docker compose run --rm batch`. `docker compose up --build` doesn't rebuild the batch image. Embeddings are optional, set with `EMBEDDING_REPOSITORY`, and stay off by default. On the 202 pairs the base declares identical, a local model (`ollama_nomic_v1`) found 126 in the top 10 against 124 without embeddings, at three times the cost. Titan on AWS is still to be measured. Compare any change with:
 
 ```bash
 uv run python -m vx_materials_mcp.evaluation --repository hybrid_embeddings_v1
