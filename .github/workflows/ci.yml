@@ -200,7 +200,7 @@ jobs:
       - name: Load deterministic demo in isolated Compose project
         env:
           DEMO_MODE: "true"
-        run: docker compose --profile demo run --rm --no-build demo reset --confirm vx_materiais
+        run: docker compose --profile demo run --rm --no-deps --pull never demo reset --confirm vx_materiais
       - name: Verify complete local flow
         run: scripts/smoke_test.sh http://127.0.0.1:18000 --mode flow
       - name: Measure bounded Agent concurrency and cancellation cleanup
