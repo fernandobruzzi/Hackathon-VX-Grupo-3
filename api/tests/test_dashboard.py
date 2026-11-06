@@ -398,3 +398,113 @@ def test_duplicates_before_and_after_follow_merge_proposals(dashboard_case, stor
     data = client.get(PATH).json()
     assert data["before"]["duplicate_codes"] == 1
     assert data["after"]["duplicate_codes"] == 0
+
+
+@pytest.mark.parametrize("field,value", [("unit", "KG"), ("ncm", "1111.11.11"), ("status", "OBSOLETO")])
+def test_snapshot_refuses_values_not_recorded_by_the_application(dashboard_case, storage, field, value):
+    client, db, _, materials, _, proposal, _ = dashboard_case
+    login(client)
+    approve(client, proposal)
+    db.refresh(materials[0])
+    setattr(materials[0], field, value)
+    db.commit()
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
+    assert response.json()["error"]["details"]["material_codes"] == ["100"]
+    assert not list(storage.rglob("quality_snapshot.json"))
+
+
+def fiscal_correction(client, db, material, original_proposal, ncm):
+    from copy import deepcopy
+
+    from vx_materials_api.schemas.proposals import proposal_hash
+
+    db.refresh(material)
+    members = [{**original_proposal.members[0], "material_id": str(material.id), "expected_version": material.version}]
+    changes = deepcopy(original_proposal.changeset)
+    changes["after"]["ncm"] = ncm
+    changes["sources"]["ncm"] = "Referência NCM do PDM"
+    proposal = SanitizationProposal(
+        tenant_id=TENANT_ID,
+        proposal_type="NCM_CORRECTION",
+        members=members,
+        primary_material_id=material.id,
+        changeset=changes,
+        changeset_hash=proposal_hash(members, changes),
+        technical_review_status="NOT_REQUIRED",
+        fiscal_review_status="PENDING",
+    )
+    db.add(proposal)
+    db.commit()
+    login(client, "AUDITOR_FISCAL")
+    response = client.post(
+        f"/api/v1/sanitization/{proposal.id}/decide",
+        json={
+            "expected_version": 1,
+            "review_area": "FISCAL",
+            "decision": "APPROVE",
+            "reason": "NCM conferido.",
+        },
+        headers=write_headers(client),
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "APPLIED"
+    login(client)
+    return proposal
+
+
+def test_ncm_application_does_not_authorize_an_extra_unit_change(dashboard_case, storage):
+    client, db, dataset, materials, snapshots, proposal, _ = dashboard_case
+    # O NCM é a única diferença original legítima; a unidade ganha uma diferença posterior sem revisão.
+    for snapshot in snapshots:
+        snapshot.raw_record = {"STATUS": "ATIVO", "NCM": materials[0].ncm, "UNIDADE_MEDIDA": "PC"}
+    db.commit()
+    fiscal_correction(client, db, materials[0], proposal, "84212300")
+    db.refresh(materials[0])
+    materials[0].unit = "KG"
+    db.commit()
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
+    assert not list(storage.rglob("quality_snapshot.json"))
+
+
+def test_snapshot_keeps_field_provenance_for_sequential_applications(dashboard_case, storage):
+    client, db, dataset, materials, _, first, _ = dashboard_case
+    login(client)
+    approve(client, first)
+    second = fiscal_correction(client, db, materials[0], first, "84212300")
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 201, response.text
+    export = json.loads((storage / response.json()["export_key"]).read_text())
+    change = next(change for change in export["changes"] if change["material_code"] == "100")
+    assert change["field_proposal_ids"]["ncm"] == [str(first.id), str(second.id)]
+    assert change["field_proposal_ids"]["unit"] == [str(first.id)]
+    assert change["after"]["ncm"] == "84212300"
+    assert export["summary"]["inventory_value_before"] == export["summary"]["inventory_value_after"] == "60.00"
+
+
+def test_snapshot_requires_application_event_not_only_applied_status(dashboard_case, storage):
+    client, db, _, _, _, proposal, _ = dashboard_case
+    proposal.status = "APPLIED"
+    db.commit()
+    login(client)
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
+    assert not list(storage.rglob("quality_snapshot.json"))
+
+
+def test_snapshot_rejects_a_gap_between_approved_applications(dashboard_case, storage):
+    client, db, _, materials, _, first, _ = dashboard_case
+    login(client)
+    approve(client, first)
+    db.refresh(materials[0])
+    materials[0].ncm = "1111.11.11"
+    db.commit()
+    fiscal_correction(client, db, materials[0], first, "84212300")
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
+    assert not list(storage.rglob("quality_snapshot.json"))

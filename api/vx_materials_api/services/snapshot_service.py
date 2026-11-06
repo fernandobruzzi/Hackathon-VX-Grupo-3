@@ -1,9 +1,10 @@
 """Snapshot posterior: a base como ficou depois das propostas aplicadas, para comparar com o original.
 
 O snapshot lê a master atual e confere que cada diferença em relação ao registro importado vem de uma
-proposta APPLIED do mesmo dataset. Uma diferença sem proposta aplicada impede o snapshot: a comparação
-só pode mostrar o que foi aprovado. O valor do estoque é recalculado pelas consolidações e precisa
-bater com o original; unificar códigos move saldos, não cria nem apaga valor.
+aplicação auditada do mesmo dataset, com autorização para aquele campo e valor final. Uma diferença
+sem cadeia aprovada impede o snapshot: a comparação só pode mostrar o que foi aprovado.
+O valor do estoque é recalculado pelas consolidações e precisa bater com o original;
+unificar códigos move saldos, não cria nem apaga valor.
 """
 
 import hashlib
@@ -84,6 +85,62 @@ def _baseline(db, tenant_id, dataset_id) -> dict[uuid.UUID, dict]:
     return baseline
 
 
+def _approved_fields(db, tenant_id, applied):
+    """Valores e cadeia por campo, a partir do evento que efetivamente aplicou cada proposta."""
+    proposals = {str(proposal.id): proposal for proposal in applied}
+    events = db.scalars(
+        select(AuditLog).where(
+            AuditLog.tenant_id == tenant_id,
+            AuditLog.entity_type == "sanitization_proposal",
+            AuditLog.entity_id.in_(proposals),
+            AuditLog.action.in_(["PROPOSAL_APPROVE_TECHNICAL", "PROPOSAL_APPROVE_FISCAL"]),
+        )
+    )
+    applications = defaultdict(list)
+    for event in events:
+        before, after = event.before_json or {}, event.after_json or {}
+        if after.get("status") != "APPLIED" or before.get("status") != "PENDING":
+            continue
+        proposal = proposals[event.entity_id]
+        if after.get("changeset_hash") != proposal.changeset_hash:
+            continue
+        members = {member.get("material_id") for member in proposal.members or []}
+        previous = {row["id"]: row for row in before.get("materials", [])}
+        for row in after.get("materials", []):
+            if row.get("id") in members and row["id"] in previous:
+                applications[row["id"]].append((row.get("version", 0), proposal, previous[row["id"]], row, after))
+    approved = {}
+    for material_id, rows in applications.items():
+        fields = {}
+        # A versão do material ordena aplicações mesmo quando timestamps coincidem.
+        for _, proposal, before, after, state in sorted(rows, key=lambda row: row[0]):
+            target = proposal.changeset.get("after", {})
+            primary = state.get("primary_material_id") == material_id
+            allowed = set()
+            if proposal.proposal_type == "UNIT_CORRECTION":
+                allowed.add("unit")
+            elif primary:
+                allowed.add("ncm")
+                if state.get("technical_review_status") == "APPROVED":
+                    allowed.add("unit")
+            elif proposal.proposal_type in {"MERGE", "COMPOSITE"} and before.get("status") != after.get("status"):
+                allowed.add("status")
+            for field in allowed:
+                if field not in before or field not in after:
+                    continue
+                if field != "status" and (field not in target or target[field] != after[field]):
+                    continue
+                chain = fields.get(field)
+                valid = chain is None or (chain["valid"] and chain["value"] == before[field])
+                fields[field] = {
+                    "value": after[field],
+                    "valid": valid,
+                    "proposal_ids": [*(chain["proposal_ids"] if chain else []), str(proposal.id)],
+                }
+        approved[material_id] = fields
+    return approved
+
+
 def _inventory_totals(db, tenant_id, dataset_id) -> tuple[Decimal, Decimal, int]:
     """Valor original e valor depois das consolidações, linha a linha, sem perder nem repetir saldo."""
     rows = db.execute(
@@ -141,21 +198,20 @@ def create_snapshot(
         )
     }
     applied = applied_proposals(db, tenant_id, dataset_id)
-    touched: dict[uuid.UUID, list[str]] = defaultdict(list)
-    for proposal in applied:
-        for member in proposal.members or []:
-            try:
-                touched[uuid.UUID(member["material_id"])].append(str(proposal.id))
-            except (KeyError, TypeError, ValueError):
-                continue
+    approved = _approved_fields(db, tenant_id, applied)
 
     items, changes, untraceable = [], [], []
     for material_id, before in baseline.items():
         material = current[material_id]
         after = {"status": material.status, "ncm": material.ncm, "unit": material.unit}
         changed = [field for field in FIELDS if after[field] != before[field]]
-        proposals = sorted(set(touched.get(material_id, ())))
-        if changed and not proposals:
+        fields = approved.get(str(material_id), {})
+        provenance = {field: fields[field]["proposal_ids"] for field in changed if field in fields}
+        proposals = sorted({proposal for ids in provenance.values() for proposal in ids})
+        if any(
+            field not in fields or not fields[field]["valid"] or fields[field]["value"] != after[field]
+            for field in changed
+        ):
             untraceable.append(material.material_code)
         items.append({"material_id": material_id, "tenant_id": tenant_id, **after, "proposal_ids": proposals})
         if changed:
@@ -166,13 +222,14 @@ def create_snapshot(
                     "before": {field: before[field] for field in changed},
                     "after": {field: after[field] for field in changed},
                     "proposal_ids": proposals,
+                    "field_proposal_ids": provenance,
                 }
             )
     if untraceable:
         raise ApiProblem(
             409,
             "UNTRACEABLE_CHANGES",
-            "Há materiais alterados sem proposta aplicada. O snapshot só registra alterações aprovadas.",
+            "Há campos ou valores sem aplicação aprovada correspondente. O snapshot só registra alterações aprovadas.",
             material_codes=sorted(untraceable)[:_SAMPLE],
             count=len(untraceable),
         )
