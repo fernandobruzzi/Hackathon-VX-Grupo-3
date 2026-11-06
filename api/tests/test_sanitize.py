@@ -181,3 +181,63 @@ def test_real_batch_proposal_can_be_applied_with_local_sessions(sanitized, monke
                 assert events and all(event["before"] and event["after"] for event in events)
         finally:
             transaction.rollback()
+
+
+def _ncm_in_class(connection, catalog, proposal_id) -> bool:
+    after = connection.execute(
+        text("SELECT changeset->'after' FROM sanitization_proposals WHERE id = :id"), {"id": proposal_id}
+    ).scalar_one()
+    references = catalog.classes[after["pdm_class_id"]].ncm_references
+    return after["ncm"] is None or any(after["ncm"] in reference.codes for reference in references)
+
+
+def test_real_group_correction_is_applied_and_keeps_the_original(sanitized, monkeypatch):
+    from domain.pdm_loader import load_pdm
+
+    _, _, admin, _ = sanitized
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
+    catalog = load_pdm(PDM)
+    with admin.connect() as connection:
+        transaction = connection.begin()
+        try:
+            rows = connection.execute(
+                text("""
+                SELECT p.id, p.changeset->'after'->>'merchandise_group', p.changeset->'after'->>'pdm_class_id',
+                       m.id, m.original_merchandise_group
+                FROM sanitization_proposals p JOIN materials_master m ON m.id = p.primary_material_id
+                WHERE p.proposal_type = 'PDM_CORRECTION' AND p.status = 'PENDING'
+                AND p.changeset->'conflicts' = '[]'::jsonb
+                AND p.changeset->'changes' @> '[{"field": "merchandise_group"}]'::jsonb
+                ORDER BY m.material_code
+            """)
+            ).all()
+            # O batch já não marca o grupo como alteração sem suporte.
+            assert rows
+            assert all(group == catalog.classes[class_id].group for _, group, class_id, _, _ in rows)
+            assert all(original and original != group for _, group, _, _, original in rows)
+
+            def factory():
+                return Session(bind=connection, join_transaction_mode="create_savepoint")
+
+            app = create_app(session_factory=factory)
+            app.state.pdm_catalog = catalog
+            # A primeira cujo NCM consta nas referências da classe: as demais esperam a revisão fiscal.
+            proposal_id, group, _, material_id, original = next(
+                row for row in rows if _ncm_in_class(connection, catalog, row[0])
+            )
+            proposal = SimpleNamespace(id=proposal_id)
+            with TestClient(app, base_url="http://localhost:8000") as client:
+                requester = login(client, "SOLICITANTE_OPERACAO")
+                assert decision(client, requester, proposal).status_code == 403
+                governance = login(client, "GESTOR_CADASTRO")
+                result = decision(client, governance, proposal)
+                assert result.status_code == 200, result.text
+                assert result.json()["status"] == "APPLIED"
+            saved = connection.execute(
+                text("SELECT merchandise_group, original_merchandise_group FROM materials_master WHERE id = :id"),
+                {"id": material_id},
+            ).one()
+            assert tuple(saved) == (group, original)
+        finally:
+            transaction.rollback()
