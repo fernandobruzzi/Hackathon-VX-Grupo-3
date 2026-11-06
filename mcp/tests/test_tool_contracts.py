@@ -43,6 +43,7 @@ def test_client_discovers_the_tools_over_the_protocol():
     tools = {tool.name: tool for tool in discover()}
     assert set(tools) == {
         "check_ncm_consistency",
+        "enrich_from_trusted_source",
         "get_pdm_template",
         "search_similar_materials",
         "validate_and_format_pdm",
@@ -65,6 +66,9 @@ def test_tool_parameters_have_no_identity_fields():
             "limit",
             "ncm",
             "ncm_version",
+            "material_code",
+            "attributes_requested",
+            "refresh",
         }
         for name in tool.input_schema["properties"]:
             assert not any(word in name.lower() for word in FORBIDDEN)

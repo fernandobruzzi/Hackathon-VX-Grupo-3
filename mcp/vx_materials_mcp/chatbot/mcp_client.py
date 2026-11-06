@@ -1,5 +1,6 @@
 """Cliente MCP: inicia o servidor como subprocesso e fala com ele por stdio."""
 
+import json
 import os
 import sys
 from collections.abc import AsyncIterator
@@ -7,6 +8,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from mcp.client.stdio import StdioServerParameters, stdio_client
+from mcp.shared.exceptions import MCPError
 from mcp.types import Tool
 
 from mcp import ClientSession
@@ -54,6 +56,25 @@ class McpClient:
 
     async def list_tools(self) -> list[Tool]:
         return (await self._session.list_tools()).tools
+
+    async def list_resource_templates(self):
+        return (await self._session.list_resource_templates()).resource_templates
+
+    async def read_resource(self, uri: str) -> dict[str, Any]:
+        try:
+            result = await self._session.read_resource(uri)
+        except MCPError as error:
+            raise McpToolError(str(error)) from error
+        return json.loads(result.contents[0].text)
+
+    async def list_prompts(self):
+        return (await self._session.list_prompts()).prompts
+
+    async def get_prompt(self, name: str, arguments: dict[str, str]):
+        try:
+            return await self._session.get_prompt(name, arguments)
+        except MCPError as error:
+            raise McpToolError(str(error)) from error
 
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         result = await self._session.call_tool(name, arguments)

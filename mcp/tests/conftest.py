@@ -20,7 +20,7 @@ PDM = str(KIT / "03_padrao_cadastro_PDM.xlsx")
 
 
 @pytest.fixture(scope="session")
-def database():
+def database(tmp_path_factory):
     base = os.environ.get("TEST_DATABASE_URL")
     if not base:
         pytest.skip("Defina TEST_DATABASE_URL para rodar os testes de busca")
@@ -40,7 +40,7 @@ def database():
         temporary_login(migration, "mcp_reader") as reader_url,
     ):
         api = create_engine(api_url)
-        bootstrap(KIT, api, LocalObjectStore(Path(os.environ.get("TMPDIR", "/tmp")) / "vx-search-test-storage"))
+        bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("mcp-storage")))
         api.dispose()
         indexed = run_index(PDM, database_url=batch_url)
         yield {"admin": admin, "reader": reader_url, "batch": batch_url, "indexed": indexed}
