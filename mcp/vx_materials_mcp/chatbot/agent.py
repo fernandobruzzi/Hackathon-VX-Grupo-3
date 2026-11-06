@@ -28,6 +28,8 @@ from vx_materials_mcp.schemas.agent import (
 
 PLANNER = "rule_based_v1"
 MAX_TOOL_CALLS = 5
+# Acima disso, listar os nomes do PDM confunde mais que ajuda: pergunta-se o tipo em aberto.
+MAX_LISTED_NAMES = 8
 TURN_TIMEOUT_SECONDS = 20.0
 
 
@@ -160,7 +162,14 @@ def _no_class_response(
                 can_submit=False,
             ),
         )
-    if context.classification.status == ClassificationStatus.UNRESOLVED and candidates:
+    # Classificação em dúvida não é rejeição: o pedido continua aguardando o tipo do item.
+    unresolved = context.classification.status == ClassificationStatus.UNRESOLVED and bool(candidates)
+    if unresolved and 0 < len(context.candidate_names) <= MAX_LISTED_NAMES:
+        message = (
+            "Ainda não sei o tipo exato do material. Qual destes é o item: "
+            f"{', '.join(context.candidate_names)}? Se não for nenhum, descreva o item pelo nome usado no catálogo."
+        )
+    elif unresolved:
         message = (
             "Encontrei mais de uma classe possível para esse material. "
             "Pode dizer o tipo do item com mais detalhe, por exemplo o nome usado no catálogo?"
@@ -183,7 +192,7 @@ def _no_class_response(
             pdm_class_id=None,
             attributes={},
             pdm_description=None,
-            validation_status="OUT_OF_SCOPE",
+            validation_status="INCOMPLETE" if unresolved else "OUT_OF_SCOPE",
             missing_attributes=[],
             ncm=NcmCard(suggested=None, status="PENDING_VALIDATION"),
             duplicate_check_status="PENDING",
