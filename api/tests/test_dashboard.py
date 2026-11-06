@@ -508,3 +508,25 @@ def test_snapshot_rejects_a_gap_between_approved_applications(dashboard_case, st
     assert response.status_code == 409, response.text
     assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
     assert not list(storage.rglob("quality_snapshot.json"))
+
+
+def test_missing_initial_application_cannot_be_hidden_by_later_approval(dashboard_case, storage):
+    from sqlalchemy import delete
+
+    from vx_materials_api.db.models import AuditLog
+
+    client, db, _, materials, snapshots, first, _ = dashboard_case
+    for snapshot in snapshots:
+        snapshot.raw_record = {**snapshot.raw_record, "UNIDADE_MEDIDA": "PC"}
+    db.commit()
+    login(client)
+    approve(client, first)
+    # Histórico incompleto simulado somente no banco descartável de teste.
+    db.execute(delete(AuditLog).where(AuditLog.entity_id == str(first.id)))
+    db.commit()
+    fiscal_correction(client, db, materials[0], first, "84212300")
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
+    assert not list(storage.rglob("quality_snapshot.json"))
+    assert client.get(PATH).json()["after_snapshot"] is None

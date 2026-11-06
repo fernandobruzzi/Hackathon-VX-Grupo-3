@@ -49,6 +49,9 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
    específica: revisão fiscal de NCM não autoriza unidade nem estado; bloqueio
    exige a aplicação de uma unificação. Aplicações sucessivas são ordenadas pela
    versão do material e seus valores anteriores precisam continuar a cadeia.
+   Cada proposta aplicada que toca o material precisa ter seu evento de aplicação
+   e a transição de revisão correspondente; um evento posterior não encobre o
+   início ausente.
    Campo adicional, valor final divergente ou histórico incompleto resulta em
    409 `UNTRACEABLE_CHANGES` com os códigos, antes de gravar snapshot ou exportação.
 3. Recalcula o valor do estoque pelas consolidações (quantidade × fator, preço ÷
