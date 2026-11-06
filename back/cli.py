@@ -13,6 +13,9 @@ from domain.runtime import check_simulated_clients
 from pipelines.classify import classification_evaluation, classification_report
 from pipelines.enrich_real_products import run_enrichment
 from pipelines.evaluate_sanitization import sanitization_evaluation
+from pipelines.experiment import SEED as EXPERIMENT_SEED
+from pipelines.experiment import experiment_packets
+from pipelines.experiment_result import experiment_result
 from pipelines.full_run import run_sanitize
 from pipelines.review_handoff import review_handoff
 from pipelines.sanitize import sanitize_report
@@ -81,6 +84,17 @@ def main(argv: list[str] | None = None) -> int:
     handoff.add_argument(
         "--historical-source", action="append", default=[], help="JSON histórico rastreável; repetível"
     )
+    packets = commands.add_parser("experiment-packets", help="Gera a planilha cega e a chave do experimento")
+    packets.add_argument("csv_path")
+    packets.add_argument("--pdm-workbook", required=True)
+    packets.add_argument("--out-dir", required=True, help="Pasta da planilha e da chave (chave fica fora)")
+    packets.add_argument("--seed", type=int, default=EXPERIMENT_SEED)
+    packets.add_argument("--pairs", type=int, default=40, help="Casos em cada parte A e B")
+    packets.add_argument("--corrections", type=int, default=40)
+    packets.add_argument("--slice", type=int, default=120)
+    result = commands.add_parser("experiment-result", help="Calcula o resultado a partir de 1 ou 2 planilhas")
+    result.add_argument("key_path")
+    result.add_argument("sheets", nargs="+")
     index = commands.add_parser("index", help="Reconstroi o indice de busca, com a credencial batch_user")
     index.add_argument("--pdm-workbook")
     index.add_argument("--if-stale", action="store_true", help="Pula se a versao atual ja cobre todos os materiais")
@@ -106,7 +120,21 @@ def main(argv: list[str] | None = None) -> int:
     publish.add_argument("--pdm-workbook", required=True)
     args = parser.parse_args(argv)
 
-    if args.command == "sanitization-evaluate":
+    if args.command == "experiment-packets":
+        if min(args.pairs, args.corrections, args.slice) < 1:
+            parser.error("tamanhos devem ser positivos")
+        result = experiment_packets(
+            args.csv_path,
+            args.pdm_workbook,
+            args.out_dir,
+            args.seed,
+            pairs_size=args.pairs,
+            corrections_size=args.corrections,
+            slice_size=args.slice,
+        )
+    elif args.command == "experiment-result":
+        result = experiment_result(args.key_path, args.sheets)
+    elif args.command == "sanitization-evaluate":
         result = sanitization_evaluation(args.csv_path, args.pdm_workbook, args.repository, args.cohort_manifest)
     elif args.command == "review-handoff":
         result = review_handoff(
