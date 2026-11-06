@@ -62,8 +62,9 @@ Quando a rede permitir a captura real:
 uv run python -m clients.ncm_snapshot_cli download
 ```
 
-O cliente usa apenas a URL fixa, timeout de 30 s, limite de 20 MiB, proxies e
-verificação TLS do sistema, sem redirecionamentos. Somente esse caminho registra
+O cliente usa apenas a URL fixa, timeout de 30 s por operação de I/O (não um
+prazo total nem limite para DNS), limite de 20 MiB, proxies e verificação TLS
+do sistema, sem redirecionamentos. Somente esse caminho registra
 `OFFICIAL_DOWNLOAD` e a URL oficial. A data é capturada no fuso
 `America/Sao_Paulo`; o cabeçalho `Vigente em DD/MM/AAAA`, quando presente, deve
 coincidir com ela. Uma data simples de última atualização pode ser anterior à

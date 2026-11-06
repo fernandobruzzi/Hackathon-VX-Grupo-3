@@ -146,6 +146,8 @@ def load_ncm_snapshot(
 def check_snapshot_ncm(snapshot: NcmSnapshot, raw_code: str | None) -> NcmSnapshotCheck:
     """Só comprova existência/vigência; coerência PDM e aprovação são separadas."""
     normalized = get_normalization_repository("rule_based_v1").normalize_ncm(raw_code).value
+    if normalized is not None and not re.fullmatch(r"[0-9]{4}\.[0-9]{2}\.[0-9]{2}", normalized):
+        normalized = None
     record = snapshot.records.get(normalized) if normalized else None
     valid = bool(record and record.valid_from <= snapshot.snapshot_date <= record.valid_until)
     reasons = []
