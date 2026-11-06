@@ -172,6 +172,22 @@ class Smoke:
                 },
                 headers={"Origin": self.base_url, "X-CSRF-Token": csrf, "Idempotency-Key": str(uuid.uuid4())},
             )
+            dashboard_path = "/api/v1/dashboard/metrics"
+            if persona == "SOLICITANTE_OPERACAO":
+                self.request(dashboard_path, expected=403)
+            else:
+                quality = self.json(dashboard_path)
+                if "financial" in quality or quality["before"]["materials_total"] <= 0:
+                    raise SmokeFailure("Dashboard de qualidade sem dados reais ou com valores financeiros")
+                if quality.get("after") is not None:
+                    raise SmokeFailure("Dashboard inventou um snapshot posterior")
+                if persona == "GESTOR_CADASTRO":
+                    self.request(dashboard_path + "?view=executive", expected=403)
+                else:
+                    financial = self.json(dashboard_path + "?view=executive")["financial"]
+                    if financial["data_origin"] != "SYNTHETIC_CHALLENGE_DATA":
+                        raise SmokeFailure("Dashboard não identificou os valores sintéticos")
+        print("PASS dashboard persistido, comparação indisponível e visão financeira exclusiva do Fiscal")
         print("PASS RBAC: Solicitante não aprova saneamento, Governança não decide fiscal e Fiscal não unifica")
         self.json("/api/v1/auth/logout", payload={}, headers={"Origin": self.base_url, "X-CSRF-Token": csrf})
         self.request("/api/v1/auth/me", expected=401)

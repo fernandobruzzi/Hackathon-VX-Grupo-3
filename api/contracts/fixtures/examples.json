@@ -585,6 +585,13 @@
         "realized_savings": null,
         "estimated_savings": null,
         "assumptions": []
+      },
+      "pipeline": {
+        "proposals_total": 0,
+        "pending": 0,
+        "applied": 0,
+        "rejected": 0,
+        "stale": 0
       }
     },
     "query": {
@@ -613,6 +620,13 @@
         "merge_precision": null,
         "duplicate_recall": null,
         "validated_class_ids": []
+      },
+      "pipeline": {
+        "proposals_total": 0,
+        "pending": 0,
+        "applied": 0,
+        "rejected": 0,
+        "stale": 0
       }
     },
     "query": {

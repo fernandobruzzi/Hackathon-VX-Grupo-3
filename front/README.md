@@ -98,3 +98,5 @@ no código:
    `types/api.ts` não duplicam estruturas. `npm test` valida o cliente HTTP.
 4. Substituir cada `mocks/*` pela chamada indicada no comentário do componente.
 5. Chat: enviar `expected_session_version` e tratar 409 de turno concorrente.
+
+O dashboard consulta métricas persistidas por dataset e centros autorizados; valores financeiros exigem o Auditor fiscal. Avaliação e comparação posterior indisponíveis ficam explícitas. Veja [as regras de cálculo](../docs/dashboard.md).

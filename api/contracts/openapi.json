@@ -1082,6 +1082,16 @@
               ],
               "default": "quality"
             }
+          },
+          {
+            "name": "dataset_id",
+            "in": "query",
+            "required": false,
+            "description": "Dataset importado; por padrão, o mais recente visível nos centros da sessão.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -3818,22 +3828,28 @@
             "type": "object",
             "properties": {
               "materials_total": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "active": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "blocked": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "obsolete": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "missing_ncm": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "noncanonical_unit": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               }
             },
             "required": [
@@ -3852,22 +3868,28 @@
                 "type": "object",
                 "properties": {
                   "materials_total": {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "active": {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "blocked": {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "obsolete": {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "missing_ncm": {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   },
                   "noncanonical_unit": {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   }
                 },
                 "required": [
@@ -3889,19 +3911,24 @@
             "type": "object",
             "properties": {
               "proposals_total": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "pending": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "applied": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "rejected": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "stale": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               }
             },
             "required": [
@@ -3964,7 +3991,15 @@
                 "type": "string"
               },
               "inventory_book_value": {
-                "$ref": "#/components/schemas/Decimal"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Decimal"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Soma dos valores originais dos centros autorizados; indisponível se qualquer valor faltar."
               },
               "realized_savings": {
                 "anyOf": [
@@ -4008,7 +4043,8 @@
           "comparison_status",
           "before",
           "after",
-          "evaluation"
+          "evaluation",
+          "pipeline"
         ],
         "additionalProperties": false
       },
