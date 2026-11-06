@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Field, Input, Textarea } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -21,13 +21,19 @@ export function OrderComplementForm({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const attempts = useRef(new Map<string, string>());
   const save = async () => {
+    const body = { expected_version: order.version, text, source, reason };
+    const fingerprint = JSON.stringify({ id: order.id, ...body });
+    const key = attempts.current.get(fingerprint) ?? crypto.randomUUID();
+    attempts.current.set(fingerprint, key);
     setBusy(true);
     setError(null);
     try {
       const result = await api.request("post", "/api/v1/registration-orders/{id}/complement", {
         params: { id: order.id },
-        body: { expected_version: order.version, text, source, reason },
+        body,
+        idempotencyKey: key,
       });
       onSaved(result);
     } catch (err) {

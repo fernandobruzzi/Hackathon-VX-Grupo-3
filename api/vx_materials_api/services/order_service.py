@@ -496,6 +496,7 @@ def complement_order(db, identity, catalog, order_id, payload, key, request_id=N
     def snapshot():
         return {
             **_state(order),
+            "pdm_class_id": order.pdm_class_id,
             "attributes": dict(order.attributes or {}),
             "missing_attributes": list(order.missing_attributes or []),
             "supplements": list(order.supplements or []),
