@@ -157,6 +157,7 @@ def test_submission_rechecks_saved_state_and_current_domain(ready, change, code)
         context["duplicate_check"]["signature"] = json.dumps(
             {
                 "pdm_class_id": "PDM110",
+                "item_name": context["item_name"],
                 "attributes": {k: v for k, v in context["material_card"]["attributes"].items() if v},
             },
             sort_keys=True,

@@ -118,6 +118,8 @@ async def _search(
     attributes = {name: value for name, value in context.attributes.items() if value}
     if attributes:
         arguments["attributes"] = attributes
+    if context.item_name:
+        arguments["item_name"] = context.item_name
     return await recorder.call("search_similar_materials", arguments, _summarize_search)
 
 
@@ -245,7 +247,9 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     template_names = [attribute["name"] for attribute in (template or {}).get("attributes", [])]
     card_attributes = {name: context.attributes.get(name) for name in template_names} or dict(context.attributes)
     previous = request.context.duplicate_check
-    if needs_search(previous, card_signature(pdm_class.id, card_attributes), request.action, request.message):
+    if needs_search(
+        previous, card_signature(pdm_class.id, card_attributes, context.item_name), request.action, request.message
+    ):
         search = await _search(recorder, request, context, pdm_class.id)
         decision = decide(search, request.message, offered, dismissed, request.action)
     else:

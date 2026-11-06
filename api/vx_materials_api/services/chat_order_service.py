@@ -50,7 +50,11 @@ def submit_chat_order(db, identity, catalog, session_id, expected_version, key, 
         raise ApiProblem(422, "CHAT_NOT_READY", "Complete a ficha antes de enviar.")
     card = MaterialCard.model_validate(context["material_card"])
     saved = context.get(chat_service.DUPLICATE_CHECK)
-    search = saved.get("candidates") if saved and saved.get("signature") == chat_service.card_signature(card) else None
+    search = (
+        saved.get("candidates")
+        if saved and saved.get("signature") == chat_service.card_signature(card, context.get("item_name"))
+        else None
+    )
     status = chat_service.turn_status(
         card, search, context.get("dismissed_material_codes", []), context.get("offered_material_codes", [])
     )

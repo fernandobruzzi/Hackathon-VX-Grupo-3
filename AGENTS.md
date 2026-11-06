@@ -508,7 +508,7 @@ In chat, a complete card is ready to submit only after the search ran, found no 
 
 Similar items without verified identity are listed for the requester to pick one or answer "Nenhum desses é o meu item". The front buttons send a structured `action` (`PICK_CANDIDATE` or `DISMISS_CANDIDATES`), so their label can change freely; typed replies are still read deterministically as a fallback. A dismissal covers only the codes shown: new candidates are asked about again. The API accepts a dismissal or a pick only for codes it stored as offered in an earlier turn of the same session, and answers 422 otherwise.
 
-The API saves the last accepted duplicate check with the card's signature (class and filled attributes). While the card doesn't change, the agent reuses it instead of searching again, so a pick or dismissal holds on later turns. A changed card searches again, and a turn without a search whose card differs from the saved one is never ready to submit. `READY_TO_SUBMIT` registers nothing: submitting and publishing an order belong to the approval flow.
+The API saves the last accepted duplicate check with the card's signature (class, identified item name and filled attributes). While the card doesn't change, the agent reuses it instead of searching again, so a pick or dismissal holds on later turns. A changed card searches again, and a turn without a search whose card differs from the saved one is never ready to submit. `READY_TO_SUBMIT` registers nothing: submitting and publishing an order belong to the approval flow.
 
 ## Correction proposals
 

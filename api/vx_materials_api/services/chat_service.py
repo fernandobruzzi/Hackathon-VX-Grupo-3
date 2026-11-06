@@ -50,10 +50,13 @@ DUPLICATE_CHECK = "duplicate_check"
 _NOT_RUN = object()
 
 
-def card_signature(card: MaterialCard) -> str:
-    """Classe e atributos preenchidos da ficha. O Agent calcula igual para decidir se busca de novo."""
+def card_signature(card: MaterialCard, item_name: str | None = None) -> str:
+    """Classe, substantivo e atributos da ficha. O Agent calcula igual para decidir se busca de novo."""
     filled = {name: value for name, value in card.attributes.items() if value}
-    return json.dumps({"pdm_class_id": card.pdm_class_id, "attributes": filled}, sort_keys=True, ensure_ascii=False)
+    identity = {"pdm_class_id": card.pdm_class_id, "attributes": filled}
+    if item_name:
+        identity["item_name"] = item_name
+    return json.dumps(identity, sort_keys=True, ensure_ascii=False)
 
 
 def _search_candidates(result: AgentRunResponse) -> list[dict[str, Any]] | None | object:
@@ -75,7 +78,7 @@ def effective_candidates(
     search = _search_candidates(result)
     if search is not _NOT_RUN:
         return search, False
-    if saved and saved.get("signature") == card_signature(result.material_card):
+    if saved and saved.get("signature") == card_signature(result.material_card, result.context_patch.get("item_name")):
         return saved.get("candidates", []), True
     return None, False
 
@@ -309,7 +312,7 @@ def complete_turn(
     card = material_card.model_dump(mode="json")
     if search is not None:
         patch[DUPLICATE_CHECK] = {
-            "signature": card_signature(material_card),
+            "signature": card_signature(material_card, patch.get("item_name")),
             "candidates": search,
             "status": material_card.duplicate_check_status,
             "existing": card.get("existing") if status == "EXISTING" else None,

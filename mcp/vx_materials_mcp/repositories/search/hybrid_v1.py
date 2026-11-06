@@ -23,6 +23,7 @@ class SearchQuery:
     pdm_class_id: str | None = None
     attributes: dict[str, str] = field(default_factory=dict)
     limit: int = 5
+    item_name: str | None = None
 
 
 class HybridV1SearchRepository:
@@ -40,7 +41,7 @@ class HybridV1SearchRepository:
         self._embedder = embedder
 
     def search(self, query: SearchQuery) -> dict:
-        classification = None if query.pdm_class_id else self._classifier.classify(ClassificationInput(query.query))
+        classification = self._classifier.classify(ClassificationInput(query.query))
         class_id = query.pdm_class_id or classification.pdm_class_id
         if class_id is None:
             # "filtro X" pode ser filtro de óleo, ar ou combustível. Em classes de referência isso não
@@ -53,7 +54,9 @@ class HybridV1SearchRepository:
         if pdm_class is not None:
             extracted = self._extractor.extract(pdm_class, query.query)
             attributes = {**{n: a.value for n, a in extracted.attributes.items()}, **attributes}
-            validation = validate_pdm(self._pdm, class_id, attributes, item_name=self._item(pdm_class))
+            validation = validate_pdm(
+                self._pdm, class_id, attributes, item_name=self._item(pdm_class, classification, query.item_name)
+            )
             key = validation.identity_key or partial_identity_key(pdm_class, attributes)
             missing = [m.name for m in validation.missing_attributes]
 
@@ -95,8 +98,14 @@ class HybridV1SearchRepository:
         return found[0] if len(found) == 1 else None
 
     @staticmethod
-    def _item(pdm_class) -> str | None:
-        return pdm_class.item_names[0] if len(pdm_class.item_names) == 1 else None
+    def _item(pdm_class, classification, explicit: str | None) -> str | None:
+        if explicit is not None:
+            return explicit
+        if len(pdm_class.item_names) == 1:
+            return pdm_class.item_names[0]
+        matched = {e.matched_name for e in classification.evidence if e.class_id == pdm_class.id}
+        names = [name for name in pdm_class.item_names if name in matched]
+        return names[0] if len(names) == 1 else None
 
     def _candidate(self, row: dict, pdm_class, attributes: dict, key: str | None, missing: list[str]) -> dict:
         verified = bool(key) and row["candidate_identity_key"] == key

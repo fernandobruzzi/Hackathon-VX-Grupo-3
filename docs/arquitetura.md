@@ -331,6 +331,8 @@ Retorno:
 }
 ```
 
+`item_name` é opcional na entrada e transporta o substantivo identificado, por exemplo `NIPLE` em PDM050. Sem ele, a busca tenta identificar um único nome pela classificação do texto. Classes com vários itens só verificam identidade técnica quando esse substantivo é conhecido; NIPLE e COTOVELO não compartilham a verificação de duplicidade. A assinatura da ficha preserva classe, substantivo e atributos preenchidos na API e no Agent.
+
 `ranking_score` ordena resultados. Ele não representa probabilidade calibrada de equivalência nem autoriza uma unificação.
 
 #### get_pdm_template

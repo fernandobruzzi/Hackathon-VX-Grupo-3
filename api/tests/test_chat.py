@@ -493,3 +493,13 @@ def test_test_session_starts_in_local(monkeypatch):
     monkeypatch.setenv("APP_ENV", settings.LOCAL_ENV)
 
     assert create_app().state.request_identity_provider is not None
+
+
+@pytest.mark.parametrize("next_item, expected", [("NIPLE", "READY_TO_SUBMIT"), ("COTOVELO 90 GRAUS", "NEEDS_INPUT")])
+def test_saved_duplicate_check_includes_the_item_noun(client, agent, next_item, expected):
+    agent.result = agent_result(VALID_CARD, search_call(), patch={"item_name": "NIPLE"})
+    first = send(client, "NIPLE").json()
+    agent.result = agent_result(VALID_CARD, patch={"item_name": next_item})
+    response = send(client, next_item, first["session_id"], version=1).json()
+    assert response["status"] == expected
+    assert response["material_card"]["can_submit"] is (expected == "READY_TO_SUBMIT")

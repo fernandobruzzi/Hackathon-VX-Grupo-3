@@ -51,13 +51,15 @@ def build_server(catalog: PdmCatalog, search: SimilarMaterialsSearch | None = No
         pdm_class_id: str | None = None,
         attributes: dict[str, str] | None = None,
         limit: int = 5,
+        item_name: str | None = None,
     ) -> SimilarMaterials:
         """Busca materiais já cadastrados parecidos com o pedido: identidade exata e texto.
 
         `identity_verified` diz se é o mesmo item pela regra do PDM; `ranking_score` só ordena.
+        Informe item_name em classes com vários itens para preservar o substantivo identificado.
         Bloqueados indicam o código ativo a usar; obsoletos não devem ser reutilizados.
         """
-        return search.run(query, pdm_class_id, attributes, limit)
+        return search.run(query, pdm_class_id, attributes, limit, item_name)
 
     @server.tool(annotations=_READ_ONLY)
     def check_ncm_consistency(

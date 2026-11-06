@@ -45,6 +45,13 @@ class SimilarMaterialsSearch:
             )
         return self._repository
 
-    def run(self, query: str, pdm_class_id: str | None, attributes: dict[str, str] | None, limit: int):
-        result = self._ready().search(SearchQuery(query, pdm_class_id, attributes or {}, limit))
+    def run(
+        self,
+        query: str,
+        pdm_class_id: str | None,
+        attributes: dict[str, str] | None,
+        limit: int,
+        item_name: str | None = None,
+    ):
+        result = self._ready().search(SearchQuery(query, pdm_class_id, attributes or {}, limit, item_name))
         return SimilarMaterials.model_validate(result)

@@ -58,10 +58,13 @@ def picked_code(text: str) -> str | None:
     return match.group(1) if match else None
 
 
-def card_signature(pdm_class_id: str | None, attributes: dict[str, str | None]) -> str:
-    """Identifica a ficha usada na busca: classe e atributos preenchidos. A API calcula igual."""
+def card_signature(pdm_class_id: str | None, attributes: dict[str, str | None], item_name: str | None = None) -> str:
+    """Identifica a ficha usada na busca: classe, substantivo e atributos. A API calcula igual."""
     filled = {name: value for name, value in attributes.items() if value}
-    return json.dumps({"pdm_class_id": pdm_class_id, "attributes": filled}, sort_keys=True, ensure_ascii=False)
+    identity = {"pdm_class_id": pdm_class_id, "attributes": filled}
+    if item_name:
+        identity["item_name"] = item_name
+    return json.dumps(identity, sort_keys=True, ensure_ascii=False)
 
 
 def wanted_code(action: ChatAction | None, message: str) -> str | None:
