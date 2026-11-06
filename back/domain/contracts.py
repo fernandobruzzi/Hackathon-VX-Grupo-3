@@ -302,6 +302,29 @@ class CorrectionRepository(Protocol):
     ) -> CorrectionResult: ...
 
 
+@dataclass(frozen=True)
+class ReviewLane:
+    """Como uma correção é revisada: 1 e 2 podem ir em lote após amostra, 3 é sempre item a item.
+
+    `lot_key` é tipo|regra|classe. `reasons` traz os códigos que mandaram a proposta ao nível 3.
+    """
+
+    tier: int
+    lot_key: str
+    reasons: tuple[str, ...] = ()
+
+
+class TextLossRepository(Protocol):
+    """Diz quais termos da descrição original não chegaram à descrição proposta.
+
+    Na dúvida, aponta perda: o custo é revisar a proposta item a item, nunca aplicar texto errado.
+    """
+
+    name: str
+
+    def lost_terms(self, material: AnalyzedMaterial, pdm_class: PdmClass, proposed: str) -> tuple[str, ...]: ...
+
+
 class EmbeddingRepository(Protocol):
     """Um modelo de embeddings. `signature` identifica modelo, dimensão e versão: indexação e consulta
     só se comparam com a mesma assinatura. Para testar outro, registre um novo repositório."""
