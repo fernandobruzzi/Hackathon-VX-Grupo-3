@@ -127,3 +127,11 @@ Alterar atributos, item, PDM ou regras após a aprovação técnica impede publi
 nova versão, também permanecem pendentes para revisão; a migração não inventa aprovação anterior.
 A Governança não define NCM. Sem o snapshot oficial da #30, existência e vigência continuam
 `null`: a concordância com o PDM e a aprovação humana não confirmam vigência oficial.
+
+Para recuperar um pedido legado ou uma ficha alterada que ainda está `PENDING_FISCAL`, a
+Governança abre **Revisar pedido**, informa o motivo e escolhe **Reavaliar e devolver à revisão
+técnica** (`POST /{id}/reopen-technical-review`). A transição confere escopo, versão e idempotência,
+reexecuta PDM/duplicidade e audita a remoção das revisões antigas. O resultado pode ser
+`READY_FOR_REVIEW`, `INCOMPLETE`, `OUT_OF_SCOPE` ou `EXISTING`; nenhuma aprovação é criada. Uma ficha
+pronta passa novamente pela aprovação técnica e depois pela fiscal. Fiscal não reabre a revisão;
+pedidos registrados e rejeitados permanecem fechados.

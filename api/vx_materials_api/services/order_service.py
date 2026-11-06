@@ -272,6 +272,9 @@ def _audit(db, identity, role, order, action, reason, before, request_id, *, aft
                 "material_id": str(order.material_id) if order.material_id else None,
                 "candidate_material_ids": list(order.candidate_material_ids or []),
                 "review_data": dict(order.review_data or {}),
+                "pdm_class_id": order.pdm_class_id,
+                "attributes": dict(order.attributes or {}),
+                "missing_attributes": list(order.missing_attributes or []),
             },
             reason=reason,
             request_id=request_id,
@@ -630,3 +633,44 @@ def get_order_review(db, identity, catalog, order_id):
         "technical_review_current": (order.review_data or {}).get("technical", {}).get("signature")
         == _review_signature(catalog, analysis, version),
     }
+
+
+def reopen_technical_review(db, identity, catalog, order_id, payload, key, request_id=None):
+    """Governança reavalia o pedido pendente fiscal sem fabricar aprovação técnica retroativa."""
+    role = require_permission(identity, GOVERNANCE)
+    operation = "registration_order.reopen_technical_review"
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:t, 1))"), {"t": str(identity.tenant_id)})
+    order = _locked_order(db, identity, order_id)
+    require_resource_scope(identity, order.tenant_id, [order.center_code] if order.center_code else ())
+    previous, payload_hash = _idempotent(
+        db, identity, operation, key, {"order_id": str(order_id), **payload.model_dump(mode="json")}
+    )
+    if previous is not None:
+        return previous.response["body"]
+    _check_version(order, payload.expected_version)
+    if order.status != "PENDING_FISCAL":
+        raise ApiProblem(409, "INVALID_TRANSITION", "Só pedidos pendentes fiscais podem voltar à revisão técnica.")
+    if not payload.reason.strip():
+        raise ApiProblem(422, "REASON_REQUIRED", "Informe o motivo da reavaliação técnica.")
+    before = {
+        **_state(order),
+        "review_data": dict(order.review_data or {}),
+        "pdm_class_id": order.pdm_class_id,
+        "attributes": dict(order.attributes or {}),
+        "missing_attributes": list(order.missing_attributes or []),
+    }
+    classifier, extractor, version = _rules(catalog)
+    analysis = _analysis(order, catalog, classifier, extractor)
+    order.status, order.candidate_material_ids = _evaluate(db, identity.tenant_id, analysis, version)
+    order.pdm_class_id, order.attributes = analysis.pdm_class_id, analysis.attributes
+    order.missing_attributes = list(analysis.missing_attributes)
+    order.review_data = {}
+    order.version += 1
+    db.flush()
+    _audit(db, identity, role, order, "ORDER_TECHNICAL_REOPENED", payload.reason, before, request_id)
+    db.flush()
+    db.refresh(order)
+    body = to_contract(db, order)
+    _remember(db, identity, operation, key, payload_hash, order.id, body)
+    db.commit()
+    return body

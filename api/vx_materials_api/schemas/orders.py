@@ -27,3 +27,8 @@ class OrderComplementRequest(_Contract):
     text: str = Field(min_length=1, max_length=10000)
     source: str = Field(min_length=1, max_length=1000)
     reason: str = Field(min_length=1, max_length=2000)
+
+
+class OrderReopenReviewRequest(_Contract):
+    expected_version: int = Field(ge=1)
+    reason: str = Field(min_length=1, max_length=2000)

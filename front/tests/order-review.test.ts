@@ -16,13 +16,15 @@ Object.assign(globalThis, {
 const fixtures = JSON.parse(
   readFileSync(new URL("../../api/contracts/fixtures/examples.json", import.meta.url), "utf8"),
 );
-for (const persona of ["GESTOR_CADASTRO", "AUDITOR_FISCAL"] as const) {
-  test(`${persona}: revisa a ficha e repete decisão sem resposta com chave estável`, async () => {
+for (const flow of ["technical", "fiscal", "reopen"] as const) {
+  const persona = flow === "fiscal" ? "AUDITOR_FISCAL" : "GESTOR_CADASTRO";
+  test(`${flow}: revisa a ficha e repete decisão sem resposta com chave estável`, async () => {
     const previousFetch = globalThis.fetch;
     const detail = structuredClone(
       fixtures.find((row: { name: string }) => row.name === "order-review").response,
     );
-    detail.order.status = persona === "GESTOR_CADASTRO" ? "READY_FOR_REVIEW" : "PENDING_FISCAL";
+    detail.order.status = flow === "technical" ? "READY_FOR_REVIEW" : "PENDING_FISCAL";
+    if (flow === "reopen") detail.technical_review_current = false;
     let decided = 0;
     let lost = true;
     const posts: { key: string | null; body: Record<string, unknown> }[] = [];
@@ -30,6 +32,7 @@ for (const persona of ["GESTOR_CADASTRO", "AUDITOR_FISCAL"] as const) {
       if (String(url).endsWith("/auth/config")) return Response.json({ mode: "local" });
       if (String(url).endsWith("/auth/me")) return Response.json(meFor(persona));
       if (init?.method !== "POST") return Response.json(detail);
+      assert.ok(String(url).endsWith(flow === "reopen" ? "/reopen-technical-review" : "/decide"));
       posts.push({
         key: new Headers(init.headers).get("Idempotency-Key"),
         body: JSON.parse(String(init.body)),
@@ -78,7 +81,11 @@ for (const persona of ["GESTOR_CADASTRO", "AUDITOR_FISCAL"] as const) {
         view.root
           .findAllByType("button")
           .find((b) =>
-            b.children.some((child) => typeof child === "string" && child.includes("Aprovar")),
+            b.children.some(
+              (child) =>
+                typeof child === "string" &&
+                child.includes(flow === "reopen" ? "Reavaliar" : "Aprovar"),
+            ),
           )!
           .props.onClick();
       await act(async () => {

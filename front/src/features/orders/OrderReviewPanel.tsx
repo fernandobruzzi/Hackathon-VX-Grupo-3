@@ -51,6 +51,7 @@ export function OrderReviewPanel({
   }, [api, id, me, retry]);
   const technical = detail?.order.status === "READY_FOR_REVIEW" && can(me, "orders:decide");
   const fiscal = detail?.order.status === "PENDING_FISCAL" && can(me, "ncm:decide");
+  const canReopen = detail?.order.status === "PENDING_FISCAL" && can(me, "orders:decide");
   const decide = async (decision: "APPROVE" | "REJECT") => {
     if (!detail || !controller.current) return;
     const signal = controller.current.signal;
@@ -81,6 +82,29 @@ export function OrderReviewPanel({
     } catch (err) {
       if (!signal.aborted)
         setError(err instanceof ApiError ? err.message : "Não foi possível registrar a decisão.");
+    } finally {
+      if (!signal.aborted) setBusy(false);
+    }
+  };
+  const reopen = async () => {
+    if (!detail || !controller.current) return;
+    const signal = controller.current.signal;
+    const body = { expected_version: detail.order.version, reason };
+    const fingerprint = JSON.stringify({ id, operation: "reopen", ...body });
+    const key = attempts.current.get(fingerprint) ?? crypto.randomUUID();
+    attempts.current.set(fingerprint, key);
+    setBusy(true);
+    setError(null);
+    try {
+      await api.request("post", "/api/v1/registration-orders/{id}/reopen-technical-review", {
+        params: { id },
+        body,
+        idempotencyKey: key,
+      });
+      if (!signal.aborted) onDecided();
+    } catch (err) {
+      if (!signal.aborted)
+        setError(err instanceof ApiError ? err.message : "Não foi possível reavaliar o pedido.");
     } finally {
       if (!signal.aborted) setBusy(false);
     }
@@ -197,29 +221,37 @@ export function OrderReviewPanel({
               </Field>
             </>
           )}
-          {(technical || fiscal) && (
+          {(technical || fiscal || canReopen) && (
             <>
               <Field label="Justificativa da decisão">
                 <Textarea value={reason} onChange={(event) => setReason(event.target.value)} />
               </Field>
               <div className="flex gap-2">
-                <Button
-                  disabled={
-                    busy ||
-                    !reason.trim() ||
-                    (fiscal && (!ncm || !source.trim() || !detail.technical_review_current))
-                  }
-                  onClick={() => decide("APPROVE")}
-                >
-                  {fiscal ? "Aprovar NCM e publicar" : "Aprovar parte técnica"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={busy || !reason.trim()}
-                  onClick={() => decide("REJECT")}
-                >
-                  Rejeitar pedido
-                </Button>
+                {canReopen ? (
+                  <Button disabled={busy || !reason.trim()} onClick={reopen}>
+                    Reavaliar e devolver à revisão técnica
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      disabled={
+                        busy ||
+                        !reason.trim() ||
+                        (fiscal && (!ncm || !source.trim() || !detail.technical_review_current))
+                      }
+                      onClick={() => decide("APPROVE")}
+                    >
+                      {fiscal ? "Aprovar NCM e publicar" : "Aprovar parte técnica"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={busy || !reason.trim()}
+                      onClick={() => decide("REJECT")}
+                    >
+                      Rejeitar pedido
+                    </Button>
+                  </>
+                )}
               </div>
             </>
           )}

@@ -2179,5 +2179,31 @@
       "fiscal_decision": null,
       "technical_review_current": true
     }
+  },
+  {
+    "name": "order-reopen-technical-review",
+    "path": "/api/v1/registration-orders/{id}/reopen-technical-review",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "expected_version": 2,
+      "reason": "Renovar revisão após atualização das regras"
+    },
+    "response": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "version": 3,
+      "origin": "CHAT",
+      "requester": "Operação Demo",
+      "original_text": "preciso de 10 parafuso sextavado m16 x 60 galvanizado 8.8 din 933 pra peneira",
+      "center_code": "1300",
+      "pdm_class_id": "PDM001",
+      "status": "READY_FOR_REVIEW",
+      "missing_attributes": [],
+      "material_code": null,
+      "updated_at": "2026-11-07T13:10:00Z"
+    },
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    }
   }
 ]
