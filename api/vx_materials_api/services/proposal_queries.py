@@ -252,7 +252,11 @@ def audit_events(db, principal, *, cursor=None, limit=20):
             AuditLog.entity_type.in_(["sanitization_proposal", "registration_order"]),
         )
     )
-    system = and_(AuditLog.actor_type == "SYSTEM", AuditLog.action == "PROPOSAL_SUPERSEDED")
+    system = and_(
+        AuditLog.entity_type == "sanitization_proposal",
+        AuditLog.actor_type == "SYSTEM",
+        AuditLog.action == "PROPOSAL_SUPERSEDED",
+    )
     submitted = and_(AuditLog.entity_type == "registration_order", AuditLog.action == "ORDER_SUBMITTED")
     if has_permission(principal, "audit:fiscal"):
         query = query.where(
@@ -289,6 +293,12 @@ def audit_events(db, principal, *, cursor=None, limit=20):
         else:
             proposal = db.get(SanitizationProposal, resource_id)
             if proposal is None or proposal.tenant_id != principal.tenant_id:
+                continue
+            if (
+                event.actor_type == "SYSTEM"
+                and not has_permission(principal, "audit:fiscal")
+                and proposal.technical_review_status == "NOT_REQUIRED"
+            ):
                 continue
             try:
                 load_members(db, proposal, principal)
