@@ -78,13 +78,15 @@ class HybridV1SearchRepository:
             rows.setdefault(row["id"], row)
 
         candidates = [self._candidate(row, pdm_class, requested, missing) for row in rows.values()]
-        candidates.sort(key=lambda c: (-c["ranking_score"], c["material_code"]))
+        match_status = self._status(candidates)
+        # A apresentação nunca pode esconder a única identidade reutilizável.
+        candidates.sort(key=lambda c: (not self._reusable(c), -c["ranking_score"], c["material_code"]))
         candidates = candidates[: max(1, min(query.limit, 20))]
         self._attach_inventory(candidates)
         for candidate in candidates:
             candidate.pop("_inventory_id")
         return {
-            "match_status": self._status(candidates),
+            "match_status": match_status,
             "pdm_class_id": class_id,
             "query_attributes": attributes,
             "index_version": self._version,
@@ -198,10 +200,13 @@ class HybridV1SearchRepository:
             candidate["inventory"] = stock.get(candidate["_inventory_id"], [])
 
     @staticmethod
-    def _status(candidates: list[dict]) -> str:
-        reusable = [
-            c for c in candidates if c["identity_verified"] and (c["status"] == "ATIVO" or c["active_code_target"])
-        ]
-        if reusable:
+    def _reusable(candidate: dict) -> bool:
+        return bool(
+            candidate["identity_verified"] and (candidate["status"] == "ATIVO" or candidate["active_code_target"])
+        )
+
+    @classmethod
+    def _status(cls, candidates: list[dict]) -> str:
+        if any(cls._reusable(candidate) for candidate in candidates):
             return "EXISTING_FOUND"
         return "REVIEW_REQUIRED" if candidates else "NO_MATCH"
