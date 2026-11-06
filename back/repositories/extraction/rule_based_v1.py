@@ -22,7 +22,12 @@ _NOISE = re.compile(
     r"\s*(?:(?<=\s)-\s*|,\s*)?\b(?:COMPRA LOCAL|VER DESENHO|CONF(?:ORME)? (?:AMOSTRA|CATALOGO)|ITEM CRITICO"
     r"|P/ ?MANUTENCAO|APLICACAO GERAL|REF ANTIGA)"
 )
-_SEGMENTS = re.compile(r"\s*;\s*|,(?!\d)\s*|\s+-\s+")
+# Ponto seguido de um novo `RÓTULO:` separa itens, como em "NORMA: DIN 933. MATERIAL: ACO CARBONO".
+# Sozinho, ponto e espaço não separam: em "REF. 123" o ponto é abreviação.
+_SEGMENTS = re.compile(r"\s*;\s*|,(?!\d)\s*|\s+-\s+|\.\s+(?=[A-Z][A-Z ]{0,30}:)")
+# Pedidos e mensagens chegam com uma informação por linha, às vezes com marcador ("- ", "* ", "• ").
+_LINE_BREAK = re.compile(r"\s*\n\s*(?:[-*•]\s+)?")
+_ONLY_PUNCTUATION = re.compile(r"^[\W_]+$")
 _CONNECTOR = re.compile(r"^(?:DE|COM|:)(?:\s+|$)|\s+(?:DE|COM|E)$")
 _DASH_SIZE_VALUE = re.compile(r"^-(\d+)$")
 _DASH_SIZE = re.compile(r"\s*\(-\d+\)")
@@ -80,6 +85,12 @@ _REFERENCE_LABELS = frozenset(
     }
 )
 _REFERENCE_TAIL = re.compile(r"((?:\s+[A-Z][A-Z]{2,})+)$")
+# Pontuação de fim de frase depois de um valor ("DIN 933." ou "12MM!"). Ponto seguido de letra ou
+# número continua parte do valor: 8.8, 1.1/2" e ASME B18.2.1 não mudam.
+_SENTENCE_END = re.compile(r"\s*[.!?]+$")
+# Fim de um valor permitido: não pode continuar em letra, número, barra ou hífen, nem em ponto
+# seguido de letra ou número (DIN 931 não casa com DIN 931.1). Ponto de fim de frase é aceito.
+_VALUE_END = r"(?![\w/\-]|\.\w)"
 _METRIC_ATTRIBUTES = ("BITOLA", "PARA PARAFUSO", "ROSCA CORPO", "FURO")
 
 
@@ -164,7 +175,7 @@ def _contained_value(attribute: PdmAttribute, raw: str) -> str | None:
     """O único valor permitido contido no texto, quando há exatamente um."""
     if attribute.allowed_values is None:
         return None
-    found = [v for v in attribute.allowed_values if re.search(rf"(?<![\w.\-]){re.escape(v)}(?![\w.\-])", raw)]
+    found = [v for v in attribute.allowed_values if re.search(rf"(?<![\w.\-]){re.escape(v)}{_VALUE_END}", raw)]
     longest = [v for v in found if not any(v != other and v in other for other in found)]
     return longest[0] if len(longest) == 1 else None
 
@@ -219,6 +230,8 @@ class _Extraction:
         return [a for a in self.pdm_class.attributes if a.name not in self.found]
 
     def fit_labeled(self, key: str, raw: str) -> bool:
+        written = raw
+        raw = _SENTENCE_END.sub("", raw)
         if not raw:
             return False
         if key == "DN" and raw.isdigit():
@@ -230,7 +243,7 @@ class _Extraction:
                 continue
             fitted = fit_value(attribute, raw)
             if fitted:
-                self.set(name, fitted[0], f"{key}: {raw}", fitted[1])
+                self.set(name, fitted[0], f"{key}: {written}", fitted[1])
                 return True
         return False
 
@@ -248,7 +261,7 @@ class RuleBasedV1ExtractionRepository:
         manufacturer_reference: str | None = None,
     ) -> ExtractionResult:
         work = _Extraction(pdm_class)
-        text = _NOISE.sub("", _DASH_SIZE.sub("", _clean_text(description)))
+        text = _NOISE.sub("", _DASH_SIZE.sub("", _clean_text(_LINE_BREAK.sub(" ; ", description))))
         self._use_structured_fields(work, manufacturer, manufacturer_reference)
 
         free: list[str] = []
@@ -267,7 +280,8 @@ class RuleBasedV1ExtractionRepository:
         pool = self._scan_manufacturer_reference(work, pool)
         self._apply_documented_inferences(work)
 
-        unresolved = tuple(part.strip() for part in pool.split(" , ") if part.strip())
+        parts = (part.strip() for part in pool.split(" , "))
+        unresolved = tuple(part for part in parts if part and not _ONLY_PUNCTUATION.match(part))
         ordered = {a.name: work.found[a.name] for a in pdm_class.attributes if a.name in work.found}
         return ExtractionResult(ordered, unresolved)
 
@@ -366,7 +380,7 @@ class RuleBasedV1ExtractionRepository:
             if any(c.isdigit() for c in phrase):
                 # Modelos e normas aparecem com ou sem separador: TC-12 e TC12.
                 body = re.sub(r"\\[ \-]|/", r"[\\s\\-/]?", body)
-            pattern = rf"(?<![\w./\-]){body}(?![\w./\-])"
+            pattern = rf"(?<![\w./\-]){body}{_VALUE_END}"
             match = re.search(pattern, pool)
             if not match:
                 continue
