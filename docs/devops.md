@@ -87,7 +87,7 @@ Revalidar estes itens na versão atual de `main`, pois há entregas simultâneas
 | Batch RunTask/heartbeat | Runner `ecs_fargate` preparado na #6; testar PassRole e task real na conta |
 | Rotas estáticas com IDs reais | Saneamento já usa `/saneamento/revisao?id=...`; enriquecimento ainda tem páginas mock |
 | Implantação ECS/RDS | #6; ainda precisa validação real na conta do workshop |
-| HTTPS alternativo | #29; testar antes da demonstração |
+| HTTPS alternativo | Render e script EC2/Caddy em `docs/ec2.md`; testar conta/TLS/login na #29 |
 | Seed/reset da demo | #34; bootstrap idempotente não equivale a reset de sessão/proposta |
 
 ## Requisitos do primeiro deploy
