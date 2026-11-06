@@ -24,7 +24,10 @@ result = repository.classify(
 
 `rule_based_v1` usa os nomes completos de `item_names` do PDM e limites de palavras.
 Ignora caixa, acentos, separadores e as preposições DA/DAS/DE/DO/DOS. Não expande
-abreviações técnicas nem interpreta inglês; extração e aliases são o escopo da #14.
+abreviações técnicas nem interpreta inglês.
+
+`aliases_v1`, o padrão, aplica as mesmas regras depois de trocar aliases técnicos
+inequívocos pela forma do PDM (seção [Aliases técnicos](#aliases-técnicos)).
 
 Os três textos — descrição longa, curta e anexo — são considerados. O nome mais
 específico prevalece quando os trechos se sobrepõem: PARAFUSO SEXTAVADO INTERNO
@@ -53,6 +56,42 @@ Cada resultado carrega a entrada original, regra versionada, candidatos,
 evidências por campo, versão e SHA-256 do PDM. O relatório acrescenta identificador
 e posição lógica do registro de origem e hash do CSV. Códigos repetidos não são
 descartados. Não há score de confiança nem chamada externa.
+
+## Aliases técnicos
+
+`aliases_v1` troca sequências exatas de palavras antes da busca dos nomes. O contexto faz
+parte do padrão, e a tabela fica em `repositories/classification/aliases_v1_tables.py`:
+
+| Alias | Vira | Por quê |
+|---|---|---|
+| `VALV ESF`, `VALVULA ESF` | `VALVULA ESFERA` | ESF só é esfera logo depois de válvula |
+| `VALV` | `VALVULA` | O tipo (GLOBO, GAVETA...) continua decidindo a classe |
+| `ELEMENTO FILTRANTE` | `FILTRO` | Com o tipo (AR, OLEO...) vira o filtro; sem ele, fica em dúvida |
+
+Cada alias usado vira uma evidência com o trecho como foi escrito e a regra
+`aliases_v1/alias.<id>`; o texto original continua em `original`. Os aliases não
+preenchem atributos: a extração lê o texto original, então `VALV ESF 2" AISI 316 NPT`
+vira válvula esfera de 2POL com rosca NPT, e o material do corpo fica vazio, porque
+AISI 316 não diz se é forjado ou fundido.
+
+Não entram na tabela: ESF fora de válvula (`ROL RIG ESF`), `ELEMENTO` sozinho e
+abreviações que dependem do item, como `PARAF CAB SEXTAVADA ALLEN` ou `VALV RET`. Esses
+textos continuam sem classe ou em dúvida. No chat, uma classificação em dúvida não é
+rejeição: o pedido fica aguardando resposta e, com até oito nomes possíveis, o agente
+pergunta qual deles é o item (`ELEMENTO FILTRANTE FLEETGUARD LF9009` lista os cinco filtros).
+
+Efeito na base de materiais, comparado ao `rule_based_v1`:
+
+- 579 materiais passam a ter classe, todos válvulas e filtros do tipo descrito.
+- 24 elementos filtrantes de óleo deixam de ser classificados como `OLEO LUBRIFICANTE`.
+- 44 válvulas que viravam `FLANGE` ou peça de reposição (`PISTAO`) ficam em dúvida.
+- Unificações: de 1.147 para 1.165 grupos. A amostra de precisão foi sorteada e revisada
+  de novo: 39 de 40, e o erro é o caso PETRONAS/MOBIL da #73.
+- A amostra de classificação continua em 36/36: nenhuma linha dela usa esses aliases, e as
+  linhas reais dos aliases estão em `tests/test_classification_aliases.py`.
+
+Mudar a tabela ou a revisão do repositório muda a versão do índice de busca. Reconstrua o
+índice antes de usar o chat: `docker compose build batch` e `docker compose run --rm batch`.
 
 ## Executar localmente
 
@@ -105,11 +144,12 @@ Resultado com `pdm-kit-v1`, SHA-256
 - Oito itens realmente em escopo ficam como `OUT_OF_SCOPE`, principalmente por
   abreviações/tradução. Esses falsos negativos aparecem em `false_out_of_scope`.
 
-Execução integral, sem usar rótulos inferidos como verdade:
+Execução integral com `aliases_v1`, sem usar rótulos inferidos como verdade. Entre
+parênteses, o `rule_based_v1` quando difere:
 
 | Entrada | Registros | Com classe | Ambíguos/incompletos | Sem correspondência |
 |---|---:|---:|---:|---:|
-| Materiais | 23.554 | 17.347 | 3.485 | 2.722 |
+| Materiais | 23.554 | 17.698 (17.347) | 3.480 (3.485) | 2.376 (2.722) |
 | Pedidos | 520 | 434 | 24 | 62 |
 
 As contagens integrais medem cobertura, não precisão. O avaliador retorna precisão
