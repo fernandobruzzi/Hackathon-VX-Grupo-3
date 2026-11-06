@@ -22,7 +22,8 @@ hash do dataset, hash/versão do PDM e revisões das regras em `analysis_signatu
 docker compose run --rm --no-deps --build batch vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-Resultado registrado: [sanitization-development-v1.json](measurements/sanitization-development-v1.json).
+Resultados registrados: [baseline v1](measurements/sanitization-development-v1.json) e
+[execução após aliases v2](measurements/sanitization-development-v2.json).
 Reexecute depois da correção de identidade da #73. A homologação independente
 posterior está registrada na #113. Os erros conhecidos continuam
 visíveis até deixarem de ser propostos; o relatório não altera o algoritmo.
@@ -32,10 +33,14 @@ visíveis até deixarem de ser propostos; o relatório não altera o algoritmo.
 | Coorte | Unidade | Seleção e limite |
 |---|---|---|
 | 40 grupos históricos | Proposta/grupo inteiro | Sorteio original com semente 32; rótulos lidos no desenvolvimento, sem especialista |
+| 40 grupos após aliases | Proposta/grupo inteiro | Nova seleção recebida da #86, preservada separadamente; não substitui a histórica |
 | 95 pares históricos | Par de materiais | Escolhidos durante o desenvolvimento; regressões, não amostra aleatória da base |
 | 17 materiais técnicos | Atributo rotulado | Sete classes, seleção dirigida com dimensões, pressão, aliases, ausências, ambiguidade e erros conhecidos |
 | Colunas ocultas | FABRICANTE ou referência preenchida | Apenas FIL01/SOB01 classificáveis; as colunas do kit são o proxy de gabarito |
 | Redirecionamentos | Par positivo declarado no kit | 202 relações `USAR COD`; compara chaves extraídas, não propostas aplicáveis nem falsos positivos |
+
+As duas coortes de grupos podem compartilhar membros; seus denominadores não
+devem ser somados como 80 observações independentes. O relatório as mantém separadas.
 
 Cada taxa traz numerador e denominador. **Precisão** usa somente previsões com
 rótulo decidido; dúvidas permanecem contadas e recebem limites de sensibilidade.
@@ -57,7 +62,7 @@ história anteriores. Uma nova amostra não substitui a coorte histórica.
 ## Rótulos e revisão
 
 As cópias congeladas ficam em `pipelines/evaluation_data`, incluídas na imagem
-batch. O manifesto guarda os hashes das fontes e do dataset. Alterar uma cópia
+batch. Os manifestos v1 e v2 guardam os hashes das fontes e do dataset; o padrão v2 inclui ambas as coortes de grupos. Alterar uma cópia
 sem atualizar sua versão é recusado. A seleção corrente do algoritmo não é usada
 para reescrever os casos antigos.
 
@@ -115,3 +120,7 @@ O dashboard mantém precisão e recall indisponíveis até haver uma avaliação
 independente homologada, sem importar este relatório de desenvolvimento. O pitch
 pode citar os casos demonstrados e as limitações; não deve chamar esses resultados
 de precisão de produção, recuperação de todas as duplicidades ou economia realizada.
+
+Após integrar os aliases da #86, a coorte nova tem 37/38 grupos decididos (97,37%),
+um erro e duas dúvidas em 40; a histórica continua mostrando 35/37 e os mesmos
+contraexemplos. Os dois resultados permanecem de desenvolvimento.
