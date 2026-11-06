@@ -330,6 +330,7 @@ class RegistrationOrder(Base):
     origin: Mapped[str] = mapped_column(Text, nullable=False)
     original_text: Mapped[str] = mapped_column(Text, nullable=False)
     attachment_text: Mapped[str | None] = mapped_column(Text)
+    supplements: Mapped[Any] = _jsonb("[]")
     center_code: Mapped[str | None] = mapped_column(Text)
     urgency: Mapped[str | None] = mapped_column(Text)
     pdm_class_id: Mapped[str | None] = mapped_column(Text)

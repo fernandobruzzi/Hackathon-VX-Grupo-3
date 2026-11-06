@@ -17,3 +17,10 @@ class OrderDecisionRequest(_Contract):
     expected_version: int = Field(ge=1)
     decision: Literal["APPROVE", "REJECT"]
     reason: str = Field(min_length=1)
+
+
+class OrderComplementRequest(_Contract):
+    expected_version: int = Field(ge=1)
+    text: str = Field(min_length=1, max_length=10000)
+    source: str = Field(min_length=1, max_length=1000)
+    reason: str = Field(min_length=1, max_length=2000)
