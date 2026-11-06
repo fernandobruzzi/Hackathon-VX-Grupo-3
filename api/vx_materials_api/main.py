@@ -1,5 +1,7 @@
 """Aplicacao FastAPI: rotas em /api/v1 e build do front na mesma origem."""
 
+import os
+import secrets
 from collections.abc import Callable
 from functools import cache
 from pathlib import Path
@@ -12,9 +14,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from vx_materials_api import settings
 from vx_materials_api.db.session import make_engine, make_session_factory
 from vx_materials_api.errors import register_error_handlers
-from vx_materials_api.routes import chat
+from vx_materials_api.routes import auth, chat
+from vx_materials_api.security.cognito import CognitoClient, CognitoConfig
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.local_session import local_identity
+from vx_materials_api.security.sessions import session_identity
 from vx_materials_api.services.agent_client import AgentClient
 
 IdentityProvider = Callable[[Session], Identity]
@@ -28,7 +32,7 @@ def _default_session_factory() -> sessionmaker[Session]:
 
 def _default_identity_provider() -> IdentityProvider | None:
     settings.check_local_shortcuts()
-    return local_identity if settings.local_test_session_enabled() else None
+    return None
 
 
 def create_app(
@@ -37,18 +41,47 @@ def create_app(
     session_factory: Callable[[], Session] | None = None,
     identity_provider: IdentityProvider | None = None,
     agent_client: AgentClient | None = None,
+    cognito_config: CognitoConfig | None = None,
+    cognito_client: CognitoClient | None = None,
 ) -> FastAPI:
     app = FastAPI(title="VX Materiais API", docs_url="/api/docs", openapi_url="/api/openapi.json")
     app.state.session_factory = session_factory or (lambda: _default_session_factory()())
     app.state.identity_provider = identity_provider or _default_identity_provider()
+    settings.check_local_shortcuts()
+    backend = os.environ.get("AUTH_BACKEND", "disabled")
+    if backend not in {"disabled", "cognito"}:
+        raise RuntimeError("AUTH_BACKEND deve ser disabled ou cognito")
+    if settings.local_test_session_enabled() and (backend == "cognito" or cognito_config):
+        raise RuntimeError("Sessões locais e Cognito não podem ser habilitados juntos")
+    config = cognito_config or (CognitoConfig.from_environment() if backend == "cognito" else None)
+    app.state.cognito_config = config
+    app.state.cognito_client = cognito_client or (CognitoClient(config) if config else None)
+    app.state.application_origin = config.origin if config else settings.application_origin()
+    app.state.auth_mode = "cognito" if config else "disabled"
+    app.state.request_identity_provider = session_identity if config else None
+    if settings.local_test_session_enabled():
+        app.state.auth_mode = "local"
+        app.state.local_session_secret = secrets.token_bytes(32)
+        app.state.request_identity_provider = local_identity
+        app.include_router(auth.local_router)
     app.state.agent_client = agent_client or AgentClient(settings.agent_url())
     register_error_handlers(app)
+
+    @app.middleware("http")
+    async def private_auth_responses(request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api/v1/auth/"):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        return response
 
     @app.get("/api/v1/healthz")
     def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
     app.include_router(chat.router)
+    app.include_router(auth.router)
 
     # Montado por ultimo: as rotas da API tem prioridade sobre os arquivos estaticos.
     if front_dist:
@@ -60,4 +93,4 @@ app = create_app(settings.front_dist_dir())
 
 
 def main() -> None:
-    uvicorn.run(app, host="0.0.0.0", port=settings.api_port())
+    uvicorn.run(app, host="0.0.0.0", port=settings.api_port(), access_log=False)

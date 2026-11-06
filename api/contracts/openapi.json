@@ -106,6 +106,110 @@
         }
       }
     },
+    "/api/v1/auth/config": {
+      "get": {
+        "operationId": "getAuthConfig",
+        "tags": [
+          "auth"
+        ],
+        "summary": "getAuthConfig",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/local-session": {
+      "post": {
+        "operationId": "createLocalSession",
+        "tags": [
+          "auth"
+        ],
+        "summary": "createLocalSession",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalSessionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "tags": [
+          "auth"
+        ],
+        "summary": "logout",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/sso-callback": {
       "post": {
         "operationId": "completeSso",
@@ -2337,7 +2441,14 @@
                 "type": "boolean"
               },
               "active_persona": {
-                "$ref": "#/components/schemas/PersonaLabel"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PersonaLabel"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -4369,6 +4480,51 @@
           "status",
           "pdm_description",
           "active_code_target"
+        ],
+        "additionalProperties": false
+      },
+      "AuthConfig": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "disabled",
+              "local",
+              "cognito"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "LocalSessionRequest": {
+        "type": "object",
+        "properties": {
+          "persona": {
+            "$ref": "#/components/schemas/PersonaLabel"
+          }
+        },
+        "required": [
+          "persona"
+        ],
+        "additionalProperties": false
+      },
+      "EmptyRequest": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "LogoutResponse": {
+        "type": "object",
+        "properties": {
+          "logged_out": {
+            "const": true
+          }
+        },
+        "required": [
+          "logged_out"
         ],
         "additionalProperties": false
       }

@@ -3,7 +3,11 @@
 Protótipo do web app do Desafio 01 (cadastro e saneamento de materiais), na identidade
 **Ascensão** do Do Fundo do Poço. É o ponto de partida do `/front` da arquitetura:
 Next.js (App Router) + Tailwind CSS v4 + componentes, com **dados mock** que seguem
-os contratos da seção 6 da Arquitetura.
+os contratos da seção 6 da Arquitetura. A autenticação usa a API por padrão:
+`/auth/config` seleciona conta local ou Cognito e `/auth/me` fornece a sessão.
+Para o protótipo visual isolado, use `NEXT_PUBLIC_DATA_SOURCE=mock`; isso não
+autentica chamadas ao backend. Login e configuração em
+[`docs/autenticacao.md`](../docs/autenticacao.md).
 
 ```bash
 npm install
@@ -15,7 +19,7 @@ npm run typecheck  # checagem de tipos
 Node 20.9 ou mais novo. O build sai em `out/`: é essa pasta que o target `api`
 do Dockerfile deve copiar e servir (no lugar do `dist/` de um build Vite).
 
-Entre pela tela de login e troque de persona no canto superior direito
+No Compose local, entre pela tela de login e troque de conta no canto superior direito
 (Solicitante, Governança PDM, Auditor fiscal). A navegação, os botões de
 decisão e as telas mudam com o papel.
 
@@ -87,8 +91,9 @@ no código:
 1. Usar o cliente tipado `src/lib/api.ts`, já disponível com cookie, CSRF,
    idempotência e `ApiError`. Exemplo de configuração e uso em
    [`api/contracts/README.md`](../api/contracts/README.md).
-2. Trocar `AuthProvider` por `GET /api/v1/auth/me` e o seletor por
-   `POST /api/v1/auth/demo/switch` (descartar caches e refazer `/auth/me`).
+2. `AuthProvider` já usa `GET /api/v1/auth/me`, expiração e logout no servidor.
+   O seletor local cria sessões de teste; a troca de sessões Cognito reais
+   pertence à #8 e fica oculta até sua entrega.
 3. Alterou o OpenAPI? Executar `npm run api:generate` e incluir `api.generated.ts`
    no commit. `npm run api:check` recusa tipos desatualizados. Os aliases em
    `types/api.ts` não duplicam estruturas. `npm test` valida o cliente HTTP.

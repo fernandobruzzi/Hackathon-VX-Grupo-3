@@ -12,3 +12,7 @@ class Identity:
     permissions: frozenset[str]
     # Centros cujo estoque o usuário pode ver. Configuração do backend, nunca do payload.
     center_codes: frozenset[str] = frozenset()
+    display_name: str = ""
+    csrf_token: str = ""
+    persona: str | None = None
+    authentication_method: str = "cookie"

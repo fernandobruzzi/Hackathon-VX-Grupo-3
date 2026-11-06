@@ -52,7 +52,9 @@ nem cookies. Esse modo exige HTTPS, `/auth/me`, CSRF e RBAC 403; rotas ausentes
 falham, sem serem tratadas como testes aprovados. O teste RBAC pressupõe que o guard
 de papel execute antes da consulta ao UUID inexistente de proposta.
 
-O modo local só aceita HTTP no loopback e não comprova Cognito, CSRF ou RBAC.
+O modo local só aceita HTTP no loopback, cria uma sessão opaca e testa o chat e o logout.
+Ele não comprova o Cognito na AWS. Configuração de sessão e migração para Cognito em
+[`autenticacao.md`](autenticacao.md).
 O cookie jar não comprova aceitação de cookies por um navegador nem executa PKCE;
 o login completo e a navegação com IDs reais precisam de teste de navegador.
 

@@ -14,7 +14,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
-| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat turns with a local test session, rest placeholders |
+| `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, local opaque sessions and configurable Cognito BFF; other flows in progress |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | Deploy, demo data, policy check and HTTP smoke test | Deploy/demo scripts remain placeholders; checks implemented |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
@@ -438,6 +438,14 @@ A finished job stores its metrics in `batch_jobs.counts` and `runs/<job_id>/metr
 Merge precision is measured on a random sample of all merge proposals in `back/tests/fixtures/merge_precision_sample.json`, reviewed by reading descriptions. If proposals change, the test asks for a new sample and review.
 
 ## Local first
+
+Authentication defaults to server sessions in the frontend. Compose enables the
+three local test accounts; use `AUTH_BACKEND=cognito` with both local-session flags
+disabled to connect Cognito without code changes. See [`docs/autenticacao.md`](docs/autenticacao.md).
+The local chat also requires login now: no anonymous test identity is injected.
+The standard smoke test in local mode creates and revokes an opaque test session.
+Local HTTP cookies are HttpOnly and SameSite=Lax; Cognito cookies are also Secure.
+Never enable local sessions in a deployed environment; runtime guards refuse AWS markers.
 
 Every feature must run and pass its tests locally with `docker compose up`, without an AWS account. AWS deployment proceeds in parallel, to surface its problems early, but doesn't block local work.
 

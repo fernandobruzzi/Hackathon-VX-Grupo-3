@@ -415,4 +415,4 @@ def test_test_session_starts_in_local(monkeypatch):
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     monkeypatch.setenv("APP_ENV", settings.LOCAL_ENV)
 
-    assert create_app().state.identity_provider is not None
+    assert create_app().state.request_identity_provider is not None

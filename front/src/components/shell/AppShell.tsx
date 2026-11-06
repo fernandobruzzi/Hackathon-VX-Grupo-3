@@ -85,7 +85,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { me, ready, signOut, theme, toggleTheme } = useAuth();
+  const { me, ready, signOut, theme, toggleTheme, authMode, error } = useAuth();
   const router = useRouter();
   const path = usePathname();
 
@@ -158,9 +158,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <button
-          onClick={() => {
-            signOut();
-            router.replace("/login/");
+          onClick={async () => {
+            try {
+              await signOut();
+              router.replace("/login/");
+            } catch {
+              window.alert("Não foi possível confirmar a saída. Tente novamente.");
+            }
           }}
           className="mt-4 flex items-center gap-2 rounded-[10px] px-3 py-2 text-sm text-on-profundo/80 hover:bg-white/8"
         >
@@ -182,7 +186,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <PersonaSwitcher />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8 lg:px-10">{children}</main>
+        <main key={me.user.id} className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8 lg:px-10">
+          {authMode === "local" && (
+            <p className="mb-4 text-xs text-muted">
+              Sessão local de teste · identidade e permissões verificadas pela API.
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="mb-4 text-sm text-alerta">
+              {error}
+            </p>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -190,10 +206,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 /** Fast-Switch Demo Persona (Arquitetura, seção 2). Integração: POST /api/v1/auth/demo/switch e refetch de /auth/me. */
 export function PersonaSwitcher() {
-  const { me, switchPersona } = useAuth();
+  const { me, switchPersona, authMode, backend } = useAuth();
   const [open, setOpen] = useState(false);
   if (!me) return null;
-  const current = PERSONAS.find((p) => p.label === me.demo.active_persona)!;
+  const current = PERSONAS.find((p) => p.label === me.demo.active_persona);
+  if (!current || authMode === "cognito")
+    return <span className="text-sm font-semibold">{me.user.display_name}</span>;
+  const displayName = backend ? me.user.display_name : current.name;
   return (
     <div className="relative">
       <button
@@ -202,10 +221,10 @@ export function PersonaSwitcher() {
         className="flex items-center gap-3 rounded-md bg-surface py-1.5 pr-3 pl-1.5 ring-1 ring-surface-2 ring-inset"
       >
         <span className="grid size-8 place-items-center rounded-full bg-profundo text-xs font-extrabold text-esmeralda">
-          {current.name.slice(0, 1)}
+          {displayName.slice(0, 1)}
         </span>
         <span className="hidden text-left leading-tight sm:block">
-          <span className="block text-sm font-bold">{current.name}</span>
+          <span className="block text-sm font-bold">{displayName}</span>
           <span className="block text-[11px] font-semibold tracking-[0.06em] text-verde uppercase">
             {current.short}
           </span>

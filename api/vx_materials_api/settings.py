@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 def front_dist_dir() -> Path | None:
@@ -45,13 +46,40 @@ def app_env() -> str:
 
 
 def local_test_session_enabled() -> bool:
-    return os.environ.get("LOCAL_TEST_SESSION", "false").lower() == "true"
+    return any(
+        os.environ.get(key, "false").lower() == "true" for key in ("LOCAL_TEST_SESSION", "ENABLE_LOCAL_TEST_SESSIONS")
+    )
 
 
 def check_local_shortcuts() -> None:
     """Impede que a sessão de teste suba fora do ambiente local."""
-    if local_test_session_enabled() and app_env() != LOCAL_ENV:
+    deployed = any(
+        os.environ.get(key)
+        for key in (
+            "AWS_EXECUTION_ENV",
+            "ECS_CONTAINER_METADATA_URI",
+            "ECS_CONTAINER_METADATA_URI_V4",
+            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+            "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        )
+    )
+    if local_test_session_enabled() and (app_env() != LOCAL_ENV or deployed):
         raise RuntimeError("LOCAL_TEST_SESSION só pode ser ativada com APP_ENV=local")
+    origin = urlsplit(application_origin())
+    if local_test_session_enabled() and (
+        origin.scheme not in {"http", "https"}
+        or origin.hostname not in {"localhost", "127.0.0.1", "::1"}
+        or origin.username
+        or origin.password
+        or origin.path
+        or origin.query
+        or origin.fragment
+    ):
+        raise RuntimeError("Sessão local exige APP_ORIGIN de loopback")
+
+
+def application_origin() -> str:
+    return os.environ.get("APP_ORIGIN", "http://localhost:8000").rstrip("/")
 
 
 def agent_url() -> str:

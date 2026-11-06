@@ -145,6 +145,17 @@ class Smoke:
         print("PASS auth/me, CSRF ausente/inválido, origem hostil e RBAC Solicitante")
         self.chat(csrf)
 
+    def local(self):
+        self.request("/api/v1/auth/me", expected=401)
+        me = self.json(
+            "/api/v1/auth/local-session", payload={"persona": "SOLICITANTE_OPERACAO"}, headers={"Origin": self.base_url}
+        )
+        csrf = me["csrf_token"]
+        self.chat(csrf)
+        self.json("/api/v1/auth/logout", payload={}, headers={"Origin": self.base_url, "X-CSRF-Token": csrf})
+        self.request("/api/v1/auth/me", expected=401)
+        print("PASS sessão local opaca, identidade do servidor e logout; Cognito não validado na AWS")
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -176,8 +187,7 @@ def main():
         if args.mode == "authenticated":
             smoke.authenticated()
         else:
-            smoke.chat()
-            print("LIMITAÇÃO: sessão local não valida Cognito, cookie de navegador, CSRF ou RBAC de aprovação")
+            smoke.local()
     return 0
 
 
