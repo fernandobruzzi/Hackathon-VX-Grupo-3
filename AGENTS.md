@@ -254,7 +254,7 @@ Each piece of work follows the same path:
 2. **Branch:** create a branch for it from an up-to-date `main`.
 3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
 4. **PR:** [update and rebase on `main`](#before-opening-a-pr), then open a pull request, closing the issue.
-5. **Merge:** rebase-merge once checks pass, and delete the branch.
+5. **Merge:** rebase-merge once checks pass, then complete [the branch cleanup](#after-merging).
 
 ## Issues and milestones
 
@@ -374,10 +374,25 @@ The author must:
 Authors may merge their own PRs, and reviews are welcome when a change is risky. Merge with rebase, to keep atomic commits on a linear `main`:
 
 ```bash
-gh pr merge <n> --rebase --delete-branch
+gh pr merge <n> --rebase
 ```
 
 Never force-push `main` or a branch someone else is using.
+
+### After merging
+
+**Required for people and agents. Branch cleanup is part of completing the work.**
+
+1. Confirm the PR is `MERGED` into its intended base. A closed PR alone is not proof of integration.
+2. Run `git fetch origin --prune` and check each remaining issue branch individually. Its current tip must match the merged PR head, with no later work to preserve. Keep `main`, `homologacao`, and branches serving as the head or base of an open PR.
+3. If the remote branch still exists, delete only the verified tip, so a concurrent push cancels the deletion:
+
+   ```bash
+   git push --force-with-lease=refs/heads/<branch>:<verified-sha> origin :refs/heads/<branch>
+   ```
+
+4. Check `git worktree list` before local cleanup. From a clean checkout on another branch, delete the completed local branch with `git branch -d <branch>`. After a rebase or squash merge, Git may not recognize it as merged: use `-D` only after verifying that all changes are integrated and no local work remains. Preserve branches checked out in another worktree and report the pending cleanup.
+5. Run `git fetch origin --prune` again and verify the remote branch and any removable local copy are gone. Report which branches were deleted and why any were kept; cleanup is complete only after this check or an explicit explanation of what remains blocked.
 
 ## Code style and avoiding conflicts
 
