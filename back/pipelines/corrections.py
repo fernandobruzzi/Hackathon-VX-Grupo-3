@@ -22,6 +22,24 @@ from domain.contracts import (
 
 _NAMESPACE = uuid.UUID("6b8f3e21-2c4d-4a9e-b1f7-93d05c8a7e14")
 PROPOSAL_TYPES = ("PDM_CORRECTION", "UNIT_CORRECTION")
+# Pendência do material que impede cada tipo de correção. Uma descrição fora do padrão não
+# impede corrigir a grafia da unidade, e uma embalagem sem fator não impede corrigir a descrição.
+# Motivo fora desta tabela vale para todos os tipos, por cautela.
+_PENDING_SCOPE = {
+    "CLASSE_NAO_CONFIRMADA": ("PDM_CORRECTION",),
+    "DESCRICAO_FORA_DO_PADRAO": ("PDM_CORRECTION",),
+    "SEM_CLASSE_CONFIAVEL": ("PDM_CORRECTION",),
+    "UNIDADE_AUSENTE": ("UNIT_CORRECTION",),
+    "UNIDADE_DIFERENTE_DA_CLASSE": ("UNIT_CORRECTION",),
+    "UNIDADE_SEM_FATOR": ("UNIT_CORRECTION",),
+}
+
+
+def pending_for(proposal_type: str, pending: tuple[str, ...]) -> tuple[str, ...]:
+    """Só as pendências que dizem respeito a este tipo de proposta."""
+    return tuple(
+        reason for reason in pending if proposal_type in _PENDING_SCOPE.get(reason.split(":")[0], PROPOSAL_TYPES)
+    )
 
 
 def _member(material: AnalyzedMaterial) -> dict:
@@ -92,7 +110,14 @@ def correction_proposals(
         changes = [change for change in result.corrections if change.proposal_type == proposal_type]
         if changes:
             proposals.append(
-                build_correction_proposal(material, proposal_type, changes, result.pending, catalog, repository_name)
+                build_correction_proposal(
+                    material,
+                    proposal_type,
+                    changes,
+                    pending_for(proposal_type, result.pending),
+                    catalog,
+                    repository_name,
+                )
             )
     return proposals
 

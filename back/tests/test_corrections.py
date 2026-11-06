@@ -216,3 +216,43 @@ def test_contract_changes_are_traceable_and_safe(analyze, catalog, tools, name, 
         if change.field == "unit":
             # Só grafias da mesma unidade: embalagem sem fator nunca é convertida.
             assert tools[2].normalize_unit(change.before).status is FieldStatus.NORMALIZED
+
+
+def test_each_proposal_carries_only_its_own_pending(analyze, catalog, tools):
+    # 10436289: disjuntor em UN, grafia de PC, com descrição sem CURVA. A descrição incompleta
+    # fica pendente no material, mas não impede corrigir a grafia da unidade.
+    material = analyze("10436289")
+    result = get_correction_repository().correct(material, catalog, tools[2])
+    assert any(reason.startswith("DESCRICAO_FORA_DO_PADRAO") for reason in result.pending)
+
+    proposals = {p.proposal_type: p for p in correction_proposals(material, result, catalog, "head_noun_v1")}
+
+    assert proposals["UNIT_CORRECTION"].conflicts == ()
+    assert proposals["UNIT_CORRECTION"].changeset["conflicts"] == []
+    assert "PDM_CORRECTION" not in proposals
+
+
+def test_packaging_without_factor_does_not_block_the_description(analyze, catalog, tools):
+    # 10017576: embalagem CT sem fator. A correção de descrição e grupo segue sem esse conflito.
+    material = analyze("10017576")
+    result = get_correction_repository().correct(material, catalog, tools[2])
+    assert any(reason.startswith("UNIDADE_SEM_FATOR") for reason in result.pending)
+
+    proposals = correction_proposals(material, result, catalog, "head_noun_v1")
+
+    assert [p.proposal_type for p in proposals] == ["PDM_CORRECTION"]
+    assert proposals[0].conflicts == ()
+
+
+def test_class_unit_difference_still_blocks_the_unit_correction(analyze, catalog, tools):
+    # 11472033: óleo em UN, grafia de PC; a classe mede em L. Corrigir a grafia esconderia a unidade errada.
+    material = analyze("11472033")
+    result = get_correction_repository().correct(material, catalog, tools[2])
+
+    unit = next(
+        p
+        for p in correction_proposals(material, result, catalog, "head_noun_v1")
+        if p.proposal_type == "UNIT_CORRECTION"
+    )
+
+    assert unit.conflicts == ("UNIDADE_DIFERENTE_DA_CLASSE: PC, padrao da classe L",)
