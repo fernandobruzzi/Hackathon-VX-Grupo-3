@@ -16,7 +16,16 @@ def expand(words: tuple[str, ...], aliases: tuple[Alias, ...] = ALIASES) -> tupl
     used: list[Alias] = []
     position = 0
     while position < len(words):
-        alias = next((a for a in aliases if words[position : position + len(a.pattern)] == a.pattern), None)
+        alias = next(
+            (
+                a
+                for a in aliases
+                if words[position : position + len(a.pattern)] == a.pattern
+                and (position == 0 or not a.at_start)
+                and not (position and words[position - 1] in a.not_after)
+            ),
+            None,
+        )
         if alias is None:
             result.append(words[position])
             position += 1
@@ -29,7 +38,7 @@ def expand(words: tuple[str, ...], aliases: tuple[Alias, ...] = ALIASES) -> tupl
 
 class AliasesV1ClassificationRepository(RuleBasedV1ClassificationRepository):
     name = "aliases_v1"
-    revision = "1"
+    revision = "2"
 
     def _words(self, field, text, notes):
         words, used = expand(super()._words(field, text, notes))

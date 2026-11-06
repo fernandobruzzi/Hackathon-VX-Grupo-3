@@ -149,3 +149,73 @@ def test_expand_is_a_single_left_to_right_pass():
     words, used = expand(("VALV", "ESF", "VALV", "GLOBO", "ESF"))
     assert words == ("VALVULA", "ESFERA", "VALVULA", "GLOBO", "ESF")
     assert [alias.id for alias in used] == ["valvula_esfera", "valvula"]
+
+
+@pytest.mark.parametrize(
+    ("code", "expected", "alias"),
+    [
+        # RET., B1, DIAM ALOJ: 37MM, DIAMETRO EIXO: 22MM, MATERIAL: NBR: retentor (gabarito, #204).
+        ("11287821", "PDM032", "retentor"),
+        # RET. 110MM 15MM BASL NBR: retentor, mesmo com o grupo TUB01 divergente.
+        ("12711820", "PDM032", "retentor"),
+        # CONT AC3 65A COM TENSAO COMANDO 24VCC: contator.
+        ("22071112", "PDM063", "contator"),
+        # LAMP LED TUBULAR T8 9 W 220V G13 5000K: lâmpada LED.
+        ("17321551", "PDM065", "lampada_led"),
+        # FILT AR, PART NUMBER: CA95120, FAB: FRAM: filtro de ar.
+        ("20019238", "PDM100", "filtro"),
+        # O-RING, SECAO TRANSV:2MM, FKM (VITON): anel O-ring.
+        ("13031016", "PDM031", "anel_o_ring"),
+    ],
+)
+def test_abbreviations_reach_the_class_they_describe(rows, aliases, previous, code, expected, alias):
+    item = material(rows, code)
+    assert previous.classify(item).status == ClassificationStatus.OUT_OF_SCOPE
+    result = aliases.classify(item)
+    assert (result.status, result.pdm_class_id) == (ClassificationStatus.CLASSIFIED, expected)
+    assert f"aliases_v1/alias.{alias}" in {rule for _, _, rule in alias_evidence(result)}
+    assert result.original == item
+
+
+def test_ball_valve_in_an_english_catalog_line_is_a_ball_valve(aliases):
+    # Pedido SC-202600016, como veio: o nome do produto está só no anexo, em inglês.
+    item = ClassificationInput(
+        "Novo item, linha do catálogo abaixo.",
+        attachment_text="Generic | Ball valve | 1POL, 150#, A216 WCB, RF flanged, reduced bore, metal-metal, lever",
+    )
+    result = aliases.classify(item)
+    assert (result.status, result.pdm_class_id) == (ClassificationStatus.CLASSIFIED, "PDM040")
+    assert ("attachment_text", "BALL VALVE", "aliases_v1/alias.valvula_esfera") in alias_evidence(result)
+
+
+def test_oil_seal_with_shaft_label_is_no_longer_read_as_a_shaft(rows, aliases, previous):
+    # RET., EIXO:60MM ...: antes virava a peça EIXO (sobressalente). Retentor e EIXO no mesmo texto
+    # ficam em dúvida, que é melhor que a classe errada.
+    item = material(rows, "28845043")
+    assert previous.classify(item).pdm_class_id == "PDM110"
+    result = aliases.classify(item)
+    assert result.status == ClassificationStatus.UNRESOLVED
+    assert {"PDM032", "PDM110"} <= set(result.candidate_class_ids)
+
+
+def test_check_valve_ret_is_not_an_oil_seal(rows, aliases):
+    # VALV. RET: RET depois de válvula é retenção, não retentor.
+    result = aliases.classify(material(rows, "11056660"))
+    assert result.pdm_class_id != "PDM032"
+    assert "PDM032" not in result.candidate_class_ids
+
+
+def test_tensioning_rod_synonym_stays_unchanged(rows, aliases, previous):
+    # VERGALHAO TENSORA é sinônimo, não abreviação: continua como antes, para revisão humana.
+    item = material(rows, "20095446")
+    before, after = previous.classify(item), aliases.classify(item)
+    assert (after.status, after.pdm_class_id) == (before.status, before.pdm_class_id)
+
+
+def test_context_rules_of_the_new_aliases():
+    # RET e CONT só no começo do campo; O RING só quando ANEL não vem antes.
+    assert expand(("VALV", "RET", "2POL"))[0] == ("VALVULA", "RET", "2POL")
+    assert expand(("ROLETE", "TRANSPORTADORA", "CONT"))[0] == ("ROLETE", "TRANSPORTADORA", "CONT")
+    assert expand(("RET", "BASL"))[0] == ("RETENTOR", "BASL")
+    assert expand(("ANEL", "O", "RING", "20X2")) == (("ANEL", "O", "RING", "20X2"), [])
+    assert expand(("O", "RING", "20X2"))[0] == ("ANEL", "O", "RING", "20X2")

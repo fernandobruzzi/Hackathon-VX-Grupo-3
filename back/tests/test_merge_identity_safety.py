@@ -23,6 +23,12 @@ SAMPLE = Path(__file__).parent / "fixtures/merge_identity_review_73.json"
 OILS = ("17590309", "27863373")
 PARTS = ("19547027", "22125549")
 REVISIONS = ("23858996", "29993231", "27417776")
+# Grupos que mudaram depois da coorte congelada, revisados lendo descrição, fabricante e referência
+# durante o desenvolvimento. A coorte não é reescrita: a revisão fica aqui, com o motivo.
+CHANGED_GROUPS_REVIEWED = {
+    # #204: os três são FILTRO AR da FRAM com referência CA94051; mesmo item pela regra 10 do PDM.
+    ("10860647", "19076688", "21440355"): True,
+}
 
 
 @pytest.fixture(scope="module")
@@ -159,9 +165,11 @@ def test_fixed_reviewed_cohort_eliminates_false_merges_and_explains_held_revisio
     # Dois positivos históricos adicionais ficam retidos por sufixo sem confirmação.
     # Seus rótulos e os dois erros históricos permanecem no mesmo arquivo.
     # A #133 também retém 16490712/25536305: ACO ZINCADO não informa CARBONO.
-    assert result["retained_true_groups"] == 31
+    # A #204 reconhece FILT como FILTRO: 19076688 (FILT AR, FRAM, CA94051) entra no grupo revisado
+    # 10860647/21440355 e o grupo ampliado deixa de ser subconjunto da coorte congelada.
+    assert result["retained_true_groups"] == 30
     assert result["retained_precision"] == 1.0
-    assert result["unreviewed_changed_groups"] == []
+    assert [tuple(codes) for codes in result["unreviewed_changed_groups"]] == list(CHANGED_GROUPS_REVIEWED)
     removed_codes = {tuple(item["original_codes"]) for item in result["removed"]}
     assert set(OILS) in [set(codes) for codes in removed_codes]
     assert set(PARTS) in [set(codes) for codes in removed_codes]

@@ -111,7 +111,9 @@ def test_contract_ambiguity_never_picks_a_class(repository, item):
 
 
 def test_attribute_label_and_substring_do_not_identify_products(repository):
-    for text in ["RET., B1, DIAMETRO EIXO:22MM", "SUPORCA", "CONTATORIA", "DIAM EIXO 60MM"]:
+    # O rótulo DIAMETRO EIXO: não identifica a peça EIXO. Sem RET. no começo: aliases_v1 lê RET. como
+    # retentor (#204), e este contrato vale para todos os repositórios.
+    for text in ["B1, DIAMETRO EIXO:22MM", "SUPORCA", "CONTATORIA", "DIAM EIXO 60MM"]:
         result = repository.classify(ClassificationInput(text))
         assert result.pdm_class_id is None
 
