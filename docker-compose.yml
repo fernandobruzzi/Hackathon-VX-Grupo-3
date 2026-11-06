@@ -134,6 +134,32 @@ services:
       bootstrap:
         condition: service_completed_successfully
 
+  # Reset da demo: apaga o estado operacional e recria o inicial. Exige DEMO_MODE=true e o nome do banco.
+  # DEMO_MODE=true docker compose --profile demo run --rm demo reset --confirm vx_materiais
+  demo:
+    profiles: [demo]
+    build:
+      context: .
+      target: api
+      args:
+        NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-api}
+    environment:
+      DEMO_MODE: ${DEMO_MODE:-false}
+      MIGRATION_DATABASE_URL: postgresql+psycopg://migration_user:${MIGRATION_DB_PASSWORD:-local_only_migration}@db:5432/${POSTGRES_DB:-vx_materiais}
+      DATA_DIR: /data/desafio01
+      PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_LOCAL_DIR: /storage
+      S3_BUCKET: ${S3_BUCKET:-}
+    entrypoint: ["vx-demo"]
+    command: ["status"]
+    volumes:
+      - ./data:/data:ro
+      - storage-data:/storage
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+
   # Modelo de embeddings local, opcional: docker compose --profile embeddings up -d embeddings
   embeddings:
     profiles: [embeddings]
