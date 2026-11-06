@@ -495,6 +495,7 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - Never commit secrets. Tokens, passwords and secrets never appear in logs.
 - Test sessions exist only in local environments.
 - Persona switching (`DEMO_MODE`) only moves between real Cognito sessions already signed in on the same browser, for accounts listed in `DEMO_ACCOUNTS` whose token has the persona's role. Choosing a persona never grants a role.
+- MCP inventory and the materials API select only the latest dataset per tenant, ordered by `imported_at DESC, id DESC`; historical observations never add to current stock. Approved conversions still follow the original snapshots within that selected dataset.
 - Stock price and value are for `metrics:financial` only. MCP tools get the inventory view from `inventory_view(caller)` and never name it directly. The database can't enforce this per user, because MCP has one credential.
 
 ## Database on AWS

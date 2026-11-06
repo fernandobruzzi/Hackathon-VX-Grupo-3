@@ -133,7 +133,10 @@ def _inventory(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, l
     if not ids or not centers:
         return {}
     dataset = db.scalar(
-        select(Dataset.id).where(Dataset.tenant_id == identity.tenant_id).order_by(Dataset.imported_at.desc()).limit(1)
+        select(Dataset.id)
+        .where(Dataset.tenant_id == identity.tenant_id)
+        .order_by(Dataset.imported_at.desc(), Dataset.id.desc())
+        .limit(1)
     )
     if dataset is None:
         return {}
