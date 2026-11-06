@@ -8,9 +8,13 @@ on:
 permissions:
   contents: read
 
+# CI descartável: uma execução nova do mesmo PR ou de main cancela a anterior, que testava um
+# estado já superado. Este workflow não publica nem migra nada fora do runner. Um job de deploy
+# ou migração real não pode entrar aqui: precisa de workflow e grupo próprios, sem cancelamento,
+# além do lock S3 dos scripts de deploy. Decisão e medições em docs/devops.md.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   style:
