@@ -221,3 +221,18 @@ def test_versioned_external_manifest_preserves_the_frozen_sources(tmp_path):
     (tmp_path / "manifest_v1.json").write_text(json.dumps(modified))
     with pytest.raises(ValueError, match="Versão"):
         load_cohorts(tmp_path / "manifest_v1.json")
+
+
+@pytest.mark.parametrize("mutation", ["duplicate", "unpinned"])
+def test_additional_cohorts_cannot_overwrite_results_or_bypass_source_hashes(tmp_path, mutation):
+    from pipelines.evaluate_sanitization import frozen_data
+
+    manifest = json.loads(frozen_data("manifest_v2.json"))
+    if mutation == "duplicate":
+        manifest["additional_group_cohorts"].append(manifest["additional_group_cohorts"][0])
+    else:
+        manifest["legacy_files"].pop(manifest["additional_group_cohorts"][0]["file"])
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="Coorte adicional"):
+        load_cohorts(path)

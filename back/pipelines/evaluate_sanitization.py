@@ -51,10 +51,15 @@ def cohort_data(name, manifest_path=None):
 
 
 def load_cohorts(manifest_path=None):
-    raw = Path(manifest_path).read_bytes() if manifest_path else frozen_data("manifest_v1.json")
+    raw = Path(manifest_path).read_bytes() if manifest_path else frozen_data("manifest_v2.json")
     manifest = json.loads(raw)
     if manifest.get("schema_version") != "evaluation-v1":
         raise ValueError("Versão do manifesto de avaliação não suportada")
+    cohort_ids = set()
+    for cohort in manifest.get("additional_group_cohorts", []):
+        if cohort["id"] in cohort_ids or cohort["file"] not in manifest["legacy_files"]:
+            raise ValueError("Coorte adicional repetida ou sem hash registrado")
+        cohort_ids.add(cohort["id"])
     frozen = {**manifest["legacy_files"], "technical_v1.json": manifest["technical_file_sha256"]}
     for name, expected in frozen.items():
         if hashlib.sha256(cohort_data(name, manifest_path)).hexdigest() != expected:
@@ -197,6 +202,14 @@ def sanitization_evaluation(csv_path, pdm_workbook, repository_name=None, manife
     pending_by_code = {}
     corrections, pending = propose_corrections(analyzed, catalog, normalizer, corrector, pending_by_code)
     report = compare_merges(merges, groups, pairs, manifest["group_review_additions"])
+    additional_groups = {}
+    for cohort in manifest.get("additional_group_cohorts", []):
+        data = json.loads(cohort_data(cohort["file"], manifest_path))
+        additional_groups[cohort["id"]] = {
+            **compare_merges(merges, data, pairs, cohort["review_additions"])["groups"],
+            "selection": cohort["selection"],
+            "source_commit": cohort["source_commit"],
+        }
     technical = json.loads(cohort_data("technical_v1.json", manifest_path))
     for case in technical["cases"]:
         pdm_class = catalog.classes.get(case["expected_class_id"])
@@ -217,6 +230,7 @@ def sanitization_evaluation(csv_path, pdm_workbook, repository_name=None, manife
         "coverage": coverage(records, merges + corrections, pending_by_code, {}),
         "pending_reasons": dict(pending),
         "current_merge_proposals": len(merges),
+        "additional_groups": additional_groups,
         **report,
         "technical": evaluate_technical(technical, {m.record.code: m for m in analyzed}),
         "hidden_columns_proxy": {

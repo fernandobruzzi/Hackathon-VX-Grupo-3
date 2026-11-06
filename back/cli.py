@@ -65,7 +65,9 @@ def main(argv: list[str] | None = None) -> int:
     sanitation_eval.add_argument("csv_path")
     sanitation_eval.add_argument("--pdm-workbook", required=True)
     sanitation_eval.add_argument("--repository")
-    sanitation_eval.add_argument("--cohort-manifest", help="Manifesto versionado; padrão: coorte de desenvolvimento v1")
+    sanitation_eval.add_argument(
+        "--cohort-manifest", help="Manifesto versionado; padrão: coortes de desenvolvimento v1/v2"
+    )
     index = commands.add_parser("index", help="Reconstroi o indice de busca, com a credencial batch_user")
     index.add_argument("--pdm-workbook")
     index.add_argument("--if-stale", action="store_true", help="Pula se a versao atual ja cobre todos os materiais")
