@@ -471,6 +471,8 @@ The API saves the last accepted duplicate check with the card's signature (class
 
 The same batch run proposes `PDM_CORRECTION` (description in PDM format, merchandise group of the class) and `UNIT_CORRECTION` (unit spelled as an alias, like `PCA` or `UN` for `PC`), one proposal per type and material. Every change records before, after and rule.
 
+Governança applies an approved merchandise group through the same decision endpoint as merges. The API checks that the group matches the confirmed PDM class, and approves only when the PDM data is complete. It saves the group in `merchandise_group`, and keeps the loaded value in `original_merchandise_group` and in the snapshot. Like any approval, it refuses an NCM outside the class references (`NCM_REFERENCE_MISMATCH`). In the kit, 196 of the 325 group corrections without conflicts can be applied: 113 stop on the NCM and 16 on incomplete PDM data.
+
 Only `ATIVO` materials are corrected, as with merges. Corrections also need a trusted class: classified, and the PDM item name opens the description. A class name found mid-text is usually an attribute of an abbreviated product, such as `PARAFUSO SEXT ... REVESTIMENTO`, so those materials only get a pending reason. The one exception is a unit alias of the same unit, like `PÇ` to `PC`, proposed with the rule `unit.alias_without_class` and never replaced by a class default. Packaging units without a known factor (`CX`, `CT`, `JG`) are never converted. The report counts pending reasons by type. Select the rules with `CORRECTION_REPOSITORY`, default `head_noun_v1`.
 
 ## Full-base runs

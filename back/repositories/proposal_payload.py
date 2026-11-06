@@ -44,13 +44,12 @@ def approval_payload(proposal, ids, dataset_id):
                 }
     changes = proposal.changeset.get("changes", [])
     conflicts = list(proposal.conflicts)
-    unsupported = {change["field"] for change in changes} - {"description", "unit"}
-    conflicts.extend(
-        "Revisão de grupo de mercadorias ainda não integrada."
-        if field == "merchandise_group"
-        else f"Alteração ainda não suportada: {field}"
-        for field in sorted(unsupported)
-    )
+    unsupported = {change["field"] for change in changes} - {"description", "merchandise_group", "unit"}
+    conflicts.extend(f"Alteração ainda não suportada: {field}" for field in sorted(unsupported))
+    group = next((change for change in changes if change["field"] == "merchandise_group"), None)
+    if group is not None:
+        # A API confere o grupo com a classe PDM confirmada antes de gravar.
+        after["merchandise_group"] = group["after"]
     changeset = {
         "schema_version": "proposal-v1",
         "dataset_id": dataset_id,
@@ -71,4 +70,6 @@ def approval_payload(proposal, ids, dataset_id):
             "ncm": "Normalização do NCM original; efetivação depende da revisão fiscal",
         },
     }
+    if group is not None:
+        changeset["sources"]["merchandise_group"] = "Grupo da classe PDM: " + group["source"]
     return members, changeset, proposal_hash(members, changeset)
