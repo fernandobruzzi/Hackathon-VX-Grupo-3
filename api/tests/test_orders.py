@@ -340,3 +340,71 @@ def test_rejected_decision_replays_under_its_original_role(imported, persona):
     assert first.json() == again.json()
     assert first.json()["status"] == "REJECTED"
     assert db.scalar(select(func.count()).select_from(AuditLog).where(AuditLog.entity_id == str(order.id))) == expected
+
+
+def test_order_pagination_filters_before_paging_and_uses_owner_ids(case):
+    from datetime import UTC, datetime, timedelta
+
+    client, db, _ = case
+    governance = login(client, "GESTOR_CADASTRO")
+    owner = db.scalar(select(UserSso).where(UserSso.subject == "GESTOR_CADASTRO"))
+    twin = UserSso(tenant_id=TENANT_ID, issuer="test", subject="twin", display_name=owner.display_name)
+    db.add(twin)
+    db.flush()
+    now = datetime.now(UTC)
+    expected = []
+    for i in range(230):
+        authorized = i % 2 == 0
+        row = RegistrationOrder(
+            tenant_id=TENANT_ID,
+            origin="CHAT",
+            requester_user_id=owner.id if i >= 100 else twin.id,
+            original_text=f"Pedido {i}",
+            center_code="1300" if authorized else "9999",
+            status="INCOMPLETE" if i % 4 == 0 else "READY_FOR_REVIEW",
+            updated_at=now - timedelta(seconds=i),
+        )
+        db.add(row)
+        db.flush()
+        if authorized:
+            expected.append(str(row.id))
+    db.commit()
+
+    def pages(**query):
+        found, cursor = [], None
+        for _ in range(250):
+            response = client.get(PATH, params={"limit": 7, **query, **({"cursor": cursor} if cursor else {})})
+            assert response.status_code == 200, response.text
+            body = response.json()
+            found.extend(item["id"] for item in body["items"])
+            cursor = body["next_cursor"]
+            if cursor is None:
+                return found
+        pytest.fail("A paginação não terminou")
+
+    assert pages() == expected
+    assert pages(mine="true") == expected[50:]
+    assert pages(status="INCOMPLETE") == expected[::2]
+    assert client.get(PATH, params={"cursor": "nope"}).status_code == 422
+    assert client.get(PATH, params={"cursor": "-1"}).status_code == 422
+    assert client.get(PATH, params={"cursor": "99999999999999999999"}).status_code == 422
+    assert governance
+
+
+def test_orders_page_is_empty_when_all_centers_are_outside_scope(case):
+    client, db, _ = case
+    login(client, "GESTOR_CADASTRO")
+    db.add_all(
+        [
+            RegistrationOrder(
+                tenant_id=TENANT_ID,
+                origin="IMPORT",
+                original_text="Fora",
+                center_code="9999",
+                status="READY_FOR_REVIEW",
+            )
+            for _ in range(30)
+        ]
+    )
+    db.commit()
+    assert client.get(PATH, params={"limit": 2}).json() == {"items": [], "next_cursor": None}

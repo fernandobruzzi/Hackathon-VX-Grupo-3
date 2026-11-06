@@ -1808,8 +1808,10 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "pattern": "^[0-9]{1,9}$"
+            },
+            "description": "Deslocamento decimal não negativo na coleção autorizada e filtrada; inválidos recebem 422."
           },
           {
             "name": "limit",
@@ -1828,6 +1830,16 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/OrderStatus"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "required": false,
+            "description": "Somente pedidos do usuário autenticado, identificado pela sessão.",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],

@@ -2539,9 +2539,12 @@ export interface operations {
   listOrders: {
     parameters: {
       query?: {
+        /** @description Deslocamento decimal não negativo na coleção autorizada e filtrada; inválidos recebem 422. */
         cursor?: string;
         limit?: number;
         status?: components["schemas"]["OrderStatus"];
+        /** @description Somente pedidos do usuário autenticado, identificado pela sessão. */
+        mine?: boolean;
       };
       header?: never;
       path?: never;
