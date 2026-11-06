@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      COMPOSE_PROJECT_NAME: vx-ci
+      COMPOSE_PROJECT_NAME: vx-ci-${{ github.run_id }}-${{ github.run_attempt }}
       APP_ENV: local
       LOCAL_TEST_SESSION: "true"
       DB_PORT: "15432"
@@ -159,9 +159,10 @@ jobs:
           context: .
           target: api
           tags: |
-            vx-ci-api:latest
-            vx-ci-migrate:latest
-            vx-ci-bootstrap:latest
+            ${{ env.COMPOSE_PROJECT_NAME }}-api:latest
+            ${{ env.COMPOSE_PROJECT_NAME }}-migrate:latest
+            ${{ env.COMPOSE_PROJECT_NAME }}-bootstrap:latest
+            ${{ env.COMPOSE_PROJECT_NAME }}-demo:latest
           load: true
           cache-from: type=gha,scope=image-api
           cache-to: type=gha,scope=image-api,mode=max
@@ -169,7 +170,7 @@ jobs:
         with:
           context: .
           target: agent
-          tags: vx-ci-agent:latest
+          tags: ${{ env.COMPOSE_PROJECT_NAME }}-agent:latest
           load: true
           cache-from: type=gha,scope=image-agent
           cache-to: type=gha,scope=image-agent,mode=max
@@ -178,28 +179,34 @@ jobs:
           context: .
           target: batch
           tags: |
-            vx-ci-batch:latest
-            vx-ci-index:latest
+            ${{ env.COMPOSE_PROJECT_NAME }}-batch:latest
+            ${{ env.COMPOSE_PROJECT_NAME }}-index:latest
           load: true
           cache-from: type=gha,scope=image-batch
           cache-to: type=gha,scope=image-batch,mode=max
       - name: Check packaged references without bind mounts
         run: |
-          docker run --rm vx-ci-agent python -c 'import os; from domain.pdm_loader import load_pdm; assert load_pdm(os.environ["PDM_WORKBOOK_PATH"]).classes'
-          docker run --rm vx-ci-batch vx-back --help
-          docker run --rm vx-ci-api python -c 'import ssl; assert ssl.create_default_context(cafile="/app/certs/rds-global-bundle.pem").cert_store_stats()["x509_ca"] > 0'
+          docker run --rm "$COMPOSE_PROJECT_NAME-agent" python -c 'import os; from domain.pdm_loader import load_pdm; assert load_pdm(os.environ["PDM_WORKBOOK_PATH"]).classes'
+          docker run --rm "$COMPOSE_PROJECT_NAME-batch" vx-back --help
+          docker run --rm "$COMPOSE_PROJECT_NAME-api" python -c 'import ssl; assert ssl.create_default_context(cafile="/app/certs/rds-global-bundle.pem").cert_store_stats()["x509_ca"] > 0'
       - name: Check packaged evaluation cohorts without AWS or database
         run: |
-          docker run --rm --network none --read-only vx-ci-batch vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx > "$RUNNER_TEMP/sanitization-evaluation.json"
+          docker run --rm --network none --read-only "$COMPOSE_PROJECT_NAME-batch" vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx > "$RUNNER_TEMP/sanitization-evaluation.json"
           python3 -c 'import json,os; r=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"sanitization-evaluation.json"))); assert r["evaluation_kind"] == "DEVELOPMENT_EVALUATION"; assert not r["independent_review"] and not r["authorizes_merge"]; assert r["groups"]["counts"]["cases"] == 40'
       - name: Start isolated Compose stack, real search index included
         run: docker compose up -d --no-build --wait --wait-timeout 300 api
       - name: Verify frontend and real MCP turn
         run: scripts/smoke_test.sh http://127.0.0.1:18000 --mode local
+      - name: Load deterministic demo in isolated Compose project
+        env:
+          DEMO_MODE: "true"
+        run: docker compose --profile demo run --rm --no-build demo reset --confirm vx_materiais
+      - name: Verify complete local flow
+        run: scripts/smoke_test.sh http://127.0.0.1:18000 --mode flow
       - name: Measure bounded Agent concurrency and cancellation cleanup
         run: docker compose exec -T agent python - --requests 8 < scripts/measure_agent.py
-      - name: Logs on failure
-        if: failure()
+      - name: Logs on failure or cancellation
+        if: failure() || cancelled()
         run: docker compose logs --no-color --tail=100
       - name: Remove isolated stack
         if: always()
