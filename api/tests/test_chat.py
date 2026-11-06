@@ -574,3 +574,9 @@ def test_list_conversations_paginates_and_processing_is_recoverable(client, fact
     with factory() as db:
         chat_service.release_turn(db, pending)
     assert client.get(path).json()["processing"] is False
+
+
+@pytest.mark.parametrize("cursor", ["9223372036854775808", "9" * 4301], ids=["offset-overflow", "int-conversion-limit"])
+def test_history_rejects_unbounded_cursor(client, cursor):
+    response = client.get("/api/v1/chat/sessions", params={"cursor": cursor})
+    assert response.status_code == 422

@@ -80,7 +80,7 @@ def list_sessions(
     identity: Annotated[Identity, Depends(current_identity)],
     db: Annotated[Session, Depends(db_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    cursor: Annotated[str | None, Query(pattern=r"^\d+$")] = None,
+    cursor: Annotated[str | None, Query(pattern=r"^[0-9]{1,9}$")] = None,
 ) -> ChatSessionList:
     require_permission(identity, "chat:use")
     return chat_service.list_sessions(db, identity, limit=limit, offset=int(cursor or 0))
