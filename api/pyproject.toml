@@ -21,6 +21,7 @@ vx-api = "vx_materials_api.main:main"
 vx-db = "vx_materials_api.db.cli:main"
 vx-batch-job = "vx_materials_api.batch_job_cli:main"
 vx-bootstrap = "vx_materials_api.bootstrap:main"
+vx-import-orders = "vx_materials_api.import_orders_cli:main"
 
 [dependency-groups]
 dev = [
