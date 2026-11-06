@@ -29,14 +29,16 @@ for (const outcome of ["success", "failure"] as const) {
         getItem: (key: string) => (key === "vx-demo-persona" ? "SOLICITANTE_OPERACAO" : null),
       },
       fetch: (_url: unknown, init: RequestInit) =>
-        new Promise<Response>((resolve, reject) =>
-          pending.push({
-            resolve,
-            reject,
-            body: JSON.parse(init.body as string),
-            signal: init.signal as AbortSignal,
-          }),
-        ),
+        init.method === "GET"
+          ? Promise.resolve(Response.json({ items: [], next_cursor: null }))
+          : new Promise<Response>((resolve, reject) =>
+              pending.push({
+                resolve,
+                reject,
+                body: JSON.parse(init.body as string),
+                signal: init.signal as AbortSignal,
+              }),
+            ),
     });
     let view!: ReactTestRenderer;
     const send = async (text: string) => {
