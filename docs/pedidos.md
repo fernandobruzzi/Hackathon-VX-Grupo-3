@@ -39,7 +39,7 @@ Fiscal. Cada passo grava auditoria e aceita `Idempotency-Key`.
 
 ## Importar os pedidos do kit
 
-Depois do bootstrap e do índice (`docker compose run --rm batch`), na raiz:
+Depois do bootstrap e do índice, que o `docker compose up` já constrói, na raiz:
 
 ```bash
 docker compose run --rm bootstrap vx-import-orders
