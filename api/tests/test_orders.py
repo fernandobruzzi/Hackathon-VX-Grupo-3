@@ -265,3 +265,78 @@ def test_owner_submits_draft_and_others_cannot(case, kit_orders):
     governance = login(client, "GESTOR_CADASTRO")
     other = client.post(f"{PATH}/{draft.id}/submit", json={"expected_version": 2}, headers=headers(governance))
     assert other.status_code == 403
+
+
+@pytest.mark.parametrize("operation", ["technical", "fiscal", "submit"])
+@pytest.mark.parametrize("revoked", [None, "role", "center", "tenant"])
+def test_replay_rechecks_current_access(imported, operation, revoked):
+    from dataclasses import replace
+
+    from vx_materials_api.schemas.orders import OrderDecisionRequest
+    from vx_materials_api.security.identity import Identity
+    from vx_materials_api.security.permissions import permissions_for
+    from vx_materials_api.services.order_service import decide_order, submit_order
+
+    client, db, _, _, orders = imported
+    order = orders["SC-202600001"]
+    persona = "AUDITOR_FISCAL" if operation == "fiscal" else "GESTOR_CADASTRO"
+    if operation == "fiscal":
+        assert decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1).status_code == 200
+    db.refresh(order)
+    login(client, persona)
+    actor = db.scalar(select(UserSso).where(UserSso.subject == persona))
+    roles = tuple(actor.roles_snapshot)
+    identity = Identity(actor.id, TENANT_ID, roles, permissions_for(roles), frozenset({order.center_code}))
+    if operation == "submit":
+        order.requester_user_id, order.status = actor.id, "DRAFT"
+        db.commit()
+    key = uuid.uuid4()
+    expected = order.version
+
+    def run(caller):
+        if operation == "submit":
+            return submit_order(db, caller, client.app.state.pdm_catalog, order.id, expected, key)
+        return decide_order(
+            db,
+            caller,
+            client.app.state.pdm_catalog,
+            order.id,
+            OrderDecisionRequest(expected_version=expected, decision="APPROVE", reason="Conferido"),
+            key,
+        )
+
+    original = run(identity)
+    if operation == "technical":
+        assert decide(client, login(client, "AUDITOR_FISCAL"), order.id, 2).status_code == 200
+        db.refresh(order)
+    count = db.scalar(select(func.count()).select_from(AuditLog))
+    if revoked == "role":
+        identity = replace(identity, roles=(), permissions=frozenset())
+    elif revoked == "center":
+        identity = replace(identity, center_codes=frozenset())
+    elif revoked == "tenant":
+        identity = replace(identity, tenant_id=uuid.uuid4())
+    if revoked:
+        with pytest.raises(ApiProblem) as error:
+            run(identity)
+        assert error.value.status in {403, 404}
+    else:
+        assert run(identity) == original
+    assert db.scalar(select(func.count()).select_from(AuditLog)) == count
+
+
+@pytest.mark.parametrize("persona", ["GESTOR_CADASTRO", "AUDITOR_FISCAL"])
+def test_rejected_decision_replays_under_its_original_role(imported, persona):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600001"]
+    if persona == "AUDITOR_FISCAL":
+        assert decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1).status_code == 200
+    me = login(client, persona)
+    key = str(uuid.uuid4())
+    expected = 2 if persona == "AUDITOR_FISCAL" else 1
+    first = decide(client, me, order.id, expected, "REJECT", key=key)
+    again = decide(client, me, order.id, expected, "REJECT", key=key)
+    assert first.status_code == again.status_code == 200
+    assert first.json() == again.json()
+    assert first.json()["status"] == "REJECTED"
+    assert db.scalar(select(func.count()).select_from(AuditLog).where(AuditLog.entity_id == str(order.id))) == expected

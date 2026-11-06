@@ -37,6 +37,12 @@ PDM não deixa escolha: código único na classe, exceção do próprio item ou 
 aplicação informada. Em outro caso a API responde 422 `NCM_UNDETERMINED` e o pedido continua no
 Fiscal. Cada passo grava auditoria e aceita `Idempotency-Key`.
 
+O replay de uma chave só devolve a resposta original após conferir tenant, centro e autorização
+atual sobre o pedido. Na decisão, a etapa registrada na auditoria original define a permissão
+exigida: uma aprovação técnica repetida continua exigindo Governança, mesmo após a publicação.
+A submissão repetida também exige que o usuário continue sendo o dono. Revogar o acesso impede
+recuperar a resposta armazenada; repetir com acesso mantido não aplica efeitos nem duplica auditoria.
+
 ## Importar os pedidos do kit
 
 Depois do bootstrap e do índice, que o `docker compose up` já constrói, na raiz:
@@ -48,7 +54,6 @@ docker compose run --rm bootstrap vx-import-orders
 Os 520 pedidos entram com `origin=IMPORT` e sem solicitante. Repetir não duplica. Na base do kit,
 com as regras atuais: 169 prontos para revisão, 205 incompletos, 86 fora de escopo e 60 já
 existentes.
-
 
 ## Enviar uma ficha do chat
 
