@@ -246,6 +246,7 @@ def test_frozen_final_metrics_refuse_changed_rules(base, tmp_path, monkeypatch):
     with pytest.raises(Interrupted):
         run_sanitize(PDM, job_id, database_url=batch_url, store=store)
     original = store.get(f"runs/{job_id}/metrics.json")
+    attempts = job_row(admin, job_id)["checkpoint"]["attempts"]
     current = full_run.get_extraction_repository()
 
     class Revised(type(current)):
@@ -258,4 +259,7 @@ def test_frozen_final_metrics_refuse_changed_rules(base, tmp_path, monkeypatch):
     row = job_row(admin, job_id)
     assert row["status"] == "FAILED"
     assert "novo job" in row["error_summary"]
+    assert row["checkpoint"]["attempts"] == attempts
+    assert len(row["checkpoint"]["finalization_attempts"]) == 2
+    assert "AnalysisRulesChanged" in row["checkpoint"]["finalization_attempts"][-1]["error"]
     assert store.get(f"runs/{job_id}/metrics.json") == original

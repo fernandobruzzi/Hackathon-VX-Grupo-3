@@ -386,6 +386,8 @@ def run_sanitize(
             try:
                 metrics = context.checkpoint.get("final_metrics")
                 if metrics is not None:
+                    finalization_attempt = {"started_at": _now()}
+                    context.checkpoint.setdefault("finalization_attempts", []).append(finalization_attempt)
                     signature = analysis_signature(
                         catalog, get_classification_repository(catalog), get_extraction_repository()
                     )
@@ -398,8 +400,9 @@ def run_sanitize(
                     # Persiste o conteúdo exato antes de publicar o artefato imutável.
                     # A retomada repete só a publicação/conclusão, sem recalcular os tempos.
                     context.checkpoint["final_metrics"] = metrics
-                finalization_attempt = {"started_at": _now()}
-                context.checkpoint.setdefault("finalization_attempts", []).append(finalization_attempt)
+                if finalization_attempt is None:
+                    finalization_attempt = {"started_at": _now()}
+                    context.checkpoint.setdefault("finalization_attempts", []).append(finalization_attempt)
                 _save_checkpoint(context)
                 store.put_if_absent(
                     f"runs/{job_id}/metrics.json", json.dumps(metrics, ensure_ascii=False, sort_keys=True).encode()
