@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -133,6 +134,19 @@ def check_ncm_consistency(
         evaluation_hash=evaluation_hash,
         pending_checks=tuple(pending),
         **reference,
+    )
+
+
+def requires_snapshot_fiscal_review(assessment: Mapping[str, object]) -> bool:
+    """Pendência da referência, separada de uma possível mudança de grafia do NCM.
+
+    Consumidores conferem mudanças reais no changeset com seus guards existentes.
+    A avaliação global continua indicando a revisão de uma normalização proposta.
+    """
+    return assessment["ncm_version"] is not None and (
+        assessment["exists_in_snapshot"] is not True
+        or assessment["valid_in_snapshot"] is not True
+        or assessment["ncm_source_kind"] != "OFFICIAL_DOWNLOAD"
     )
 
 

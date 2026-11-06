@@ -4,7 +4,7 @@ from dataclasses import asdict, replace
 
 from clients.ncm_snapshot_store import load_configured_ncm_snapshot
 from domain.contracts import AnalyzedMaterial, FieldCorrection, MergeProposal, PdmCatalog, ValidationStatus
-from domain.ncm_rules import RULES_VERSION, check_ncm_consistency
+from domain.ncm_rules import RULES_VERSION, check_ncm_consistency, requires_snapshot_fiscal_review
 from domain.ncm_snapshot import NcmSnapshot
 from domain.pdm_validator import validate_pdm
 from domain.proposals import canonical_hash
@@ -90,5 +90,5 @@ def bind_snapshot_assessment(proposal: MergeProposal, catalog: PdmCatalog, snaps
         proposal,
         changeset=changes,
         changeset_hash=canonical_hash(changes),
-        fiscal_review_required=proposal.fiscal_review_required or result.requires_fiscal_review,
+        fiscal_review_required=proposal.fiscal_review_required or requires_snapshot_fiscal_review(asdict(result)),
     )

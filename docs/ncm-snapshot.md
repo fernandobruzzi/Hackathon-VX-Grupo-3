@@ -125,7 +125,11 @@ inteiro já vinculado ao changeset. Mudanças de versão, hash, data ou origem r
 a proposta com `NCM_ASSESSMENT_CHANGED`; propostas antigas sem assessment também
 precisam ser regeneradas quando a referência passa a ser configurada. O guard de
 aprovação exige revisão fiscal para os motivos do snapshot, inclusive quando o
-NCM persistido não está sendo alterado. A autorização humana continua separada do
+NCM persistido não está sendo alterado. Uma diferença apenas de grafia, quando
+a correção técnica conserva o NCM original, não é um motivo do snapshot; a
+avaliação global continua sinalizando que normalizar esse NCM seria uma alteração
+fiscal. Os guards existentes continuam exigindo revisão para mudanças reais de
+NCM ou dos atributos que sustentam sua classificação. A autorização humana continua separada do
 resultado do motor. O contrato de avaliação passa a `pdm-ncm-v2`: assessments v1
 já persistidos precisam ser regenerados mesmo sem configurar um snapshot, porque
 não contêm os novos campos vinculados ao hash. A compatibilidade sem configuração

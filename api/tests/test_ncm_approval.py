@@ -140,7 +140,7 @@ def test_modified_attributes_cannot_reuse_persisted_assessment(approval_case):
 
 
 @pytest.fixture
-def configured_snapshot(monkeypatch, tmp_path):
+def configured_snapshot(monkeypatch, tmp_path, request):
     from datetime import date
 
     from clients.ncm_snapshot_store import NcmSnapshotStore
@@ -148,7 +148,16 @@ def configured_snapshot(monkeypatch, tmp_path):
     from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
 
     raw = (Path(__file__).parents[2] / "back/tests/fixtures/ncm_simulated.json").read_bytes()
-    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 6), source_kind=NcmSourceKind.SIMULATED)
+    scenario = getattr(request, "param", "unverified")
+    source_kind = NcmSourceKind.SIMULATED
+    if scenario in ("absent", "expired"):
+        payload = json.loads(raw)
+        row = next(r for r in payload["Nomenclaturas"] if r["Codigo"] == "7318.16.00")
+        row.update({"Codigo": "9999.99.99"} if scenario == "absent" else {"Data_Fim": "05/11/2026"})
+        raw = json.dumps(payload).encode()
+        # Apenas simula o transporte neste teste; o conteúdo continua sendo fixture.
+        source_kind = NcmSourceKind.OFFICIAL_DOWNLOAD
+    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 6), source_kind=source_kind)
     NcmSnapshotStore(LocalObjectStore(tmp_path)).register(snapshot, raw)
     monkeypatch.setenv("STORAGE_BACKEND", "local")
     monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
@@ -205,7 +214,8 @@ def test_configured_reference_failure_is_explicit(catalog, monkeypatch):
     assert error.value.code == "NCM_REFERENCE_UNAVAILABLE"
 
 
-def test_configured_unverified_snapshot_requires_fiscal_even_without_ncm_change(approval_case, configured_snapshot):
+@pytest.mark.parametrize("configured_snapshot", ["unverified", "absent", "expired"], indirect=True)
+def test_configured_snapshot_requires_fiscal_even_without_ncm_change(approval_case, configured_snapshot):
     case = approval_case
     material = configure_nut(case)
     material.ncm = "7318.16.00"

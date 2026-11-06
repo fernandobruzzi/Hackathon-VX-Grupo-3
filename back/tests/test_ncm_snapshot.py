@@ -267,3 +267,16 @@ def test_server_configuration_pins_one_version_and_fails_closed(monkeypatch, tmp
     monkeypatch.setenv("NCM_SNAPSHOT_VERSION", "missing")
     with pytest.raises(NcmSnapshotError, match="configurado indisponível"):
         load_configured_ncm_snapshot()
+
+
+def test_snapshot_review_reason_is_separate_from_a_possible_format_change(catalog):
+    from dataclasses import asdict
+
+    from domain.ncm_rules import check_ncm_consistency, requires_snapshot_fiscal_review
+
+    snapshot = load(source_kind=NcmSourceKind.OFFICIAL_DOWNLOAD)
+    result = check_ncm_consistency(catalog, "PDM003", {}, "73181600", snapshot=snapshot)
+    assert result.requires_fiscal_review  # Normalizar essa grafia seria uma alteração.
+    assert not requires_snapshot_fiscal_review(asdict(result))
+    unverified = check_ncm_consistency(catalog, "PDM003", {}, "73181600", snapshot=load())
+    assert requires_snapshot_fiscal_review(asdict(unverified))
