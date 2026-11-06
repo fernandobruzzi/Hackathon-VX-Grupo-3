@@ -229,7 +229,7 @@ class _Extraction:
     def open_attributes(self) -> list[PdmAttribute]:
         return [a for a in self.pdm_class.attributes if a.name not in self.found]
 
-    def fit_labeled(self, key: str, raw: str) -> bool:
+    def fit_labeled(self, key: str, raw: str, *, allow_contained: bool = True, allow_unique_words: bool = True) -> bool:
         written = raw
         raw = _SENTENCE_END.sub("", raw)
         if not raw:
@@ -243,6 +243,10 @@ class _Extraction:
                 continue
             fitted = fit_value(attribute, raw)
             if fitted:
+                if fitted[1] == "value.contained" and not allow_contained:
+                    continue
+                if fitted[1] == "value.unique_words" and not allow_unique_words:
+                    continue
                 self.set(name, fitted[0], f"{key}: {written}", fitted[1])
                 return True
         return False
@@ -250,7 +254,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "5"
+    revision = "6-label-boundaries-159"
 
     def extract(
         self,
@@ -298,10 +302,13 @@ class RuleBasedV1ExtractionRepository:
 
     @staticmethod
     def _fit_longest_prefix(work: _Extraction, label: str, value: str) -> str | None:
-        """Sem separador, o valor vai até o próximo rótulo: usa o maior começo válido e devolve o resto."""
+        """Sem separador, só consome um prefixo inteiro; correspondências parciais engoliriam outros atributos."""
         words = value.split()
         for size in range(len(words), 0, -1):
-            if work.fit_labeled(label, " ".join(words[:size])):
+            # Palavras soltas só no valor inteiro: um prefixo não pode ganhar qualificadores ausentes.
+            if work.fit_labeled(
+                label, " ".join(words[:size]), allow_contained=False, allow_unique_words=size == len(words)
+            ):
                 return " ".join(words[size:])
         return None
 
@@ -383,6 +390,9 @@ class RuleBasedV1ExtractionRepository:
             pattern = rf"(?<![\w./\-]){body}{_VALUE_END}"
             match = re.search(pattern, pool)
             if not match:
+                continue
+            # A fração de uma medida mista (2 1/4POL) não é uma bitola isolada de 1/4POL.
+            if re.match(r"\d+/\d+POL$", phrase) and re.search(r"\d[ \-]$", pool[: match.start()]):
                 continue
             names = [name for name in options[phrase] if name not in work.found]
             if len(names) != 1:
