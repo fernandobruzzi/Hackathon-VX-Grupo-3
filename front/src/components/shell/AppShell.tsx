@@ -216,7 +216,8 @@ export function PersonaSwitcher() {
   const [open, setOpen] = useState(false);
   if (!me) return null;
   const current = PERSONAS.find((p) => p.label === me.demo.active_persona);
-  if (!current || authMode === "cognito")
+  // No Cognito, só contas da lista de demonstração com DEMO_MODE têm persona e podem trocar.
+  if (!current || (authMode === "cognito" && !me.demo.enabled))
     return <span className="text-sm font-semibold">{me.user.display_name}</span>;
   const displayName = backend ? me.user.display_name : current.name;
   return (
@@ -262,7 +263,9 @@ export function PersonaSwitcher() {
             </button>
           ))}
           <p className="px-3 pt-2 pb-1 text-[11px] leading-4 text-muted">
-            Cada persona é uma sessão Cognito já autenticada; a auditoria registra o usuário real.
+            {authMode === "cognito"
+              ? "Cada persona é uma sessão Cognito já autenticada neste navegador; sem ela, o login da conta é pedido. A auditoria registra o usuário real."
+              : "Cada persona é uma sessão de teste local; a auditoria registra o usuário da sessão."}
           </p>
         </div>
       )}

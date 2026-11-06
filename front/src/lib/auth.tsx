@@ -127,9 +127,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   const switchPersona = useCallback(
     (persona: PersonaLabel) => {
-      if (!backend || authMode === "local") void signIn(persona);
+      if (!backend || authMode === "local") {
+        void signIn(persona);
+        return;
+      }
+      if (authMode !== "cognito") return;
+      setError(null);
+      api
+        .request("post", "/api/v1/auth/demo/switch", { body: { session_handle: persona } })
+        .then(() => {
+          // Outra conta: recarregar descarta dados privados em memória e refaz /auth/me.
+          window.location.reload();
+        })
+        .catch((error: unknown) => {
+          if (error instanceof ApiError && error.error.code === "DEMO_SESSION_NOT_FOUND") {
+            // A conta ainda não entrou neste navegador: o Cognito pede o login dela.
+            window.location.assign("/api/v1/auth/sso-start?prompt=login");
+            return;
+          }
+          setError(
+            error instanceof ApiError ? error.message : "Não foi possível trocar de persona.",
+          );
+        });
     },
-    [authMode, backend, signIn],
+    [api, authMode, backend, signIn],
   );
   const signOut = useCallback(async () => {
     if (backend) await api.request("post", "/api/v1/auth/logout", { body: {} });
