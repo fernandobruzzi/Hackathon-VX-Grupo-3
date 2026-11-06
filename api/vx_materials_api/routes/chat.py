@@ -41,7 +41,9 @@ async def send_message(
     require_center(identity, payload.center_code)
     verify_write(request, identity)
     rid = request_id(request)
-    reservation = chat_service.reserve_turn(db, identity, payload)
+    reservation = chat_service.reserve_turn(
+        db, identity, payload, rules_version=chat_service.cache_rules(catalog(request))
+    )
     secret = settings.agent_internal_token_secret()
     token = issue_agent_token(
         identity.user_id, effective_permissions(identity), identity.center_codes, secret, identity.tenant_id
@@ -51,7 +53,9 @@ async def send_message(
     except AgentUnavailable as error:
         chat_service.release_turn(db, reservation)
         raise ApiProblem(503, error.code, str(error)) from error
-    return chat_service.complete_turn(db, identity, payload, reservation, result, rid)
+    return chat_service.complete_turn(
+        db, identity, payload, reservation, result, rid, rules_version=chat_service.cache_rules(catalog(request))
+    )
 
 
 @router.post("/{session_id}/submit")

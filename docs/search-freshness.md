@@ -45,6 +45,22 @@ causa, a recuperação acontece automaticamente. Para uma operação pontual,
 `vx-back index --if-stale` usa a mesma lógica. O comando sem `--watch` continua
 finito, inclusive nas tasks de preparação do deploy.
 
+## Verificações salvas no chat
+
+A API guarda uma prova privada por tenant (quantidade e soma das revisões dos
+materiais, mais a versão das regras/PDM). Antes de encaminhar o contexto ao Agent,
+compara essa prova com o catálogo atual. Uma publicação ou aprovação invalida a
+verificação antiga e suas escolhas; sessões legadas sem prova são revalidadas uma
+vez. Sem mudança de catálogo ou ficha, escolhas e descartes continuam válidos sem
+repetir a busca. A prova não integra o contrato do Agent.
+
+A conclusão confere novamente a prova sob os mesmos locks dos escritores. Se o
+catálogo mudou durante o turno, devolve `CATALOG_CHANGED` sem gravar mensagens nem
+avançar a versão da conversa. A liberação da reserva e a invalidação são
+confirmadas antes do erro; basta repetir a mensagem. Um botão de escolha antigo
+pode disparar essa recuperação, mas nunca confirma um candidato desatualizado.
+Falhas da busca deixam a ficha pendente e não renovam a prova antiga.
+
 ## AWS e EC2
 
 As tasks de migração/bootstrap/indexação do deploy permanecem finitas. A

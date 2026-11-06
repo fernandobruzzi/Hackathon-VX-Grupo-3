@@ -2,12 +2,13 @@
 
 import json
 import uuid
+from pathlib import Path
 
 import httpx
 import jwt
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import sessionmaker
 from test_contracts import validator
 
@@ -105,6 +106,9 @@ def agent():
 @pytest.fixture
 def client(factory, identity, agent, monkeypatch):
     monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
+    monkeypatch.setenv(
+        "PDM_WORKBOOK_PATH", str(Path(__file__).parents[2] / "data/desafio01/03_padrao_cadastro_PDM.xlsx")
+    )
     app = create_app(
         session_factory=factory,
         identity_provider=lambda db: identity,
@@ -701,3 +705,144 @@ def test_legacy_history_scope_uses_only_unambiguous_assistant_stock(client, fact
     assert client.get(f"/api/v1/chat/sessions/{first['session_id']}").status_code == status
     visible = client.get("/api/v1/chat/sessions").json()["items"]
     assert len(visible) == (1 if status == 200 else 0)
+
+
+def test_catalog_changed_during_agent_call_does_not_stamp_or_persist_a_stale_proof(
+    client, factory, identity, agent, monkeypatch
+):
+    from vx_materials_api.db.models import ChatSession
+
+    original = chat_service.complete_turn
+    changed = False
+
+    def concurrent(db, principal, request, reservation, result, request_id, **kwargs):
+        nonlocal changed
+        if not changed:
+            changed = True
+            with factory() as writer:
+                writer.execute(
+                    text(
+                        "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
+                        "VALUES (:t, 'TEST', 'catalog-change', 'ATIVO')"
+                    ),
+                    {"t": identity.tenant_id},
+                )
+                writer.commit()
+        return original(db, principal, request, reservation, result, request_id, **kwargs)
+
+    monkeypatch.setattr(chat_service, "complete_turn", concurrent)
+    agent.result = agent_result(VALID_CARD, search_call())
+    response = send(client)
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "CATALOG_CHANGED"
+    with factory() as db:
+        session = db.scalar(select(ChatSession).where(ChatSession.tenant_id == identity.tenant_id))
+        assert session.version == 0 and session.active_turn_id is None
+        assert not session.context.get("duplicate_check")
+        assert db.scalar(text("SELECT count(*) FROM chat_messages WHERE session_id=:id"), {"id": session.id}) == 0
+    # A reserva foi liberada; nova tentativa inicia uma busca em vez de reutilizar o retorno recusado.
+    retried = send(client, session_id=session.id, version=0)
+    assert retried.status_code == 200
+
+
+def test_a_foreign_tenant_change_does_not_invalidate_a_saved_proof(client, factory, agent):
+    first = _offer(client, agent)
+    with factory() as writer:
+        writer.execute(
+            text(
+                "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
+                "VALUES (:t, 'TEST', 'foreign-change', 'ATIVO')"
+            ),
+            {"t": uuid.uuid4()},
+        )
+        writer.commit()
+    agent.result = agent_result(VALID_CARD, patch={"dismissed_material_codes": ["777"]})
+    second = send(client, "Nenhum", first["session_id"], version=1, action={"type": "DISMISS_CANDIDATES"})
+    assert second.status_code == 200 and second.json()["status"] == "READY_TO_SUBMIT"
+    assert agent.payload()["context"]["duplicate_check"] is not None
+
+
+@pytest.mark.parametrize("action_type", ["PICK_CANDIDATE", "DISMISS_CANDIDATES"])
+def test_stale_action_can_retry_after_agent_failure_without_consuming_old_candidates(
+    client, factory, identity, agent, action_type
+):
+    first = _offer(client, agent)
+    with factory() as writer:
+        writer.execute(
+            text(
+                "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
+                "VALUES (:t, 'TEST', 'new-content', 'ATIVO')"
+            ),
+            {"t": identity.tenant_id},
+        )
+        writer.commit()
+    action = {"type": action_type}
+    if action_type == "PICK_CANDIDATE":
+        action["material_code"] = "777"
+    agent.status = 503
+    unavailable = send(client, "Ação do botão", first["session_id"], version=1, action=action)
+    assert unavailable.status_code == 503
+    agent.status = 200
+    agent.result = agent_result(
+        VALID_CARD,
+        search_call(similar("777")),
+        patch={"dismissed_material_codes": ["777"], "offered_material_codes": ["777"]},
+    )
+    refreshed = send(client, "Ação do botão", first["session_id"], version=1, action=action)
+    assert refreshed.status_code == 200 and refreshed.json()["status"] == "NEEDS_INPUT"
+    assert agent.payload()["context"]["duplicate_check"] is None
+    assert agent.payload()["context"]["offered_material_codes"] == []
+    assert agent.payload()["context"]["dismissed_material_codes"] == []
+    if action_type == "PICK_CANDIDATE":
+        picked = {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": {**EXISTING, "material_code": "777"}}
+        agent.result = agent_result(picked, search_call(similar("777")))
+    else:
+        agent.result = agent_result(VALID_CARD, patch={"dismissed_material_codes": ["777"]})
+    accepted = send(client, "Confirmar oferta nova", first["session_id"], version=2, action=action)
+    assert accepted.status_code == 200
+    assert accepted.json()["status"] == ("EXISTING" if action_type == "PICK_CANDIDATE" else "READY_TO_SUBMIT")
+
+
+def test_legacy_saved_check_without_catalog_proof_is_revalidated_once(client, factory, agent):
+    from vx_materials_api.db.models import ChatSession
+
+    first = _offer(client, agent)
+    with factory() as db:
+        session = db.get(ChatSession, uuid.UUID(first["session_id"]))
+        context = dict(session.context)
+        context["duplicate_check"] = {
+            key: value for key, value in context["duplicate_check"].items() if key != "catalog_proof"
+        }
+        session.context = context
+        db.commit()
+    agent.result = agent_result(VALID_CARD, search_call(similar("777")), patch={"offered_material_codes": ["777"]})
+    second = send(client, "Nova verificação", first["session_id"], version=1)
+    assert second.status_code == 200
+    assert agent.payload()["context"]["duplicate_check"] is None
+    agent.result = agent_result(VALID_CARD, patch={"dismissed_material_codes": ["777"]})
+    third = send(client, "Nenhum", first["session_id"], version=2, action={"type": "DISMISS_CANDIDATES"})
+    assert third.status_code == 200 and third.json()["status"] == "READY_TO_SUBMIT"
+    assert agent.payload()["context"]["duplicate_check"] is not None
+    assert "catalog_proof" not in agent.payload()["context"]["duplicate_check"]
+
+
+def test_agent_cannot_renew_an_old_proof_without_search_after_catalog_change(client, factory, identity, agent):
+    from vx_materials_api.db.models import ChatSession
+
+    first = _offer(client, agent)
+    with factory() as writer:
+        writer.execute(
+            text(
+                "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
+                "VALUES (:t, 'TEST', 'unverified-new', 'ATIVO')"
+            ),
+            {"t": identity.tenant_id},
+        )
+        writer.commit()
+    agent.result = agent_result(VALID_CARD)
+    second = send(client, "preciso de 20 unidades", first["session_id"], version=1)
+    assert second.status_code == 200 and second.json()["status"] == "NEEDS_INPUT"
+    assert second.json()["material_card"]["duplicate_check_status"] == "PENDING"
+    with factory() as db:
+        saved = db.get(ChatSession, uuid.UUID(first["session_id"])).context.get("duplicate_check")
+        assert saved is None

@@ -6,10 +6,11 @@ import subprocess
 import sys
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from copy import deepcopy
 from pathlib import Path
 
+import httpx
 import psycopg
 import pytest
 from alembic import command
@@ -26,7 +27,10 @@ from vx_materials_api.db.models import RegistrationOrder, SanitizationProposal
 from vx_materials_api.db.temporary_login import temporary_login
 from vx_materials_api.main import create_app
 from vx_materials_api.schemas.proposals import proposal_hash
-from vx_materials_mcp.security import caller_from_environment
+from vx_materials_api.services.agent_client import AgentClient
+from vx_materials_mcp.app import create_app as create_agent_app
+from vx_materials_mcp.chatbot.mcp_client import connect
+from vx_materials_mcp.security import caller_from_environment, caller_to_environment
 from vx_materials_mcp.tools.search_similar_materials import SimilarMaterialsSearch
 
 sys.path.insert(0, str(Path(__file__).parents[2] / "api/tests"))
@@ -79,22 +83,29 @@ def searchable(content_database_url, monkeypatch):
         app.state.pdm_catalog = catalog
         try:
             with (
+                temporary_login(migrated_url, "api_user") as api,
                 temporary_login(migrated_url, "batch_user") as batch,
                 temporary_login(migrated_url, "mcp_reader") as reader,
             ):
-                with TestClient(app, base_url=ORIGIN) as client:
-                    yield {
-                        "db": db,
-                        "engine": engine,
-                        "catalog": catalog,
-                        "dataset": dataset,
-                        "materials": materials,
-                        "original": original,
-                        "owner": principals[2].user_id,
-                        "client": client,
-                        "batch": batch,
-                        "reader": reader,
-                    }
+                api_engine = create_engine(api)
+                app.state.session_factory = lambda: Session(api_engine)
+                try:
+                    with TestClient(app, base_url=ORIGIN) as client:
+                        yield {
+                            "db": db,
+                            "engine": engine,
+                            "catalog": catalog,
+                            "dataset": dataset,
+                            "materials": materials,
+                            "original": original,
+                            "owner": principals[2].user_id,
+                            "client": client,
+                            "app": app,
+                            "batch": batch,
+                            "reader": reader,
+                        }
+                finally:
+                    api_engine.dispose()
         finally:
             db.rollback()
             with engine.begin() as connection:
@@ -362,3 +373,103 @@ def test_a_late_old_payload_cannot_overwrite_a_newer_material_revision(searchabl
         )
     assert version == 2
     assert search(case, "LF9009").match_status == "EXISTING_FOUND"
+
+
+@contextmanager
+def real_chat(case, monkeypatch):
+    secret = "test-content-proof-secret-with-at-least-32-bytes"
+    monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", secret)
+
+    @asynccontextmanager
+    async def mcp(caller):
+        async with connect(PDM, case["reader"], caller_to_environment(caller)) as client:
+            yield client
+
+    with TestClient(create_agent_app(case["catalog"], secret, mcp)) as agent:
+
+        def transport(request):
+            response = agent.post(request.url.path, content=request.content, headers=dict(request.headers))
+            return httpx.Response(response.status_code, json=response.json())
+
+        case["app"].state.agent_client = AgentClient("http://agent", httpx.MockTransport(transport))
+        yield
+
+
+def chat_turn(case, message, previous=None, action=None):
+    client = case["client"]
+    me = client.post(
+        "/api/v1/auth/local-session", json={"persona": "SOLICITANTE_OPERACAO"}, headers={"Origin": ORIGIN}
+    ).json()
+    response = client.post(
+        "/api/v1/chat/message",
+        json={
+            "session_id": previous["session_id"] if previous else None,
+            "expected_session_version": previous["session_version"] if previous else 0,
+            "client_message_id": str(uuid.uuid4()),
+            "message": message,
+            "center_code": "1200",
+            "action": action,
+        },
+        headers={"Origin": ORIGIN, "X-CSRF-Token": me["csrf_token"]},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+@pytest.mark.parametrize("indexed", [True, False])
+def test_cached_no_match_is_revalidated_after_real_publication(searchable, monkeypatch, indexed):
+    case = searchable
+    run_index(PDM, case["batch"])
+    with real_chat(case, monkeypatch):
+        first = chat_turn(case, "Parafuso sextavado M36x333, classe A4-70, aço inox 316, oxidado preto, DIN 931")
+        assert first["status"] == "READY_TO_SUBMIT"
+        card = first["material_card"]
+        order = RegistrationOrder(
+            tenant_id=TENANT_ID,
+            requester_user_id=case["owner"],
+            origin="CHAT",
+            original_text="Pedido de outra conversa",
+            center_code="1200",
+            pdm_class_id=card["pdm_class_id"],
+            item_name="PARAFUSO SEXTAVADO",
+            attributes={k: v for k, v in card["attributes"].items() if v},
+            status="READY_FOR_REVIEW",
+        )
+        case["db"].add(order)
+        case["db"].commit()
+        path = f"/api/v1/registration-orders/{order.id}/decide"
+        technical = decide(case, path, "GESTOR_CADASTRO", 1)
+        published = decide(case, path, "AUDITOR_FISCAL", technical["version"])
+        assert published["status"] == "REGISTERED"
+        if indexed:
+            assert run_index(PDM, case["batch"], if_stale=True)["pending"] == 0
+        second = chat_turn(case, "preciso de 20 unidades", first)
+        assert any(call["name"] == "search_similar_materials" for call in second["tool_calls"])
+        assert second["status"] == ("EXISTING" if indexed else "NEEDS_INPUT")
+        assert second["material_card"]["can_submit"] is False
+        if indexed:
+            assert second["material_card"]["existing"]["material_code"] == published["material_code"]
+
+
+@pytest.mark.parametrize("choice", ["PICK_CANDIDATE", "DISMISS_CANDIDATES"])
+def test_unchanged_catalog_preserves_real_choices_without_searching_again(searchable, monkeypatch, choice):
+    case = searchable
+    for index, material in enumerate(case["materials"]):
+        material.material_code = str(10000 + index)
+    case["db"].commit()
+    run_index(PDM, case["batch"])
+    with real_chat(case, monkeypatch):
+        first = chat_turn(case, "Filtro oleo lubrificante Fleetguard LF9998")
+        assert first["status"] == "NEEDS_INPUT" and first["material_card"]["similar_candidates"]
+        action = {"type": choice}
+        if choice == "PICK_CANDIDATE":
+            action["material_code"] = first["material_card"]["similar_candidates"][0]["material_code"]
+        reply = f"É o item {action['material_code']}" if choice == "PICK_CANDIDATE" else "Nenhum desses é o meu item"
+        second = chat_turn(case, reply, first, action=action)
+        expected = "EXISTING" if choice == "PICK_CANDIDATE" else "READY_TO_SUBMIT"
+        assert second["status"] == expected
+        third = chat_turn(case, "obrigado", second)
+        assert third["status"] == expected
+        assert not any(call["name"] == "search_similar_materials" for call in third["tool_calls"])
+        if choice == "PICK_CANDIDATE":
+            assert third["material_card"]["existing"]["material_code"] == action["material_code"]

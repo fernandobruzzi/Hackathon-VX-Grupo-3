@@ -7,6 +7,7 @@ Um turno passa por duas transações curtas, e o Agent é chamado entre elas, se
    mescla o contexto e incrementa a versão.
 
 Se o Agent falhar, a reserva é liberada sem mudar a versão, e nada da mensagem fica gravado.
+A invalidação de uma prova de catálogo antiga permanece gravada para a próxima tentativa.
 """
 
 import re
@@ -15,12 +16,17 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from domain.identity import identity_signature
 from domain.pdm_loader import DEFAULT_PDM_VERSION
-from vx_materials_api.db.models import ChatMessage, ChatSession, OperationRequest
+from pipelines.sanitize import _catalog
+from pipelines.search_index import index_version
+from repositories.classification import get_classification_repository
+from repositories.embeddings import get_embedding_repository
+from repositories.extraction import get_extraction_repository
+from vx_materials_api.db.models import ChatMessage, ChatSession, MaterialMaster, OperationRequest
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
@@ -49,6 +55,48 @@ SEARCH_TOOL = "search_similar_materials"
 # Verificação de duplicidade aceita pela API. Só a API grava: o Agent não escreve nesta chave.
 DUPLICATE_CHECK = "duplicate_check"
 _NOT_RUN = object()
+
+
+def cache_rules(catalog) -> str:
+    embedder = get_embedding_repository()
+    return index_version(
+        catalog,
+        get_classification_repository(catalog),
+        get_extraction_repository(),
+        embedder.signature if embedder else None,
+    )
+
+
+def _catalog_proof(db, tenant_id, rules_version):
+    # Contagem e soma avançam em cada publicação/alteração; a API nunca reduz revisões nem apaga materiais.
+    count, revisions = db.execute(
+        select(func.count(), func.coalesce(func.sum(MaterialMaster.version), 0)).where(
+            MaterialMaster.tenant_id == tenant_id
+        )
+    ).one()
+    return {"materials": count, "revisions": int(revisions), "rules": rules_version}
+
+
+def _clear_duplicate_check(context):
+    historical = list(
+        dict.fromkeys([*context.get("stale_offered_material_codes", []), *context.get("offered_material_codes", [])])
+    )
+    cleaned = {
+        **context,
+        DUPLICATE_CHECK: None,
+        "offered_material_codes": [],
+        "dismissed_material_codes": [],
+        "stale_offered_material_codes": historical,
+    }
+    if context.get("material_card"):
+        cleaned["material_card"] = {
+            **context["material_card"],
+            "can_submit": False,
+            "duplicate_check_status": "PENDING",
+            "existing": None,
+            "similar_candidates": [],
+        }
+    return cleaned
 
 
 def card_signature(card: MaterialCard) -> str:
@@ -84,11 +132,11 @@ def effective_candidates(
 
 
 def validate_action(context: dict[str, Any], request: ChatMessageRequest) -> None:
-    """Ações só valem para códigos oferecidos no turno anterior desta conversa."""
+    """Códigos históricos permitem recuperar o turno, mas não são reenviados como ofertas válidas."""
     action = request.action
     if action is None:
         return
-    offered = context.get("offered_material_codes", [])
+    offered = [*context.get("offered_material_codes", []), *context.get("stale_offered_material_codes", [])]
     if action.type == "PICK_CANDIDATE" and action.material_code not in offered:
         raise ApiProblem(422, "INVALID_ACTION", "Esse código não foi oferecido nesta conversa.")
     if action.type == "DISMISS_CANDIDATES" and not offered:
@@ -161,6 +209,7 @@ class Reservation:
     turn_id: uuid.UUID
     session_version: int
     agent_payload: dict[str, Any]
+    catalog_proof: dict[str, Any]
 
 
 def _conflict(code: str, message: str) -> ApiProblem:
@@ -240,7 +289,7 @@ def _history(db: Session, session_id: uuid.UUID) -> list[dict[str, Any]]:
     ]
 
 
-def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -> Reservation:
+def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest, *, rules_version=None) -> Reservation:
     turn_id = uuid.uuid4()
     if request.session_id is None:
         if request.expected_session_version != 0:
@@ -281,6 +330,12 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
     if request.session_id is None:
         validate_action({}, request)
     context = session.context or {}
+    rules_version = rules_version or cache_rules(_catalog(None))
+    proof = _catalog_proof(db, identity.tenant_id, rules_version)
+    saved = context.get(DUPLICATE_CHECK)
+    if saved and saved.get("catalog_proof") != proof:
+        context = _clear_duplicate_check(context)
+        session.context = context
     payload = {
         "turn_id": str(turn_id),
         "session_id": str(session.id),
@@ -298,7 +353,7 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
             "duplicate_check": _agent_duplicate_check(context.get(DUPLICATE_CHECK)),
         },
     }
-    reservation = Reservation(session.id, turn_id, session.version, payload)
+    reservation = Reservation(session.id, turn_id, session.version, payload, proof)
     db.commit()
     return reservation
 
@@ -317,11 +372,26 @@ def complete_turn(
     reservation: Reservation,
     result: AgentRunResponse,
     request_id: str,
+    *,
+    rules_version=None,
 ) -> ChatTurnResponse:
+    # Mesma ordem dos escritores: a conclusão só confirma prova e mensagens num catálogo estável.
+    # Os locks são curtos e vêm antes do lock da conversa, como no envio de pedidos.
+    rules_version = rules_version or cache_rules(_catalog(None))
+    for seed in (0, 1):
+        db.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:tenant, :seed))"),
+            {"tenant": str(identity.tenant_id), "seed": seed},
+        )
     session = _locked_session(db, identity, reservation.session_id)
     _require_history_scope(db, identity, session)
     if session.active_turn_id != reservation.turn_id or session.version != reservation.session_version:
         raise _conflict("TURN_SUPERSEDED", "O turno foi substituído por outro.")
+    if _catalog_proof(db, identity.tenant_id, rules_version) != reservation.catalog_proof:
+        session.context = _clear_duplicate_check(session.context or {})
+        session.active_turn_id = None
+        db.commit()
+        raise _conflict("CATALOG_CHANGED", "O catálogo mudou durante a verificação. Envie a mensagem novamente.")
 
     last = db.scalar(select(func.max(ChatMessage.sequence)).where(ChatMessage.session_id == session.id)) or 0
     tool_calls = [call.model_dump(mode="json") for call in result.tool_calls]
@@ -349,6 +419,8 @@ def complete_turn(
     context = session.context or {}
     patch = {key: value for key, value in result.context_patch.items() if key in CONTEXT_KEYS}
     saved = context.get(DUPLICATE_CHECK)
+    if saved and saved.get("catalog_proof") != reservation.catalog_proof:
+        saved = None
     search, reused = effective_candidates(result, saved)
     offered, dismissed = validated_candidate_codes(context, patch, search)
     patch |= {"offered_material_codes": offered, "dismissed_material_codes": dismissed}
@@ -358,10 +430,16 @@ def complete_turn(
     )
     # O envio só é liberado quando a API concorda que o pedido está pronto.
     material_card = result.material_card.model_copy(update={"can_submit": status == "READY_TO_SUBMIT"})
+    if search is None:
+        material_card = material_card.model_copy(
+            update={"duplicate_check_status": "PENDING", "existing": None, "similar_candidates": []}
+        )
     card = material_card.model_dump(mode="json")
     if search is not None:
+        patch["stale_offered_material_codes"] = []
         patch[DUPLICATE_CHECK] = {
             "signature": card_signature(material_card),
+            "catalog_proof": reservation.catalog_proof,
             "candidates": search,
             "status": material_card.duplicate_check_status,
             "existing": card.get("existing") if status == "EXISTING" else None,
