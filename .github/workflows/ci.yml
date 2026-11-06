@@ -135,6 +135,7 @@ jobs:
       LOCAL_TEST_SESSION: "true"
       DB_PORT: "15432"
       API_BIND_PORT: "18000"
+      APP_ORIGIN: http://127.0.0.1:18000
       AGENT_INTERNAL_TOKEN_SECRET: ci_only_internal_token_secret_with_32_bytes
     steps:
       - uses: actions/checkout@v4
