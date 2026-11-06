@@ -13,6 +13,7 @@ from domain.evaluation import merge_metrics, ratio, resolve_reviews
 from pipelines.corrections import propose_corrections
 from pipelines.full_run import coverage
 from pipelines.measure_extraction import Row, measure_against_columns, measure_known_pairs
+from pipelines.ncm_corrections import propose_ncm_corrections
 from pipelines.sanitize import _catalog, analysis_signature, analyze_material, merge_proposals, read_csv_records
 from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
@@ -30,7 +31,14 @@ def implementation_fingerprint():
             relative = path.relative_to(root)
             if all(part.isidentifier() for part in (*relative.parts[:-1], path.stem)):
                 sources[f"{package}/{relative.as_posix()}"] = path.read_bytes()
-    for name in ("sanitize", "corrections", "evaluate_sanitization", "measure_extraction"):
+    for name in (
+        "sanitize",
+        "corrections",
+        "ncm_corrections",
+        "full_run",
+        "evaluate_sanitization",
+        "measure_extraction",
+    ):
         module = importlib.import_module(f"pipelines.{name}")
         sources[f"pipelines/{name}.py"] = Path(module.__file__).read_bytes()
     payload = {name: hashlib.sha256(value).hexdigest() for name, value in sorted(sources.items())}
@@ -201,6 +209,7 @@ def sanitization_evaluation(csv_path, pdm_workbook, repository_name=None, manife
     merges = merge_proposals(analyzed, catalog, candidates, normalizer)
     pending_by_code = {}
     corrections, pending = propose_corrections(analyzed, catalog, normalizer, corrector, pending_by_code)
+    corrections += propose_ncm_corrections(analyzed, catalog)
     report = compare_merges(merges, groups, pairs, manifest["group_review_additions"])
     additional_groups = {}
     for cohort in manifest.get("additional_group_cohorts", []):
