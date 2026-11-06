@@ -396,6 +396,17 @@ def test_ncm_listed_for_another_item_is_rejected_by_shared_rules(pending_case):
     assert case["reviews"][0].proposal_id is None
 
 
+@pytest.mark.parametrize("ncm", ["8421.23.00", "84212300"])
+def test_ncm_is_accepted_in_either_spelling(pending_case, ncm):
+    # A base traz NCM sem pontos; o PDM, com pontos. A mesma normalização da aprovação vale aqui.
+    case = pending_case
+    response = propose(case, case["resolution"] | {"ncm": ncm})
+    assert response.status_code == 202, response.text
+    proposal = case["session"].get(SanitizationProposal, uuid.UUID(response.json()["proposal_id"]))
+    assert proposal.changeset["after"]["ncm"] == ncm
+    assert proposal.changeset["ncm_assessment"]["technical_consistency"] == "CONSISTENT"
+
+
 def test_original_stock_alias_is_supported_after_master_spelling_was_corrected(pending_case):
     case = pending_case
     row = case["reviews"][0]
