@@ -141,7 +141,7 @@ uv run vx-back classification-report ../data/desafio01/01_base_materiais.csv --i
 uv run vx-back classification-evaluate tests/fixtures/classification_review.json --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`; the default, `aliases_v1`, expands unambiguous technical aliases like `VALV ESF` first. Every input
+Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`; the default, `aliases_v1`, expands unambiguous technical aliases like `VALV ESF`, `FILT` or `RET` at the start of a field first. Every input
 record gets a result with its original values and evidence; reports do not change
 the master data. An `OUT_OF_SCOPE` classification can be a false negative and must
 not automatically reject an order.

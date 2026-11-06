@@ -67,6 +67,12 @@ parte do padrão, e a tabela fica em `repositories/classification/aliases_v1_tab
 | `VALV ESF`, `VALVULA ESF` | `VALVULA ESFERA` | ESF só é esfera logo depois de válvula |
 | `VALV` | `VALVULA` | O tipo (GLOBO, GAVETA...) continua decidindo a classe |
 | `ELEMENTO FILTRANTE` | `FILTRO` | Com o tipo (AR, OLEO...) vira o filtro; sem ele, fica em dúvida |
+| `FILT` | `FILTRO` | As 95 ocorrências da base são filtros; sem o tipo completo, fica em dúvida |
+| `RET` no começo do campo | `RETENTOR` | As 57 descrições que começam com RET são retentores; depois de VALV é retenção |
+| `CONT` no começo do campo | `CONTATOR` | Abre as 28 descrições de contatores; no meio do texto é corte de outra palavra |
+| `LAMP LED` | `LAMPADA LED` | Todas as 28 ocorrências são lâmpadas LED |
+| `O RING` sem `ANEL` antes | `ANEL O RING` | O nome do PDM é ANEL O-RING; 89 descrições escrevem só O-RING |
+| `BALL VALVE` | `VALVULA ESFERA` | Linhas de catálogo em inglês nos anexos dos pedidos |
 
 Cada alias usado vira uma evidência com o trecho como foi escrito e a regra
 `aliases_v1/alias.<id>`; o texto original continua em `original`. Os aliases não
@@ -74,8 +80,9 @@ preenchem atributos: a extração lê o texto original, então `VALV ESF 2" AISI
 vira válvula esfera de 2POL com rosca NPT, e o material do corpo fica vazio, porque
 AISI 316 não diz se é forjado ou fundido.
 
-Não entram na tabela: ESF fora de válvula (`ROL RIG ESF`), `ELEMENTO` sozinho e
-abreviações que dependem do item, como `PARAF CAB SEXTAVADA ALLEN` ou `VALV RET`. Esses
+Não entram na tabela: ESF fora de válvula (`ROL RIG ESF`), `ELEMENTO` sozinho,
+abreviações que dependem do item, como `PARAF CAB SEXTAVADA ALLEN` ou `VALV RET`, e
+sinônimos, como `VERGALHAO TENSORA` (`VERGALHAO ROSCADO` é outra peça). Esses
 textos continuam sem classe ou em dúvida. No chat, uma classificação em dúvida não é
 rejeição: o pedido fica aguardando resposta e, com até oito nomes possíveis, o agente
 pergunta qual deles é o item (`ELEMENTO FILTRANTE FLEETGUARD LF9009` lista os cinco filtros).
@@ -89,6 +96,17 @@ Efeito na base de materiais, comparado ao `rule_based_v1`:
   de novo: 39 de 40, e o erro é o caso PETRONAS/MOBIL da #73.
 - A amostra de classificação continua em 36/36: nenhuma linha dela usa esses aliases, e as
   linhas reais dos aliases estão em `tests/test_classification_aliases.py`.
+
+Abreviações da #204 (revisão 2 do `aliases_v1`), comparadas com a revisão 1:
+
+- Gabarito de classificação: de 36 para 43 classificados, todos corretos; falsos "fora do
+  escopo" de 8 para 1 (`VERGALHAO TENSORA`, que fica para revisão humana).
+- Base: 290 materiais mudam. 235 deixam de ser "fora do escopo" (anel O-ring, filtro,
+  retentor, contator e lâmpada LED), 23 filtros de óleo deixam de ser `OLEO LUBRIFICANTE`, e
+  18 retentores com `EIXO:` deixam de ser a peça `EIXO` e ficam em dúvida.
+- Pedidos: 5 dos 520 deixam de ser "fora do escopo" (3 anéis O-ring e 2 válvulas esfera).
+- Unificações: de 976 para 998 grupos, com 28 grupos novos e 6 que cresceram, todos de
+  itens agora classificados, com mesmo fabricante e referência ou mesmos atributos.
 
 Mudar a tabela ou a revisão do repositório muda a versão do índice de busca. Reconstrua o
 índice antes de usar o chat: `docker compose up --build` faz isso pelo serviço `index`.
