@@ -48,7 +48,9 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
    auditada de proposta `APPLIED` do mesmo dataset e material. A autorização é
    específica: revisão fiscal de NCM não autoriza unidade nem estado; bloqueio
    exige a aplicação de uma unificação. Aplicações sucessivas são ordenadas pela
-   versão do material e seus valores anteriores precisam continuar a cadeia.
+   versão do material: o primeiro valor anterior precisa coincidir com o original
+   importado, e os seguintes precisam continuar a cadeia. Uma aprovação sem
+   mudança do campo não explica uma diferença anterior sem aprovação.
    Cada proposta aplicada que toca o material precisa ter seu evento de aplicação
    e a transição de revisão correspondente; um evento posterior não encobre o
    início ausente.

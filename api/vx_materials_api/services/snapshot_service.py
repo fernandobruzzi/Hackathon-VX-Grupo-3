@@ -85,7 +85,7 @@ def _baseline(db, tenant_id, dataset_id) -> dict[uuid.UUID, dict]:
     return baseline
 
 
-def _approved_fields(db, tenant_id, applied):
+def _approved_fields(db, tenant_id, applied, baseline):
     """Valores e cadeia por campo, a partir do evento que efetivamente aplicou cada proposta."""
     proposals = {str(proposal.id): proposal for proposal in applied}
     expected = defaultdict(set)
@@ -143,7 +143,12 @@ def _approved_fields(db, tenant_id, applied):
                 if field != "status" and (field not in target or target[field] != after[field]):
                     continue
                 chain = fields.get(field)
-                valid = chain is None or (chain["valid"] and chain["value"] == before[field])
+                initial = baseline.get(uuid.UUID(material_id), {})
+                valid = (
+                    before[field] == initial.get(field)
+                    if chain is None
+                    else chain["valid"] and chain["value"] == before[field]
+                )
                 fields[field] = {
                     "value": after[field],
                     "valid": valid,
@@ -214,7 +219,7 @@ def create_snapshot(
         )
     }
     applied = applied_proposals(db, tenant_id, dataset_id)
-    approved = _approved_fields(db, tenant_id, applied)
+    approved = _approved_fields(db, tenant_id, applied, baseline)
 
     items, changes, untraceable = [], [], []
     for material_id, before in baseline.items():
