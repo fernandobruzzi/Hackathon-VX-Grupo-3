@@ -466,3 +466,22 @@ def test_reinforced_ptfe_tail_keeps_its_explicit_qualification(catalog, code):
 
     text = next(row.description for row in read_rows() if row.code == code)
     assert values(catalog, "PDM040", text)["VEDACAO SEDE"] == "RPTFE"
+
+
+@pytest.mark.parametrize("decimal,fraction", [("0,5", "1/2"), ("0,25", "1/4"), ("0,75", "3/4"), ("1,5", "1.1/2")])
+def test_decimal_inches_share_fractional_identity(catalog, decimal, fraction):
+    repository = RuleBasedV1ExtractionRepository()
+    pdm_class = catalog.classes["PDM040"]
+    results = [repository.extract(pdm_class, f"VALVULA ESFERA {size}POL") for size in (decimal, fraction)]
+    measures = [r.attributes["DIAMETRO NOMINAL"] for r in results]
+    assert [m.value for m in measures] == [f"{fraction}POL"] * 2
+    assert measures[0].original == f"{decimal}POL"
+    assert measures[0].rule == "measure.inches.unlabeled"
+    assert build_identity_key(pdm_class, "VALVULA ESFERA", {"DIAMETRO NOMINAL": measures[0].value}) == (
+        build_identity_key(pdm_class, "VALVULA ESFERA", {"DIAMETRO NOMINAL": measures[1].value})
+    )
+
+
+@pytest.mark.parametrize("size", ["0,3POL", "0,50POL", "0.5POL"])
+def test_unsupported_decimal_inches_are_not_read_as_whole_suffix(catalog, size):
+    assert "DIAMETRO NOMINAL" not in values(catalog, "PDM040", f"VALVULA ESFERA {size}")
