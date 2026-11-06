@@ -255,7 +255,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "7"
+    revision = "8"
 
     def extract(
         self,
@@ -419,6 +419,10 @@ class RuleBasedV1ExtractionRepository:
                         if is_valid_value(length, value):
                             work.set("COMPRIMENTO", value, match[0], "measure.compact_notation")
                 elif thread in attribute.allowed_values:
+                    # Three terms explicitly include a pitch. Never reinterpret an
+                    # unsupported pitch as length or infer coarse thread from it.
+                    if match[3]:
+                        continue
                     work.set(name, thread, match[0], "measure.metric_thread")
                     length = work.by_name.get("COMPRIMENTO")
                     if match[2] and length and "COMPRIMENTO" not in work.found:
