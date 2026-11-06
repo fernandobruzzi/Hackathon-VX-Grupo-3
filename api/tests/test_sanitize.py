@@ -1,15 +1,23 @@
 """Saneamento de ponta a ponta no banco real, com a credencial batch_user."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
-from sqlalchemy import create_engine, text
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy.orm import Session
+from test_authenticated_approvals import decision, login
 
 from clients.storage import LocalObjectStore
 from pipelines.full_run import run_sanitize
 from vx_materials_api.bootstrap import bootstrap
+from vx_materials_api.db.models import SanitizationProposal
 from vx_materials_api.db.temporary_login import temporary_login
+from vx_materials_api.main import create_app
+from vx_materials_api.schemas.proposals import proposal_hash
+from vx_materials_api.services.approval_service import decode_proposal
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
 PDM = str(KIT / "03_padrao_cadastro_PDM.xlsx")
@@ -121,3 +129,55 @@ def test_corrections_are_saved_with_before_after_and_rule(sanitized):
         "OR NOT change ? 'before')"
     )
     assert scalar(admin, query) == 0
+
+
+def test_every_saved_batch_proposal_matches_the_review_contract(sanitized):
+    _, _, admin, _ = sanitized
+    with Session(admin) as db:
+        for proposal in db.scalars(select(SanitizationProposal)):
+            decode_proposal(proposal)
+            assert proposal.changeset_hash == proposal_hash(proposal.members, proposal.changeset, proposal.evidence_ids)
+
+
+def test_real_batch_proposal_can_be_applied_with_local_sessions(sanitized, monkeypatch):
+    from domain.pdm_loader import load_pdm
+
+    _, _, admin, _ = sanitized
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
+    with admin.connect() as connection:
+        transaction = connection.begin()
+        try:
+            proposal_id = connection.execute(
+                text("""
+                SELECT id FROM sanitization_proposals WHERE proposal_type = 'MERGE'
+                AND changeset->'after'->'attributes'->>'REFERENCIA FABRICANTE' = 'WK 569/7'
+                AND changeset->'conflicts' = '[]'::jsonb LIMIT 1
+            """)
+            ).scalar_one()
+
+            def factory():
+                return Session(bind=connection, join_transaction_mode="create_savepoint")
+
+            app = create_app(session_factory=factory)
+            app.state.pdm_catalog = load_pdm(PDM)
+            proposal = SimpleNamespace(id=proposal_id)
+            with TestClient(app, base_url="http://localhost:8000") as client:
+                governance = login(client, "GESTOR_CADASTRO")
+                queue = client.get("/api/v1/sanitization/queue?limit=5")
+                assert queue.status_code == 200, queue.text
+                detail = client.get(f"/api/v1/sanitization/{proposal_id}")
+                assert detail.status_code == 200, detail.text
+                first = decision(client, governance, proposal)
+                assert first.status_code == 200, first.text
+                if first.json()["status"] == "PENDING":
+                    fiscal = login(client, "AUDITOR_FISCAL")
+                    result = decision(client, fiscal, proposal, "FISCAL", first.json()["version"])
+                    assert result.status_code == 200, result.text
+                else:
+                    result = first
+                assert result.json()["status"] == "APPLIED"
+                events = client.get("/api/v1/audit").json()["items"]
+                assert events and all(event["before"] and event["after"] for event in events)
+        finally:
+            transaction.rollback()

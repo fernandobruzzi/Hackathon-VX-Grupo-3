@@ -63,7 +63,12 @@ def get_queue(
 def get_proposal(proposal_id: UUID, request: Request, db: Db, caller: Caller):
     require_reviewer(caller)
     proposal = db.get(SanitizationProposal, proposal_id)
-    if proposal is None or proposal.tenant_id != caller.tenant_id:
+    if (
+        proposal is None
+        or proposal.tenant_id != caller.tenant_id
+        or not isinstance(proposal.changeset, dict)
+        or proposal.changeset.get("schema_version") != "proposal-v1"
+    ):
         raise ApiError(404, "NOT_FOUND", "Proposta nao encontrada.")
     return detail(db, proposal, caller, catalog(request))
 

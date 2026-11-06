@@ -1,5 +1,7 @@
 """Contrato persistido da revisão, comum ao batch em memória e aos checkpoints."""
 
+import os
+
 from domain.proposals import proposal_hash
 from repositories.normalization import get_normalization_repository
 
@@ -43,7 +45,12 @@ def approval_payload(proposal, ids, dataset_id):
     changes = proposal.changeset.get("changes", [])
     conflicts = list(proposal.conflicts)
     unsupported = {change["field"] for change in changes} - {"description", "unit"}
-    conflicts.extend(f"CAMPO_NAO_SUPORTADO: {field}" for field in sorted(unsupported))
+    conflicts.extend(
+        "Revisão de grupo de mercadorias ainda não integrada."
+        if field == "merchandise_group"
+        else f"Alteração ainda não suportada: {field}"
+        for field in sorted(unsupported)
+    )
     changeset = {
         "schema_version": "proposal-v1",
         "dataset_id": dataset_id,
@@ -56,9 +63,11 @@ def approval_payload(proposal, ids, dataset_id):
         "conflicts": conflicts,
         "changes": changes,
         "sources": {
-            "pdm_class_id": "Classificação batch registrada na proposta",
-            "attributes": "Extração batch e validação PDM; originais nos snapshots do dataset",
-            "unit": "Normalização de unidade conforme PDM",
+            "pdm_class_id": "Classificação batch: " + os.environ.get("CLASSIFICATION_REPOSITORY", "rule_based_v1"),
+            "attributes": "Extração batch: "
+            + os.environ.get("EXTRACTION_REPOSITORY", "rule_based_v1")
+            + "; validação PDM e originais no dataset",
+            "unit": "Normalização de unidade: " + normalizer.name,
             "ncm": "Normalização do NCM original; efetivação depende da revisão fiscal",
         },
     }

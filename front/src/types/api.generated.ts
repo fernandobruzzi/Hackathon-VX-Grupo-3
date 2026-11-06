@@ -513,9 +513,9 @@ export interface components {
       material_code: string;
       status: components["schemas"]["MaterialStatus"];
       description: string;
-      unit: string;
+      unit: string | null;
       ncm: string | null;
-      inventory: components["schemas"]["InventoryRow"][];
+      inventory: components["schemas"]["ProposalInventoryRow"][];
       /** @description Disponível somente com metrics:financial. */
       value_brl?: components["schemas"]["Decimal"];
     };
@@ -547,9 +547,12 @@ export interface components {
       technical_review_status: components["schemas"]["ReviewStatus"];
       fiscal_review_status: components["schemas"]["ReviewStatus"];
       conflicts: string[];
-      ranking_score: number;
+      ranking_score: number | null;
       created_at: components["schemas"]["UtcDateTime"];
       allowed_actions: components["schemas"]["Decision"][];
+      consolidated_inventory?: components["schemas"]["ConsolidatedInventoryRow"][];
+      /** @description Omitido sem metrics:financial; nulo se o valor nao estiver disponivel. */
+      consolidated_value_brl?: components["schemas"]["Decimal"] | null;
     };
     EvidenceItem: {
       attribute: string;
@@ -637,6 +640,12 @@ export interface components {
       reason: string | null;
       request_id: string;
       created_at: components["schemas"]["UtcDateTime"];
+      before?: {
+        [key: string]: unknown;
+      };
+      after?: {
+        [key: string]: unknown;
+      };
     };
     DashboardMetrics: {
       /** Format: uuid */
@@ -716,6 +725,9 @@ export interface components {
       fiscal_review_status: components["schemas"]["ReviewStatus"];
       conflicts: string[];
       allowed_actions: components["schemas"]["Decision"][];
+      title?: string;
+      ranking_score?: number | null;
+      created_at?: components["schemas"]["UtcDateTime"];
     };
     Material: {
       material_code: string;
@@ -753,7 +765,7 @@ export interface components {
       expected_version: number;
       review_area: components["schemas"]["ReviewArea"];
       decision: components["schemas"]["Decision"];
-      primary_material_code?: string;
+      primary_material_code?: string | null;
       reason: string;
     };
     ProposalDecisionResponse: {
@@ -878,6 +890,17 @@ export interface components {
     LogoutResponse: {
       /** @constant */
       logged_out: true;
+    };
+    ProposalInventoryRow: {
+      center_code: string;
+      quantity: components["schemas"]["Decimal"];
+      unit: string | null;
+    };
+    ConsolidatedInventoryRow: {
+      center_code: string;
+      quantity: components["schemas"]["Decimal"];
+      unit: string;
+      total_value?: components["schemas"]["Decimal"] | null;
     };
   };
   responses: never;
@@ -1409,7 +1432,8 @@ export interface operations {
         cursor?: string;
         limit?: number;
         review_area?: components["schemas"]["ReviewArea"];
-        status?: components["schemas"]["ProposalStatus"];
+        status?: "PENDING" | "APPLIED" | "REJECTED" | "STALE" | "DECIDED";
+        proposal_type?: components["schemas"]["ProposalType"];
       };
       header?: never;
       path?: never;

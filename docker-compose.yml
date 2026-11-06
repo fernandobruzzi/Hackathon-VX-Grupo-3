@@ -21,6 +21,8 @@ services:
     build:
       context: .
       target: api
+      args:
+        NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-api}
     environment:
       MIGRATION_DATABASE_URL: postgresql+psycopg://migration_user:${MIGRATION_DB_PASSWORD:-local_only_migration}@db:5432/${POSTGRES_DB:-vx_materiais}
       API_DB_PASSWORD: ${API_DB_PASSWORD:-local_only_api}
@@ -36,6 +38,8 @@ services:
     build:
       context: .
       target: api
+      args:
+        NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-api}
     environment:
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
       DATA_DIR: /data/desafio01
@@ -55,6 +59,8 @@ services:
     build:
       context: .
       target: api
+      args:
+        NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-api}
     env_file:
       - path: .env
         required: false
@@ -64,6 +70,7 @@ services:
       # Contas locais com cookie opaco; nunca ativar no deploy.
       APP_ENV: ${APP_ENV:-local}
       LOCAL_TEST_SESSION: ${LOCAL_TEST_SESSION:-true}
+      ENABLE_LOCAL_TEST_SESSIONS: ${ENABLE_LOCAL_TEST_SESSIONS:-false}
       AUTH_BACKEND: ${AUTH_BACKEND:-disabled}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${API_BIND_PORT:-8000}}
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
