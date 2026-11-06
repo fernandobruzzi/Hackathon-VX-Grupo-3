@@ -1,0 +1,765 @@
+{
+ "description": "Pares revisados lendo as descricoes, durante o desenvolvimento. Nao e validacao de especialista nem estimativa da base inteira. same_item nulo significa que o texto nao permite decidir.",
+ "pairs": [
+  {
+   "codes": [
+    "19169896",
+    "28128718"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10461721",
+    "23296141"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "22643065",
+    "29116970"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "16243191",
+    "24324902"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "11385486",
+    "26860719"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "16132199",
+    "17296328"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "12415531",
+    "15940152"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "14817338",
+    "21148885"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "14223418",
+    "28350540"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "16392237",
+    "18172468"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13584005",
+    "19704931"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "17353906",
+    "22431556"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "11841750",
+    "27231440"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "17497904",
+    "26546628"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13170402",
+    "14129145"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "11146844",
+    "24752822"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13167532",
+    "17993073"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "15041329",
+    "23393368"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13971315",
+    "24560997"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13239144",
+    "22824478"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "24419691",
+    "26537891"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "22303249",
+    "23754032"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13964269",
+    "25948694"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13840011",
+    "20539280"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10212045",
+    "27570994"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "14949298",
+    "24211594"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "11464218",
+    "11949580"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10212045",
+    "13066332"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "25307586",
+    "29651206"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "15122161",
+    "28861199"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "17952655",
+    "21935760"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "16643655",
+    "27071724"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "21848059",
+    "24375037"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "16120682",
+    "21011906"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "12129792",
+    "22846148"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13086878",
+    "27229010"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "14521408",
+    "14614057"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "18487633",
+    "26594052"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10203535",
+    "10448550"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13708470",
+    "18501187"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "27462146",
+    "29167585"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "18752656",
+    "21731981"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10421303",
+    "18689037"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "11666759",
+    "21539720"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "11477782",
+    "17519705"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "20318344",
+    "23545808"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "17947145",
+    "29993231"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10397362",
+    "12649841"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "20957222",
+    "28095557"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "28352743",
+    "29087667"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10798589",
+    "23151964"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "13450232",
+    "29240540"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "10579585",
+    "18392443"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "25201815",
+    "26251551"
+   ],
+   "same_item": true,
+   "note": "mesmo item pela leitura das descricoes"
+  },
+  {
+   "codes": [
+    "18155720",
+    "25839210"
+   ],
+   "same_item": null,
+   "note": "mesma descricao, sem referencia informada: nao da para confirmar"
+  },
+  {
+   "codes": [
+    "25745561",
+    "27015830"
+   ],
+   "same_item": true,
+   "note": "mesma referencia e fabricante"
+  },
+  {
+   "codes": [
+    "20607446",
+    "21469708"
+   ],
+   "same_item": true,
+   "note": "mesma referencia e fabricante"
+  },
+  {
+   "codes": [
+    "24103390",
+    "27634773"
+   ],
+   "same_item": null,
+   "note": "um nao informa material nem conexao"
+  },
+  {
+   "codes": [
+    "12764426",
+    "27199121"
+   ],
+   "same_item": false,
+   "note": "6 e 2 condutores"
+  },
+  {
+   "codes": [
+    "14029925",
+    "21642380"
+   ],
+   "same_item": false,
+   "note": "enchimento grafite e PTFE"
+  },
+  {
+   "codes": [
+    "14292727",
+    "14317792"
+   ],
+   "same_item": null,
+   "note": "um nao informa embalagem"
+  },
+  {
+   "codes": [
+    "13377716",
+    "22144219"
+   ],
+   "same_item": null,
+   "note": "descricao de um esta incompleta"
+  },
+  {
+   "codes": [
+    "20709197",
+    "23698006"
+   ],
+   "same_item": false,
+   "note": "curva C e curva B"
+  },
+  {
+   "codes": [
+    "11384720",
+    "20009709"
+   ],
+   "same_item": true,
+   "note": "mesma referencia e fabricante"
+  },
+  {
+   "codes": [
+    "11651153",
+    "16008043"
+   ],
+   "same_item": null,
+   "note": "um nao informa bitola"
+  },
+  {
+   "codes": [
+    "11831359",
+    "15400484"
+   ],
+   "same_item": null,
+   "note": "um nao informa contatos"
+  },
+  {
+   "codes": [
+    "16280762",
+    "24337489"
+   ],
+   "same_item": null,
+   "note": "um nao informa schedule"
+  },
+  {
+   "codes": [
+    "19812338",
+    "26278030"
+   ],
+   "same_item": false,
+   "note": "espessura 3 e 3,2 mm"
+  },
+  {
+   "codes": [
+    "12211832",
+    "16260718"
+   ],
+   "same_item": true,
+   "note": "descricoes identicas"
+  },
+  {
+   "codes": [
+    "27593598",
+    "29720327"
+   ],
+   "same_item": false,
+   "note": "acabamento diferente"
+  },
+  {
+   "codes": [
+    "10377301",
+    "16263252"
+   ],
+   "same_item": null,
+   "note": "um nao informa contatos"
+  },
+  {
+   "codes": [
+    "14346966",
+    "14746601"
+   ],
+   "same_item": false,
+   "note": "acabamento e medidas diferentes"
+  },
+  {
+   "codes": [
+    "19285983",
+    "20815569"
+   ],
+   "same_item": true,
+   "note": "mesma referencia e fabricante"
+  },
+  {
+   "codes": [
+    "22832138",
+    "29388576"
+   ],
+   "same_item": null,
+   "note": "um nao informa diametro"
+  },
+  {
+   "codes": [
+    "14203851",
+    "20171581"
+   ],
+   "same_item": true,
+   "note": "mesma referencia e fabricante"
+  },
+  {
+   "codes": [
+    "17554179",
+    "20119553"
+   ],
+   "same_item": false,
+   "note": "comprimento 750 e 1500 mm"
+  },
+  {
+   "codes": [
+    "17715005",
+    "23260796"
+   ],
+   "same_item": false,
+   "note": "faixa 870 e 580 PSI"
+  },
+  {
+   "codes": [
+    "14347204",
+    "15755710"
+   ],
+   "same_item": false,
+   "note": "tipo PP e flexivel"
+  },
+  {
+   "codes": [
+    "13543613",
+    "24548372"
+   ],
+   "same_item": false,
+   "note": "rosca grossa e fina"
+  },
+  {
+   "codes": [
+    "13917138",
+    "16917648"
+   ],
+   "same_item": null,
+   "note": "um nao informa secao"
+  },
+  {
+   "codes": [
+    "10436289",
+    "29588001"
+   ],
+   "same_item": false,
+   "note": "3 e 1 polos"
+  },
+  {
+   "codes": [
+    "12431921",
+    "13931254"
+   ],
+   "same_item": false,
+   "note": "API 5L e A106"
+  },
+  {
+   "codes": [
+    "10347025",
+    "11135823"
+   ],
+   "same_item": null,
+   "note": "um nao informa comprimento"
+  },
+  {
+   "codes": [
+    "11973996",
+    "13917138"
+   ],
+   "same_item": null,
+   "note": "um nao informa secao"
+  },
+  {
+   "codes": [
+    "16367892",
+    "23406311"
+   ],
+   "same_item": null,
+   "note": "um nao informa comprimento"
+  },
+  {
+   "codes": [
+    "13469341",
+    "26414935"
+   ],
+   "same_item": false,
+   "note": "comprimento 5000 e 3500 mm"
+  },
+  {
+   "codes": [
+    "10417707",
+    "18460940"
+   ],
+   "same_item": false,
+   "note": "acabamento diferente"
+  },
+  {
+   "codes": [
+    "15506821",
+    "19684675"
+   ],
+   "same_item": null,
+   "note": "um nao informa CA"
+  },
+  {
+   "codes": [
+    "14529447",
+    "18804419"
+   ],
+   "same_item": false,
+   "note": "diametro -20 e -10"
+  },
+  {
+   "codes": [
+    "15996756",
+    "27906835"
+   ],
+   "same_item": null,
+   "note": "um nao informa tipo"
+  },
+  {
+   "codes": [
+    "19516967",
+    "23554609"
+   ],
+   "same_item": false,
+   "note": "60 PSI e 60 KGF/CM2"
+  },
+  {
+   "codes": [
+    "12519571",
+    "24718737"
+   ],
+   "same_item": null,
+   "note": "material e acionamento vagos"
+  },
+  {
+   "codes": [
+    "19526338",
+    "19601723"
+   ],
+   "same_item": null,
+   "note": "um nao informa eixo"
+  },
+  {
+   "codes": [
+    "20019825",
+    "21032483"
+   ],
+   "same_item": null,
+   "note": "material e diametro vagos em um"
+  },
+  {
+   "codes": [
+    "25376103",
+    "26883301"
+   ],
+   "same_item": true,
+   "note": "mesma referencia e fabricante"
+  }
+ ]
+}

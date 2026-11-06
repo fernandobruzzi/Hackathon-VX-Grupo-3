@@ -1,0 +1,94 @@
+{
+  "schema_version": "evaluation-v1",
+  "cohort_id": "sanitization-development-v1",
+  "evaluation_kind": "DEVELOPMENT",
+  "source_commit": "59ed4ea1f69f4e36b9ecbe83dc0cf53b8acc02fe",
+  "dataset_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+  "legacy_files": {
+    "merge_groups_v1.json": "e8063327ec344fb68adf8d361d6a6804c2040859b37d9b9d153df1692bd5f863",
+    "merge_pairs_v1.json": "83eab76706889291283562386045ab194ce43562d8632e558322024c6a43f88b",
+    "merge_groups_aliases_v2.json": "a03efefc9525814c3bc119804cc85156a0fa40e84ffb5537b4b3f4907d599b81"
+  },
+  "selection": "Coorte histórica de 40 grupos sorteados com semente 32; 95 pares escolhidos no desenvolvimento; amostra técnica dirigida. Não houve revisão independente.",
+  "group_review_additions": [
+    {
+      "codes": [
+        "16387785",
+        "18402570",
+        "23858996"
+      ],
+      "author": "bepo7",
+      "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+      "label": null,
+      "evidence": [
+        "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+        "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+      ]
+    },
+    {
+      "codes": [
+        "17947145",
+        "29993231"
+      ],
+      "author": "bepo7",
+      "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+      "label": null,
+      "evidence": [
+        "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+        "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+      ]
+    },
+    {
+      "codes": [
+        "18757471",
+        "27417776"
+      ],
+      "author": "bepo7",
+      "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+      "label": null,
+      "evidence": [
+        "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+        "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+      ]
+    }
+  ],
+  "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+  "technical_file_sha256": "d39083084960678d4cb8948ccf6ddbad4f5785262232d79fad5605d25a57f23b",
+  "additional_group_cohorts": [
+    {
+      "id": "aliases-development-v2",
+      "file": "merge_groups_aliases_v2.json",
+      "source_commit": "f0a81c4",
+      "selection": "Sorteio com semente 32 após aliases_v1, recebido da main sem alterar seus rótulos.",
+      "review_additions": [
+        {
+          "codes": [
+            "14630464",
+            "16137946",
+            "28868287"
+          ],
+          "author": "bepo7",
+          "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+          "label": null,
+          "evidence": [
+            "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+            "A nota exige confirmação de revisão de peça, ainda não registrada."
+          ]
+        },
+        {
+          "codes": [
+            "27462146",
+            "29167585"
+          ],
+          "author": "bepo7",
+          "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+          "label": null,
+          "evidence": [
+            "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao; unidades diferentes bloqueiam a consolidacao de quantidade",
+            "A nota exige confirmação de revisão de peça, ainda não registrada."
+          ]
+        }
+      ]
+    }
+  ]
+}

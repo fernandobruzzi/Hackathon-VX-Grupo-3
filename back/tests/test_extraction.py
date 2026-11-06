@@ -307,7 +307,7 @@ def test_other_suffix_keeps_identity_distinct(catalog):
     assert first != second
 
 
-# Avaliação com respostas que o extrator não vê. Os mínimos só devem subir.
+# Proxy de colunas ocultas em FIL01/SOB01; não valida diâmetro, material ou pressão.
 def test_columns_hidden_from_the_extractor_confirm_its_results(catalog):
     report = measure_against_columns(catalog, read_rows())
     assert report["FABRICANTE"]["precision_percent"] >= 99

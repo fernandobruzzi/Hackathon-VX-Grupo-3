@@ -1,7 +1,8 @@
 """Amostra reproduzível de propostas de unificação, para revisão manual da precisão.
 
 A amostra é sorteada com semente fixa entre todas as unificações da base, ordenadas pelo id. Assim,
-quem revisa e o teste sorteiam os mesmos grupos. Ver `tests/fixtures/merge_precision_sample.json`.
+quem prepara uma nova revisão consegue reproduzir a seleção. Coortes já revisadas permanecem
+congeladas em `pipelines/evaluation_data/`; uma nova amostra não substitui seus rótulos.
 """
 
 import random

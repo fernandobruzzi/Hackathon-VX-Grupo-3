@@ -1,0 +1,293 @@
+{
+  "schema_version": "technical-review-v1",
+  "author": "bepo7",
+  "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+  "method": "Inspeção textual de desenvolvimento. Autor identifica o responsável pelo artefato; não é certificação técnica independente.",
+  "selection": "Amostra dirigida por classe e risco: dimensões, pressão, aliases, ausências e modelo confundido com referência; inclui casos difíceis conhecidos.",
+  "cases": [
+    {
+      "code": "15485259",
+      "description": "PARAFUSO SEXTAVADO, ROSCA:UNC, BITOLA:1POL, COMP:1.3/4 IN, CL:SAE GRAU 5, AC CARBONO, REVESTIMENTO:ZINCADO, CONF:ASME B18.2.1",
+      "expected_class_id": "PDM001",
+      "attributes": {
+        "BITOLA": "1POL",
+        "CLASSE RESISTENCIA": "SAE GRAU 5"
+      },
+      "tags": [
+        "alias"
+      ],
+      "evidence": [
+        "PARAFUSO SEXTAVADO, ROSCA:UNC, BITOLA:1POL, COMP:1.3/4 IN, CL:SAE GRAU 5, AC CARBONO, REVESTIMENTO:ZINCADO, CONF:ASME B18.2.1"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "12168946",
+      "description": "PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, DIAMETRO:M 14, COMP:100MM, CL:8.8, MAT:CARBONO, TRATAMENTO:GALVANIZADO, PADRAO:DIN 933",
+      "expected_class_id": "PDM001",
+      "attributes": {
+        "BITOLA": "M14",
+        "COMPRIMENTO": "100MM",
+        "CLASSE RESISTENCIA": "8.8"
+      },
+      "tags": [
+        "dimensao"
+      ],
+      "evidence": [
+        "PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, DIAMETRO:M 14, COMP:100MM, CL:8.8, MAT:CARBONO, TRATAMENTO:GALVANIZADO, PADRAO:DIN 933"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "14398259",
+      "description": "PORCA SEXTAVADA, BITOLA M 18, COM CLASSE A2-70, COM MATERIAL SS304, TRATAMENTO DE NATURAL, NORMA DE DIN 934",
+      "expected_class_id": "PDM003",
+      "attributes": {
+        "BITOLA": "M18",
+        "CLASSE RESISTENCIA": "A2-70",
+        "MATERIAL": "ACO INOX 304"
+      },
+      "tags": [
+        "alias"
+      ],
+      "evidence": [
+        "PORCA SEXTAVADA, BITOLA M 18, COM CLASSE A2-70, COM MATERIAL SS304, TRATAMENTO DE NATURAL, NORMA DE DIN 934"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "27095418",
+      "description": "PORCA SEXTAVADA, METRICA, COM BITOLA M 24, RESISTENCIA DE 10, ACABAMENTO DACROMET, CONF DE DIN 934",
+      "expected_class_id": "PDM003",
+      "attributes": {
+        "BITOLA": "M24",
+        "CLASSE RESISTENCIA": "10",
+        "MATERIAL": null
+      },
+      "tags": [
+        "ausencia"
+      ],
+      "evidence": [
+        "PORCA SEXTAVADA, METRICA, COM BITOLA M 24, RESISTENCIA DE 10, ACABAMENTO DACROMET, CONF DE DIN 934"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "20571479",
+      "description": "VALVULA ESFERA, DIAM NOMINAL:2 POL, 800#, MATERIAL:ACO INOX FORJADO A182 F316, EXTREMIDADES:ROSCA NPT, PASSAGEM:PASSAGEM REDUZIDA, VEDACAO SEDE:PTFE REFORCADO - CONF AMOSTRA",
+      "expected_class_id": "PDM040",
+      "attributes": {
+        "DIAMETRO NOMINAL": "2POL",
+        "CLASSE PRESSAO": "800#",
+        "MATERIAL CORPO": "ACO INOX FORJADO A182 F316",
+        "ACIONAMENTO": null
+      },
+      "tags": [
+        "pressao",
+        "ausencia"
+      ],
+      "evidence": [
+        "VALVULA ESFERA, DIAM NOMINAL:2 POL, 800#, MATERIAL:ACO INOX FORJADO A182 F316, EXTREMIDADES:ROSCA NPT, PASSAGEM:PASSAGEM REDUZIDA, VEDACAO SEDE:PTFE REFORCADO - CONF AMOSTRA"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "22228120",
+      "description": "VALVULA ESFERA, BITOLA:1.1/2POL, RATING:800#, MAT CORPO:F316, TIPO CONEXAO:RSC NPT, PASSAGEM:STD, METAL-METAL",
+      "expected_class_id": "PDM040",
+      "attributes": {
+        "DIAMETRO NOMINAL": "1.1/2POL",
+        "MATERIAL CORPO": "ACO INOX FORJADO A182 F316"
+      },
+      "tags": [
+        "alias"
+      ],
+      "evidence": [
+        "VALVULA ESFERA, BITOLA:1.1/2POL, RATING:800#, MAT CORPO:F316, TIPO CONEXAO:RSC NPT, PASSAGEM:STD, METAL-METAL"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "15551676",
+      "description": "ROLAMENTO RIGIDO ESFERAS; REFERENCIA: 6315-2RS/C3; DIAMETRO INTERNO: 75MM; DIAMETRO EXTERNO: 160MM; LARGURA: 37MM; VEDACAO: BORRACHA AMBOS LADOS; FOLGA: C3",
+      "expected_class_id": "PDM020",
+      "attributes": {
+        "REFERENCIA": "6315-2RS/C3",
+        "DIAMETRO INTERNO": "75MM",
+        "DIAMETRO EXTERNO": "160MM",
+        "LARGURA": "37MM"
+      },
+      "tags": [
+        "dimensao"
+      ],
+      "evidence": [
+        "ROLAMENTO RIGIDO ESFERAS; REFERENCIA: 6315-2RS/C3; DIAMETRO INTERNO: 75MM; DIAMETRO EXTERNO: 160MM; LARGURA: 37MM; VEDACAO: BORRACHA AMBOS LADOS; FOLGA: C3"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "27292151",
+      "description": "ROLAMENTO RIGIDO ESFERA 6315-2RS/C3 160 MM 37MM BORRACHA AMBOS LADOS C3 - REF ANTIGA",
+      "expected_class_id": "PDM020",
+      "attributes": {
+        "DIAMETRO INTERNO": null,
+        "DIAMETRO EXTERNO": null,
+        "LARGURA": null
+      },
+      "tags": [
+        "ausencia"
+      ],
+      "evidence": [
+        "ROLAMENTO RIGIDO ESFERA 6315-2RS/C3 160 MM 37MM BORRACHA AMBOS LADOS C3 - REF ANTIGA"
+      ],
+      "notes": "Medidas sem rótulos não confirmam inequivocamente o campo; não usar catálogo implícito do rolamento."
+    },
+    {
+      "code": "24739856",
+      "description": "MANOMETRO, EXTREMIDADE:1/4POL NPT INFERIOR, FAIXA:0-400 BAR, DIAM VISOR:63MM, MATERIAL CAIXA:INOX 304, ENCHIMENTO:SECO",
+      "expected_class_id": "PDM067",
+      "attributes": {
+        "FAIXA": "0-400BAR",
+        "DIAMETRO VISOR": "63MM",
+        "ENCHIMENTO": "SECO"
+      },
+      "tags": [
+        "pressao"
+      ],
+      "evidence": [
+        "MANOMETRO, EXTREMIDADE:1/4POL NPT INFERIOR, FAIXA:0-400 BAR, DIAM VISOR:63MM, MATERIAL CAIXA:INOX 304, ENCHIMENTO:SECO"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "16801774",
+      "description": "MANOMETRO, DIAM VISOR:100MM, ESCALA:0-1450PSI, 1/4POL NPT INFERIOR, MATERIAL CAIXA:INOX 304, ENCHIMENTO:GLICERINA",
+      "expected_class_id": "PDM067",
+      "attributes": {
+        "FAIXA": "0-100BAR",
+        "DIAMETRO VISOR": "100MM"
+      },
+      "tags": [
+        "conversao"
+      ],
+      "evidence": [
+        "MANOMETRO, DIAM VISOR:100MM, ESCALA:0-1450PSI, 1/4POL NPT INFERIOR, MATERIAL CAIXA:INOX 304, ENCHIMENTO:GLICERINA"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "22047652",
+      "description": "MANGUEIRA HIDRAULICA, PADRAO: SAE 100R2AT, DIAMETRO INTERNO: 2\", PRESSAO TRABALHO: 80BAR, REFORCO: 2 TRAMAS ACO, MATERIAL COBERTURA: BORRACHA SINTETICA ANTIABRASAO",
+      "expected_class_id": "PDM010",
+      "attributes": {
+        "DIAMETRO INTERNO": "2POL",
+        "PRESSAO TRABALHO": "80BAR",
+        "REFORCO": "2 TRAMAS ACO"
+      },
+      "tags": [
+        "pressao"
+      ],
+      "evidence": [
+        "MANGUEIRA HIDRAULICA, PADRAO: SAE 100R2AT, DIAMETRO INTERNO: 2\", PRESSAO TRABALHO: 80BAR, REFORCO: 2 TRAMAS ACO, MATERIAL COBERTURA: BORRACHA SINTETICA ANTIABRASAO"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "28216055",
+      "description": "MANGUEIRA HIDRAULICA, CONF:EN 856 4SP, DIAMETRO INTERNO:-32, REFORCO:4 ESP ACO, PRESSAO:165BAR, COB:BORRACHA SINTETICA ANTIABRASAO",
+      "expected_class_id": "PDM010",
+      "attributes": {
+        "DIAMETRO INTERNO": "2POL",
+        "PRESSAO TRABALHO": "165BAR",
+        "REFORCO": "4 ESPIRAIS ACO"
+      },
+      "tags": [
+        "alias"
+      ],
+      "evidence": [
+        "MANGUEIRA HIDRAULICA, CONF:EN 856 4SP, DIAMETRO INTERNO:-32, REFORCO:4 ESP ACO, PRESSAO:165BAR, COB:BORRACHA SINTETICA ANTIABRASAO"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "19547027",
+      "description": "BUCHA ESCAVADEIRA HIDRAULICA 6030 CATERPILLAR",
+      "expected_class_id": "PDM110",
+      "attributes": {
+        "MODELO EQUIPAMENTO": "6030",
+        "REFERENCIA FABRICANTE": null
+      },
+      "tags": [
+        "erro-conhecido-73"
+      ],
+      "evidence": [
+        "BUCHA ESCAVADEIRA HIDRAULICA 6030 CATERPILLAR"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "22125549",
+      "description": "RODA GUIA ESCAVADEIRA HIDRAULICA 6030 CATERPILLAR",
+      "expected_class_id": "PDM110",
+      "attributes": {
+        "MODELO EQUIPAMENTO": "6030",
+        "REFERENCIA FABRICANTE": null
+      },
+      "tags": [
+        "erro-conhecido-73"
+      ],
+      "evidence": [
+        "RODA GUIA ESCAVADEIRA HIDRAULICA 6030 CATERPILLAR"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "11030366",
+      "description": "BUCHA ESCAVADEIRA HIDRAULICA EX1200 COD 4893434 HITACHI",
+      "expected_class_id": "PDM110",
+      "attributes": {
+        "MODELO EQUIPAMENTO": "EX1200",
+        "REFERENCIA FABRICANTE": "4893434"
+      },
+      "tags": [
+        "referencia-explicita"
+      ],
+      "evidence": [
+        "BUCHA ESCAVADEIRA HIDRAULICA EX1200 COD 4893434 HITACHI"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "22895390",
+      "description": "RODA GUIA, REFERENCIA FABRICANTE:809-2155, MODELO EQUIPAMENTO:6015B, FABRICANTE:CATERPILLAR, ESCAVADEIRA HIDRAULICA",
+      "expected_class_id": "PDM110",
+      "attributes": {
+        "MODELO EQUIPAMENTO": "6015B",
+        "REFERENCIA FABRICANTE": "809-2155"
+      },
+      "tags": [
+        "referencia-explicita"
+      ],
+      "evidence": [
+        "RODA GUIA, REFERENCIA FABRICANTE:809-2155, MODELO EQUIPAMENTO:6015B, FABRICANTE:CATERPILLAR, ESCAVADEIRA HIDRAULICA"
+      ],
+      "notes": "Somente os campos listados foram rotulados; valores nulos indicam que o texto não sustenta um valor inequívoco."
+    },
+    {
+      "code": "21457702",
+      "description": "VALVULA ESFERA 1.1/2\" 800# INOX 316 ROSCADA NPT PASSAGEM REDUZIDA METAL-METAL ATUADOR PNEUMATICO",
+      "expected_class_id": "PDM040",
+      "attributes": {
+        "DIAMETRO NOMINAL": "1.1/2POL",
+        "MATERIAL CORPO": null
+      },
+      "tags": [
+        "ambiguidade-material"
+      ],
+      "evidence": [
+        "VALVULA ESFERA 1.1/2\" 800# INOX 316 ROSCADA NPT PASSAGEM REDUZIDA METAL-METAL ATUADOR PNEUMATICO"
+      ],
+      "notes": "INOX 316 não distingue forjado A182 F316 e fundido A351 CF8M."
+    }
+  ]
+}

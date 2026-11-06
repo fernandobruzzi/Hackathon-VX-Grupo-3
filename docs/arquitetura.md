@@ -1107,6 +1107,8 @@ A API exige ROLE_AUDITOR_FISCAL. Se ainda faltar aprovação técnica, retorna `
 
 ### 6.4. Dashboard
 
+Precisão e recuperação de coortes de desenvolvimento ficam separadas dos indicadores do produto; método e limites em [avaliacao-saneamento.md](avaliacao-saneamento.md). Aceitação pelo PDM não comprova correção técnica.
+
 A implementação local usa snapshots originais e propostas persistidas, com escopo por tenant, dataset e centros. O funil é calculado sem estimar precisão ou economia; detalhes em [dashboard.md](dashboard.md). O depois vem de um snapshot posterior gerado só com propostas aplicadas; detalhes no mesmo documento.
 
 `GET /api/v1/dashboard/metrics?view=executive`

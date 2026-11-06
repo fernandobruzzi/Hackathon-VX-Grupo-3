@@ -1,0 +1,338 @@
+{
+  "description": "Amostra aleatoria das propostas MERGE da base inteira (semente e tamanho em pipelines/merge_sample.py), revisada lendo descricoes, fabricante e referencia, durante o desenvolvimento. Nao e validacao de especialista. same_item nulo significa que o texto nao permite decidir. Sorteada de novo quando a classificacao passou a usar aliases_v1 (#86); decisoes de grupos ja revisados foram mantidas.",
+  "seed": 32,
+  "size": 40,
+  "candidate_repository": "exact_identity_v1",
+  "reviewed": [
+    {
+      "codes": [
+        "17497904",
+        "26546628"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "15360049",
+        "19452731"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo texto, fabricante e referencia; unidades diferentes bloqueiam a consolidacao de quantidade"
+    },
+    {
+      "codes": [
+        "18540640",
+        "20031324"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia; unidades diferentes bloqueiam a consolidacao de quantidade"
+    },
+    {
+      "codes": [
+        "15002251",
+        "18900827"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade (NBR e nitrilica sao a mesma borracha)"
+    },
+    {
+      "codes": [
+        "25449636",
+        "27070325"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e equipamento; a referencia 6600027495 do segundo membro esta na coluna de referencia"
+    },
+    {
+      "codes": [
+        "11072656",
+        "26225724"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "16060549",
+        "20151915"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "11851343",
+        "25801564",
+        "29703767"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "19004221",
+        "22503373"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (455-56-74852 e 4555674852)"
+    },
+    {
+      "codes": [
+        "15879155",
+        "20140805",
+        "28690965"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "11403739",
+        "27869053"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "15922102",
+        "22511750",
+        "29935091"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (297-0599 e 2970599); NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "25993909",
+        "27056232"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "12853858",
+        "20336682"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade"
+    },
+    {
+      "codes": [
+        "14630464",
+        "16137946",
+        "28868287"
+      ],
+      "same_item": true,
+      "note": "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao"
+    },
+    {
+      "codes": [
+        "14066893",
+        "22480902"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e referencia 7731730441, esta na coluna de referencia de um membro; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "18126148",
+        "22592125",
+        "22921157"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "17024311",
+        "20193481",
+        "21727344"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia; unidades diferentes bloqueiam a consolidacao de quantidade"
+    },
+    {
+      "codes": [
+        "18503954",
+        "22883797",
+        "29135149"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade"
+    },
+    {
+      "codes": [
+        "22930691",
+        "29147018"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "26096352",
+        "28405550"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "20719203",
+        "21611937"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade"
+    },
+    {
+      "codes": [
+        "19977048",
+        "24899970"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "27462146",
+        "29167585"
+      ],
+      "same_item": true,
+      "note": "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao; unidades diferentes bloqueiam a consolidacao de quantidade"
+    },
+    {
+      "codes": [
+        "11002642",
+        "22202753"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "15157229",
+        "27732736"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (N33156178 e codigo Metso); unidades diferentes bloqueiam a consolidacao de quantidade; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "20899545",
+        "26910115"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "14304216",
+        "24948591"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "12909183",
+        "23352274",
+        "24220721"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "17590309",
+        "27863373"
+      ],
+      "same_item": false,
+      "note": "fabricantes diferentes (PETRONAS e MOBIL): produtos equivalentes ficam separados pela regra do time, com a equivalencia registrada, sem unificar"
+    },
+    {
+      "codes": [
+        "12251696",
+        "18269625"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade (bobina e tensao de comando 24VCC)"
+    },
+    {
+      "codes": [
+        "16070294",
+        "21298331"
+      ],
+      "same_item": true,
+      "note": "mesmo item: descricoes identicas"
+    },
+    {
+      "codes": [
+        "10576061",
+        "11882453"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade; NCM divergente sinalizado para revisao fiscal"
+    },
+    {
+      "codes": [
+        "11654580",
+        "27597832"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma referencia 550-6569; 6030 e o modelo do equipamento nos dois membros, nao a referencia"
+    },
+    {
+      "codes": [
+        "20321699",
+        "26395025"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+    },
+    {
+      "codes": [
+        "20051147",
+        "20226271"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade (NBR e nitrilica)"
+    },
+    {
+      "codes": [
+        "18675010",
+        "25808476",
+        "27155952"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (sufixo -00 na referencia)"
+    },
+    {
+      "codes": [
+        "12183956",
+        "15953542",
+        "25383359"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesma classe e mesmos atributos de identidade; unidades diferentes bloqueiam a consolidacao de quantidade"
+    },
+    {
+      "codes": [
+        "15063326",
+        "29468389"
+      ],
+      "same_item": true,
+      "note": "mesmo item: descricoes identicas; agrupado depois que ELEMENTO FILTRANTE passou a identificar a classe de filtros (#86)"
+    },
+    {
+      "codes": [
+        "17193884",
+        "29768512"
+      ],
+      "same_item": true,
+      "note": "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia; um membro marca o PN como REF ANTIGA, mas os dois usam o mesmo PN; NCM divergente sinalizado para revisao fiscal"
+    }
+  ]
+}

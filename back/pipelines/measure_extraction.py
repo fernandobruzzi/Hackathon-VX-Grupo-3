@@ -139,8 +139,8 @@ def measure_against_columns(catalog: PdmCatalog, rows: list[Row], repository_nam
             "rows": total,
             "filled": filled,
             "correct": correct,
-            "coverage_percent": round(100 * filled / total, 1) if total else 0,
-            "precision_percent": round(100 * correct / filled, 1) if filled else 0,
+            "coverage_percent": round(100 * filled / total, 1) if total else None,
+            "precision_percent": round(100 * correct / filled, 1) if filled else None,
         }
     return report
 

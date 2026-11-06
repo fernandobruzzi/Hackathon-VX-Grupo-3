@@ -9,6 +9,7 @@ from collections import Counter
 from domain.contracts import NormalizedField
 from domain.runtime import check_simulated_clients
 from pipelines.classify import classification_evaluation, classification_report
+from pipelines.evaluate_sanitization import sanitization_evaluation
 from pipelines.full_run import run_sanitize
 from pipelines.sanitize import sanitize_report
 from pipelines.search_index import run_index
@@ -60,6 +61,11 @@ def main(argv: list[str] | None = None) -> int:
     report_merges.add_argument("csv_path")
     report_merges.add_argument("--pdm-workbook")
     report_merges.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
+    sanitation_eval = commands.add_parser("sanitization-evaluate", help="Avalia coortes congeladas de desenvolvimento")
+    sanitation_eval.add_argument("csv_path")
+    sanitation_eval.add_argument("--pdm-workbook", required=True)
+    sanitation_eval.add_argument("--repository")
+    sanitation_eval.add_argument("--cohort-manifest", help="Manifesto versionado; padrão: coorte de desenvolvimento v1")
     index = commands.add_parser("index", help="Reconstroi o indice de busca, com a credencial batch_user")
     index.add_argument("--pdm-workbook")
     index.add_argument("--if-stale", action="store_true", help="Pula se a versao atual ja cobre todos os materiais")
@@ -70,7 +76,9 @@ def main(argv: list[str] | None = None) -> int:
     sanitize.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
     args = parser.parse_args(argv)
 
-    if args.command == "index":
+    if args.command == "sanitization-evaluate":
+        result = sanitization_evaluation(args.csv_path, args.pdm_workbook, args.repository, args.cohort_manifest)
+    elif args.command == "index":
         result = run_index(args.pdm_workbook, if_stale=args.if_stale)
     elif args.command == "sanitize-report":
         result = sanitize_report(args.csv_path, args.pdm_workbook, args.repository)

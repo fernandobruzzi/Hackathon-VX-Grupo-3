@@ -25,7 +25,8 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
   revisáveis.
 - **Avaliação:** zero pares e precisão/recall indisponíveis até existir uma
   avaliação independente publicada. Aprovação humana de propostas operacionais
-  não é uma amostra rotulada de precisão. A avaliação independente segue na #85.
+  não é uma amostra rotulada de precisão. O [relatório da #85](avaliacao-saneamento.md) é de desenvolvimento e não alimenta
+  esses indicadores; sua publicação futura exige a revisão independente da #113.
 - **Depois:** vem do snapshot posterior mais recente do dataset. Sem snapshot,
   `after=null` e `AFTER_SNAPSHOT_NOT_AVAILABLE`; aplicações atualizam o funil, mas
   não o depois. Com snapshot, `comparison_status=AVAILABLE`, `after` traz as mesmas
