@@ -1,0 +1,426 @@
+{
+  "baseline_commit": "00f70cd53bd16ac0fbfc4ff52f58e0add2b7e35e",
+  "candidate_parent": "c3639a9885ed70a6799d844b0814bc475a73b66b",
+  "candidate_extractor_sha256": "ef885e035ce67dea28d9aebfb92b23237129709aae3e599d1ee0eb971abf8386",
+  "candidate_revision": "8",
+  "scope": "development extraction and candidate identity-key comparison; not independent precision or merge authorization",
+  "data_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+  "pdm_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+  "materials": {
+    "total": 23554,
+    "before_statuses": {
+      "SEM_CLASSE": 5597,
+      "VALID": 10883,
+      "INCOMPLETE": 7074
+    },
+    "after_statuses": {
+      "SEM_CLASSE": 5597,
+      "VALID": 10883,
+      "INCOMPLETE": 7074
+    },
+    "changed_rows": 9,
+    "changed_identity_keys": 0,
+    "deltas": [
+      {
+        "code": "26211976",
+        "class": "PDM001",
+        "description": "PARAFUSO SEXTAVADO, ROSCA MF, DIAMETRO M 12X1,5, COMP 150MM, CL 8.8, ACO CARB, PADRAO DIN 933",
+        "before": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M12X1,5",
+            "COMPRIMENTO": "150MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PARAFUSO SEXTAVADO",
+            "ROSCA MF"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M12X1,5",
+            "COMPRIMENTO": "150MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PARAFUSO SEXTAVADO",
+            "ROSCA MF",
+            "DIAMETRO"
+          ]
+        },
+        "development_review": "Only the label DIAMETRO remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "10892841",
+        "class": "PDM003",
+        "description": "PORCA MODELO DE SEXTAVADA, ROSCA DE ROSCA FINA, DIAMETRO DE M-10X1,25, CL DE 8, MATERIAL ACO, ACABAMENTO DE GF, COM CONF DIN 934",
+        "before": {
+          "attributes": {
+            "TIPO": "SEXTAVADA",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M10X1,25",
+            "CLASSE RESISTENCIA": "8",
+            "NORMA": "DIN 934"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PORCA",
+            "ROSCA",
+            "MATERIAL ACO",
+            "ACABAMENTO GF",
+            "COM"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "TIPO": "SEXTAVADA",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M10X1,25",
+            "CLASSE RESISTENCIA": "8",
+            "NORMA": "DIN 934"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PORCA",
+            "ROSCA",
+            "DIAMETRO",
+            "MATERIAL ACO",
+            "ACABAMENTO GF",
+            "COM"
+          ]
+        },
+        "development_review": "Only the label DIAMETRO remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "11441916",
+        "class": "PDM003",
+        "description": "PORCA, TIPO SEXTAVADA, ROSCA ROSCA FINA, DIAMETRO M8X1, 8, MATERIAL ACO, ACABAMENTO ZINC BRANCO",
+        "before": {
+          "attributes": {
+            "TIPO": "SEXTAVADA",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M8X1",
+            "ACABAMENTO": "ZINCADO BRANCO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PORCA",
+            "ROSCA",
+            "8",
+            "MATERIAL ACO"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "TIPO": "SEXTAVADA",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M8X1",
+            "ACABAMENTO": "ZINCADO BRANCO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PORCA",
+            "ROSCA",
+            "DIAMETRO",
+            "8",
+            "MATERIAL ACO"
+          ]
+        },
+        "development_review": "Only the label DIAMETRO remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "27370692",
+        "class": "PDM003",
+        "description": "PORCA COM TIPO SEXTAVADA, COM ROSCA ROSCA FINA, DIAMETRO M12X1,5, CLASSE DE 8, AC CARBONO, COM ACABAMENTO GALV A FOGO, CONF DE DIN 934",
+        "before": {
+          "attributes": {
+            "TIPO": "SEXTAVADA",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M12X1,5",
+            "CLASSE RESISTENCIA": "8",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "GALVANIZADO A FOGO",
+            "NORMA": "DIN 934"
+          },
+          "status": "VALID",
+          "identity_key": "PDM003|PORCA|TIPO=SEXTAVADA|ROSCA=METRICA FINA|BITOLA=M12X1,5|CLASSE RESISTENCIA=8|MATERIAL=ACO CARBONO|ACABAMENTO=GALVANIZADO A FOGO",
+          "unresolved": [
+            "PORCA COM",
+            "COM",
+            "ROSCA",
+            "COM"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "TIPO": "SEXTAVADA",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M12X1,5",
+            "CLASSE RESISTENCIA": "8",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "GALVANIZADO A FOGO",
+            "NORMA": "DIN 934"
+          },
+          "status": "VALID",
+          "identity_key": "PDM003|PORCA|TIPO=SEXTAVADA|ROSCA=METRICA FINA|BITOLA=M12X1,5|CLASSE RESISTENCIA=8|MATERIAL=ACO CARBONO|ACABAMENTO=GALVANIZADO A FOGO",
+          "unresolved": [
+            "PORCA COM",
+            "COM",
+            "ROSCA",
+            "DIAMETRO",
+            "COM"
+          ]
+        },
+        "development_review": "Only the label DIAMETRO remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "11146727",
+        "class": "PDM001",
+        "description": "PARAFUSO SEXTAVADO MF, DIAMETRO M-20X1,5, COM C 70 MM, RESISTENCIA 8.8, ACO CARBONO, COM TRATAMENTO ZINC, NORMA CONSTRUCAO DIN 931",
+        "before": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M20X1,5",
+            "COMPRIMENTO": "70MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 931"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PARAFUSO SEXTAVADO MF",
+            "COM",
+            "COM",
+            "TRATAMENTO ZINC"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M20X1,5",
+            "COMPRIMENTO": "70MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 931"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PARAFUSO SEXTAVADO MF",
+            "DIAMETRO",
+            "COM",
+            "COM",
+            "TRATAMENTO ZINC"
+          ]
+        },
+        "development_review": "Only the label DIAMETRO remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "14628844",
+        "class": "PDM001",
+        "description": "PARAFUSO SEXTAVADO, DIN 933, DIAMETRO M10X1,25, COMP 150,0MM, CLASSE RESISTENCIA 8.8, MAT ACO, ROSCA ROSCA FINA",
+        "before": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M10X1,25",
+            "COMPRIMENTO": "150MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PARAFUSO SEXTAVADO",
+            "MAT ACO",
+            "ROSCA"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M10X1,25",
+            "COMPRIMENTO": "150MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PARAFUSO SEXTAVADO",
+            "DIAMETRO",
+            "MAT ACO",
+            "ROSCA"
+          ]
+        },
+        "development_review": "Only the label DIAMETRO remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "27040151",
+        "class": "PDM003",
+        "description": "PORCA COM TIPO AUTOTRAVANTE, COM ROSCA ROSCA FINA, BITOLA DE M-20X1,5, COM CL 10, MAT ACO, ZINCADO, COM NORMA DIN 985",
+        "before": {
+          "attributes": {
+            "TIPO": "AUTOTRAVANTE",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M20X1,5",
+            "CLASSE RESISTENCIA": "10",
+            "NORMA": "DIN 985"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PORCA COM",
+            "COM",
+            "ROSCA",
+            "COM",
+            "MAT ACO",
+            "ZINCADO",
+            "COM"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "TIPO": "AUTOTRAVANTE",
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M20X1,5",
+            "CLASSE RESISTENCIA": "10",
+            "NORMA": "DIN 985"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "unresolved": [
+            "PORCA COM",
+            "COM",
+            "ROSCA",
+            "BITOLA",
+            "COM",
+            "MAT ACO",
+            "ZINCADO",
+            "COM"
+          ]
+        },
+        "development_review": "Only the label BITOLA remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "14043420",
+        "class": "PDM001",
+        "description": "PARAFUSO SEXTAVADO COM ROSCA METRICA FINA, BITOLA DE M 16X1,5, COMP 250 MM, CL 10.9, COM MATERIAL CARBONO, TRATAMENTO DE OXIDADO PRETO, NORMA CONSTRUCAO DE DIN 931",
+        "before": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M16X1,5",
+            "COMPRIMENTO": "250MM",
+            "CLASSE RESISTENCIA": "10.9",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "OXIDADO PRETO",
+            "NORMA": "DIN 931"
+          },
+          "status": "VALID",
+          "identity_key": "PDM001|PARAFUSO SEXTAVADO|ROSCA=METRICA FINA|BITOLA=M16X1,5|COMPRIMENTO=250MM|CLASSE RESISTENCIA=10.9|MATERIAL=ACO CARBONO|ACABAMENTO=OXIDADO PRETO|NORMA=DIN 931",
+          "unresolved": [
+            "PARAFUSO SEXTAVADO COM",
+            "COM"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M16X1,5",
+            "COMPRIMENTO": "250MM",
+            "CLASSE RESISTENCIA": "10.9",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "OXIDADO PRETO",
+            "NORMA": "DIN 931"
+          },
+          "status": "VALID",
+          "identity_key": "PDM001|PARAFUSO SEXTAVADO|ROSCA=METRICA FINA|BITOLA=M16X1,5|COMPRIMENTO=250MM|CLASSE RESISTENCIA=10.9|MATERIAL=ACO CARBONO|ACABAMENTO=OXIDADO PRETO|NORMA=DIN 931",
+          "unresolved": [
+            "PARAFUSO SEXTAVADO COM",
+            "BITOLA",
+            "COM"
+          ]
+        },
+        "development_review": "Only the label BITOLA remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      },
+      {
+        "code": "26136240",
+        "class": "PDM001",
+        "description": "PARAFUSO SEXTAVADO ROSCA MF, BITOLA M 16X1,5, 250MM, 8.8, COM MATERIAL CARBONO, ZINCADO BRANCO, DIN 931",
+        "before": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M16X1,5",
+            "COMPRIMENTO": "250MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "ZINCADO BRANCO",
+            "NORMA": "DIN 931"
+          },
+          "status": "VALID",
+          "identity_key": "PDM001|PARAFUSO SEXTAVADO|ROSCA=METRICA FINA|BITOLA=M16X1,5|COMPRIMENTO=250MM|CLASSE RESISTENCIA=8.8|MATERIAL=ACO CARBONO|ACABAMENTO=ZINCADO BRANCO|NORMA=DIN 931",
+          "unresolved": [
+            "PARAFUSO SEXTAVADO",
+            "ROSCA MF",
+            "COM"
+          ]
+        },
+        "after": {
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "BITOLA": "M16X1,5",
+            "COMPRIMENTO": "250MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "ZINCADO BRANCO",
+            "NORMA": "DIN 931"
+          },
+          "status": "VALID",
+          "identity_key": "PDM001|PARAFUSO SEXTAVADO|ROSCA=METRICA FINA|BITOLA=M16X1,5|COMPRIMENTO=250MM|CLASSE RESISTENCIA=8.8|MATERIAL=ACO CARBONO|ACABAMENTO=ZINCADO BRANCO|NORMA=DIN 931",
+          "unresolved": [
+            "PARAFUSO SEXTAVADO",
+            "ROSCA MF",
+            "BITOLA",
+            "COM"
+          ]
+        },
+        "development_review": "Only the label BITOLA remains in unresolved after metric scanning; attribute values, status and identity key are unchanged."
+      }
+    ],
+    "changed_attribute_rows": 0,
+    "changed_status_rows": 0,
+    "changed_unresolved_rows": 9
+  },
+  "orders": {
+    "total": 520,
+    "before_statuses": {
+      "READY_FOR_REVIEW": 256,
+      "INCOMPLETE": 178,
+      "OUT_OF_SCOPE": 86
+    },
+    "after_statuses": {
+      "READY_FOR_REVIEW": 256,
+      "INCOMPLETE": 178,
+      "OUT_OF_SCOPE": 86
+    },
+    "changed_rows": 0,
+    "deltas": []
+  },
+  "independent_review": false,
+  "authorizes_merge": false,
+  "delta_review": "Development review of every listed delta; no independent precision claim."
+}

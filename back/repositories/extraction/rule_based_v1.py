@@ -176,6 +176,9 @@ def _contained_value(attribute: PdmAttribute, raw: str) -> str | None:
     """O único valor permitido contido no texto, quando há exatamente um."""
     if attribute.allowed_values is None:
         return None
+    # M12 dentro de M12 X passo X comprimento não comprova rosca grossa.
+    if attribute.name in _METRIC_ATTRIBUTES and (metric := _POOL_METRIC.search(raw)) and metric[2]:
+        return None
     found = [v for v in attribute.allowed_values if re.search(rf"(?<![\w.\-]){re.escape(v)}{_VALUE_END}", raw)]
     longest = [v for v in found if not any(v != other and v in other for other in found)]
     return longest[0] if len(longest) == 1 else None
@@ -304,6 +307,10 @@ class RuleBasedV1ExtractionRepository:
     @staticmethod
     def _fit_longest_prefix(work: _Extraction, label: str, value: str) -> str | None:
         """Sem separador, só consome um prefixo inteiro; correspondências parciais engoliriam outros atributos."""
+        names = (label, *KEY_ALIASES.get(label, ()))
+        # Preservar a notação inteira para o leitor métrico, sem encurtá-la até M12.
+        if set(names).intersection(_METRIC_ATTRIBUTES) and (metric := _POOL_METRIC.search(value)) and metric[2]:
+            return None
         words = value.split()
         for size in range(len(words), 0, -1):
             # Palavras soltas só no valor inteiro: um prefixo não pode ganhar qualificadores ausentes.
