@@ -117,6 +117,7 @@ def test_reader_keeps_catalog_index_and_stock_inside_authenticated_tenant(databa
     """Mesmo centro e referência não tornam o catálogo da outra empresa visível."""
     other = "22222222-2222-4222-8222-222222222222"
     code = "16031971"
+    query = "filtro oleo lubrificante Fleetguard LF 9009"
     with database["admin"].begin() as connection:
         material_id = connection.execute(
             text("SELECT id FROM materials_master WHERE material_code = :code"), {"code": code}
@@ -141,22 +142,22 @@ def test_reader_keeps_catalog_index_and_stock_inside_authenticated_tenant(databa
             )
     try:
         for caller in (REQUESTER, FISCAL):
-            result = search(database, caller, query="filtro Fleetguard LF 9009")
+            result = search(database, caller, query=query)
             assert all(c["material_code"] != code for c in result["candidates"])
-            own = search(database, {**caller, "tenant_id": other}, query="filtro Fleetguard LF 9009")
+            own = search(database, {**caller, "tenant_id": other}, query=query)
             top = own["candidates"][0]
             assert top["material_code"] == code and top["identity_verified"]
             assert top["inventory"]
             assert bool(top["inventory"][0].get("unit_price")) is (caller is FISCAL)
             outside = {**caller, "tenant_id": other, "center_codes": ["9999"]}
-            assert search(database, outside, query="filtro Fleetguard LF 9009")["candidates"][0]["inventory"] == []
+            assert search(database, outside, query=query)["candidates"][0]["inventory"] == []
         # Um índice inconsistente não pode apontar para o material de outro tenant.
         with database["admin"].begin() as connection:
             connection.execute(
                 text("UPDATE material_search_index SET tenant_id = :tenant WHERE material_id = :id"),
                 {"tenant": TENANT_ID, "id": material_id},
             )
-        result = search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+        result = search(database, REQUESTER, query=query)
         assert all(c["material_code"] != code for c in result["candidates"])
     finally:
         with database["admin"].begin() as connection:
