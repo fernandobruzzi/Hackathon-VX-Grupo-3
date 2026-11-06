@@ -46,6 +46,7 @@ def base(migrated_url, tmp_path_factory):
 def clean_jobs(base):
     admin = base[0]
     with admin.begin() as connection:
+        connection.execute(text("DELETE FROM manual_reviews"))
         connection.execute(text("DELETE FROM sanitization_proposals"))
         connection.execute(text("DELETE FROM batch_jobs"))
     return base

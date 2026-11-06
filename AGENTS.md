@@ -626,6 +626,18 @@ Nothing reaches the master data without a person approving it; form corrections 
 
 Opening a lot review (`/saneamento/lotes/`) freezes its proposals and versions and draws the sample on the server: 10 items for tier 1 and 20 for tier 2, stored in `lot_reviews` and the same on every read. Governança must mark every sample item. Zero errors applies each proposal through the normal decision service, each in its own savepoint and with its own audit event pointing to the lot review and sample. Items that changed, were decided apart or no longer pass the PDM are reported as `STALE` or `SKIPPED` and don't block the rest. Any wrong item applies nothing, records the rule, and sends the whole lot back to individual review.
 
+## Manual review
+
+Governance reviews batch pendencies at `/pendencias/`, separately from applicable
+proposals. New sanitization runs persist the same per-material reasons counted
+in `corrections.pending`; old runs need to be rerun. Counts preserve the historical
+observation and include materials already forwarded. All centers of a material
+must be authorized, including inherited inventory. Inactive materials cannot be
+corrected. Completing a review creates a versioned `PDM_CORRECTION` and audit event;
+only the existing approval flow applies it. Packaging requires an explicit factor
+and source, and changes to NCM or its technical basis require fiscal approval.
+See [`docs/pendencias.md`](docs/pendencias.md) for endpoints and operation.
+
 ## Full-base runs
 
 `vx-back sanitize --job-id <id>` runs a job the API created, and resumes from its checkpoint if it stopped. Analysis is saved in chunks of 1,000 materials under `runs/<job_id>/analysis/` in storage, and proposals are saved in batches of 500 in the same transaction as the checkpoint, so a rerun skips finished work and never duplicates a proposal. The job and every analysis chunk record the rules signature, the same PDM hash and revisions the search index uses. Resuming after any of them changed fails the job with the reason and leaves its chunks as they are: create a new job instead. Without `--job-id` the run is in memory, with nothing to resume. Locally, `APP_ENV=local uv run vx-batch-job` (from `api/`, with the `api_user` connection) also creates a job without the screen.

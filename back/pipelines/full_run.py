@@ -47,6 +47,7 @@ from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
+from repositories.manual_reviews import save_manual_reviews
 from repositories.normalization import get_normalization_repository
 
 PIPELINE_VERSION = "batch-v1"
@@ -277,11 +278,24 @@ def run_full(
     propose_seconds = time.perf_counter() - started - analysis_seconds
 
     inserted = save_all(proposals, records, context)
+    with context.engine.begin() as connection:
+        review_run_id = save_manual_reviews(
+            connection,
+            records,
+            analyzed,
+            pending_by_code,
+            context,
+            catalog,
+            get_correction_repository(correction_repository).name,
+        )
+        if context.job_id:
+            update_job(connection, context.job_id, context.checkpoint)
     total_seconds = time.perf_counter() - started
     attempts[-1].update({"finished_at": _now(), "seconds": round(total_seconds, 2)})
 
     by_type = Counter(proposal.proposal_type for proposal in proposals)
     return {
+        "manual_review_run_id": review_run_id,
         "pipeline_version": PIPELINE_VERSION,
         "pdm_version": catalog.version,
         "analysis_signature": context.checkpoint["analysis_signature"],

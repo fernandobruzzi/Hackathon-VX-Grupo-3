@@ -527,6 +527,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/manual-reviews": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar pendências por motivo e material, separadas das propostas. */
+    get: operations["listManualReviews"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/manual-reviews/{review_id}/propose": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Encaminhar pendência à aprovação sem alterar o material. */
+    post: operations["proposeManualReview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/manual-reviews/catalog": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar classes e atributos do PDM para revisão manual. */
+    get: operations["manualReviewCatalog"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1277,6 +1328,110 @@ export interface components {
       /** Format: uuid */
       order_id: string | null;
       submission: components["schemas"]["ChatSubmitResponse"] | null;
+    };
+    ManualReview: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      run_id: string;
+      /** Format: uuid */
+      job_id: string | null;
+      /** Format: uuid */
+      material_id: string;
+      expected_material_version: number;
+      reasons: string[];
+      observation: {
+        material_code: string;
+        status: components["schemas"]["MaterialStatus"];
+        description: string;
+        unit: string;
+        ncm: string | null;
+        pdm_class_id: string | null;
+        item_name: string | null;
+        attributes: {
+          [key: string]: string | null;
+        };
+      };
+      rules_signature: string;
+      pdm_version: string;
+      pdm_source_sha256: string;
+      /** Format: uuid */
+      proposal_id: string | null;
+      proposal_status: components["schemas"]["ProposalStatus"] | null;
+      /** Format: date-time */
+      created_at: string;
+    };
+    ManualReviewList: {
+      /** Format: uuid */
+      run_id: string | null;
+      /** Format: uuid */
+      job_id: string | null;
+      items: components["schemas"]["ManualReview"][];
+      counts_by_reason: {
+        [key: string]: number;
+      };
+      materials_total: number;
+      /** Format: uuid */
+      next_cursor: string | null;
+    };
+    /** UnitConversion */
+    ManualUnitConversion: {
+      /** From Unit */
+      from_unit: string;
+      /** To Unit */
+      to_unit: string;
+      /** Factor */
+      factor: string;
+      /** Source */
+      source: string;
+    };
+    /** ManualReviewResolution */
+    ManualReviewResolution: {
+      /** Expected Material Version */
+      expected_material_version: number;
+      /** Pdm Class Id */
+      pdm_class_id: string;
+      /** Item Name */
+      item_name: string;
+      /** Attributes */
+      attributes: {
+        [key: string]: string;
+      };
+      /** Unit */
+      unit: string;
+      /** Ncm */
+      ncm: string | null;
+      /** Conversions */
+      conversions?: components["schemas"]["ManualUnitConversion"][];
+      /** Source */
+      source: string;
+      /** Reason */
+      reason: string;
+    };
+    ManualReviewProposed: {
+      /** Format: uuid */
+      review_id: string;
+      /** Format: uuid */
+      proposal_id: string;
+      /** @constant */
+      status: "PENDING";
+    };
+    ManualReviewAttribute: {
+      name: string;
+      required: boolean;
+      format: string;
+      allowed_values: string[];
+    };
+    ManualReviewClass: {
+      id: string;
+      item_names: string[];
+      unit: string;
+      attributes: components["schemas"]["ManualReviewAttribute"][];
+      ncm_codes: string[];
+    };
+    ManualReviewCatalog: {
+      pdm_version: string;
+      classes: components["schemas"]["ManualReviewClass"][];
     };
   };
   responses: never;
@@ -3809,6 +3964,272 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChatSessionDetail"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  listManualReviews: {
+    parameters: {
+      query?: {
+        run_id?: string;
+        reason?: string;
+        material_code?: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ManualReviewList"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  proposeManualReview: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        review_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ManualReviewResolution"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ManualReviewProposed"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  manualReviewCatalog: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ManualReviewCatalog"];
         };
       };
       /** @description Sessão inválida ou expirada. */
