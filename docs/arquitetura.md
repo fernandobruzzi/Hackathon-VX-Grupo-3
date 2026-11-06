@@ -771,6 +771,12 @@ Tipos principais:
 - ENRICHMENT
 - COMPOSITE
 
+Correções de PDM e de unidade levam `review_lane` no changeset (decisão da #36): nível 1 para grafia da mesma unidade, nível 2 para descrição e grupo no padrão sem perda de texto, ambos com classe confiável e sem pendência, e nível 3 para o resto, com os motivos (`UNTRUSTED_CLASS`, `CONFLICT`, `TEXT_LOSS`). `lot_key` é tipo|regra|classe. Níveis 1 e 2 podem ser aprovados em lote depois da revisão de uma amostra; o nível só muda como a pessoa revisa, nunca dispensa a aprovação. MERGE e NCM não têm nível e são sempre revisados item a item.
+
+```json
+"review_lane": {"tier": 2, "lot_key": "PDM_CORRECTION|head_noun_v1/description.pdm_format|PDM001", "reasons": []}
+```
+
 #### Pedidos
 
 DRAFT → INCOMPLETE | READY_FOR_REVIEW | EXISTING | OUT_OF_SCOPE
