@@ -419,6 +419,29 @@
     "method": "get",
     "status": 200,
     "response": {
+      "ncm_assessment": {
+        "input_ncm": "8421.23.00",
+        "normalized_ncm": "8421.23.00",
+        "syntax_valid": true,
+        "exists_in_snapshot": null,
+        "valid_in_snapshot": null,
+        "technical_consistency": "CONSISTENT",
+        "suggested_ncm_codes": [
+          "8421.23.00"
+        ],
+        "missing_attributes": [],
+        "rule_id": "PDM100_NCM",
+        "requires_fiscal_review": false,
+        "fiscal_approval_status": "NOT_REQUIRED",
+        "pdm_version": "pdm-kit-v1",
+        "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+        "reference_source": "03_padrao_cadastro_PDM.xlsx#NCM_REFERENCIA",
+        "rules_version": "pdm-ncm-v1",
+        "evaluation_hash": "935fcd8b600db1f99480ead7e7cc57143ca2e7aca0c547ecfa61907abaef7647",
+        "pending_checks": [
+          "OFFICIAL_SNAPSHOT_UNAVAILABLE"
+        ]
+      },
       "id": "66666666-6666-4666-8666-666666666666",
       "allowed_actions": [
         "APPROVE",

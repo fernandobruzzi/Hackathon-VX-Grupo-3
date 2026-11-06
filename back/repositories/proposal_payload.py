@@ -45,7 +45,7 @@ def approval_payload(proposal, ids, dataset_id):
                 }
     changes = proposal.changeset.get("changes", [])
     conflicts = list(proposal.conflicts)
-    unsupported = {change["field"] for change in changes} - {"description", "merchandise_group", "unit"}
+    unsupported = {change["field"] for change in changes} - {"description", "merchandise_group", "unit", "ncm"}
     conflicts.extend(f"Alteração ainda não suportada: {field}" for field in sorted(unsupported))
     group = next((change for change in changes if change["field"] == "merchandise_group"), None)
     if group is not None:
@@ -74,4 +74,9 @@ def approval_payload(proposal, ids, dataset_id):
     }
     if group is not None:
         changeset["sources"]["merchandise_group"] = "Grupo da classe PDM: " + group["source"]
+    for field in ("ncm_assessment", "ncm_before_assessment"):
+        if field in proposal.changeset:
+            changeset[field] = proposal.changeset[field]
+    if proposal.proposal_type == "NCM_CORRECTION":
+        changeset["sources"]["ncm"] = next(change["source"] for change in changes if change["field"] == "ncm")
     return members, changeset, proposal_hash(members, changeset)

@@ -29,6 +29,7 @@ from sqlalchemy import Engine, create_engine
 from clients.storage import ObjectStore, get_object_store
 from domain.contracts import AnalyzedMaterial, MaterialRecord, MergeProposal, PdmCatalog
 from pipelines.corrections import propose_corrections, summarize_corrections
+from pipelines.ncm_corrections import propose_ncm_corrections
 from pipelines.sanitize import _catalog, analysis_signature, analyze_material, merge_proposals, summarize
 from repositories.batch_repository import (
     DEFAULT_STALE_SECONDS,
@@ -261,6 +262,7 @@ def run_full(
     corrections, pending = propose_corrections(
         analyzed, catalog, normalizer, get_correction_repository(correction_repository), pending_by_code
     )
+    corrections += propose_ncm_corrections(analyzed, catalog)
     proposals = merges + corrections
     propose_seconds = time.perf_counter() - started - analysis_seconds
 
