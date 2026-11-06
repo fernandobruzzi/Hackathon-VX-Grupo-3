@@ -1536,5 +1536,232 @@
       "order_id": "44444444-4444-4444-8444-444444444444",
       "status": "READY_FOR_REVIEW"
     }
+  },
+  {
+    "name": "lot-list",
+    "path": "/api/v1/sanitization/lots",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "lot_key": "UNIT_CORRECTION|rule_based_v1/unit.alias|PDM001",
+          "tier": 1,
+          "proposal_type": "UNIT_CORRECTION",
+          "rule": "rule_based_v1/unit.alias",
+          "pdm_class_id": "PDM001",
+          "pdm_class_name": "PARAFUSO SEXTAVADO",
+          "size": 42,
+          "sample_size": 10,
+          "open_review_id": null
+        }
+      ],
+      "min_lot_size": 20
+    }
+  },
+  {
+    "name": "lot-review-open",
+    "path": "/api/v1/sanitization/lots/reviews",
+    "method": "post",
+    "status": 201,
+    "request": {
+      "lot_key": "UNIT_CORRECTION|rule_based_v1/unit.alias|PDM001",
+      "tier": 1
+    },
+    "response": {
+      "id": "88888888-8888-4888-8888-888888888888",
+      "lot_key": "UNIT_CORRECTION|rule_based_v1/unit.alias|PDM001",
+      "tier": 1,
+      "proposal_type": "UNIT_CORRECTION",
+      "rule": "rule_based_v1/unit.alias",
+      "pdm_class_id": "PDM001",
+      "pdm_class_name": "PARAFUSO SEXTAVADO",
+      "status": "OPEN",
+      "version": 1,
+      "size": 42,
+      "sample": [
+        {
+          "proposal_id": "90000000-9999-4999-8999-999999999990",
+          "proposal_type": "UNIT_CORRECTION",
+          "status": "PENDING",
+          "material_code": "16031971",
+          "original_description": "PARAFUSO SEXT M12X50 8.8 ZINC",
+          "current_description": null,
+          "proposed_description": null,
+          "changes": [
+            {
+              "field": "unit",
+              "before": "PCA",
+              "after": "PC",
+              "source": "rule_based_v1/unit.alias"
+            }
+          ]
+        },
+        {
+          "proposal_id": "90000001-9999-4999-8999-999999999991",
+          "proposal_type": "UNIT_CORRECTION",
+          "status": "PENDING",
+          "material_code": "27841570",
+          "original_description": "PARAF SEXTAVADO M10X40 CL 8.8",
+          "current_description": null,
+          "proposed_description": null,
+          "changes": [
+            {
+              "field": "unit",
+              "before": "PCA",
+              "after": "PC",
+              "source": "rule_based_v1/unit.alias"
+            }
+          ]
+        }
+      ],
+      "marks": {},
+      "result": null,
+      "created_at": "2026-11-06T14:00:00Z",
+      "decided_at": null
+    }
+  },
+  {
+    "name": "lot-review-detail",
+    "path": "/api/v1/sanitization/lots/reviews/{id}",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "id": "88888888-8888-4888-8888-888888888888"
+    },
+    "response": {
+      "id": "88888888-8888-4888-8888-888888888888",
+      "lot_key": "UNIT_CORRECTION|rule_based_v1/unit.alias|PDM001",
+      "tier": 1,
+      "proposal_type": "UNIT_CORRECTION",
+      "rule": "rule_based_v1/unit.alias",
+      "pdm_class_id": "PDM001",
+      "pdm_class_name": "PARAFUSO SEXTAVADO",
+      "status": "OPEN",
+      "version": 1,
+      "size": 42,
+      "sample": [
+        {
+          "proposal_id": "90000000-9999-4999-8999-999999999990",
+          "proposal_type": "UNIT_CORRECTION",
+          "status": "PENDING",
+          "material_code": "16031971",
+          "original_description": "PARAFUSO SEXT M12X50 8.8 ZINC",
+          "current_description": null,
+          "proposed_description": null,
+          "changes": [
+            {
+              "field": "unit",
+              "before": "PCA",
+              "after": "PC",
+              "source": "rule_based_v1/unit.alias"
+            }
+          ]
+        },
+        {
+          "proposal_id": "90000001-9999-4999-8999-999999999991",
+          "proposal_type": "UNIT_CORRECTION",
+          "status": "PENDING",
+          "material_code": "27841570",
+          "original_description": "PARAF SEXTAVADO M10X40 CL 8.8",
+          "current_description": null,
+          "proposed_description": null,
+          "changes": [
+            {
+              "field": "unit",
+              "before": "PCA",
+              "after": "PC",
+              "source": "rule_based_v1/unit.alias"
+            }
+          ]
+        }
+      ],
+      "marks": {},
+      "result": null,
+      "created_at": "2026-11-06T14:00:00Z",
+      "decided_at": null
+    }
+  },
+  {
+    "name": "lot-review-approve",
+    "path": "/api/v1/sanitization/lots/reviews/{id}/decide",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "id": "88888888-8888-4888-8888-888888888888"
+    },
+    "request": {
+      "expected_version": 1,
+      "marks": [
+        {
+          "proposal_id": "90000000-9999-4999-8999-999999999990",
+          "verdict": "CORRECT"
+        },
+        {
+          "proposal_id": "90000001-9999-4999-8999-999999999991",
+          "verdict": "CORRECT"
+        }
+      ],
+      "reason": "Amostra conferida: só muda a grafia da unidade."
+    },
+    "response": {
+      "lot_review_id": "88888888-8888-4888-8888-888888888888",
+      "status": "APPROVED",
+      "version": 2,
+      "result": {
+        "counts": {
+          "APPLIED": 41,
+          "STALE": 1,
+          "SKIPPED": 0
+        },
+        "items": [
+          {
+            "proposal_id": "90000000-9999-4999-8999-999999999990",
+            "status": "APPLIED"
+          },
+          {
+            "proposal_id": "90000001-9999-4999-8999-999999999991",
+            "status": "STALE",
+            "code": "STALE_PROPOSAL"
+          }
+        ]
+      },
+      "audit_event_id": "77777777-7777-4777-8777-777777777777"
+    }
+  },
+  {
+    "name": "lot-review-returned",
+    "path": "/api/v1/sanitization/lots/reviews/{id}/decide",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "id": "88888888-8888-4888-8888-888888888888"
+    },
+    "request": {
+      "expected_version": 1,
+      "marks": [
+        {
+          "proposal_id": "90000000-9999-4999-8999-999999999990",
+          "verdict": "CORRECT"
+        },
+        {
+          "proposal_id": "90000001-9999-4999-8999-999999999991",
+          "verdict": "WRONG"
+        }
+      ],
+      "reason": "Um item da amostra trocou a unidade de embalagem."
+    },
+    "response": {
+      "lot_review_id": "88888888-8888-4888-8888-888888888888",
+      "status": "RETURNED",
+      "version": 2,
+      "result": {
+        "wrong_ids": [
+          "90000001-9999-4999-8999-999999999991"
+        ],
+        "rule": "rule_based_v1/unit.alias"
+      },
+      "audit_event_id": "77777777-7777-4777-8777-777777777777"
+    }
   }
 ]
