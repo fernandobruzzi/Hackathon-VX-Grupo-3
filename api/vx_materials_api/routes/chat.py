@@ -36,7 +36,9 @@ async def send_message(
     rid = request_id(request)
     reservation = chat_service.reserve_turn(db, identity, payload)
     secret = settings.agent_internal_token_secret()
-    token = issue_agent_token(identity.user_id, effective_permissions(identity), identity.center_codes, secret)
+    token = issue_agent_token(
+        identity.user_id, effective_permissions(identity), identity.center_codes, secret, identity.tenant_id
+    )
     try:
         result = await agent.run(reservation.agent_payload, token, rid)
     except AgentUnavailable as error:

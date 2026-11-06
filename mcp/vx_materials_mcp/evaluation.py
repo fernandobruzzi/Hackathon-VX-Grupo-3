@@ -28,13 +28,14 @@ _PREFIX = re.compile(r"^NAO UTILIZAR - USAR COD \d+\s*-\s*")
 _PAIRS = text(
     """
     SELECT b.material_code AS blocked, b.original_description_long AS description, a.material_code AS target
-    FROM mcp_catalog b JOIN mcp_catalog a ON a.id = b.active_code_target
-    WHERE b.status = 'BLOQUEADO' AND a.status = 'ATIVO' ORDER BY b.material_code
+    FROM mcp_catalog b JOIN mcp_catalog a ON a.id = b.active_code_target AND a.tenant_id = b.tenant_id
+    WHERE b.tenant_id = CAST(:tenant_id AS uuid) AND b.status = 'BLOQUEADO' AND a.status = 'ATIVO'
+    ORDER BY b.material_code
     """
 )
 
 
-def evaluate(database_url: str, pdm_workbook: str, repository_name: str, limit: int = 10) -> dict:
+def evaluate(database_url: str, pdm_workbook: str, repository_name: str, tenant_id: str, limit: int = 10) -> dict:
     engine = create_engine(database_url)
     catalog = load_pdm(pdm_workbook)
     classifier = get_classification_repository(catalog)
@@ -43,7 +44,7 @@ def evaluate(database_url: str, pdm_workbook: str, repository_name: str, limit: 
     version = index_version(catalog, classifier, extractor, embedder.signature if embedder else None)
     repository = get_search_repository(
         repository_name,
-        catalog=CatalogRepository(engine),
+        catalog=CatalogRepository(engine, tenant_id),
         pdm_catalog=catalog,
         classifier=classifier,
         extractor=extractor,
@@ -52,7 +53,7 @@ def evaluate(database_url: str, pdm_workbook: str, repository_name: str, limit: 
         embedder=embedder,
     )
     with engine.connect() as connection:
-        pairs = connection.execute(_PAIRS).all()
+        pairs = connection.execute(_PAIRS, {"tenant_id": tenant_id}).all()
     hits = {1: 0, 5: 0, 10: 0}
     started = time.time()
     for blocked, description, target in pairs:
@@ -75,10 +76,11 @@ def evaluate(database_url: str, pdm_workbook: str, repository_name: str, limit: 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compara buscas nos pares declarados pela base")
+    parser.add_argument("--tenant-id", required=True)
     parser.add_argument("--repository", default="hybrid_v1")
     parser.add_argument("--pdm-workbook", default=os.environ.get("PDM_WORKBOOK_PATH"))
     args = parser.parse_args()
-    report = evaluate(os.environ["DATABASE_URL"], args.pdm_workbook, args.repository)
+    report = evaluate(os.environ["DATABASE_URL"], args.pdm_workbook, args.repository, args.tenant_id)
     print(json.dumps(report, indent=2, ensure_ascii=False))
 
 

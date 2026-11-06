@@ -23,6 +23,8 @@ class SimilarMaterialsSearch:
         self._repository = None
 
     def _ready(self):
+        if self._caller is None:
+            raise ToolError("Tenant autenticado ausente")
         if self._engine is None:
             raise ToolError("Catalogo indisponivel: defina DATABASE_URL com a credencial mcp_reader")
         if self._repository is None:
@@ -30,7 +32,7 @@ class SimilarMaterialsSearch:
             extractor = get_extraction_repository()
             embedder = get_embedding_repository()
             version = index_version(self._pdm, classifier, extractor, embedder.signature if embedder else None)
-            catalog = CatalogRepository(self._engine)
+            catalog = CatalogRepository(self._engine, self._caller.tenant_id)
             # Indexação e consulta precisam usar as mesmas regras, ou os tokens não se comparam.
             if catalog.indexed(version) == 0:
                 raise ToolError(f"Indice de busca ausente na versao {version}: reconstrua com `vx-back index`")

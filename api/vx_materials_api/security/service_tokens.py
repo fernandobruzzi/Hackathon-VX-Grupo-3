@@ -11,13 +11,14 @@ TTL_SECONDS = 60
 
 
 def issue_agent_token(
-    user_id: uuid.UUID, permissions: frozenset[str], center_codes: frozenset[str], secret: str
+    user_id: uuid.UUID, permissions: frozenset[str], center_codes: frozenset[str], secret: str, tenant_id: uuid.UUID
 ) -> str:
     now = int(time.time())
     claims = {
         "iss": ISSUER,
         "aud": AGENT_AUDIENCE,
         "sub": str(user_id),
+        "tenant_id": str(tenant_id),
         "iat": now,
         "exp": now + TTL_SECONDS,
         "jti": str(uuid.uuid4()),

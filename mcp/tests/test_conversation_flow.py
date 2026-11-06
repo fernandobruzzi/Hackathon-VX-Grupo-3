@@ -11,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from domain.pdm_loader import load_pdm
+from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_mcp.app import create_app
 from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.agent import ToolLimitExceeded, ToolRecorder
@@ -86,6 +87,7 @@ def token(**overrides):
         "iss": "vx-api",
         "aud": "vx-agent",
         "sub": "user-1",
+        "tenant_id": str(TENANT_ID),
         "iat": now,
         "exp": now + 60,
         "permissions": ["chat:use", "inventory:read"],
@@ -388,6 +390,8 @@ def test_only_reusable_identity_matches_are_offered(candidates, code):
     [
         "not-a-jwt",
         token(aud="vx-api"),
+        token(tenant_id=None),
+        token(tenant_id="invalid"),
         token(exp=int(time.time()) - 10),
         jwt.encode({"sub": "u", "aud": "vx-agent", "iss": "vx-api"}, "other-secret-with-at-least-32-bytes!", "HS256"),
     ],
