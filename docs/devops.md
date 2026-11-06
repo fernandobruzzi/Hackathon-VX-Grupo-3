@@ -13,8 +13,8 @@ Integre com rebase apenas depois de conferir essa evidência. Os comandos por á
 estão no [guia do time](../AGENTS.md#commands).
 
 Os workflows `CI` e `Repository policy` só são disparados por `pull_request`
-com destino `main`. PRs para `homologacao`, inclusive a sincronização vinda de
-`main`, e pushes, inclusive o merge em `main`, não iniciam esses workflows. Não há
+com destino `main`. PRs para `homologacao` e pushes, inclusive o merge em `main`,
+não iniciam esses workflows. Não há
 gatilho agendado ou manual. Isso concentra os minutos de CI na promoção para produção, sem executar de novo o mesmo lote após o
 merge. Corrija falhas de desenvolvimento localmente antes de publicar outra versão.
 
@@ -33,30 +33,28 @@ merge. Corrija falhas de desenvolvimento localmente antes de publicar outra vers
    `pull_request` testa a combinação proposta com `main`. Se houver conflito ou
    `main` mudar, resolva e revalide a combinação antes de integrar; não rebase a
    branch compartilhada nem contorne os checks obrigatórios.
-4. Integre **com merge commit**, preservando os SHAs das entregas e a branch:
+4. Integre **com rebase**, como todo PR em `main`, que mantém histórico linear e
+   só aceita rebase. A `homologacao` é protegida contra exclusão e continua existindo:
 
    ```bash
-   gh pr merge <n> --merge
+   gh pr merge <n> --rebase
    ```
 
-   Rebase ou squash nessa etapa reescreveriam os commits de `homologacao` e fariam
-   as próximas promoções reapresentar entregas antigas. O repositório precisa
-   permitir merge commits; veja a configuração administrativa abaixo.
-5. Abra o PR de sincronização de volta, preservando a exigência de PR nas duas
-   branches:
+5. Sincronize: o rebase dá hashes novos aos commits promovidos em `main`. Um
+   administrador rebaseia `homologacao` sobre `main` e força o push, com a ponta
+   anterior conferida. Commits já promovidos têm o mesmo conteúdo e são descartados
+   pelo rebase; entregas posteriores, se houver, são preservadas:
 
    ```bash
-   gh pr create --base homologacao --head main
-   gh pr merge <n-da-sincronizacao> --merge
+   git fetch origin && git switch homologacao && git reset --hard origin/homologacao
+   git rebase origin/main
+   git push --force-with-lease=homologacao:<ponta-anterior> origin homologacao
    ```
 
-   Esse PR também usa merge commit e não dispara validação remota. Confira o
-   histórico e o diff antes de integrar: ele traz o merge já validado de produção
-   para a branch de integração. Se houve integração concorrente ou conflitos,
-   mantenha o congelamento e reconcilie com o responsável pela entrega, sem
-   force-push, reset ou exclusão das branches.
-6. Confirme que `main` é ancestral de `homologacao` e libere a integração. Os SHAs
-   das pontas podem diferir por causa do merge de sincronização:
+   Só administradores podem fazer esse push: a regra de `homologacao` exige PR para
+   todos os demais.
+6. Confira que `main` é ancestral de `homologacao`, libere a integração e avise o
+   time para rebasear as branches de trabalho abertas:
 
    ```bash
    git fetch origin
@@ -188,34 +186,29 @@ o login completo e a navegação com IDs reais precisam de teste de navegador.
 
 ## Configurações que exigem administrador do GitHub
 
-Na verificação de 6/11/2026, o repositório permitia apenas rebase merge, com merge
-commits desabilitados. A conta usada nesta mudança tinha push, sem administração.
-Os itens abaixo são requisitos de ativação, não configurações já aplicadas:
+Configuração aplicada em 6/11/2026:
 
-- Definir `homologacao` como branch padrão para que novos PRs tenham essa base.
-- Em `main`, exigir PR, atualização em relação à base e os checks `style`,
-  `python (back)`, `python (mcp)`, `python (api)`, `database`, `front`, `images`
-  e `policy`, sem bypass ou push direto.
-- Habilitar merge commits para promoção e sincronização e remover a exigência
-  de histórico linear das duas branches permanentes, se houver. Preservar rebase
-  para os PRs de trabalho; squash permanece desabilitado.
-- Em `homologacao`, exigir PR e remover checks obrigatórios de CI e política.
-  Eles não são disparados nessa base e ficariam pendentes indefinidamente.
-  PRs de trabalho exigem evidência local; a sincronização `main` → `homologacao`
-  também passa por PR, sem exceção de push direto.
-- Proteger as duas branches de force-push e exclusão. Preservar `homologacao`
-  após promoções: desabilitar a exclusão automática de branches de origem ou
-  garantir a proteção que impede sua exclusão. Excluir branches de trabalho
-  explicitamente após o merge.
-- Revisar os workflows como parte da promoção: um PR pode alterar seu próprio
+- `homologacao` é a branch padrão, para que novos PRs tenham essa base e `Closes #<n>`
+  feche a issue quando o trabalho entra nela.
+- A regra de `main` aponta para `refs/heads/main`, não para a branch padrão: com
+  `~DEFAULT_BRANCH`, ela passaria a proteger `homologacao` e deixaria `main` sem regra.
+- `main` mantém a regra de antes: PR obrigatório, base atualizada, os checks `style`,
+  `python (back)`, `python (mcp)`, `python (api)`, `database`, `front`, `images` e
+  `policy` do GitHub Actions, histórico linear, só rebase e sem bypass, push direto,
+  force-push ou exclusão.
+- `homologacao` exige PR e só aceita rebase, sem checks obrigatórios: eles não são
+  disparados nessa base e ficariam pendentes. É protegida contra exclusão, o que a
+  preserva da exclusão automática de branches após o merge da promoção. Só o papel
+  de administrador pode contornar a regra, para a sincronização por force-push.
+- Merge commits e squash continuam desabilitados no repositório.
+- Revise os workflows como parte da promoção: um PR pode alterar seu próprio
   workflow, e a checagem de política não substitui revisão de código.
 
-A política aceita a promoção somente da `homologacao` deste repositório para
-`main`, e a sincronização de `main` de volta para `homologacao`. As duas operações
-preservam merge commits. Para PRs de trabalho, a validação local mantém o formato
-de branch, atribuições automáticas conhecidas e a restrição a merge commits por
-conferência na revisão. `node --test` testa o validador com exemplos; não inspeciona
-automaticamente a branch e os commits da entrega.
+A política aceita em `main` somente a promoção da `homologacao` deste repositório.
+Para PRs de trabalho, a validação local mantém o formato de branch, atribuições
+automáticas conhecidas e a ausência de merge commits por conferência na revisão.
+`node --test` testa o validador com exemplos; não inspeciona automaticamente a
+branch e os commits da entrega.
 
 ### Ativar o fluxo e migrar PRs existentes
 
