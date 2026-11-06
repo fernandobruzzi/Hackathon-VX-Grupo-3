@@ -4088,1534 +4088,29 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "sessionCookie": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "__Host-vx_session"
-      },
-      "cognitoAccessToken": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      },
-      "csrfToken": {
-        "type": "apiKey",
-        "in": "header",
+    "parameters": {
+      "CsrfToken": {
         "name": "X-CSRF-Token",
-        "description": "Obrigatório em escritas autenticadas por cookie; dispensado com bearer."
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Obrigatório nas escritas com cookie. A API também verifica a origem."
       },
-      "internalToken": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT interno emitido pela API com audience exclusiva do Agent e validade curta; nunca token do usuário."
-      },
-      "localSessionCookie": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "vx_local_session",
-        "description": "Somente sessao de teste local em HTTP. Em HTTPS usa __Host-vx_session. Desabilitada fora de APP_ENV=local."
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Reutilizar a mesma chave e o mesmo payload ao repetir uma operação."
       }
     },
     "schemas": {
-      "EmptyRequest": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": false
-      },
-      "LotDecisionResponse": {
-        "type": "object",
-        "properties": {
-          "lot_review_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "APPROVED",
-              "RETURNED"
-            ]
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "result": {
-            "$ref": "#/components/schemas/LotResult"
-          },
-          "audit_event_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "lot_review_id",
-          "status",
-          "version",
-          "result",
-          "audit_event_id"
-        ],
-        "additionalProperties": false
-      },
-      "ProposalInventoryRow": {
-        "type": "object",
-        "properties": {
-          "center_code": {
-            "type": "string"
-          },
-          "quantity": {
-            "$ref": "#/components/schemas/Decimal"
-          },
-          "unit": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "center_code",
-          "quantity",
-          "unit"
-        ],
-        "additionalProperties": false
-      },
-      "Material": {
-        "type": "object",
-        "properties": {
-          "material_code": {
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/MaterialStatus"
-          },
-          "description": {
-            "type": "string"
-          },
-          "pdm_class": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "unit": {
-            "type": "string"
-          },
-          "ncm": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "active_code_target": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "inventory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InventoryRow"
-            }
-          },
-          "flags": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "SEM_NCM",
-                "DUPLICIDADE_SUSPEITA",
-                "UNIDADE_NAO_CANONICA",
-                "ATRIBUTO_FALTANDO"
-              ]
-            }
-          }
-        },
-        "required": [
-          "material_code",
-          "status",
-          "description",
-          "pdm_class",
-          "unit",
-          "ncm",
-          "active_code_target",
-          "inventory",
-          "flags"
-        ],
-        "additionalProperties": false
-      },
-      "EnrichmentList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EnrichmentProposal"
-            }
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "additionalProperties": false
-      },
-      "AuditEvent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "actor": {
-            "type": "string"
-          },
-          "effective_role": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Role"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "action": {
-            "type": "string"
-          },
-          "entity": {
-            "type": "string"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "request_id": {
-            "type": "string"
-          },
-          "created_at": {
-            "$ref": "#/components/schemas/UtcDateTime"
-          },
-          "before": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "after": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "actor_type": {
-            "type": "string",
-            "enum": [
-              "USER",
-              "SYSTEM"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "actor",
-          "effective_role",
-          "action",
-          "entity",
-          "reason",
-          "request_id",
-          "created_at",
-          "actor_type"
-        ],
-        "additionalProperties": false
-      },
-      "LotList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LotSummary"
-            }
-          },
-          "min_lot_size": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "items",
-          "min_lot_size"
-        ],
-        "additionalProperties": false
-      },
-      "ProposalQueue": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProposalSummary"
-            }
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "additionalProperties": false
-      },
-      "ManualReviewAttribute": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "name",
-          "required",
-          "format",
-          "allowed_values"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "format": {
-            "type": "string"
-          },
-          "allowed_values": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "ValidationStatus": {
-        "type": "string",
-        "enum": [
-          "VALID",
-          "INCOMPLETE",
-          "INVALID",
-          "OUT_OF_SCOPE"
-        ]
-      },
-      "LogoutResponse": {
-        "type": "object",
-        "properties": {
-          "logged_out": {
-            "const": true
-          }
-        },
-        "required": [
-          "logged_out"
-        ],
-        "additionalProperties": false
-      },
-      "Role": {
-        "type": "string",
-        "enum": [
-          "ROLE_SOLICITANTE",
-          "ROLE_GOVERNANCA_PDM",
-          "ROLE_AUDITOR_FISCAL"
-        ]
-      },
-      "MaterialCardData": {
-        "type": "object",
-        "properties": {
-          "pdm_class_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "pdm_class_name": {
-            "type": "string"
-          },
-          "attributes": {
-            "type": "object",
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          },
-          "pdm_description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "validation_status": {
-            "$ref": "#/components/schemas/ValidationStatus"
-          },
-          "missing_attributes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "ncm": {
-            "type": "object",
-            "properties": {
-              "suggested": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "PENDING_VALIDATION",
-                  "CONSISTENT",
-                  "REVIEW_REQUIRED"
-                ]
-              }
-            },
-            "required": [
-              "suggested",
-              "status"
-            ],
-            "additionalProperties": false
-          },
-          "duplicate_check_status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "NO_MATCH",
-              "MATCH_FOUND"
-            ]
-          },
-          "existing": {
-            "$ref": "#/components/schemas/ExistingMatch"
-          },
-          "similar_candidates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SimilarCandidate"
-            }
-          },
-          "can_submit": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "pdm_class_id",
-          "attributes",
-          "pdm_description",
-          "validation_status",
-          "missing_attributes",
-          "ncm",
-          "duplicate_check_status",
-          "can_submit"
-        ],
-        "additionalProperties": false
-      },
-      "ManualReviewClass": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "item_names",
-          "unit",
-          "attributes",
-          "ncm_codes"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "item_names": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "unit": {
-            "type": "string"
-          },
-          "attributes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ManualReviewAttribute"
-            }
-          },
-          "ncm_codes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "ManualReviewCatalog": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "pdm_version",
-          "classes"
-        ],
-        "properties": {
-          "pdm_version": {
-            "type": "string"
-          },
-          "classes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ManualReviewClass"
-            }
-          }
-        }
-      },
-      "ManualUnitConversion": {
-        "additionalProperties": false,
-        "properties": {
-          "from_unit": {
-            "title": "From Unit",
-            "type": "string"
-          },
-          "to_unit": {
-            "title": "To Unit",
-            "type": "string"
-          },
-          "factor": {
-            "maxLength": 64,
-            "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
-            "title": "Factor",
-            "type": "string"
-          },
-          "source": {
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Source",
-            "type": "string"
-          }
-        },
-        "required": [
-          "from_unit",
-          "to_unit",
-          "factor",
-          "source"
-        ],
-        "title": "UnitConversion",
-        "type": "object"
-      },
-      "ApiError": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "object",
-            "properties": {
-              "code": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "request_id": {
-                "type": "string"
-              },
-              "details": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            },
-            "required": [
-              "code",
-              "message",
-              "request_id",
-              "details"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "error"
-        ],
-        "additionalProperties": false
-      },
-      "AuthConfig": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "enum": [
-              "disabled",
-              "local",
-              "cognito"
-            ]
-          }
-        },
-        "required": [
-          "mode"
-        ],
-        "additionalProperties": false
-      },
-      "LotItemOutcome": {
-        "type": "object",
-        "properties": {
-          "proposal_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "APPLIED",
-              "STALE",
-              "SKIPPED"
-            ]
-          },
-          "code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "proposal_id",
-          "status"
-        ],
-        "additionalProperties": false
-      },
-      "RegistrationOrder": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "origin": {
-            "type": "string",
-            "enum": [
-              "CHAT",
-              "IMPORT"
-            ]
-          },
-          "requester": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "original_text": {
-            "type": "string"
-          },
-          "center_code": {
-            "type": "string"
-          },
-          "pdm_class_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "status": {
-            "$ref": "#/components/schemas/OrderStatus"
-          },
-          "missing_attributes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "material_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "updated_at": {
-            "$ref": "#/components/schemas/UtcDateTime"
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "supplements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderSupplement"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "origin",
-          "requester",
-          "original_text",
-          "center_code",
-          "pdm_class_id",
-          "status",
-          "missing_attributes",
-          "material_code",
-          "updated_at",
-          "version"
-        ],
-        "additionalProperties": false
-      },
-      "ChatSessionList": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatSessionSummary"
-            }
-          },
-          "next_cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "Decimal": {
-        "type": "string",
-        "pattern": "^-?[0-9]+(\\.[0-9]+)?$",
-        "description": "Quantidade ou valor decimal, sem conversão para ponto flutuante."
-      },
-      "InventoryRow": {
-        "type": "object",
-        "properties": {
-          "center_code": {
-            "type": "string"
-          },
-          "quantity": {
-            "$ref": "#/components/schemas/Decimal"
-          },
-          "unit": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "center_code",
-          "quantity",
-          "unit"
-        ],
-        "additionalProperties": false
-      },
-      "SsoCallbackResponse": {
-        "type": "object",
-        "properties": {
-          "authenticated": {
-            "type": "boolean",
-            "const": true
-          },
-          "expires_in_seconds": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "redirect_path": {
-            "type": "string",
-            "pattern": "^/[^/]"
-          }
-        },
-        "required": [
-          "authenticated",
-          "expires_in_seconds",
-          "redirect_path"
-        ],
-        "additionalProperties": false
-      },
-      "ChatSessionDetail": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "session_id",
-          "session_version",
-          "processing",
-          "center_code",
-          "messages",
-          "calls",
-          "material_card",
-          "order_id",
-          "submission"
-        ],
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "session_version": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "processing": {
-            "type": "boolean"
-          },
-          "center_code": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatMessage"
-            }
-          },
-          "calls": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SavedToolCall"
-            }
-          },
-          "material_card": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/MaterialCardData"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "order_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "submission": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ChatSubmitResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      },
-      "BatchJobList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BatchJob"
-            }
-          },
-          "latest_dataset_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Dataset que um novo job usaria."
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "latest_dataset_id",
-          "next_cursor"
-        ],
-        "additionalProperties": false
-      },
-      "ExistingMatch": {
-        "type": "object",
-        "properties": {
-          "material_code": {
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/MaterialStatus"
-          },
-          "pdm_description": {
-            "type": "string"
-          },
-          "match_type": {
-            "type": "string"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "inventory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InventoryRow"
-            }
-          }
-        },
-        "required": [
-          "material_code",
-          "status",
-          "pdm_description",
-          "match_type",
-          "reason",
-          "inventory"
-        ],
-        "additionalProperties": false
-      },
-      "OrderSupplement": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "text",
-          "source",
-          "reason",
-          "actor_user_id",
-          "created_at"
-        ],
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "source": {
-            "type": "string"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "actor_user_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "LotReview": {
-        "type": "object",
-        "description": "Revisão de um lote: amostra sorteada pelo servidor, igual em toda leitura.",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "lot_key": {
-            "type": "string"
-          },
-          "tier": {
-            "$ref": "#/components/schemas/LotTier"
-          },
-          "proposal_type": {
-            "type": "string",
-            "enum": [
-              "UNIT_CORRECTION",
-              "PDM_CORRECTION"
-            ]
-          },
-          "rule": {
-            "type": "string"
-          },
-          "pdm_class_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "pdm_class_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "OPEN",
-              "APPROVED",
-              "RETURNED"
-            ]
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "sample": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LotSampleItem"
-            }
-          },
-          "marks": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string",
-              "enum": [
-                "CORRECT",
-                "WRONG"
-              ]
-            }
-          },
-          "result": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/LotResult"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "decided_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "lot_key",
-          "tier",
-          "proposal_type",
-          "rule",
-          "pdm_class_id",
-          "pdm_class_name",
-          "status",
-          "version",
-          "size",
-          "sample",
-          "marks",
-          "result",
-          "created_at",
-          "decided_at"
-        ],
-        "additionalProperties": false
-      },
-      "Decision": {
-        "type": "string",
-        "enum": [
-          "APPROVE",
-          "REJECT"
-        ]
-      },
-      "OrderSubmitRequest": {
-        "type": "object",
-        "properties": {
-          "expected_version": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "expected_version"
-        ],
-        "additionalProperties": false
-      },
-      "ChatSubmitRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "expected_session_version"
-        ],
-        "properties": {
-          "expected_session_version": {
-            "type": "integer",
-            "minimum": 1
-          }
-        }
-      },
-      "QualitySnapshotRequest": {
-        "type": "object",
-        "description": "Sem dataset_id, usa o dataset importado mais recentemente.",
-        "properties": {
-          "dataset_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "ReviewStatus": {
-        "type": "string",
-        "enum": [
-          "PENDING",
-          "APPROVED",
-          "REJECTED",
-          "NOT_REQUIRED"
-        ]
-      },
-      "AgentRunRequest": {
-        "type": "object",
-        "properties": {
-          "turn_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "session_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "session_version": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "message": {
-            "type": "string",
-            "minLength": 1
-          },
-          "action": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ChatAction"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "context": {
-            "type": "object",
-            "properties": {
-              "pdm_version": {
-                "type": "string"
-              },
-              "ncm_version": {
-                "type": "string"
-              },
-              "center_code": {
-                "type": "string"
-              },
-              "history": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ChatMessage"
-                }
-              },
-              "confirmed_attributes": {
-                "type": "object",
-                "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "offered_material_codes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Códigos parecidos mostrados no turno anterior, lidos do contexto persistido pela API."
-              },
-              "dismissed_material_codes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Códigos que o solicitante confirmou não serem o item dele, validados pela API."
-              },
-              "duplicate_check": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/DuplicateCheckState"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Lida pela API do contexto persistido. Enquanto a ficha não muda, o Agent decide sem nova busca."
-              }
-            },
-            "required": [
-              "pdm_version",
-              "ncm_version",
-              "center_code",
-              "history",
-              "confirmed_attributes"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "turn_id",
-          "session_id",
-          "session_version",
-          "message",
-          "context"
-        ],
-        "additionalProperties": false
-      },
-      "Me": {
-        "type": "object",
-        "properties": {
-          "user": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid"
-              },
-              "display_name": {
-                "type": "string"
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Role"
-                }
-              }
-            },
-            "required": [
-              "id",
-              "display_name",
-              "roles"
-            ],
-            "additionalProperties": false
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Permission"
-            }
-          },
-          "scope": {
-            "type": "object",
-            "properties": {
-              "center_codes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "required": [
-              "center_codes"
-            ],
-            "additionalProperties": false
-          },
-          "demo": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean"
-              },
-              "active_persona": {
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/PersonaLabel"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "enabled",
-              "active_persona"
-            ],
-            "additionalProperties": false
-          },
-          "csrf_token": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "user",
-          "permissions",
-          "scope",
-          "demo",
-          "csrf_token"
-        ],
-        "additionalProperties": false
-      },
-      "LotTier": {
-        "type": "integer",
-        "enum": [
-          1,
-          2
-        ]
-      },
-      "LotSummary": {
-        "type": "object",
-        "description": "Lote elegível: propostas pendentes com o mesmo review_lane.lot_key e nível 1 ou 2.",
-        "properties": {
-          "lot_key": {
-            "type": "string"
-          },
-          "tier": {
-            "$ref": "#/components/schemas/LotTier"
-          },
-          "proposal_type": {
-            "type": "string",
-            "enum": [
-              "UNIT_CORRECTION",
-              "PDM_CORRECTION"
-            ]
-          },
-          "rule": {
-            "type": "string"
-          },
-          "pdm_class_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "pdm_class_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "sample_size": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "open_review_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "lot_key",
-          "tier",
-          "proposal_type",
-          "rule",
-          "pdm_class_id",
-          "pdm_class_name",
-          "size",
-          "sample_size",
-          "open_review_id"
-        ],
-        "additionalProperties": false
-      },
-      "ProposalIdentity": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "MANUFACTURER_REFERENCE",
-              "TECHNICAL_ATTRIBUTES"
-            ]
-          },
-          "summary": {
-            "type": "string"
-          },
-          "manufacturer": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "manufacturer_reference": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "attributes": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "mode"
-        ],
-        "additionalProperties": false
-      },
-      "QualitySnapshot": {
-        "type": "object",
-        "description": "Snapshot posterior gerado só com propostas aplicadas; imutável.",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "dataset_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "applied_proposals": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "materials_changed": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "inventory_value_conserved": {
-            "type": "boolean"
-          },
-          "export_key": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "dataset_id",
-          "created_at",
-          "applied_proposals",
-          "materials_changed",
-          "inventory_value_conserved",
-          "export_key"
-        ],
-        "additionalProperties": false
-      },
-      "UtcDateTime": {
-        "type": "string",
-        "format": "date-time",
-        "pattern": "Z$",
-        "description": "Data ISO 8601 em UTC."
-      },
       "ProposalType": {
         "type": "string",
         "enum": [
@@ -5627,61 +4122,32 @@
           "COMPOSITE"
         ]
       },
-      "SavedToolCall": {
+      "EmptyRequest": {
         "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "turn",
-          "call"
-        ],
+        "properties": {},
+        "additionalProperties": false
+      },
+      "OrderDecisionRequest": {
+        "type": "object",
         "properties": {
-          "turn": {
+          "expected_version": {
             "type": "integer",
             "minimum": 1
           },
-          "call": {
-            "$ref": "#/components/schemas/ToolCall"
-          }
-        }
-      },
-      "ChatMessage": {
-        "type": "object",
-        "properties": {
-          "id": {
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "reason": {
             "type": "string",
-            "format": "uuid"
-          },
-          "author": {
-            "type": "string",
-            "enum": [
-              "user",
-              "assistant"
-            ]
-          },
-          "content": {
-            "type": "string"
-          },
-          "created_at": {
-            "$ref": "#/components/schemas/UtcDateTime"
+            "minLength": 1
           }
         },
         "required": [
-          "id",
-          "author",
-          "content",
-          "created_at"
+          "expected_version",
+          "decision",
+          "reason"
         ],
         "additionalProperties": false
-      },
-      "ChatStatus": {
-        "type": "string",
-        "enum": [
-          "NEEDS_INPUT",
-          "EXISTING",
-          "READY_TO_SUBMIT",
-          "SUBMITTED",
-          "OUT_OF_SCOPE"
-        ]
       },
       "LotSampleItem": {
         "type": "object",
@@ -5787,45 +4253,126 @@
         ],
         "additionalProperties": false
       },
-      "ProposalStatus": {
+      "SsoCallbackRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "code",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "DuplicateCheckState": {
+        "type": "object",
+        "description": "Última verificação de duplicidade aceita pela API, com a assinatura da ficha (classe e atributos preenchidos). Vale só enquanto a ficha não muda.",
+        "properties": {
+          "signature": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "NO_MATCH",
+              "MATCH_FOUND"
+            ]
+          },
+          "existing": {
+            "$ref": "#/components/schemas/ExistingMatch"
+          },
+          "similar_candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SimilarCandidate"
+            }
+          }
+        },
+        "required": [
+          "signature",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "ChatAction": {
+        "type": "object",
+        "description": "Ação dos botões do chat. Só vale para códigos oferecidos antes nesta conversa; o texto exibido no botão não importa.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PICK_CANDIDATE",
+              "DISMISS_CANDIDATES"
+            ]
+          },
+          "material_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Obrigatório em PICK_CANDIDATE."
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "MaterialStatus": {
         "type": "string",
         "enum": [
-          "PENDING",
-          "APPLIED",
-          "REJECTED",
-          "STALE"
+          "ATIVO",
+          "BLOQUEADO",
+          "OBSOLETO"
         ]
       },
-      "OrderComplementRequest": {
+      "Decision": {
+        "type": "string",
+        "enum": [
+          "APPROVE",
+          "REJECT"
+        ]
+      },
+      "UtcDateTime": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "Z$",
+        "description": "Data ISO 8601 em UTC."
+      },
+      "ProposalInventoryRow": {
         "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "expected_version",
-          "text",
-          "source",
-          "reason"
-        ],
         "properties": {
-          "expected_version": {
-            "type": "integer",
-            "minimum": 1
+          "center_code": {
+            "type": "string"
           },
-          "text": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 10000
+          "quantity": {
+            "$ref": "#/components/schemas/Decimal"
           },
-          "source": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 1000
-          },
-          "reason": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2000
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
-        }
+        },
+        "required": [
+          "center_code",
+          "quantity",
+          "unit"
+        ],
+        "additionalProperties": false
       },
       "NcmAssessment": {
         "additionalProperties": false,
@@ -5940,6 +4487,338 @@
         ],
         "type": "object"
       },
+      "ExistingMatch": {
+        "type": "object",
+        "properties": {
+          "material_code": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MaterialStatus"
+          },
+          "pdm_description": {
+            "type": "string"
+          },
+          "match_type": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "inventory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryRow"
+            }
+          }
+        },
+        "required": [
+          "material_code",
+          "status",
+          "pdm_description",
+          "match_type",
+          "reason",
+          "inventory"
+        ],
+        "additionalProperties": false
+      },
+      "ChatSessionList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatSessionSummary"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "LotDecisionResponse": {
+        "type": "object",
+        "properties": {
+          "lot_review_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "RETURNED"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "result": {
+            "$ref": "#/components/schemas/LotResult"
+          },
+          "audit_event_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "lot_review_id",
+          "status",
+          "version",
+          "result",
+          "audit_event_id"
+        ],
+        "additionalProperties": false
+      },
+      "BatchJobRequest": {
+        "type": "object",
+        "properties": {
+          "dataset_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "job_type": {
+            "type": "string",
+            "enum": [
+              "SANITIZE",
+              "IMPORT_ORDERS",
+              "ENRICH_REAL_PRODUCTS"
+            ]
+          },
+          "pdm_version": {
+            "type": "string"
+          },
+          "ncm_version": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "object",
+            "properties": {
+              "pdm_class_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "include_statuses": {
+                "description": "O batch atual exige ATIVO, BLOQUEADO e OBSOLETO. Subconjuntos e lista vazia recebem 422 SCOPE_NOT_SUPPORTED antes de criar o job.",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MaterialStatus"
+                }
+              }
+            },
+            "required": [
+              "pdm_class_ids",
+              "include_statuses"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "dataset_id",
+          "job_type",
+          "pdm_version",
+          "ncm_version",
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "LotList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotSummary"
+            }
+          },
+          "min_lot_size": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "items",
+          "min_lot_size"
+        ],
+        "additionalProperties": false
+      },
+      "AgentRunResponse": {
+        "type": "object",
+        "properties": {
+          "assistant_message": {
+            "type": "string"
+          },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolCall"
+            },
+            "maxItems": 5
+          },
+          "context_patch": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "material_card": {
+            "$ref": "#/components/schemas/MaterialCardData"
+          }
+        },
+        "required": [
+          "assistant_message",
+          "tool_calls",
+          "context_patch",
+          "material_card"
+        ],
+        "additionalProperties": false
+      },
+      "SimilarCandidate": {
+        "type": "object",
+        "description": "Item parecido, sem identidade verificada, que o solicitante confirma ou descarta. Obsoletos nunca aparecem.",
+        "properties": {
+          "material_code": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MaterialStatus"
+          },
+          "pdm_description": {
+            "type": "string"
+          },
+          "active_code_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "material_code",
+          "status",
+          "pdm_description",
+          "active_code_target"
+        ],
+        "additionalProperties": false
+      },
+      "ProposalDecisionRequest": {
+        "type": "object",
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "review_area": {
+            "$ref": "#/components/schemas/ReviewArea"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "primary_material_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "expected_version",
+          "review_area",
+          "decision",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "AuditEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "effective_role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/UtcDateTime"
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "actor_type": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "SYSTEM"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "actor",
+          "effective_role",
+          "action",
+          "entity",
+          "reason",
+          "request_id",
+          "created_at",
+          "actor_type"
+        ],
+        "additionalProperties": false
+      },
       "ChatSessionSummary": {
         "type": "object",
         "additionalProperties": false,
@@ -5962,180 +4841,30 @@
           }
         }
       },
-      "ProposalMember": {
+      "SsoCallbackResponse": {
         "type": "object",
         "properties": {
-          "material_code": {
-            "type": "string"
+          "authenticated": {
+            "type": "boolean",
+            "const": true
           },
-          "status": {
-            "$ref": "#/components/schemas/MaterialStatus"
-          },
-          "description": {
-            "type": "string"
-          },
-          "unit": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "ncm": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "inventory": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProposalInventoryRow"
-            }
-          },
-          "value_brl": {
-            "$ref": "#/components/schemas/Decimal",
-            "description": "Disponível somente com metrics:financial."
-          }
-        },
-        "required": [
-          "material_code",
-          "status",
-          "description",
-          "unit",
-          "ncm",
-          "inventory"
-        ],
-        "additionalProperties": false
-      },
-      "ManualReviewProposed": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "review_id",
-          "proposal_id",
-          "status"
-        ],
-        "properties": {
-          "review_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "proposal_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "const": "PENDING"
-          }
-        }
-      },
-      "AuditList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuditEvent"
-            }
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "additionalProperties": false
-      },
-      "SsoCallbackRequest": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "minLength": 1
-          },
-          "state": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "code",
-          "state"
-        ],
-        "additionalProperties": false
-      },
-      "ChatSubmitResponse": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "session_id",
-          "session_version",
-          "order_id",
-          "status"
-        ],
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "session_version": {
+          "expires_in_seconds": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 0
           },
-          "order_id": {
+          "redirect_path": {
             "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "READY_FOR_REVIEW",
-              "EXISTING"
-            ]
-          }
-        }
-      },
-      "OrderList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RegistrationOrder"
-            }
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "pattern": "^/[^/]"
           }
         },
         "required": [
-          "items",
-          "next_cursor"
+          "authenticated",
+          "expires_in_seconds",
+          "redirect_path"
         ],
         "additionalProperties": false
       },
-      "ConsolidatedInventoryRow": {
+      "InventoryRow": {
         "type": "object",
         "properties": {
           "center_code": {
@@ -6146,81 +4875,12 @@
           },
           "unit": {
             "type": "string"
-          },
-          "total_value": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
         "required": [
           "center_code",
           "quantity",
           "unit"
-        ],
-        "additionalProperties": false
-      },
-      "BatchJobResumeRequest": {
-        "type": "object",
-        "description": "Sem campos: o job reprocessado é o da rota.",
-        "properties": {},
-        "additionalProperties": false
-      },
-      "ChatTurnResponse": {
-        "type": "object",
-        "properties": {
-          "request_id": {
-            "type": "string"
-          },
-          "session_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "session_version": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "order_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "status": {
-            "$ref": "#/components/schemas/ChatStatus"
-          },
-          "assistant_message": {
-            "type": "string"
-          },
-          "tool_calls": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ToolCall"
-            }
-          },
-          "material_card": {
-            "$ref": "#/components/schemas/MaterialCardData"
-          }
-        },
-        "required": [
-          "request_id",
-          "session_id",
-          "session_version",
-          "order_id",
-          "status",
-          "assistant_message",
-          "tool_calls",
-          "material_card"
         ],
         "additionalProperties": false
       },
@@ -6268,6 +4928,32 @@
             "type": "string"
           }
         },
+        "additionalProperties": false
+      },
+      "ProposalQueue": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalSummary"
+            }
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
         "additionalProperties": false
       },
       "ManualReviewResolution": {
@@ -6356,6 +5042,1061 @@
         "title": "ManualReviewResolution",
         "type": "object"
       },
+      "LotItemOutcome": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "STALE",
+              "SKIPPED"
+            ]
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal_id",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "ToolCall": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "search_similar_materials",
+              "get_pdm_template",
+              "validate_and_format_pdm",
+              "check_ncm_consistency",
+              "enrich_from_trusted_source"
+            ]
+          },
+          "transport": {
+            "type": "string",
+            "const": "MCP_STDIO"
+          },
+          "input": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCEEDED",
+              "FAILED",
+              "PENDING"
+            ]
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "result": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "transport",
+          "input",
+          "status",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "ProposalMember": {
+        "type": "object",
+        "properties": {
+          "material_code": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MaterialStatus"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ncm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "inventory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalInventoryRow"
+            }
+          },
+          "value_brl": {
+            "$ref": "#/components/schemas/Decimal",
+            "description": "Disponível somente com metrics:financial."
+          }
+        },
+        "required": [
+          "material_code",
+          "status",
+          "description",
+          "unit",
+          "ncm",
+          "inventory"
+        ],
+        "additionalProperties": false
+      },
+      "Permission": {
+        "type": "string",
+        "enum": [
+          "chat:use",
+          "materials:read",
+          "inventory:read",
+          "orders:create",
+          "orders:read_own",
+          "orders:update_own",
+          "orders:decide",
+          "queue:read",
+          "queue:read_audit",
+          "merge:decide",
+          "enrichment:decide",
+          "ncm:decide",
+          "batch:run",
+          "metrics:quality",
+          "metrics:financial",
+          "audit:own",
+          "audit:technical",
+          "audit:fiscal"
+        ]
+      },
+      "EvidenceItem": {
+        "type": "object",
+        "properties": {
+          "attribute": {
+            "type": "string"
+          },
+          "current_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposed_value": {
+            "type": "string"
+          },
+          "source_title": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "source_excerpt": {
+            "type": "string"
+          },
+          "source_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "ALTA",
+              "MEDIA",
+              "BAIXA"
+            ]
+          },
+          "divergence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence_basis": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulated": {
+            "type": "boolean"
+          },
+          "included_in_proposal": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "attribute",
+          "current_value",
+          "proposed_value",
+          "source_title",
+          "source_url",
+          "source_excerpt",
+          "source_page",
+          "confidence",
+          "divergence"
+        ],
+        "additionalProperties": false
+      },
+      "BatchJobResumeRequest": {
+        "type": "object",
+        "description": "Sem campos: o job reprocessado é o da rota.",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "request_id": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "request_id",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/UtcDateTime"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "content",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "LogoutResponse": {
+        "type": "object",
+        "properties": {
+          "logged_out": {
+            "const": true
+          }
+        },
+        "required": [
+          "logged_out"
+        ],
+        "additionalProperties": false
+      },
+      "ProposalStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "APPLIED",
+          "REJECTED",
+          "STALE"
+        ]
+      },
+      "OrderComplementRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expected_version",
+          "text",
+          "source",
+          "reason"
+        ],
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      },
+      "BatchManifest": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dataset_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pipeline_version": {
+            "type": "string"
+          },
+          "pdm_version": {
+            "type": "string"
+          },
+          "ncm_version": {
+            "type": "string"
+          },
+          "input_manifest_key": {
+            "type": "string"
+          },
+          "output_prefix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "dataset_id",
+          "pipeline_version",
+          "pdm_version",
+          "ncm_version",
+          "input_manifest_key",
+          "output_prefix"
+        ],
+        "additionalProperties": false
+      },
+      "ConsolidatedInventoryRow": {
+        "type": "object",
+        "properties": {
+          "center_code": {
+            "type": "string"
+          },
+          "quantity": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "total_value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "center_code",
+          "quantity",
+          "unit"
+        ],
+        "additionalProperties": false
+      },
+      "ChatTurnResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "session_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChatStatus"
+          },
+          "assistant_message": {
+            "type": "string"
+          },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToolCall"
+            }
+          },
+          "material_card": {
+            "$ref": "#/components/schemas/MaterialCardData"
+          }
+        },
+        "required": [
+          "request_id",
+          "session_id",
+          "session_version",
+          "order_id",
+          "status",
+          "assistant_message",
+          "tool_calls",
+          "material_card"
+        ],
+        "additionalProperties": false
+      },
+      "Decimal": {
+        "type": "string",
+        "pattern": "^-?[0-9]+(\\.[0-9]+)?$",
+        "description": "Quantidade ou valor decimal, sem conversão para ponto flutuante."
+      },
+      "LotDecisionRequest": {
+        "type": "object",
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "marks": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "proposal_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "verdict": {
+                  "type": "string",
+                  "enum": [
+                    "CORRECT",
+                    "WRONG"
+                  ]
+                }
+              },
+              "required": [
+                "proposal_id",
+                "verdict"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "expected_version",
+          "marks",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "ManualUnitConversion": {
+        "additionalProperties": false,
+        "properties": {
+          "from_unit": {
+            "title": "From Unit",
+            "type": "string"
+          },
+          "to_unit": {
+            "title": "To Unit",
+            "type": "string"
+          },
+          "factor": {
+            "maxLength": 64,
+            "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
+            "title": "Factor",
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_unit",
+          "to_unit",
+          "factor",
+          "source"
+        ],
+        "title": "UnitConversion",
+        "type": "object"
+      },
+      "AuthConfig": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "disabled",
+              "local",
+              "cognito"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "OrderSupplement": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "source",
+          "reason",
+          "actor_user_id",
+          "created_at"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "actor_user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ValidationStatus": {
+        "type": "string",
+        "enum": [
+          "VALID",
+          "INCOMPLETE",
+          "INVALID",
+          "OUT_OF_SCOPE"
+        ]
+      },
+      "ReviewStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "REJECTED",
+          "NOT_REQUIRED"
+        ]
+      },
+      "Material": {
+        "type": "object",
+        "properties": {
+          "material_code": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MaterialStatus"
+          },
+          "description": {
+            "type": "string"
+          },
+          "pdm_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit": {
+            "type": "string"
+          },
+          "ncm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active_code_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "inventory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryRow"
+            }
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SEM_NCM",
+                "DUPLICIDADE_SUSPEITA",
+                "UNIDADE_NAO_CANONICA",
+                "ATRIBUTO_FALTANDO"
+              ]
+            }
+          }
+        },
+        "required": [
+          "material_code",
+          "status",
+          "description",
+          "pdm_class",
+          "unit",
+          "ncm",
+          "active_code_target",
+          "inventory",
+          "flags"
+        ],
+        "additionalProperties": false
+      },
+      "BatchJobList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchJob"
+            }
+          },
+          "latest_dataset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dataset que um novo job usaria."
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "latest_dataset_id",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "AgentRunRequest": {
+        "type": "object",
+        "properties": {
+          "turn_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "session_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChatAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "pdm_version": {
+                "type": "string"
+              },
+              "ncm_version": {
+                "type": "string"
+              },
+              "center_code": {
+                "type": "string"
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ChatMessage"
+                }
+              },
+              "confirmed_attributes": {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "offered_material_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Códigos parecidos mostrados no turno anterior, lidos do contexto persistido pela API."
+              },
+              "dismissed_material_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Códigos que o solicitante confirmou não serem o item dele, validados pela API."
+              },
+              "duplicate_check": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DuplicateCheckState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Lida pela API do contexto persistido. Enquanto a ficha não muda, o Agent decide sem nova busca."
+              }
+            },
+            "required": [
+              "pdm_version",
+              "ncm_version",
+              "center_code",
+              "history",
+              "confirmed_attributes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "turn_id",
+          "session_id",
+          "session_version",
+          "message",
+          "context"
+        ],
+        "additionalProperties": false
+      },
+      "LotSummary": {
+        "type": "object",
+        "description": "Lote elegível: propostas pendentes com o mesmo review_lane.lot_key e nível 1 ou 2.",
+        "properties": {
+          "lot_key": {
+            "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LotTier"
+          },
+          "proposal_type": {
+            "type": "string",
+            "enum": [
+              "UNIT_CORRECTION",
+              "PDM_CORRECTION"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "pdm_class_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pdm_class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sample_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "open_review_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "lot_key",
+          "tier",
+          "proposal_type",
+          "rule",
+          "pdm_class_id",
+          "pdm_class_name",
+          "size",
+          "sample_size",
+          "open_review_id"
+        ],
+        "additionalProperties": false
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "INCOMPLETE",
+          "READY_FOR_REVIEW",
+          "EXISTING",
+          "OUT_OF_SCOPE",
+          "PENDING_FISCAL",
+          "REGISTERED",
+          "REJECTED"
+        ]
+      },
+      "EnrichmentList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrichmentProposal"
+            }
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "LocalSessionRequest": {
+        "type": "object",
+        "properties": {
+          "persona": {
+            "$ref": "#/components/schemas/PersonaLabel"
+          }
+        },
+        "required": [
+          "persona"
+        ],
+        "additionalProperties": false
+      },
+      "ProposalDecisionResponse": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "technical_review_status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "fiscal_review_status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "primary_material_code": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "blocked_material_codes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "primary_material_code",
+                  "blocked_material_codes"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audit_event_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "proposal_id",
+          "version",
+          "status",
+          "technical_review_status",
+          "fiscal_review_status",
+          "result",
+          "audit_event_id"
+        ],
+        "additionalProperties": false
+      },
+      "ChatStatus": {
+        "type": "string",
+        "enum": [
+          "NEEDS_INPUT",
+          "EXISTING",
+          "READY_TO_SUBMIT",
+          "SUBMITTED",
+          "OUT_OF_SCOPE"
+        ]
+      },
       "ProposalSummary": {
         "type": "object",
         "properties": {
@@ -6442,81 +6183,270 @@
         ],
         "additionalProperties": false
       },
-      "ProposalDecisionResponse": {
+      "ProposalIdentity": {
         "type": "object",
         "properties": {
-          "proposal_id": {
+          "mode": {
             "type": "string",
-            "format": "uuid"
+            "enum": [
+              "MANUFACTURER_REFERENCE",
+              "TECHNICAL_ATTRIBUTES"
+            ]
           },
-          "version": {
-            "type": "integer",
-            "minimum": 1
+          "summary": {
+            "type": "string"
           },
-          "status": {
-            "$ref": "#/components/schemas/ProposalStatus"
-          },
-          "technical_review_status": {
-            "$ref": "#/components/schemas/ReviewStatus"
-          },
-          "fiscal_review_status": {
-            "$ref": "#/components/schemas/ReviewStatus"
-          },
-          "result": {
+          "manufacturer": {
             "anyOf": [
               {
-                "type": "object",
-                "properties": {
-                  "primary_material_code": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "blocked_material_codes": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "required": [
-                  "primary_material_code",
-                  "blocked_material_codes"
-                ],
-                "additionalProperties": false
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "audit_event_id": {
-            "type": "string",
-            "format": "uuid"
+          "manufacturer_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
         "required": [
-          "proposal_id",
-          "version",
-          "status",
-          "technical_review_status",
-          "fiscal_review_status",
-          "result",
-          "audit_event_id"
+          "mode"
         ],
         "additionalProperties": false
       },
-      "ReviewArea": {
+      "ManualReviewProposed": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "review_id",
+          "proposal_id",
+          "status"
+        ],
+        "properties": {
+          "review_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "const": "PENDING"
+          }
+        }
+      },
+      "ChatSubmitRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expected_session_version"
+        ],
+        "properties": {
+          "expected_session_version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "PersonaLabel": {
         "type": "string",
         "enum": [
-          "TECHNICAL",
-          "FISCAL"
+          "SOLICITANTE_OPERACAO",
+          "GESTOR_CADASTRO",
+          "AUDITOR_FISCAL"
         ]
+      },
+      "RegistrationOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "CHAT",
+              "IMPORT"
+            ]
+          },
+          "requester": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_text": {
+            "type": "string"
+          },
+          "center_code": {
+            "type": "string"
+          },
+          "pdm_class_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "missing_attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "material_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/UtcDateTime"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "supplements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderSupplement"
+            }
+          },
+          "can_complement": {
+            "type": "boolean",
+            "description": "A identidade atual pode complementar este pedido no estado e escopo atuais."
+          }
+        },
+        "required": [
+          "id",
+          "origin",
+          "requester",
+          "original_text",
+          "center_code",
+          "pdm_class_id",
+          "status",
+          "missing_attributes",
+          "material_code",
+          "updated_at",
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "LotTier": {
+        "type": "integer",
+        "enum": [
+          1,
+          2
+        ]
+      },
+      "ManualReviewAttribute": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "required",
+          "format",
+          "allowed_values"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "format": {
+            "type": "string"
+          },
+          "allowed_values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ManualReviewCatalog": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pdm_version",
+          "classes"
+        ],
+        "properties": {
+          "pdm_version": {
+            "type": "string"
+          },
+          "classes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualReviewClass"
+            }
+          }
+        }
+      },
+      "ChatSubmitResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "session_id",
+          "session_version",
+          "order_id",
+          "status"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "session_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "order_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "READY_FOR_REVIEW",
+              "EXISTING"
+            ]
+          }
+        }
       },
       "Proposal": {
         "type": "object",
@@ -6711,20 +6641,144 @@
         ],
         "additionalProperties": false
       },
-      "SimilarCandidate": {
+      "LotReview": {
         "type": "object",
-        "description": "Item parecido, sem identidade verificada, que o solicitante confirma ou descarta. Obsoletos nunca aparecem.",
+        "description": "Revisão de um lote: amostra sorteada pelo servidor, igual em toda leitura.",
         "properties": {
-          "material_code": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot_key": {
             "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LotTier"
+          },
+          "proposal_type": {
+            "type": "string",
+            "enum": [
+              "UNIT_CORRECTION",
+              "PDM_CORRECTION"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "pdm_class_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pdm_class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
-            "$ref": "#/components/schemas/MaterialStatus"
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "RETURNED"
+            ]
           },
-          "pdm_description": {
-            "type": "string"
+          "version": {
+            "type": "integer",
+            "minimum": 1
           },
-          "active_code_target": {
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sample": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotSampleItem"
+            }
+          },
+          "marks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "CORRECT",
+                "WRONG"
+              ]
+            }
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LotResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "lot_key",
+          "tier",
+          "proposal_type",
+          "rule",
+          "pdm_class_id",
+          "pdm_class_name",
+          "status",
+          "version",
+          "size",
+          "sample",
+          "marks",
+          "result",
+          "created_at",
+          "decided_at"
+        ],
+        "additionalProperties": false
+      },
+      "MaterialList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Material"
+            }
+          },
+          "next_cursor": {
             "anyOf": [
               {
                 "type": "string"
@@ -6736,68 +6790,100 @@
           }
         },
         "required": [
-          "material_code",
-          "status",
-          "pdm_description",
-          "active_code_target"
+          "items",
+          "next_cursor"
         ],
         "additionalProperties": false
       },
-      "OrderDecisionRequest": {
+      "LotReviewOpenRequest": {
         "type": "object",
         "properties": {
-          "expected_version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "decision": {
-            "$ref": "#/components/schemas/Decision"
-          },
-          "reason": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "expected_version",
-          "decision",
-          "reason"
-        ],
-        "additionalProperties": false
-      },
-      "ProposalDecisionRequest": {
-        "type": "object",
-        "properties": {
-          "expected_version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "review_area": {
-            "$ref": "#/components/schemas/ReviewArea"
-          },
-          "decision": {
-            "$ref": "#/components/schemas/Decision"
-          },
-          "primary_material_code": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "reason": {
+          "lot_key": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 2000,
-            "pattern": "\\S"
+            "maxLength": 500
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LotTier"
           }
         },
         "required": [
-          "expected_version",
-          "review_area",
-          "decision",
-          "reason"
+          "lot_key",
+          "tier"
         ],
         "additionalProperties": false
+      },
+      "QualitySnapshot": {
+        "type": "object",
+        "description": "Snapshot posterior gerado só com propostas aplicadas; imutável.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dataset_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "applied_proposals": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "materials_changed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "inventory_value_conserved": {
+            "type": "boolean"
+          },
+          "export_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dataset_id",
+          "created_at",
+          "applied_proposals",
+          "materials_changed",
+          "inventory_value_conserved",
+          "export_key"
+        ],
+        "additionalProperties": false
+      },
+      "OrderSubmitRequest": {
+        "type": "object",
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "additionalProperties": false
+      },
+      "SavedToolCall": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "turn",
+          "call"
+        ],
+        "properties": {
+          "turn": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "call": {
+            "$ref": "#/components/schemas/ToolCall"
+          }
+        }
       },
       "ManualReview": {
         "type": "object",
@@ -6934,457 +7020,6 @@
           }
         }
       },
-      "EnrichmentProposal": {
-        "type": "object",
-        "properties": {
-          "proposal_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "material_code": {
-            "type": "string"
-          },
-          "original_description": {
-            "type": "string"
-          },
-          "proposed_description": {
-            "type": "string"
-          },
-          "pdm_class_id": {
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/ProposalStatus"
-          },
-          "evidence": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EvidenceItem"
-            }
-          },
-          "technical_review_status": {
-            "$ref": "#/components/schemas/ReviewStatus"
-          },
-          "fiscal_review_status": {
-            "$ref": "#/components/schemas/ReviewStatus"
-          },
-          "allowed_actions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "APPROVE",
-                "REJECT"
-              ]
-            }
-          },
-          "pending_attributes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "proposal_id",
-          "version",
-          "material_code",
-          "original_description",
-          "proposed_description",
-          "pdm_class_id",
-          "status",
-          "evidence"
-        ],
-        "additionalProperties": false
-      },
-      "ToolCall": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "enum": [
-              "search_similar_materials",
-              "get_pdm_template",
-              "validate_and_format_pdm",
-              "check_ncm_consistency",
-              "enrich_from_trusted_source"
-            ]
-          },
-          "transport": {
-            "type": "string",
-            "const": "MCP_STDIO"
-          },
-          "input": {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "SUCCEEDED",
-              "FAILED",
-              "PENDING"
-            ]
-          },
-          "duration_ms": {
-            "type": "number"
-          },
-          "result": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "transport",
-          "input",
-          "status",
-          "result"
-        ],
-        "additionalProperties": false
-      },
-      "BatchManifest": {
-        "type": "object",
-        "properties": {
-          "job_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "dataset_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "pipeline_version": {
-            "type": "string"
-          },
-          "pdm_version": {
-            "type": "string"
-          },
-          "ncm_version": {
-            "type": "string"
-          },
-          "input_manifest_key": {
-            "type": "string"
-          },
-          "output_prefix": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "job_id",
-          "dataset_id",
-          "pipeline_version",
-          "pdm_version",
-          "ncm_version",
-          "input_manifest_key",
-          "output_prefix"
-        ],
-        "additionalProperties": false
-      },
-      "BatchJob": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "job_type": {
-            "type": "string",
-            "enum": [
-              "SANITIZE",
-              "IMPORT_ORDERS",
-              "ENRICH_REAL_PRODUCTS"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "QUEUED",
-              "RUNNING",
-              "SUCCEEDED",
-              "FAILED"
-            ]
-          },
-          "requested_by": {
-            "type": "string"
-          },
-          "pdm_version": {
-            "type": "string"
-          },
-          "ncm_version": {
-            "type": "string"
-          },
-          "progress": {
-            "type": "object",
-            "properties": {
-              "processed": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "processed",
-              "total"
-            ],
-            "additionalProperties": false
-          },
-          "counts": {
-            "type": "object",
-            "properties": {
-              "proposals": {
-                "type": "number"
-              },
-              "merges": {
-                "type": "number"
-              },
-              "ncm": {
-                "type": "number"
-              },
-              "enrichment": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "proposals",
-              "merges",
-              "ncm",
-              "enrichment"
-            ],
-            "additionalProperties": false
-          },
-          "started_at": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UtcDateTime"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "finished_at": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UtcDateTime"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "heartbeat_at": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UtcDateTime"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string"
-                  },
-                  "message": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "code",
-                  "message"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "job_type",
-          "status",
-          "requested_by",
-          "pdm_version",
-          "ncm_version",
-          "progress",
-          "counts",
-          "started_at",
-          "finished_at",
-          "heartbeat_at",
-          "error"
-        ],
-        "additionalProperties": false
-      },
-      "ChatMessageRequest": {
-        "type": "object",
-        "properties": {
-          "session_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "client_message_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "expected_session_version": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "message": {
-            "type": "string",
-            "minLength": 1
-          },
-          "center_code": {
-            "type": "string"
-          },
-          "action": {
-            "$ref": "#/components/schemas/ChatAction"
-          }
-        },
-        "required": [
-          "session_id",
-          "client_message_id",
-          "expected_session_version",
-          "message",
-          "center_code"
-        ],
-        "additionalProperties": false
-      },
-      "ChatAction": {
-        "type": "object",
-        "description": "Ação dos botões do chat. Só vale para códigos oferecidos antes nesta conversa; o texto exibido no botão não importa.",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "PICK_CANDIDATE",
-              "DISMISS_CANDIDATES"
-            ]
-          },
-          "material_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Obrigatório em PICK_CANDIDATE."
-          }
-        },
-        "required": [
-          "type"
-        ],
-        "additionalProperties": false
-      },
-      "AgentRunResponse": {
-        "type": "object",
-        "properties": {
-          "assistant_message": {
-            "type": "string"
-          },
-          "tool_calls": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ToolCall"
-            },
-            "maxItems": 5
-          },
-          "context_patch": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "material_card": {
-            "$ref": "#/components/schemas/MaterialCardData"
-          }
-        },
-        "required": [
-          "assistant_message",
-          "tool_calls",
-          "context_patch",
-          "material_card"
-        ],
-        "additionalProperties": false
-      },
-      "Permission": {
-        "type": "string",
-        "enum": [
-          "chat:use",
-          "materials:read",
-          "inventory:read",
-          "orders:create",
-          "orders:read_own",
-          "orders:update_own",
-          "orders:decide",
-          "queue:read",
-          "queue:read_audit",
-          "merge:decide",
-          "enrichment:decide",
-          "ncm:decide",
-          "batch:run",
-          "metrics:quality",
-          "metrics:financial",
-          "audit:own",
-          "audit:technical",
-          "audit:fiscal"
-        ]
-      },
-      "DuplicateCheckState": {
-        "type": "object",
-        "description": "Última verificação de duplicidade aceita pela API, com a assinatura da ficha (classe e atributos preenchidos). Vale só enquanto a ficha não muda.",
-        "properties": {
-          "signature": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "NO_MATCH",
-              "MATCH_FOUND"
-            ]
-          },
-          "existing": {
-            "$ref": "#/components/schemas/ExistingMatch"
-          },
-          "similar_candidates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SimilarCandidate"
-            }
-          }
-        },
-        "required": [
-          "signature",
-          "status"
-        ],
-        "additionalProperties": false
-      },
       "DemoSwitchRequest": {
         "type": "object",
         "properties": {
@@ -7398,177 +7033,87 @@
         ],
         "additionalProperties": false
       },
-      "PersonaLabel": {
-        "type": "string",
-        "enum": [
-          "SOLICITANTE_OPERACAO",
-          "GESTOR_CADASTRO",
-          "AUDITOR_FISCAL"
-        ]
-      },
-      "LotReviewOpenRequest": {
+      "Me": {
         "type": "object",
         "properties": {
-          "lot_key": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 500
-          },
-          "tier": {
-            "$ref": "#/components/schemas/LotTier"
-          }
-        },
-        "required": [
-          "lot_key",
-          "tier"
-        ],
-        "additionalProperties": false
-      },
-      "MaterialStatus": {
-        "type": "string",
-        "enum": [
-          "ATIVO",
-          "BLOQUEADO",
-          "OBSOLETO"
-        ]
-      },
-      "EvidenceItem": {
-        "type": "object",
-        "properties": {
-          "attribute": {
-            "type": "string"
-          },
-          "current_value": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "proposed_value": {
-            "type": "string"
-          },
-          "source_title": {
-            "type": "string"
-          },
-          "source_url": {
-            "type": "string"
-          },
-          "source_excerpt": {
-            "type": "string"
-          },
-          "source_page": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "confidence": {
-            "type": "string",
-            "enum": [
-              "ALTA",
-              "MEDIA",
-              "BAIXA"
-            ]
-          },
-          "divergence": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "source_sha256": {
-            "anyOf": [
-              {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
                 "type": "string",
-                "pattern": "^[0-9a-f]{64}$"
+                "format": "uuid"
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "confidence_basis": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "simulated": {
-            "type": "boolean"
-          },
-          "included_in_proposal": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "attribute",
-          "current_value",
-          "proposed_value",
-          "source_title",
-          "source_url",
-          "source_excerpt",
-          "source_page",
-          "confidence",
-          "divergence"
-        ],
-        "additionalProperties": false
-      },
-      "LotDecisionRequest": {
-        "type": "object",
-        "properties": {
-          "expected_version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "marks": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": {
-              "type": "object",
-              "properties": {
-                "proposal_id": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "verdict": {
-                  "type": "string",
-                  "enum": [
-                    "CORRECT",
-                    "WRONG"
-                  ]
+              "display_name": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Role"
                 }
-              },
-              "required": [
-                "proposal_id",
-                "verdict"
-              ],
-              "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "display_name",
+              "roles"
+            ],
+            "additionalProperties": false
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
             }
           },
-          "reason": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2000,
-            "pattern": "\\S"
+          "scope": {
+            "type": "object",
+            "properties": {
+              "center_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "center_codes"
+            ],
+            "additionalProperties": false
+          },
+          "demo": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "active_persona": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PersonaLabel"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "enabled",
+              "active_persona"
+            ],
+            "additionalProperties": false
+          },
+          "csrf_token": {
+            "type": "string"
           }
         },
         "required": [
-          "expected_version",
-          "marks",
-          "reason"
+          "user",
+          "permissions",
+          "scope",
+          "demo",
+          "csrf_token"
         ],
         "additionalProperties": false
       },
@@ -7623,86 +7168,6 @@
             "format": "uuid"
           }
         }
-      },
-      "BatchJobRequest": {
-        "type": "object",
-        "properties": {
-          "dataset_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "job_type": {
-            "type": "string",
-            "enum": [
-              "SANITIZE",
-              "IMPORT_ORDERS",
-              "ENRICH_REAL_PRODUCTS"
-            ]
-          },
-          "pdm_version": {
-            "type": "string"
-          },
-          "ncm_version": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "object",
-            "properties": {
-              "pdm_class_ids": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "include_statuses": {
-                "description": "O batch atual exige ATIVO, BLOQUEADO e OBSOLETO. Subconjuntos e lista vazia recebem 422 SCOPE_NOT_SUPPORTED antes de criar o job.",
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialStatus"
-                }
-              }
-            },
-            "required": [
-              "pdm_class_ids",
-              "include_statuses"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "dataset_id",
-          "job_type",
-          "pdm_version",
-          "ncm_version",
-          "scope"
-        ],
-        "additionalProperties": false
-      },
-      "MaterialList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Material"
-            }
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "additionalProperties": false
       },
       "DashboardMetrics": {
         "type": "object",
@@ -7965,52 +7430,591 @@
         ],
         "additionalProperties": false
       },
-      "OrderStatus": {
-        "type": "string",
-        "enum": [
-          "DRAFT",
-          "INCOMPLETE",
-          "READY_FOR_REVIEW",
-          "EXISTING",
-          "OUT_OF_SCOPE",
-          "PENDING_FISCAL",
-          "REGISTERED",
-          "REJECTED"
-        ]
-      },
-      "LocalSessionRequest": {
+      "BatchJob": {
         "type": "object",
         "properties": {
-          "persona": {
-            "$ref": "#/components/schemas/PersonaLabel"
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "job_type": {
+            "type": "string",
+            "enum": [
+              "SANITIZE",
+              "IMPORT_ORDERS",
+              "ENRICH_REAL_PRODUCTS"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED"
+            ]
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "pdm_version": {
+            "type": "string"
+          },
+          "ncm_version": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "object",
+            "properties": {
+              "processed": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "processed",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "proposals": {
+                "type": "number"
+              },
+              "merges": {
+                "type": "number"
+              },
+              "ncm": {
+                "type": "number"
+              },
+              "enrichment": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "proposals",
+              "merges",
+              "ncm",
+              "enrichment"
+            ],
+            "additionalProperties": false
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "heartbeat_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcDateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
-          "persona"
+          "id",
+          "job_type",
+          "status",
+          "requested_by",
+          "pdm_version",
+          "ncm_version",
+          "progress",
+          "counts",
+          "started_at",
+          "finished_at",
+          "heartbeat_at",
+          "error"
         ],
         "additionalProperties": false
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "ROLE_SOLICITANTE",
+          "ROLE_GOVERNANCA_PDM",
+          "ROLE_AUDITOR_FISCAL"
+        ]
+      },
+      "ReviewArea": {
+        "type": "string",
+        "enum": [
+          "TECHNICAL",
+          "FISCAL"
+        ]
+      },
+      "QualitySnapshotRequest": {
+        "type": "object",
+        "description": "Sem dataset_id, usa o dataset importado mais recentemente.",
+        "properties": {
+          "dataset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChatMessageRequest": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "client_message_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expected_session_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "center_code": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ChatAction"
+          }
+        },
+        "required": [
+          "session_id",
+          "client_message_id",
+          "expected_session_version",
+          "message",
+          "center_code"
+        ],
+        "additionalProperties": false
+      },
+      "EnrichmentProposal": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "material_code": {
+            "type": "string"
+          },
+          "original_description": {
+            "type": "string"
+          },
+          "proposed_description": {
+            "type": "string"
+          },
+          "pdm_class_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceItem"
+            }
+          },
+          "technical_review_status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "fiscal_review_status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "allowed_actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "APPROVE",
+                "REJECT"
+              ]
+            }
+          },
+          "pending_attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "proposal_id",
+          "version",
+          "material_code",
+          "original_description",
+          "proposed_description",
+          "pdm_class_id",
+          "status",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "ManualReviewClass": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "item_names",
+          "unit",
+          "attributes",
+          "ncm_codes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "item_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unit": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualReviewAttribute"
+            }
+          },
+          "ncm_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OrderList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegistrationOrder"
+            }
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "MaterialCardData": {
+        "type": "object",
+        "properties": {
+          "pdm_class_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pdm_class_name": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "pdm_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validation_status": {
+            "$ref": "#/components/schemas/ValidationStatus"
+          },
+          "missing_attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ncm": {
+            "type": "object",
+            "properties": {
+              "suggested": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDING_VALIDATION",
+                  "CONSISTENT",
+                  "REVIEW_REQUIRED"
+                ]
+              }
+            },
+            "required": [
+              "suggested",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "duplicate_check_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "NO_MATCH",
+              "MATCH_FOUND"
+            ]
+          },
+          "existing": {
+            "$ref": "#/components/schemas/ExistingMatch"
+          },
+          "similar_candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SimilarCandidate"
+            }
+          },
+          "can_submit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "pdm_class_id",
+          "attributes",
+          "pdm_description",
+          "validation_status",
+          "missing_attributes",
+          "ncm",
+          "duplicate_check_status",
+          "can_submit"
+        ],
+        "additionalProperties": false
+      },
+      "AuditList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            }
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "additionalProperties": false
+      },
+      "ChatSessionDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "session_id",
+          "session_version",
+          "processing",
+          "center_code",
+          "messages",
+          "calls",
+          "material_card",
+          "order_id",
+          "submission"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "session_version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "center_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          },
+          "calls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedToolCall"
+            }
+          },
+          "material_card": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MaterialCardData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "order_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "submission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChatSubmitResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
       }
     },
-    "parameters": {
-      "CsrfToken": {
-        "name": "X-CSRF-Token",
-        "in": "header",
-        "required": false,
-        "schema": {
-          "type": "string",
-          "minLength": 1
-        },
-        "description": "Obrigatório nas escritas com cookie. A API também verifica a origem."
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-vx_session"
       },
-      "IdempotencyKey": {
-        "name": "Idempotency-Key",
+      "cognitoAccessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "csrfToken": {
+        "type": "apiKey",
         "in": "header",
-        "required": true,
-        "schema": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "description": "Reutilizar a mesma chave e o mesmo payload ao repetir uma operação."
+        "name": "X-CSRF-Token",
+        "description": "Obrigatório em escritas autenticadas por cookie; dispensado com bearer."
+      },
+      "internalToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT interno emitido pela API com audience exclusiva do Agent e validade curta; nunca token do usuário."
+      },
+      "localSessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "vx_local_session",
+        "description": "Somente sessao de teste local em HTTP. Em HTTPS usa __Host-vx_session. Desabilitada fora de APP_ENV=local."
       }
     }
   }

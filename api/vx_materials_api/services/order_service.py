@@ -142,7 +142,17 @@ def _visible(identity, order: RegistrationOrder) -> bool:
     return has_permission(identity, FISCAL) and in_scope and order.status in {"PENDING_FISCAL", "REGISTERED"}
 
 
-def to_contract(db, order: RegistrationOrder) -> dict:
+def _can_complement(identity, order):
+    if identity is None or order.status not in {"DRAFT", "INCOMPLETE", "OUT_OF_SCOPE"}:
+        return False
+    if order.tenant_id != identity.tenant_id or (order.center_code and order.center_code not in identity.center_codes):
+        return False
+    if order.requester_user_id == identity.user_id:
+        return has_permission(identity, "orders:update_own")
+    return order.origin == "IMPORT" and order.requester_user_id is None and has_permission(identity, GOVERNANCE)
+
+
+def to_contract(db, order: RegistrationOrder, identity=None) -> dict:
     requester = db.get(UserSso, order.requester_user_id) if order.requester_user_id else None
     material = db.get(MaterialMaster, order.material_id) if order.material_id else None
     return {
@@ -158,6 +168,7 @@ def to_contract(db, order: RegistrationOrder) -> dict:
         "updated_at": order.updated_at.isoformat().replace("+00:00", "Z"),
         "version": order.version,
         "supplements": list(order.supplements or []),
+        "can_complement": _can_complement(identity, order),
     }
 
 
@@ -181,7 +192,7 @@ def list_orders(db, identity, *, status=None, mine=False, limit=20, cursor=None)
         query.order_by(RegistrationOrder.updated_at.desc(), RegistrationOrder.id).offset(offset).limit(limit + 1)
     ).all()
     return {
-        "items": [to_contract(db, order) for order in rows[:limit]],
+        "items": [to_contract(db, order, identity) for order in rows[:limit]],
         "next_cursor": str(offset + limit) if len(rows) > limit else None,
     }
 
@@ -296,7 +307,7 @@ def submit_order(db, identity, catalog, order_id, expected_version, key, request
     _audit(db, identity, role, order, "ORDER_SUBMITTED", None, before, request_id)
     db.flush()
     db.refresh(order)
-    body = to_contract(db, order)
+    body = to_contract(db, order, identity)
     _remember(db, identity, operation, key, payload_hash, order.id, body)
     db.commit()
     return body
@@ -335,7 +346,9 @@ def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
     if order.origin == "CHAT" and order.item_name is not None:
         attributes = dict(order.attributes)
         if order.supplements:
-            extra = extractor.extract(catalog.classes[order.pdm_class_id], "; ".join(item["text"] for item in order.supplements))
+            extra = extractor.extract(
+                catalog.classes[order.pdm_class_id], "; ".join(item["text"] for item in order.supplements)
+            )
             attributes.update({name: value.value for name, value in extra.attributes.items() if name not in attributes})
         validation = validate_pdm(catalog, order.pdm_class_id, attributes, item_name=order.item_name)
         ready = (
@@ -451,7 +464,7 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
     _audit(db, identity, role, order, action, decision.reason, before, request_id)
     db.flush()
     db.refresh(order)
-    body = to_contract(db, order)
+    body = to_contract(db, order, identity)
     _remember(db, identity, operation, key, payload_hash, order.id, body)
     db.commit()
     return body
@@ -510,7 +523,7 @@ def complement_order(db, identity, catalog, order_id, payload, key, request_id=N
     _audit(db, identity, role, order, "ORDER_COMPLEMENTED", payload.reason, before, request_id, after=snapshot())
     db.flush()
     db.refresh(order)
-    body = to_contract(db, order)
+    body = to_contract(db, order, identity)
     _remember(db, identity, operation, key, payload_hash, order.id, body)
     db.commit()
     return body

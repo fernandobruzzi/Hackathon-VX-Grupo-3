@@ -528,3 +528,33 @@ def test_complement_finds_existing_identity_and_does_not_publish(imported):
     assert result.status_code == 200 and result.json()["status"] == "EXISTING"
     db.refresh(order)
     assert order.candidate_material_ids == [str(existing.id)] and order.material_id is None
+
+
+def test_complement_preserves_the_confirmed_chat_card(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    requester = login(client, "SOLICITANTE_OPERACAO")
+    owner = db.scalar(select(UserSso).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    order.origin, order.requester_user_id = "CHAT", owner.id
+    order.item_name = "PARAFUSO SEXTAVADO"
+    order.original_text = "Conversa com informações antigas já corrigidas"
+    original_attributes = dict(order.attributes)
+    db.commit()
+    result = complement(client, requester, order)
+    assert result.status_code == 200, result.text
+    assert result.json()["status"] == "READY_FOR_REVIEW"
+    db.refresh(order)
+    assert order.attributes == {**original_attributes, "BITOLA": "M12"}
+    assert order.attributes["ROSCA"] == "METRICA FINA"
+
+
+@pytest.mark.parametrize("status", ["READY_FOR_REVIEW", "PENDING_FISCAL", "REGISTERED", "REJECTED", "EXISTING"])
+def test_complements_cannot_reopen_reviewed_orders(imported, status):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    order.status = status
+    db.commit()
+    response = complement(client, login(client, "GESTOR_CADASTRO"), order)
+    assert response.status_code == 409
+    db.refresh(order)
+    assert order.supplements == []

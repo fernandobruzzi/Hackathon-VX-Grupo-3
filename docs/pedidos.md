@@ -88,3 +88,17 @@ autenticado, independentemente do nome de exibição. Centro, propriedade e esta
 no servidor antes do limite. A ordenação usa atualização decrescente e UUID para desempate.
 Use `next_cursor` para a página seguinte na mesma consulta; cursor inválido recebe 422.
 A tela oferece **Carregar mais pedidos** e reinicia a coleção ao trocar aba ou identidade.
+## Complementar um pedido
+
+O dono pode complementar pedidos próprios; a Governança pode complementar importados sem dono,
+sempre nos centros autorizados. `can_complement` na resposta indica a ação disponível. Apenas
+`DRAFT`, `INCOMPLETE` e `OUT_OF_SCOPE` aceitam essa operação; revisão, publicação e rejeição não
+são reabertas. O complemento não atribui um dono e nunca publica um material.
+
+`POST /api/v1/registration-orders/{id}/complement` recebe versão, texto complementar, origem da
+informação e motivo, com CSRF e Idempotency-Key. Preserva os textos original e do anexo; grava
+cada complemento com autor e data e audita antes/depois na mesma transação. O motor PDM reavalia
+classe, atributos e duplicidade; informação insuficiente mantém as pendências. Na ficha estruturada
+confirmada pelo chat, preenche somente atributos ausentes e preserva os valores já confirmados.
+Por exemplo, `SC-202600011` com `BITOLA: M12` pode seguir para revisão técnica. Informação aceita
+não significa cadastro aprovado nem decisão fiscal.

@@ -620,6 +620,10 @@ Similar items without verified identity are listed for the requester to pick one
 
 The API saves the last accepted duplicate check with the card's signature (class and filled attributes). While the card doesn't change, the agent reuses it instead of searching again, so a pick or dismissal holds on later turns. A changed card searches again, and a turn without a search whose card differs from the saved one is never ready to submit. `READY_TO_SUBMIT` registers nothing: submitting and publishing an order belong to the approval flow.
 
+When changing registration-order supplements, read [`docs/pedidos.md`](docs/pedidos.md):
+owner/imported-order authorization, editable states, immutable originals, structured chat-card preservation,
+shared PDM reevaluation, and transactional source/actor/version audit are part of the contract.
+
 ## Correction proposals
 
 The same batch run proposes `PDM_CORRECTION` (description in PDM format, merchandise group of the class) and `UNIT_CORRECTION` (unit spelled as an alias, like `PCA` or `UN` for `PC`), one proposal per type and material. Every change records before, after and rule.

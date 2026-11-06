@@ -12,6 +12,8 @@ import { fmtDate } from "@/lib/format";
 import type { RegistrationOrder } from "@/types/api";
 import { orders as sample } from "@/mocks/data";
 
+import { OrderComplementForm } from "./OrderComplementForm";
+
 type Tab = "mine" | "review" | "all";
 
 /**
@@ -34,6 +36,8 @@ export function OrdersPage() {
   }, [reviewer]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState<RegistrationOrder | null>(null);
+  const [saved, setSaved] = useState<RegistrationOrder | null>(null);
   const [retry, setRetry] = useState(0);
 
   const loadPage = useCallback(
@@ -68,6 +72,8 @@ export function OrdersPage() {
     const request = new AbortController();
     controller.current = request;
     setRemote(null);
+    setEditing(null);
+    setSaved(null);
     setNextCursor(null);
     void loadPage(null, false, request.signal);
     return () => request.abort();
@@ -157,6 +163,26 @@ export function OrdersPage() {
           </Button>
         </div>
       )}
+      {editing && (
+        <OrderComplementForm
+          key={editing.id}
+          order={editing}
+          onCancel={() => setEditing(null)}
+          onSaved={(result) => {
+            setEditing(null);
+            setSaved(result);
+            setRemote((rows) => rows?.map((row) => (row.id === result.id ? result : row)) ?? null);
+          }}
+        />
+      )}
+      {saved && (
+        <p role="status" className="my-4 text-sm text-verde">
+          Complemento aceito. Resultado: {saved.status}
+          {saved.missing_attributes.length
+            ? `. Falta: ${saved.missing_attributes.join(", ")}`
+            : ". Sem pendências de atributos."}
+        </p>
+      )}
       <Table>
         <thead>
           <tr>
@@ -193,6 +219,22 @@ export function OrdersPage() {
                   <span className="font-semibold text-aviso">
                     Falta: {o.missing_attributes.join(", ")}
                   </span>
+                )}
+                {(o.supplements ?? []).map((entry, index) => (
+                  <p key={index} className="mt-1 text-sm text-muted">
+                    Complemento: {entry.text} · Origem: {entry.source}
+                  </p>
+                ))}
+                {backend && o.can_complement && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditing(o);
+                      setSaved(null);
+                    }}
+                  >
+                    Complementar
+                  </Button>
                 )}
                 {o.material_code && (
                   <span>
