@@ -50,6 +50,8 @@ def create_app(
     app.state.session_factory = session_factory or (lambda: _default_session_factory()())
     app.state.identity_provider = identity_provider or _default_identity_provider()
     settings.check_local_shortcuts()
+    # Falha cedo se a troca de persona estiver ligada sem a lista de contas.
+    settings.demo_accounts()
     backend = os.environ.get("AUTH_BACKEND", "disabled")
     if backend not in {"disabled", "cognito"}:
         raise RuntimeError("AUTH_BACKEND deve ser disabled ou cognito")

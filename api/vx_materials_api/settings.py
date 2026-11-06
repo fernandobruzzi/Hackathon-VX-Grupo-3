@@ -107,3 +107,26 @@ def batch_database_url() -> str:
 def batch_heartbeat_timeout_seconds() -> int:
     """Sem heartbeat por mais que isso, o job é dado como parado."""
     return int(os.environ.get("BATCH_HEARTBEAT_TIMEOUT_SECONDS", "120"))
+
+
+def demo_mode_enabled() -> bool:
+    """Troca rápida de persona no pitch. Desligada por padrão; nunca concede papel por si só."""
+    return os.environ.get("DEMO_MODE", "false").lower() == "true"
+
+
+def demo_accounts() -> dict[str, str]:
+    """Persona → e-mail da conta Cognito de demonstração, em `PERSONA=email,PERSONA=email`."""
+    from vx_materials_api.security.permissions import PERSONA_ROLES
+
+    accounts = {}
+    for item in os.environ.get("DEMO_ACCOUNTS", "").split(","):
+        if not item.strip():
+            continue
+        persona, _, email = item.partition("=")
+        persona, email = persona.strip(), email.strip().lower()
+        if persona not in PERSONA_ROLES or not email:
+            raise RuntimeError(f"DEMO_ACCOUNTS inválido: {item.strip()!r}")
+        accounts[persona] = email
+    if demo_mode_enabled() and not accounts:
+        raise RuntimeError("DEMO_MODE exige DEMO_ACCOUNTS com as contas de demonstração")
+    return accounts

@@ -11,12 +11,13 @@ from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from vx_materials_api import settings
 from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_api.db.models import AuthSession, UserSso
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.security.cognito import invalid_login
 from vx_materials_api.security.identity import Identity
-from vx_materials_api.security.permissions import permissions_for
+from vx_materials_api.security.permissions import PERSONA_ROLES, permissions_for
 
 SESSION_COOKIE = "__Host-vx_session"
 CONTEXT_COOKIE = "__Host-vx_browser"
@@ -78,6 +79,16 @@ def upsert_user(db, access, profile=None):
     return user
 
 
+def demo_persona(user, roles) -> str | None:
+    """Persona de demonstração da conta, só com DEMO_MODE e com o papel que a persona exige."""
+    if not settings.demo_mode_enabled() or not user.email:
+        return None
+    for persona, email in settings.demo_accounts().items():
+        if user.email.lower() == email and PERSONA_ROLES[persona] in roles:
+            return persona
+    return None
+
+
 def create_session(db, config, tokens, access, profile, browser_context):
     user = upsert_user(db, access, profile)
     token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
@@ -89,6 +100,7 @@ def create_session(db, config, tokens, access, profile, browser_context):
         tokens_ciphertext=seal(config, {"tokens": tokens, "csrf_token": csrf}),
         expires_at=expires,
         csrf_token_hash=digest(csrf),
+        demo_label=demo_persona(user, access["roles"]),
     )
     db.add(row)
     db.flush()
@@ -129,20 +141,26 @@ def session_identity(request: Request, db) -> Identity:
         row.AuthSession.browser_context_hash, digest(request.cookies.get(CONTEXT_COOKIE, ""))
     ):
         raise invalid_login()
-    payload = unseal(client.config, row.AuthSession.tokens_ciphertext)
+    return identity_from_session(client, row.AuthSession, row.UserSso)
+
+
+def identity_from_session(client, auth_session: AuthSession, user: UserSso) -> Identity:
+    """Valida os tokens guardados da sessão e monta a identidade, sempre a partir do servidor."""
+    payload = unseal(client.config, auth_session.tokens_ciphertext)
     access = client.validate(payload["tokens"]["access_token"], "access")
-    if access["sub"] != row.UserSso.subject or not hmac.compare_digest(
-        digest(payload["csrf_token"]), row.AuthSession.csrf_token_hash
+    if access["sub"] != user.subject or not hmac.compare_digest(
+        digest(payload["csrf_token"]), auth_session.csrf_token_hash
     ):
         raise invalid_login()
     return Identity(
-        row.UserSso.id,
-        row.UserSso.tenant_id,
+        user.id,
+        user.tenant_id,
         access["roles"],
         permissions_for(access["roles"]),
-        display_name=row.UserSso.display_name or "",
+        display_name=user.display_name or "",
         center_codes=frozenset(client.config.center_codes),
         csrf_token=payload["csrf_token"],
+        persona=auth_session.demo_label if settings.demo_mode_enabled() else None,
     )
 
 

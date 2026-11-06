@@ -964,7 +964,10 @@ export type $defs = Record<string, never>;
 export interface operations {
   startSso: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Com DEMO_MODE, `login` pede nova autenticação para entrar com outra conta demo no mesmo navegador. */
+        prompt?: "login";
+      };
       header?: never;
       path?: never;
       cookie?: never;
