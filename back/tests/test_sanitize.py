@@ -237,7 +237,7 @@ def precision(pairs):
     return sum(pair["same_item"] for pair in decided) / len(decided), len(decided)
 
 
-# Mede com pares revisados: é a medida de junções erradas, e os mínimos só devem subir.
+# Regressão de desenvolvimento em pares escolhidos; não estima precisão na base inteira.
 def test_exact_identity_precision_on_reviewed_pairs(catalog, whole_base):
     _, analyzed = whole_base
     value, decided = precision(proposed_pairs(group_for("exact_identity_v1", catalog, analyzed)))

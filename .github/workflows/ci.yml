@@ -187,6 +187,10 @@ jobs:
           docker run --rm vx-ci-agent python -c 'import os; from domain.pdm_loader import load_pdm; assert load_pdm(os.environ["PDM_WORKBOOK_PATH"]).classes'
           docker run --rm vx-ci-batch vx-back --help
           docker run --rm vx-ci-api python -c 'import ssl; assert ssl.create_default_context(cafile="/app/certs/rds-global-bundle.pem").cert_store_stats()["x509_ca"] > 0'
+      - name: Check packaged evaluation cohorts without AWS or database
+        run: |
+          docker run --rm --network none --read-only vx-ci-batch vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx > "$RUNNER_TEMP/sanitization-evaluation.json"
+          python3 -c 'import json,os; r=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"sanitization-evaluation.json"))); assert r["evaluation_kind"] == "DEVELOPMENT_EVALUATION"; assert not r["independent_review"] and not r["authorizes_merge"]; assert r["groups"]["counts"]["cases"] == 40'
       - name: Start isolated Compose stack, real search index included
         run: docker compose up -d --no-build --wait --wait-timeout 300 api
       - name: Verify frontend and real MCP turn

@@ -32,3 +32,6 @@ include = ["clients*", "domain*", "enrichment*", "matching*", "pipelines*", "rep
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.setuptools.package-data]
+"pipelines.evaluation_data" = ["*.json"]

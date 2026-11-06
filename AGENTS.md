@@ -508,7 +508,23 @@ A finished job stores its metrics in `batch_jobs.counts` and `runs/<job_id>/metr
 
 A proposal's id comes from its content, so a rerun with the same content inserts nothing. When rules change, the new proposal for the same dataset, type and members replaces the earlier `PENDING` one: in the same transaction, the batch calls `supersede_proposals`, which marks it `STALE` with a `SYSTEM` audit event (`PROPOSAL_SUPERSEDED`, pointing to its replacement). `APPLIED` and `REJECTED` proposals never change. `batch_user` still has no access to `audit_logs`: the function runs with the migration owner's rights and does only this.
 
-Merge precision is measured on a random sample of all merge proposals in `back/tests/fixtures/merge_precision_sample.json`, reviewed by reading descriptions. If proposals change, the test asks for a new sample and review.
+Sanitization evaluation uses frozen development cohorts packaged in
+`back/pipelines/evaluation_data/`. Never replace old labels or cohorts when
+candidates change: report changed/withdrawn groups and add a new version with
+review authors and evidence. Unknown labels and conflicting reviews stay
+inconclusive. The report distinguishes pair/group precision, coverage, abstention
+and recovery of known positives; none authorizes a merge. See
+[`docs/avaliacao-saneamento.md`](docs/avaliacao-saneamento.md).
+
+From the repo root, without a database or AWS:
+
+```bash
+uv run vx-back sanitization-evaluate data/desafio01/01_base_materiais.csv --pdm-workbook data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
+The dashboard must not publish development precision as an independent product
+metric. Technical corpus labels cover only the explicitly reviewed fields;
+PDM-valid values are not necessarily correct values for a product.
 
 ## Local first
 
