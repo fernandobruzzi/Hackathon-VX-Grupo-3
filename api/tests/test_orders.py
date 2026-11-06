@@ -558,3 +558,16 @@ def test_complements_cannot_reopen_reviewed_orders(imported, status):
     assert response.status_code == 409
     db.refresh(order)
     assert order.supplements == []
+
+
+def test_complement_audits_reclassified_order(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    order.status, order.pdm_class_id = "OUT_OF_SCOPE", None
+    db.commit()
+    response = complement(client, login(client, "GESTOR_CADASTRO"), order)
+    assert response.status_code == 200, response.text
+    assert response.json()["pdm_class_id"] == "PDM001"
+    audit = db.scalar(select(AuditLog).where(AuditLog.entity_id == str(order.id)))
+    assert audit.before_json["pdm_class_id"] is None
+    assert audit.after_json["pdm_class_id"] == "PDM001"
