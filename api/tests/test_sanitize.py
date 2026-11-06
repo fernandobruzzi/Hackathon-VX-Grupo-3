@@ -191,6 +191,19 @@ def _ncm_in_class(connection, catalog, proposal_id) -> bool:
     return after["ncm"] is None or any(after["ncm"] in reference.codes for reference in references)
 
 
+def _pdm_valid(connection, catalog, proposal_id) -> bool:
+    """Pendência de unidade não é mais conflito da correção de PDM (#111); a validação ainda a recusa."""
+    from domain.pdm_validator import validate_pdm
+
+    after = connection.execute(
+        text("SELECT changeset->'after' FROM sanitization_proposals WHERE id = :id"), {"id": proposal_id}
+    ).scalar_one()
+    validation = validate_pdm(
+        catalog, after["pdm_class_id"], after["attributes"], item_name=after["item_name"], unit=after["unit"]
+    )
+    return validation.status.value == "VALID" and not validation.not_applicable_attributes
+
+
 def test_real_group_correction_is_applied_and_keeps_the_original(sanitized, monkeypatch):
     from domain.pdm_loader import load_pdm
 
@@ -224,7 +237,9 @@ def test_real_group_correction_is_applied_and_keeps_the_original(sanitized, monk
             app.state.pdm_catalog = catalog
             # A primeira cujo NCM consta nas referências da classe: as demais esperam a revisão fiscal.
             proposal_id, group, _, material_id, original = next(
-                row for row in rows if _ncm_in_class(connection, catalog, row[0])
+                row
+                for row in rows
+                if _ncm_in_class(connection, catalog, row[0]) and _pdm_valid(connection, catalog, row[0])
             )
             proposal = SimpleNamespace(id=proposal_id)
             with TestClient(app, base_url="http://localhost:8000") as client:
@@ -241,3 +256,111 @@ def test_real_group_correction_is_applied_and_keeps_the_original(sanitized, monk
             assert tuple(saved) == (group, original)
         finally:
             transaction.rollback()
+
+
+@pytest.fixture
+def review(sanitized, monkeypatch):
+    """Cliente com sessões locais dentro de uma transação desfeita no fim, sobre o batch real."""
+    from domain.pdm_loader import load_pdm
+
+    _, _, admin, _ = sanitized
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
+    with admin.connect() as connection:
+        transaction = connection.begin()
+        app = create_app(session_factory=lambda: Session(bind=connection, join_transaction_mode="create_savepoint"))
+        app.state.pdm_catalog = load_pdm(PDM)
+        try:
+            with TestClient(app, base_url="http://localhost:8000") as client:
+                yield client, connection, login(client, "GESTOR_CADASTRO")
+        finally:
+            transaction.rollback()
+
+
+def correction(connection, proposal_type, code):
+    row = connection.execute(
+        text(
+            "SELECT p.id, p.changeset FROM sanitization_proposals p JOIN materials_master m "
+            "ON m.id = p.primary_material_id WHERE p.proposal_type = :type AND m.material_code = :code"
+        ),
+        {"type": proposal_type, "code": code},
+    ).one()
+    return SimpleNamespace(id=row[0]), row[1]
+
+
+def master(connection, code):
+    return connection.execute(
+        text(
+            "SELECT unit, ncm, version, pdm_class_id, identity_key, is_canonical, pdm_description "
+            "FROM materials_master WHERE material_code = :code"
+        ),
+        {"code": code},
+    ).one()
+
+
+@pytest.mark.parametrize(
+    ("code", "unit"),
+    [
+        # Sem classe confiável: só a grafia da unidade (unit.alias_without_class).
+        ("10109628", "PC"),
+        # Classe confiável, mas descrição sem CURVA: a pendência é da descrição, não da unidade.
+        ("10436289", "PC"),
+        # NCM sem pontos (84109000), que antes dava NCM_REFERENCE_MISMATCH.
+        ("10157545", "PC"),
+    ],
+)
+def test_real_unit_correction_changes_only_the_unit(review, code, unit):
+    client, connection, governance = review
+    proposal, changeset = correction(connection, "UNIT_CORRECTION", code)
+    assert changeset["conflicts"] == []
+    before = master(connection, code)
+    detail = client.get(f"/api/v1/sanitization/{proposal.id}").json()
+    assert detail["conflicts"] == [] and "APPROVE" in detail["allowed_actions"]
+
+    result = decision(client, governance, proposal)
+
+    assert result.status_code == 200, result.text
+    assert result.json()["status"] == "APPLIED"
+    after = master(connection, code)
+    assert (after.unit, after.version) == (unit, before.version + 1)
+    # Identidade, NCM e descrição continuam como estavam: a correção é só de grafia.
+    assert after[1:2] + after[3:] == before[1:2] + before[3:]
+    event = client.get("/api/v1/audit").json()["items"][0]
+    assert event["action"] == "PROPOSAL_APPROVE_TECHNICAL"
+    assert event["before"]["materials"][0]["unit"] == before.unit and event["after"]["materials"][0]["unit"] == unit
+
+
+def test_unit_correction_with_a_wrong_class_unit_stays_blocked(review):
+    # 11472033: óleo em UN; a classe mede em L. Trocar UN por PC esconderia a unidade errada.
+    client, connection, governance = review
+    proposal, changeset = correction(connection, "UNIT_CORRECTION", "11472033")
+    assert changeset["conflicts"] == ["UNIDADE_DIFERENTE_DA_CLASSE: PC, padrao da classe L"]
+
+    result = decision(client, governance, proposal)
+
+    assert result.status_code == 422 and result.json()["error"]["code"] == "PROPOSAL_CONFLICT"
+    assert master(connection, "11472033").unit == "UN"
+
+
+def test_unit_correction_never_converts_another_unit(review):
+    # Se o cadastro passou a ter outra unidade sem nova versão, a proposta não vira conversão.
+    client, connection, governance = review
+    proposal, _ = correction(connection, "UNIT_CORRECTION", "10109628")
+    connection.execute(text("UPDATE materials_master SET unit = 'CX' WHERE material_code = '10109628'"))
+
+    result = decision(client, governance, proposal)
+
+    assert result.status_code == 422 and result.json()["error"]["code"] == "UNIT_NOT_ALIAS"
+
+
+def test_pdm_correction_accepts_ncm_written_without_dots(review):
+    # 10002148: NCM 87089990 no cadastro, 8708.99.90 nas referências da classe.
+    client, connection, governance = review
+    proposal, changeset = correction(connection, "PDM_CORRECTION", "10002148")
+    assert changeset["after"]["ncm"] == "87089990" and changeset["conflicts"] == []
+
+    result = decision(client, governance, proposal)
+
+    assert result.status_code == 200, result.text
+    assert result.json()["status"] == "APPLIED"
+    assert master(connection, "10002148").ncm == "87089990"

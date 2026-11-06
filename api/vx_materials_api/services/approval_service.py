@@ -11,9 +11,10 @@ from pydantic import ValidationError
 from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
-from domain.contracts import PdmCatalog, ValidationStatus
+from domain.contracts import FieldStatus, PdmCatalog, ValidationStatus
 from domain.identity import reference_key
 from domain.pdm_validator import validate_pdm
+from repositories.normalization import get_normalization_repository
 from vx_materials_api.db.models import (
     AuditLog,
     Dataset,
@@ -277,6 +278,48 @@ def _check_group(catalog, proposal, changes, materials):
     return group
 
 
+def _ncm(code: str) -> str:
+    """A base traz `84314390` ou `8431.4390`; o PDM, `8431.43.90`. Compara pela mesma grafia."""
+    return get_normalization_repository().normalize_ncm(code).value or code
+
+
+def _apply_unit_correction(principal, proposal, catalog, changes, materials):
+    """Grafia da mesma unidade (PCA, UN, PÇ para PC): muda só a unidade de um material.
+
+    Não depende de classe nem de PDM completo, porque não publica identidade, descrição nem NCM.
+    Quantidades não mudam: é a mesma unidade escrita de outro jeito. Conversão entre unidades
+    diferentes nunca passa por aqui.
+    """
+    if changes.conflicts:
+        raise ApiError(422, "PROPOSAL_CONFLICT", "Resolva os conflitos antes de aprovar.")
+    if changes.pdm_version != catalog.version or changes.pdm_source_sha256 != catalog.source_sha256:
+        raise ApiError(409, "REFERENCE_CHANGED", "A referencia PDM mudou. Gere uma nova proposta.")
+    if len(materials) != 1 or [change.field for change in changes.changes] != ["unit"]:
+        raise ApiError(422, "INVALID_PROPOSAL", "Correcao de unidade altera so a unidade de um material.")
+    if proposal.fiscal_review_status != "NOT_REQUIRED":
+        raise ApiError(422, "INVALID_PROPOSAL", "Correcao de unidade nao altera NCM.")
+    material, change = materials[0], changes.changes[0]
+    if material.status != "ATIVO":
+        raise ApiError(422, "INVALID_PRIMARY", "O principal deve ser um membro ativo da proposta.")
+    unit = get_normalization_repository().normalize_unit(material.unit)
+    if (
+        unit.status is not FieldStatus.NORMALIZED
+        or unit.value != changes.after.unit
+        or (change.before, change.after) != (material.unit, unit.value)
+    ):
+        raise ApiError(
+            422, "UNIT_NOT_ALIAS", "A correcao so troca a grafia da mesma unidade; conversao exige outra revisao."
+        )
+    if not change.source.strip():
+        raise ApiError(422, "SOURCE_REQUIRED", "Toda alteracao deve registrar sua regra ou fonte.", field="unit")
+    material.unit = unit.value
+    material.version += 1
+    proposal.technical_review_status = "APPROVED"
+    proposal.technical_reviewer_id = principal.user_id
+    proposal.status = "APPLIED"
+    return {"primary_material_code": material.material_code, "blocked_material_codes": []}
+
+
 def _check_review_bindings(db, proposal):
     for area, status in [("TECHNICAL", proposal.technical_review_status), ("FISCAL", proposal.fiscal_review_status)]:
         if status != "APPROVED":
@@ -431,6 +474,8 @@ def _decide_current(
             "REJECTED",
         )
         proposal.status = "REJECTED"
+    elif proposal.proposal_type == "UNIT_CORRECTION":
+        result = _apply_unit_correction(principal, proposal, catalog, changes, materials)
     else:
         if changes.conflicts:
             raise ApiError(422, "PROPOSAL_CONFLICT", "Resolva os conflitos antes de aprovar.")
@@ -460,8 +505,10 @@ def _decide_current(
             technical_change or proposal.proposal_type != "NCM_CORRECTION"
         ) and proposal.technical_review_status == "NOT_REQUIRED":
             raise ApiError(422, "TECHNICAL_REVIEW_REQUIRED", "A alteracao tecnica exige revisao da Governanca.")
-        if changes.after.ncm is not None and changes.after.ncm not in {
-            code for reference in catalog.classes[changes.after.pdm_class_id].ncm_references for code in reference.codes
+        if changes.after.ncm is not None and _ncm(changes.after.ncm) not in {
+            _ncm(code)
+            for reference in catalog.classes[changes.after.pdm_class_id].ncm_references
+            for code in reference.codes
         }:
             raise ApiError(422, "NCM_REFERENCE_MISMATCH", "NCM nao consta nas referencias desta classe do PDM.")
         if len(materials) > 1 and proposal.proposal_type not in {"MERGE", "COMPOSITE"}:

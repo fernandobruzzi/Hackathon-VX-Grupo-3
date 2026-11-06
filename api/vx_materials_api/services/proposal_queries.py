@@ -56,7 +56,9 @@ def detail(db, proposal, principal, catalog):
             row["value_brl"] = str(total)
         member_rows.append(row)
     conflicts = list(changes.conflicts)
-    if validation.status.value != "VALID" or validation.not_applicable_attributes:
+    # Correcao de unidade aplica so a grafia da unidade, sem identidade: o PDM completo nao se aplica.
+    unit_only = proposal.proposal_type == "UNIT_CORRECTION"
+    if not unit_only and (validation.status.value != "VALID" or validation.not_applicable_attributes):
         conflicts.append("Os dados propostos nao atendem ao PDM.")
     try:
         consolidated = consolidated_inventory(
@@ -78,7 +80,7 @@ def detail(db, proposal, principal, catalog):
         change.model_dump() | {"field": labels.get(change.field, change.field)} for change in changes.changes
     ]
     recorded = {change.field for change in changes.changes}
-    if primary:
+    if primary and not unit_only:
         for field in ("pdm_class_id", "unit", "ncm"):
             before_value = getattr(primary, field)
             after_value = getattr(after, field)
