@@ -104,6 +104,13 @@ def test_values_are_kept_exactly_as_they_came(loaded):
     assert scalar(admin, "SELECT count(*) FROM materials_master WHERE ncm IS NULL") == 1173
     assert scalar(admin, "SELECT count(*) FROM materials_master WHERE pdm_class_id IS NOT NULL") == 0
     assert scalar(admin, "SELECT count(*) FROM materials_master WHERE is_canonical") == 0
+    # Grupo da carga fica como original; o revisado só existe depois de uma aprovação.
+    mismatched = """SELECT count(*) FROM materials_master m JOIN material_inventory_snapshots s
+        ON s.material_id = m.id WHERE m.original_merchandise_group IS DISTINCT FROM
+        NULLIF(s.raw_record->>'GRUPO_MERCADORIA', '')"""
+    assert scalar(admin, mismatched) == 0
+    assert scalar(admin, "SELECT count(*) FROM materials_master WHERE original_merchandise_group IS NULL") == 0
+    assert scalar(admin, "SELECT count(*) FROM materials_master WHERE merchandise_group IS NOT NULL") == 0
 
 
 def test_stock_points_to_its_source_line(loaded):

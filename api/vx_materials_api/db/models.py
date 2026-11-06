@@ -212,6 +212,9 @@ class MaterialMaster(Base):
     unit: Mapped[str | None] = mapped_column(Text)
     ncm: Mapped[str | None] = mapped_column(Text)
     ncm_review_status: Mapped[str | None] = mapped_column(Text)
+    # Grupo da carga, imutável, e grupo revisado, gravado só por proposta aprovada.
+    original_merchandise_group: Mapped[str | None] = mapped_column(Text)
+    merchandise_group: Mapped[str | None] = mapped_column(Text)
     identity_key: Mapped[str | None] = mapped_column(Text)
     is_canonical: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
     version: Mapped[int] = _version()
