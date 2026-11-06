@@ -170,10 +170,10 @@ def test_technical_then_fiscal_approval_publishes_the_material(imported):
     assert (created.status, created.is_canonical, created.identity_key) == ("ATIVO", True, BUCHA)
     assert (created.ncm, created.ncm_review_status, created.unit) == ("8474.90.00", "APPROVED", "PC")
     assert created.original_description_long == order.original_text
-    actions = db.scalars(
-        select(AuditLog.action).where(AuditLog.entity_id == str(order.id)).order_by(AuditLog.created_at)
-    ).all()
-    assert actions == ["ORDER_APPROVED_TECHNICAL", "ORDER_REGISTERED"]
+    # No teste, tudo roda numa só transação externa: now() é igual nos dois eventos, então a ordem
+    # por created_at depende da posição física das linhas. A sequência já foi verificada pelas respostas.
+    actions = db.scalars(select(AuditLog.action).where(AuditLog.entity_id == str(order.id))).all()
+    assert sorted(actions) == ["ORDER_APPROVED_TECHNICAL", "ORDER_REGISTERED"]
 
 
 def test_duplicate_found_before_publishing_stops_the_order(imported):
