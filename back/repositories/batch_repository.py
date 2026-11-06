@@ -5,6 +5,7 @@ O batch não altera a base mestre: só registra propostas, aplicadas depois pelo
 
 import json
 import uuid
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from sqlalchemy import Connection, Engine, text
@@ -92,30 +93,69 @@ def _record(row, inventory: list[dict], total: Decimal) -> MaterialRecord:
     )
 
 
+@dataclass(frozen=True)
+class SearchSource:
+    record: MaterialRecord
+    approved_class_id: str | None
+    approved_attributes: dict
+
+
+def read_search_sources(
+    engine: Engine, tenant_id: str, version: str, *, only_stale: bool = False
+) -> list[SearchSource]:
+    """A interpretação sugerida fica no índice; os valores na master são os dados atuais aprovados."""
+    query = text(
+        "SELECT m.id::text AS id, m.material_code, m.status, m.original_description_short, "
+        "m.original_description_long, m.manufacturer, m.manufacturer_reference, m.unit, m.ncm, m.version, "
+        "m.pdm_class_id, m.pdm_description, m.attributes, "
+        "(SELECT s.raw_record->>'GRUPO_MERCADORIA' FROM material_inventory_snapshots s "
+        "WHERE s.material_id = m.id AND s.tenant_id = m.tenant_id ORDER BY s.source_line LIMIT 1) AS grupo "
+        "FROM materials_master m LEFT JOIN material_search_index i ON i.material_id = m.id "
+        "AND i.tenant_id = m.tenant_id AND i.normalization_version = :version "
+        "WHERE m.tenant_id = :tenant AND (NOT :only_stale OR i.source_version IS DISTINCT FROM m.version) "
+        "ORDER BY m.id"
+    )
+    with engine.connect() as connection:
+        rows = connection.execute(query, {"tenant": tenant_id, "version": version, "only_stale": only_stale}).mappings()
+        result = []
+        for row in rows:
+            record = _record(row, [], Decimal(0))
+            if row["pdm_description"]:
+                record = replace(record, description=row["pdm_description"])
+            result.append(SearchSource(record, row["pdm_class_id"], dict(row["attributes"] or {})))
+        return result
+
+
 _INDEX_COVERAGE = text(
     """
     SELECT
         (SELECT count(*) FROM materials_master WHERE tenant_id = :tenant_id) AS materials,
         (
-            SELECT count(DISTINCT material_id) FROM material_search_index
-            WHERE tenant_id = :tenant_id AND normalization_version = :version
+            SELECT count(*) FROM material_search_index i JOIN materials_master m ON m.id = i.material_id
+            WHERE i.tenant_id = :tenant_id AND m.tenant_id = :tenant_id
+            AND i.normalization_version = :version AND i.source_version = m.version
         ) AS indexed
     """
-)
-_DELETE_INDEX = text(
-    "DELETE FROM material_search_index WHERE tenant_id = :tenant_id AND normalization_version = :version"
 )
 _INSERT_INDEX = text(
     """
     INSERT INTO material_search_index (
         tenant_id, material_id, proposed_class_id, extracted_attributes, search_vector, normalization_version,
-        candidate_identity_key, embedding, embedding_model
+        candidate_identity_key, embedding, embedding_model, source_version
     )
     VALUES (
         :tenant_id, :material_id, :proposed_class_id, CAST(:extracted_attributes AS jsonb),
         to_tsvector('simple', :search_text), :version, :candidate_identity_key, CAST(:embedding AS vector),
-        :embedding_model
+        :embedding_model, :source_version
     )
+    ON CONFLICT (material_id, normalization_version) DO UPDATE SET
+        proposed_class_id = EXCLUDED.proposed_class_id,
+        extracted_attributes = EXCLUDED.extracted_attributes,
+        search_vector = EXCLUDED.search_vector,
+        candidate_identity_key = EXCLUDED.candidate_identity_key,
+        embedding = EXCLUDED.embedding, embedding_model = EXCLUDED.embedding_model,
+        source_version = EXCLUDED.source_version
+    WHERE material_search_index.source_version <= EXCLUDED.source_version
     """
 )
 
@@ -128,9 +168,8 @@ def index_coverage(engine: Engine, tenant_id: str, version: str) -> tuple[int, i
 
 
 def write_search_index(engine: Engine, tenant_id: str, version: str, rows: list[dict]) -> int:
-    """Troca o índice inteiro de uma versão, em uma transação: a busca nunca vê um índice pela metade."""
+    """Confirma um lote atomicamente, sem sobrescrever uma revisão mais recente do material."""
     with engine.begin() as connection:
-        connection.execute(_DELETE_INDEX, {"tenant_id": tenant_id, "version": version})
         payload = [
             {
                 **row,

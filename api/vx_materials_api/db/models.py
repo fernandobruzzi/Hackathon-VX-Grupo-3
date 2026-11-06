@@ -282,6 +282,7 @@ class MaterialSearchIndex(Base):
     embedding_model: Mapped[str | None] = mapped_column(Text)
     normalization_version: Mapped[str | None] = mapped_column(Text)
     candidate_identity_key: Mapped[str | None] = mapped_column(Text)
+    source_version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
 
 
 class SanitizationProposal(Base):

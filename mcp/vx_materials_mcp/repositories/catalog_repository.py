@@ -1,8 +1,9 @@
 """Leitura do catálogo pelas views autorizadas, com a credencial mcp_reader."""
 
+from contextlib import nullcontext
 from uuid import UUID
 
-from sqlalchemy import Engine, bindparam, text
+from sqlalchemy import Connection, Engine, bindparam, text
 
 from vx_materials_mcp.security import INVENTORY_FINANCIAL_VIEW, INVENTORY_VIEW
 
@@ -20,16 +21,30 @@ _FROM = """
 
 
 class CatalogRepository:
-    def __init__(self, engine: Engine, tenant_id: str) -> None:
+    def __init__(self, engine: Engine | Connection, tenant_id: str) -> None:
         self._engine = engine
         self._tenant_id = str(UUID(tenant_id))
+
+    def _connect(self):
+        return nullcontext(self._engine) if isinstance(self._engine, Connection) else self._engine.connect()
+
+    def index_state(self, version: str) -> tuple[int, int]:
+        query = text(
+            "SELECT count(*) AS materials, count(i.material_id) AS current FROM mcp_catalog c "
+            "LEFT JOIN mcp_search_index i ON i.material_id = c.id AND i.tenant_id = c.tenant_id "
+            "AND i.normalization_version = :version AND i.source_version = c.version "
+            "WHERE c.tenant_id = CAST(:tenant_id AS uuid)"
+        )
+        with self._connect() as connection:
+            row = connection.execute(query, {"tenant_id": self._tenant_id, "version": version}).one()
+        return row.materials, row.current
 
     def indexed(self, version: str) -> int:
         query = text(
             "SELECT count(*) FROM mcp_search_index WHERE tenant_id = CAST(:tenant_id AS uuid) "
             "AND normalization_version = :version"
         )
-        with self._engine.connect() as connection:
+        with self._connect() as connection:
             return connection.execute(query, {"tenant_id": self._tenant_id, "version": version}).scalar_one()
 
     def by_identity(self, key: str, version: str) -> list[dict]:
@@ -38,7 +53,7 @@ class CatalogRepository:
             "WHERE i.tenant_id = CAST(:tenant_id AS uuid) AND i.normalization_version = :version "
             "AND i.candidate_identity_key = :key"
         )
-        with self._engine.connect() as connection:
+        with self._connect() as connection:
             return [
                 dict(row)
                 for row in connection.execute(
@@ -66,7 +81,7 @@ class CatalogRepository:
             "class_id": class_id,
             "limit": limit,
         }
-        with self._engine.connect() as connection:
+        with self._connect() as connection:
             return [dict(row) for row in connection.execute(query, params).mappings()]
 
     def nearest(self, vector: list[float], version: str, class_id: str | None, limit: int) -> list[dict]:
@@ -86,7 +101,7 @@ class CatalogRepository:
             "class_id": class_id,
             "limit": limit,
         }
-        with self._engine.connect() as connection:
+        with self._connect() as connection:
             return [dict(row) for row in connection.execute(query, params).mappings()]
 
     def inventory(self, material_ids: list[str], view: str, center_codes: frozenset[str]) -> dict[str, list[dict]]:
@@ -101,7 +116,7 @@ class CatalogRepository:
             "AND center_code IN :centers ORDER BY center_code"
         ).bindparams(bindparam("ids", expanding=True), bindparam("centers", expanding=True))
         result: dict[str, list[dict]] = {}
-        with self._engine.connect() as connection:
+        with self._connect() as connection:
             params = {"tenant_id": self._tenant_id, "ids": material_ids, "centers": sorted(center_codes)}
             for row in connection.execute(query, params).mappings():
                 item = {"center_code": row["center_code"], "quantity": str(row["quantity"]), "unit": row["unit"]}

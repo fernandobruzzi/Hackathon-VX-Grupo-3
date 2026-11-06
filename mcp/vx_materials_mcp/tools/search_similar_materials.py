@@ -20,32 +20,32 @@ class SimilarMaterialsSearch:
         self._pdm = pdm_catalog
         self._caller = caller
         self._engine = create_engine(database_url) if database_url else None
-        self._repository = None
 
-    def _ready(self):
+    def _ready(self, connection=None):
         if self._caller is None:
             raise ToolError("Tenant autenticado ausente")
         if self._engine is None:
             raise ToolError("Catalogo indisponivel: defina DATABASE_URL com a credencial mcp_reader")
-        if self._repository is None:
-            classifier = get_classification_repository(self._pdm)
-            extractor = get_extraction_repository()
-            embedder = get_embedding_repository()
-            version = index_version(self._pdm, classifier, extractor, embedder.signature if embedder else None)
-            catalog = CatalogRepository(self._engine, self._caller.tenant_id)
-            # Indexação e consulta precisam usar as mesmas regras, ou os tokens não se comparam.
-            if catalog.indexed(version) == 0:
-                raise ToolError(f"Indice de busca ausente na versao {version}: reconstrua com `vx-back index`")
-            self._repository = get_search_repository(
-                pdm_catalog=self._pdm,
-                catalog=catalog,
-                classifier=classifier,
-                extractor=extractor,
-                index_version=version,
-                caller=self._caller,
-                embedder=embedder,
+        classifier = get_classification_repository(self._pdm)
+        extractor = get_extraction_repository()
+        embedder = get_embedding_repository()
+        version = index_version(self._pdm, classifier, extractor, embedder.signature if embedder else None)
+        catalog = CatalogRepository(connection if connection is not None else self._engine, self._caller.tenant_id)
+        total, current = catalog.index_state(version)
+        if not total or current != total:
+            raise ToolError(
+                f"INDEX_UPDATING: índice pendente na versão {version} ({current}/{total}). "
+                "Aguarde a atualização automática e tente novamente. Não é possível concluir ausência de duplicados."
             )
-        return self._repository
+        return get_search_repository(
+            pdm_catalog=self._pdm,
+            catalog=catalog,
+            classifier=classifier,
+            extractor=extractor,
+            index_version=version,
+            caller=self._caller,
+            embedder=embedder,
+        )
 
     def run(
         self,
@@ -55,5 +55,13 @@ class SimilarMaterialsSearch:
         limit: int,
         item_name: str | None = None,
     ):
-        result = self._ready().search(SearchQuery(query, pdm_class_id, attributes or {}, limit, item_name))
-        return SimilarMaterials.model_validate(result)
+        if self._engine is None or self._caller is None:
+            self._ready()
+        with self._engine.connect().execution_options(
+            isolation_level="REPEATABLE READ", postgresql_readonly=True
+        ) as connection:
+            with connection.begin():
+                result = self._ready(connection).search(
+                    SearchQuery(query, pdm_class_id, attributes or {}, limit, item_name)
+                )
+                return SimilarMaterials.model_validate(result)

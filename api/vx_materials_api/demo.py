@@ -89,6 +89,10 @@ def check_demo_environment(database_url: str, confirm: str | None) -> None:
 
 def wipe(engine: Engine) -> None:
     with engine.begin() as connection:
+        # Espera a análise antiga terminar antes de reaproveitar IDs e revisões da carga inicial.
+        connection.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"), {"key": f"search-index:{TENANT_ID}"}
+        )
         connection.execute(text(f"TRUNCATE TABLE {', '.join(OPERATIONAL_TABLES)}"))
 
 

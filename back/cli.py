@@ -19,7 +19,7 @@ from pipelines.experiment_result import experiment_result
 from pipelines.full_run import run_sanitize
 from pipelines.review_handoff import review_handoff
 from pipelines.sanitize import sanitize_report
-from pipelines.search_index import run_index
+from pipelines.search_index import run_index, watch_index
 from repositories.normalization import get_normalization_repository
 
 
@@ -97,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
     result.add_argument("sheets", nargs="+")
     index = commands.add_parser("index", help="Reconstroi o indice de busca, com a credencial batch_user")
     index.add_argument("--pdm-workbook")
+    index.add_argument("--watch", action="store_true", help="Atualiza automaticamente fontes alteradas")
+    index.add_argument("--poll-seconds", type=int, default=2)
     index.add_argument("--if-stale", action="store_true", help="Pula se a versao atual ja cobre todos os materiais")
     sanitize = commands.add_parser("sanitize", help="Grava propostas no banco, com a credencial batch_user")
     sanitize.add_argument("--pdm-workbook")
@@ -161,6 +163,8 @@ def main(argv: list[str] | None = None) -> int:
             evidence_manifest_key=args.evidence_manifest_key,
         )
     elif args.command == "index":
+        if args.watch:
+            watch_index(args.pdm_workbook, poll_seconds=args.poll_seconds)
         result = run_index(args.pdm_workbook, if_stale=args.if_stale)
     elif args.command == "sanitize-report":
         result = sanitize_report(args.csv_path, args.pdm_workbook, args.repository)
