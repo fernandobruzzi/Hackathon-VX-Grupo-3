@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from domain.proposal_validation import approval_blockers
 from vx_materials_api.db.models import AuditLog, SanitizationProposal, UserSso
 from vx_materials_api.errors import ApiError
 from vx_materials_api.security.approval_identity import require_reviewer
@@ -65,8 +66,16 @@ def detail(db, proposal, principal, catalog):
             ncm_evaluation = evaluate_proposed_ncm(catalog, changes)
         except ApiError as error:
             conflicts.append(error.message)
-    if not unit_only and (validation.status.value != "VALID" or validation.not_applicable_attributes):
-        conflicts.append("Os dados propostos nao atendem ao PDM.")
+    if not unit_only:
+        # Mesma validação da aprovação, membros incluídos: o que ela recusaria não fica aprovável.
+        codes = {material.id: material.material_code for material in materials}
+        blockers = approval_blockers(
+            catalog,
+            after.model_dump(),
+            [item.model_dump() | {"material_code": codes.get(item.material_id)} for item in interpretations],
+            check_unit=proposal.technical_review_status != "NOT_REQUIRED",
+        )
+        conflicts.extend(blocker for blocker in blockers if blocker not in conflicts)
     try:
         consolidated = consolidated_inventory(
             inventory_rows(db, snapshots, after.unit, changes), financial=principal.financial

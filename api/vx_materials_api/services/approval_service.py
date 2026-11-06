@@ -11,9 +11,10 @@ from pydantic import ValidationError
 from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
-from domain.contracts import FieldStatus, PdmCatalog, ValidationStatus
+from domain.contracts import FieldStatus, PdmCatalog
 from domain.identity import reference_key
 from domain.pdm_validator import validate_pdm
+from domain.proposal_validation import is_approvable
 from repositories.normalization import get_normalization_repository
 from vx_materials_api.db.models import (
     AuditLog,
@@ -248,7 +249,8 @@ def _audit(db, principal, proposal, request_id, action, reason, before, after, r
 
 def _validation(catalog, item, unit=None):
     validation = validate_pdm(catalog, item.pdm_class_id, item.attributes, item_name=item.item_name, unit=unit)
-    if validation.status is not ValidationStatus.VALID or validation.not_applicable_attributes:
+    # Mesmo critério que o batch e a fila usam para marcar a proposta como não aprovável.
+    if not is_approvable(validation):
         raise ApiError(422, "PDM_INVALID", "A proposta nao atende aos atributos e unidade do PDM.")
     return validation
 
