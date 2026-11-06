@@ -14,7 +14,16 @@ from sqlalchemy.orm import Session, sessionmaker
 from vx_materials_api import settings
 from vx_materials_api.db.session import make_engine, make_session_factory
 from vx_materials_api.errors import register_error_handlers, request_id
-from vx_materials_api.routes import auth, batch, chat, dashboard, materials, registration_orders, sanitization
+from vx_materials_api.routes import (
+    auth,
+    batch,
+    chat,
+    dashboard,
+    enrichment,
+    materials,
+    registration_orders,
+    sanitization,
+)
 from vx_materials_api.security.cognito import CognitoClient, CognitoConfig
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.local_session import local_identity
@@ -94,6 +103,7 @@ def create_app(
     app.include_router(materials.router)
     app.include_router(auth.router)
     app.include_router(sanitization.router)
+    app.include_router(enrichment.router)
     app.include_router(registration_orders.router)
 
     # Montado por ultimo: as rotas da API tem prioridade sobre os arquivos estaticos.

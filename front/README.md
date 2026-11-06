@@ -44,7 +44,7 @@ no deploy nem no fluxo de sessão. Consequências:
 | `/materiais` | Busca + estoque por centro, bloqueados apontam para o ativo | todos | catálogo |
 | `/saneamento` | Fila técnica / fiscal / decididas | Governança, Fiscal | 6.3 |
 | `/saneamento/[id]` | Revisão: antes, depois, estoque consolidado, mudanças com fonte, decisão com justificativa | Governança (técnica), Fiscal (NCM) | 6.3 |
-| `/enriquecimento`, `/enriquecimento/[id]` | Evidências por atributo: fonte, trecho, confiança, divergência | Governança (decide), Fiscal (lê) | 6.5 |
+| `/enriquecimento`, `/enriquecimento/revisao/?id=<UUID>` | Evidências persistidas por atributo: fonte, trecho, confiança, divergência; decisão versionada pela API | Governança (decide), Fiscal (revisa quando exigido) | 6.5 |
 | `/batch` | Iniciar job e acompanhar progresso/heartbeat | Governança | 6.5 |
 | `/dashboard` | Qualidade da base; bloco financeiro só para o Fiscal | Governança, Fiscal | 6.4 |
 | `/auditoria` | Trilha por escopo do papel | todos | — |

@@ -58,12 +58,13 @@ def detail(db, proposal, principal, catalog):
             row["value_brl"] = str(total)
         member_rows.append(row)
     conflicts = list(changes.conflicts)
+    partial_enrichment = proposal.proposal_type == "ENRICHMENT" and changes.enrichment_context is not None
     # Correcao de unidade aplica so a grafia da unidade, sem identidade: o PDM completo nao se aplica.
     unit_only = proposal.proposal_type == "UNIT_CORRECTION"
     ncm_evaluation = None
     if not unit_only and after.pdm_class_id in catalog.classes:
         try:
-            ncm_evaluation = evaluate_proposed_ncm(catalog, changes)
+            ncm_evaluation = evaluate_proposed_ncm(catalog, changes, require_consistency=not partial_enrichment)
         except ApiError as error:
             conflicts.append(error.message)
     if not unit_only:
@@ -73,12 +74,14 @@ def detail(db, proposal, principal, catalog):
             catalog,
             after.model_dump(),
             [item.model_dump() | {"material_code": codes.get(item.material_id)} for item in interpretations],
-            check_unit=proposal.technical_review_status != "NOT_REQUIRED",
+            check_unit=proposal.technical_review_status != "NOT_REQUIRED" and not partial_enrichment,
+            allow_incomplete=partial_enrichment,
         )
         conflicts.extend(blocker for blocker in blockers if blocker not in conflicts)
     try:
         consolidated = consolidated_inventory(
-            inventory_rows(db, snapshots, after.unit, changes), financial=principal.financial
+            inventory_rows(db, snapshots, None if partial_enrichment else after.unit, changes),
+            financial=principal.financial,
         )
     except ApiError as error:
         consolidated = []

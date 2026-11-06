@@ -11,7 +11,14 @@ from pydantic import ValidationError
 from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
-from domain.contracts import AnalyzedMaterial, ClassificationInput, FieldStatus, MaterialRecord, PdmCatalog
+from domain.contracts import (
+    AnalyzedMaterial,
+    ClassificationInput,
+    FieldStatus,
+    MaterialRecord,
+    PdmCatalog,
+    ValidationStatus,
+)
 from domain.identity import item_name_review_reasons, reference_key, resolve_item_name
 from domain.identity_decision import decide_identity
 from domain.pdm_validator import validate_pdm
@@ -38,6 +45,7 @@ from vx_materials_api.schemas.proposals import (
     proposal_hash,
 )
 from vx_materials_api.security.approval_identity import Principal, require_reviewer
+from vx_materials_api.services.enrichment_validation import check_source_environment, validate_enrichment_context
 from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
 
@@ -253,10 +261,9 @@ def _audit(db, principal, proposal, request_id, action, reason, before, after, r
     return audit
 
 
-def _validation(catalog, item, unit=None):
+def _validation(catalog, item, unit=None, *, allow_incomplete=False):
     validation = validate_pdm(catalog, item.pdm_class_id, item.attributes, item_name=item.item_name, unit=unit)
-    # Mesmo critério que o batch e a fila usam para marcar a proposta como não aprovável.
-    if not is_approvable(validation):
+    if not is_approvable(validation, allow_incomplete=allow_incomplete):
         raise ApiError(422, "PDM_INVALID", "A proposta nao atende aos atributos e unidade do PDM.")
     return validation
 
@@ -507,11 +514,19 @@ def _decide_current(
             raise ApiError(422, "PROPOSAL_CONFLICT", "Resolva os conflitos antes de aprovar.")
         if changes.pdm_version != catalog.version or changes.pdm_source_sha256 != catalog.source_sha256:
             raise ApiError(409, "REFERENCE_CHANGED", "A referencia PDM mudou. Gere uma nova proposta.")
+        partial_enrichment = proposal.proposal_type == "ENRICHMENT" and changes.enrichment_context is not None
         validation = _validation(
-            catalog, changes.after, changes.after.unit if proposal.technical_review_status != "NOT_REQUIRED" else None
+            catalog,
+            changes.after,
+            changes.after.unit
+            if proposal.technical_review_status != "NOT_REQUIRED" and not partial_enrichment
+            else None,
+            allow_incomplete=partial_enrichment,
         )
         group = _check_group(catalog, proposal, changes, materials)
-        ncm_evaluation = evaluate_proposed_ncm(catalog, changes)
+        # Enriquecimento parcial reavalia, mas preserva o NCM original sem certificá-lo.
+        # O contexto abaixo impede qualquer alteração fiscal por esse caminho.
+        ncm_evaluation = evaluate_proposed_ncm(catalog, changes, require_consistency=not partial_enrichment)
         fiscal_change = any(m.ncm != changes.after.ncm for m in materials)
         fiscal_basis_changed = any(
             (m.pdm_class_id is not None and m.pdm_class_id != changes.after.pdm_class_id)
@@ -532,11 +547,16 @@ def _decide_current(
             technical_change or proposal.proposal_type != "NCM_CORRECTION"
         ) and proposal.technical_review_status == "NOT_REQUIRED":
             raise ApiError(422, "TECHNICAL_REVIEW_REQUIRED", "A alteracao tecnica exige revisao da Governanca.")
-        if changes.after.ncm is not None and _ncm(changes.after.ncm) not in {
-            _ncm(code)
-            for reference in catalog.classes[changes.after.pdm_class_id].ncm_references
-            for code in reference.codes
-        }:
+        if (
+            not partial_enrichment
+            and changes.after.ncm is not None
+            and _ncm(changes.after.ncm)
+            not in {
+                _ncm(code)
+                for reference in catalog.classes[changes.after.pdm_class_id].ncm_references
+                for code in reference.codes
+            }
+        ):
             raise ApiError(422, "NCM_REFERENCE_MISMATCH", "NCM nao consta nas referencias desta classe do PDM.")
         if len(materials) > 1 and proposal.proposal_type not in {"MERGE", "COMPOSITE"}:
             raise ApiError(422, "INVALID_PROPOSAL", "Tipo de proposta nao permite unificacao.")
@@ -621,7 +641,12 @@ def _decide_current(
                 ):
                     raise ApiError(422, "IDENTITY_CONFLICT", "Atributos atuais divergem da identidade proposta.")
         rows = inventory_rows(
-            db, snapshots, changes.after.unit if proposal.technical_review_status != "NOT_REQUIRED" else None, changes
+            db,
+            snapshots,
+            changes.after.unit
+            if proposal.technical_review_status != "NOT_REQUIRED" and proposal.proposal_type != "ENRICHMENT"
+            else None,
+            changes,
         )
         if decision.primary_material_code:
             if decision.review_area != "TECHNICAL":
@@ -635,7 +660,11 @@ def _decide_current(
             if getattr(primary, field) != getattr(changes.after, field) and not changes.sources.get(field, "").strip():
                 raise ApiError(422, "SOURCE_REQUIRED", "Toda alteracao deve registrar sua regra ou fonte.", field=field)
         if proposal.proposal_type == "ENRICHMENT":
-            changed = {k: v for k, v in changes.after.attributes.items() if primary.attributes.get(k) != v}
+            dataset = db.get(Dataset, changes.dataset_id)
+            baseline = validate_enrichment_context(changes, primary, dataset, catalog)
+            changed = {k: v for k, v in changes.after.attributes.items() if baseline.get(k) != v}
+            if changes.enrichment_context is not None and not changed:
+                raise ApiError(422, "EVIDENCE_REQUIRED", "Nenhum atributo novo com evidencia faz parte da proposta.")
             try:
                 evidence_ids = [UUID(value) for value in proposal.evidence_ids]
             except (TypeError, ValueError):
@@ -649,7 +678,9 @@ def _decide_current(
                     )
                 )
             )
-            if any(changes.evidence_hashes.get(str(source.id)) != evidence_hash(source) for source in sources):
+            if len(sources) != len(set(evidence_ids)) or any(
+                changes.evidence_hashes.get(str(source.id)) != evidence_hash(source) for source in sources
+            ):
                 raise ApiError(409, "EVIDENCE_CHANGED", "A evidencia mudou. Gere uma nova proposta.")
             if any(
                 not any(
@@ -659,7 +690,24 @@ def _decide_current(
                 for key, value in changed.items()
             ):
                 raise ApiError(422, "EVIDENCE_REQUIRED", "Enriquecimento exige evidencia por atributo.")
-            verified_sources = sources
+            check_source_environment(sources)
+            if partial_enrichment and any(
+                not source.source_excerpt
+                or not source.source_excerpt.strip()
+                or not source.source_sha256
+                or not source.s3_object_key
+                or not source.confidence_basis
+                or source.confidence_level not in {"HIGH", "MEDIUM", "LOW"}
+                for source in sources
+            ):
+                raise ApiError(
+                    422, "EVIDENCE_REQUIRED", "Cada valor exige trecho, documento e fundamento da confianca."
+                )
+            verified_sources = [
+                source for source in sources if changed.get(source.attribute_name) == source.proposed_value
+            ]
+            if any(source.status == "REJECTED" for source in verified_sources):
+                raise ApiError(422, "EVIDENCE_REJECTED", "Evidencia rejeitada exige nova proposta com outra evidencia.")
         if any(m.status == "OBSOLETO" for m in materials):
             raise ApiError(422, "OBSOLETE_MEMBER", "Material obsoleto exige revisao separada.")
         ids = {m.id for m in materials}
@@ -702,9 +750,13 @@ def _decide_current(
                 primary.pdm_class_id = changes.after.pdm_class_id
                 primary.pdm_version = changes.pdm_version
                 primary.attributes = changes.after.attributes
-                primary.pdm_description = validation.formatted_description
-                primary.identity_key = validation.identity_key
-                primary.is_canonical = True
+                primary.pdm_description = validation.formatted_description or primary.pdm_description
+                if partial_enrichment:
+                    primary.is_canonical = primary.is_canonical and validation.status is ValidationStatus.VALID
+                    primary.identity_key = validation.identity_key if primary.is_canonical else None
+                else:
+                    primary.identity_key = validation.identity_key
+                    primary.is_canonical = True
                 primary.unit = changes.after.unit
                 primary.manufacturer = changes.after.attributes.get("FABRICANTE", primary.manufacturer)
                 primary.manufacturer_reference = changes.after.attributes.get(
@@ -714,7 +766,7 @@ def _decide_current(
                     # O original continua em original_merchandise_group e no snapshot da carga.
                     primary.merchandise_group = group
             primary.ncm = changes.after.ncm
-            if proposal.fiscal_review_status == "APPROVED":
+            if proposal.fiscal_review_status == "APPROVED" and not partial_enrichment:
                 primary.ncm_review_status = "APPROVED" if primary.ncm is not None else "MISSING"
             primary.version += 1
             for source in verified_sources:
@@ -722,6 +774,8 @@ def _decide_current(
                 source.validated_by_user_id = proposal.technical_reviewer_id
                 source.validated_at = datetime.now(UTC)
             for row in rows:
+                if proposal.proposal_type == "ENRICHMENT":
+                    continue
                 if proposal.technical_review_status != "APPROVED":
                     continue
                 snapshot = row["snapshot"]
@@ -761,6 +815,10 @@ def _decide_current(
                     "source_excerpt": source.source_excerpt,
                     "source_title": source.source_title,
                     "source_page": source.source_page,
+                    "retrieved_at": source.retrieved_at.isoformat(),
+                    "s3_object_key": source.s3_object_key,
+                    "confidence_level": source.confidence_level,
+                    "confidence_basis": source.confidence_basis,
                 }
                 for source in verified_sources
             ],
