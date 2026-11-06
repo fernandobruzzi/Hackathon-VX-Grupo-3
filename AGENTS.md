@@ -51,11 +51,26 @@ uv run ruff check --fix .
 uv run ruff format .
 ```
 
-Tests, from `back/`, `mcp/` or `api/`:
+**Required for people and agents before opening any PR for review:** run all three
+pytest suites locally and fix failures first. From the repo root:
 
 ```bash
-uv run pytest
+(cd back && uv run --locked pytest)
+(cd mcp && uv run --locked pytest)
+(cd api && uv run --locked pytest)
 ```
+
+Run focused tests while developing, then the complete suites before the PR.
+Run pytest separately per module: a root invocation collects colliding test filenames.
+For changes to operational Python scripts, also run
+`uv run --locked --package vx-materials-back pytest scripts/tests` from the root.
+
+Record the exact commands, pass/fail results and skipped tests in the PR description.
+Changes to persistence, migrations or search also require the PostgreSQL-backed API
+and MCP suites with `TEST_DATABASE_URL`, as described below. Skips do not validate
+database behavior. If a required check cannot run, report the blocker before opening
+the PR for review. Use the PR to review locally validated work, not to discover whether
+the tests pass.
 
 Database, from the repo root. The first command starts Postgres on port 5432, and the rest run from `api/`. Tests recreate the `_test` database, and they're skipped without this variable. Roles and passwords are global to the server, so tests never change `api_user`, `batch_user` or `mcp_reader`: they log in through `temporary_login`, a disposable member role dropped at the end. Give each concurrent run its own `_test` database name:
 
@@ -341,7 +356,7 @@ through an explicit table and reject unknown or inconsistent content.
    ```
 
 2. Resolve conflicts by keeping both sides' intent. If you can't tell what the other change meant, run `git rebase --abort` and ask its author. For lockfiles, follow [Code style and avoiding conflicts](#code-style-and-avoiding-conflicts).
-3. Run the local checks again, listed under [Commands](#commands), because the combined code hasn't been tested yet.
+3. Run all three local pytest suites and the other checks listed under [Commands](#commands) again, because the combined code hasn't been tested yet. Include their commands, results and skips in the PR description.
 4. Push. After a rebase, use `git push --force-with-lease`, on your own branch only.
 5. Create the PR.
 
