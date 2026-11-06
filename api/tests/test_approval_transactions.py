@@ -83,11 +83,11 @@ def test_stale_member_is_rejected_and_audited(approval_case):
 def test_fiscal_review_and_technical_review_are_both_required(approval_case):
     case = approval_case
     changes = copy.deepcopy(case["proposal"].changeset)
-    changes["after"]["ncm"] = "8421.99.99"  # Outra referencia permitida da classe de filtros.
-    changes["sources"]["ncm"] = "Revisao fiscal do catalogo."
-    # Usa um NCM efetivamente listado na referencia do PDM.
-    codes = [code for ref in case["catalog"].classes["PDM100"].ncm_references for code in ref.codes]
-    changes["after"]["ncm"] = next(code for code in codes if code != "8421.23.00")
+    # O alvo corrige filtros de óleo; um código de filtro de ar não serve só por constar na classe.
+    for material in case["materials"]:
+        material.ncm = "8421.31.00"
+    changes["after"]["ncm"] = "8421.23.00"
+    changes["sources"]["ncm"] = "Revisao fiscal: filtro de oleo lubrificante."
     case["proposal"].changeset = changes
     case["proposal"].fiscal_review_status = "PENDING"
     persist(case)

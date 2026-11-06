@@ -115,14 +115,19 @@ def test_corrections_are_saved_with_before_after_and_rule(sanitized):
     first, _, admin, _ = sanitized
     with admin.connect() as connection:
         rows = connection.execute(
-            text(
-                "SELECT proposal_type, count(*) FROM sanitization_proposals "
-                "WHERE proposal_type <> 'MERGE' AND fiscal_review_status = 'NOT_REQUIRED' GROUP BY 1"
-            )
+            text("SELECT proposal_type, count(*) FROM sanitization_proposals WHERE proposal_type <> 'MERGE' GROUP BY 1")
         )
         saved = {row[0]: row[1] for row in rows}
     assert saved == first["corrections"]["proposals"]
-    assert set(saved) == {"PDM_CORRECTION", "UNIT_CORRECTION"}
+    assert set(saved) == {"PDM_CORRECTION", "UNIT_CORRECTION", "NCM_CORRECTION"}
+    assert (
+        scalar(
+            admin,
+            "SELECT count(*) FROM sanitization_proposals WHERE proposal_type='NCM_CORRECTION' "
+            "AND fiscal_review_status <> 'PENDING'",
+        )
+        == 0
+    )
     query = (
         "SELECT count(*) FROM sanitization_proposals p, jsonb_array_elements(p.changeset->'changes') change "
         "WHERE p.proposal_type <> 'MERGE' AND (change->>'after' IS NULL OR change->>'source' IS NULL "
