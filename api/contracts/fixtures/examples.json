@@ -1075,7 +1075,11 @@
       "proposed_description": "ROLAMENTO RIGIDO ESFERAS; REFERENCIA: 6206-2RSH; DIAMETRO INTERNO: 30MM; DIAMETRO EXTERNO: 62MM; LARGURA: 16MM; VEDACAO: 2RSH; FABRICANTE: SKF",
       "pdm_class_id": "PDM020",
       "status": "PENDING",
-      "evidence": [
+      "technical_review_status": "PENDING",
+        "fiscal_review_status": "NOT_REQUIRED",
+        "allowed_actions": ["APPROVE", "REJECT"],
+        "pending_attributes": ["VEDACAO"],
+        "evidence": [
         {
           "attribute": "DIAMETRO INTERNO",
           "current_value": null,

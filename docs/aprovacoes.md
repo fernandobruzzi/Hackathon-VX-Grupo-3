@@ -23,8 +23,8 @@ APP_ENV=local ENABLE_LOCAL_TEST_SESSIONS=true NEXT_PUBLIC_DATA_SOURCE=api docker
 
 O batch grava o contrato `proposal-v1`, incluindo versões, referência PDM e hash
 compartilhado com a API. A repetição não duplica propostas. Chat, saneamento e
-auditoria usam dados persistidos; pedidos, enriquecimento e dashboard continuam
-demonstrativos. O front usa a API por padrão; `NEXT_PUBLIC_DATA_SOURCE=mock`
+auditoria e enriquecimento usam dados persistidos. O fluxo de evidências é descrito
+em [enriquecimento.md](enriquecimento.md). O front usa a API por padrão; `NEXT_PUBLIC_DATA_SOURCE=mock`
 seleciona explicitamente o protótipo visual.
 
 O acesso local usa cookie opaco HttpOnly, expira em uma hora e pode ser revogado
@@ -57,6 +57,10 @@ JSON. O hash não torna uma sugestão correta: a API ainda valida PDM, identidad
 versões, escopo, principal, fontes e revisões. Scores nunca autorizam unificação.
 Para enriquecimento, cada evidência deve existir no banco e coincidir com o hash
 de seus fatos, calculado por `schemas.proposals.evidence_hash`.
+O produtor de enriquecimento usa `enrichment_context` para vincular o original e
+as regras de extração. Somente nesse fluxo, atributos novos comprovados podem ser
+aprovados com PDM ainda incompleto: as lacunas permanecem explícitas, sem publicar
+identidade canônica. Isso não libera propostas de unificação incompletas.
 As conversões de aliases de unidade registram fator 1 e a regra da normalização;
 embalagens sem fator continuam bloqueadas. Normalizar o NCM original também
 exige revisão fiscal quando muda o valor persistido.

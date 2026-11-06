@@ -1099,7 +1099,7 @@ Resposta após aplicação:
 }
 ```
 
-Para enriquecimento técnico, o mesmo endpoint aceita a decisão sobre uma proposta ENRICHMENT. O valor aprovado vem da proposta persistida, não de um novo valor enviado junto com o botão de aprovação.
+Para enriquecimento técnico, o mesmo endpoint aceita a decisão sobre uma proposta ENRICHMENT. O valor aprovado vem da proposta persistida, não de um novo valor enviado junto com o botão de aprovação. O adaptador `publish-enrichment` reprocessa documentos preservados dos 15 produtos originais e fixa as versões do cadastro e das evidências. Atributos parciais comprovados podem ser aprovados sem tornar o material canônico; divergências, valores incompatíveis com o PDM e lacunas continuam indicados na tela. Consulte [enriquecimento.md](enriquecimento.md).
 
 Para revisão fiscal:
 

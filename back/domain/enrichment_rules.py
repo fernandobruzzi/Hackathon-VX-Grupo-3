@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 
 from domain.contracts import ClassificationInput
+from domain.identity import IDENTITY_RULES_VERSION, resolve_item_name
 from domain.proposals import canonical_hash
 from domain.runtime import AWS_RUNTIME_VARIABLES
 from repositories.classification import get_classification_repository
@@ -30,7 +31,7 @@ def original_hash(material) -> str:
 def extraction_signature(catalog) -> str:
     extractor = get_extraction_repository()
     classifier = get_classification_repository(catalog)
-    return f"{extractor.name}@{extractor.revision}|{classifier.name}@{classifier.revision}"
+    return f"{extractor.name}@{extractor.revision}|{classifier.name}@{classifier.revision}|{IDENTITY_RULES_VERSION}"
 
 
 def original_item_name(catalog, class_id: str, material) -> str | None:
@@ -45,7 +46,7 @@ def original_item_name(catalog, class_id: str, material) -> str | None:
         for item in result.evidence
         if item.class_id == class_id and item.matched_name in cls.item_names
     ]
-    return max(names, key=len) if result.pdm_class_id == class_id and names else None
+    return resolve_item_name(cls, names) if result.pdm_class_id == class_id else None
 
 
 def original_attributes(catalog, class_id: str, material) -> dict[str, str]:

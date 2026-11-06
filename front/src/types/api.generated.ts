@@ -705,6 +705,10 @@ export interface components {
       /** @enum {string} */
       confidence: "ALTA" | "MEDIA" | "BAIXA";
       divergence: string | null;
+      source_sha256?: string | null;
+      confidence_basis?: string[];
+      simulated?: boolean;
+      included_in_proposal?: boolean;
     };
     EnrichmentProposal: {
       /** Format: uuid */
@@ -716,6 +720,10 @@ export interface components {
       pdm_class_id: string;
       status: components["schemas"]["ProposalStatus"];
       evidence: components["schemas"]["EvidenceItem"][];
+      technical_review_status?: components["schemas"]["ReviewStatus"];
+      fiscal_review_status?: components["schemas"]["ReviewStatus"];
+      allowed_actions?: ("APPROVE" | "REJECT")[];
+      pending_attributes?: string[];
     };
     /** @enum {string} */
     OrderStatus:

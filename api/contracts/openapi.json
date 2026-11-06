@@ -4215,6 +4215,29 @@
                 "type": "null"
               }
             ]
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence_basis": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulated": {
+            "type": "boolean"
+          },
+          "included_in_proposal": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4260,6 +4283,28 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/EvidenceItem"
+            }
+          },
+          "technical_review_status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "fiscal_review_status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "allowed_actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "APPROVE",
+                "REJECT"
+              ]
+            }
+          },
+          "pending_attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         },
