@@ -49,7 +49,7 @@ class LocalObjectStore:
                 raise ObjectConflictError(f"Conteudo diferente em {key}")
             return StoredObject(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        # A hard link publishes the complete inode and never replaces an existing key.
+        # O hard link publica o inode completo e nunca substitui uma chave existente.
         with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as staged:
             temporary = Path(staged.name)
             try:
