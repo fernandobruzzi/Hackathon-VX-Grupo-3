@@ -131,6 +131,7 @@ def _material_values(row: dict[str, str], target: str | None, reason: str | None
         "manufacturer_reference": _empty_to_none(row["REFERENCIA_FABRICANTE"]),
         "unit": _empty_to_none(row["UNIDADE_MEDIDA"]),
         "ncm": _empty_to_none(row["NCM"]),
+        "original_merchandise_group": _empty_to_none(row["GRUPO_MERCADORIA"]),
     }
 
 
