@@ -21,7 +21,7 @@ from vx_materials_api.errors import ApiProblem
 from vx_materials_api.main import create_app
 from vx_materials_api.security.cognito import CognitoClient, CognitoConfig
 from vx_materials_api.security.permissions import PERSONA_ROLES
-from vx_materials_api.security.sessions import CONTEXT_COOKIE, LOGIN_COOKIE, SESSION_COOKIE
+from vx_materials_api.security.sessions import CONTEXT_COOKIE, LOGIN_COOKIE, SESSION_COOKIE, digest
 
 
 @pytest.fixture(scope="module")
@@ -178,7 +178,9 @@ def test_pkce_login_opaque_cookie_encrypted_tokens_and_logout(browser):
     assert me.json()["demo"] == {"enabled": False, "active_persona": None}
     assert me.json()["scope"]["center_codes"] == ["1100", "1200"]
     with factory() as db:
-        session = db.scalar(select(AuthSession))
+        session = db.scalar(
+            select(AuthSession).where(AuthSession.session_token_hash == digest(client.cookies[SESSION_COOKIE]))
+        )
         assert issued["access_token"].encode() not in session.tokens_ciphertext
         assert client.cookies[SESSION_COOKIE] != session.session_token_hash
         assert me.json()["csrf_token"] != session.csrf_token_hash
@@ -222,16 +224,19 @@ def test_expiry_revocation_context_and_disabled_user_are_enforced(browser):
     client, app, factory, _, _, _ = browser
     assert finish(browser).status_code == 200
     context = client.cookies[CONTEXT_COOKIE]
+    session_hash = digest(client.cookies[SESSION_COOKIE])
     client.cookies.delete(CONTEXT_COOKIE)
     assert client.get("/api/v1/auth/me").status_code == 401
     client.cookies.set(CONTEXT_COOKIE, context)
     with factory() as db:
-        db.scalar(select(UserSso)).disabled_at = datetime.now(UTC)
+        session = db.scalar(select(AuthSession).where(AuthSession.session_token_hash == session_hash))
+        db.get(UserSso, session.user_id).disabled_at = datetime.now(UTC)
         db.commit()
     assert client.get("/api/v1/auth/me").status_code == 401
     with factory() as db:
-        db.scalar(select(UserSso)).disabled_at = None
-        db.scalar(select(AuthSession)).expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        session = db.scalar(select(AuthSession).where(AuthSession.session_token_hash == session_hash))
+        db.get(UserSso, session.user_id).disabled_at = None
+        session.expires_at = datetime.now(UTC) - timedelta(seconds=1)
         db.commit()
     assert client.get("/api/v1/auth/me").status_code == 401
 
