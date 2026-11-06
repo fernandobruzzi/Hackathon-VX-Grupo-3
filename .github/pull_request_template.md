@@ -6,8 +6,7 @@ Closes #
 
 - [ ] Trabalho: branch da issue → `homologacao`
 - [ ] Promoção: `homologacao` deste repositório → `main`
-- [ ] Sincronização: `main` deste repositório → `homologacao`
-<!-- Promoção e sincronização usam merge commit e preservam as duas branches. -->
+<!-- A promoção usa rebase merge; depois dela, um administrador rebaseia homologacao sobre main (AGENTS.md, "Promoting to main"). -->
 
 ## Validação local
 

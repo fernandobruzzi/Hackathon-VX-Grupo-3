@@ -251,10 +251,13 @@ limits are documented in [`docs/ec2.md`](docs/ec2.md); live validation remains #
 Each piece of work follows the same path:
 
 1. **Issue:** claim the issue, as described in [Claiming an issue](#claiming-an-issue). If none exists for the work, create one and assign it first. Nothing else starts before this.
-2. **Branch:** create a branch for it from an up-to-date `main`.
+2. **Branch:** create a branch for it from an up-to-date `homologacao`, the default branch.
 3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
-4. **PR:** [update and rebase on `main`](#before-opening-a-pr), then open a pull request, closing the issue.
-5. **Merge:** rebase-merge once checks pass, then complete [the branch cleanup](#after-merging).
+4. **PR:** [update and rebase on `homologacao`](#before-opening-a-pr), then open a pull request targeting `homologacao`, closing the issue. These PRs run no CI: the local checks are the gate, recorded in the PR.
+5. **Merge:** rebase-merge into `homologacao`, then complete [the branch cleanup](#after-merging).
+6. **Promote:** when `homologacao` is ready for production, follow [Promoting to main](#promoting-to-main). Only that PR runs the full CI.
+
+`main` is production and keeps its protection: PR only, the eight CI checks with an up-to-date base, linear history and rebase merges. Nobody opens work PRs against `main`.
 
 ## Issues and milestones
 
@@ -347,20 +350,20 @@ through an explicit table and reject unknown or inconsistent content.
 
 ### Before opening a PR
 
-**Required for people and agents. Never open a PR from a branch that isn't rebased on the latest `main`.** Others merge all the time, so this finds conflicts on your branch instead of on `main`.
+**Required for people and agents. Never open a PR from a branch that isn't rebased on the latest `homologacao`.** Others merge all the time, so this finds conflicts on your branch instead of on `homologacao`.
 
-1. Commit your work, because a rebase needs a clean tree. Then pull `main` and rebase your branch on it, in one command that also works in worktrees:
+1. Commit your work, because a rebase needs a clean tree. Then pull `homologacao` and rebase your branch on it, in one command that also works in worktrees:
 
    ```bash
-   git pull --rebase origin main
+   git pull --rebase origin homologacao
    ```
 
 2. Resolve conflicts by keeping both sides' intent. If you can't tell what the other change meant, run `git rebase --abort` and ask its author. For lockfiles, follow [Code style and avoiding conflicts](#code-style-and-avoiding-conflicts).
 3. Run all three local pytest suites and the other checks listed under [Commands](#commands) again, because the combined code hasn't been tested yet. Include their commands, results and skips in the PR description.
 4. Push. After a rebase, use `git push --force-with-lease`, on your own branch only.
-5. Create the PR.
+5. Create the PR with `--base homologacao`.
 
-Never merge `main` into your branch, and never skip these steps to save time.
+Never merge `homologacao` or `main` into your branch, and never skip these steps to save time.
 
 ### Before merging
 
@@ -368,16 +371,33 @@ The author must:
 
 1. Run style and the local checks for each area touched, listed under [Commands](#commands). Docker changes are checked by CI's image builds.
 2. Confirm every acceptance criterion of the issue is met.
-3. Confirm CI is green.
-4. Repeat [the rebase and checks](#before-opening-a-pr) if `main` moved after the PR opened.
+3. Repeat [the rebase and checks](#before-opening-a-pr) if `homologacao` moved after the PR opened.
 
-Authors may merge their own PRs, and reviews are welcome when a change is risky. Merge with rebase, to keep atomic commits on a linear `main`:
+Authors may merge their own PRs, and reviews are welcome when a change is risky. Merge with rebase, to keep atomic commits on a linear history:
 
 ```bash
 gh pr merge <n> --rebase
 ```
 
 Never force-push `main` or a branch someone else is using.
+
+### Promoting to main
+
+`main` receives only promotions of `homologacao`, opened from the same repository. This is the only PR that runs the full CI and the repository policy.
+
+1. Freeze `homologacao`: ask the team not to merge into it until the promotion lands.
+2. Run the local checks on `homologacao` itself, including the database-backed suites, and `scripts/smoke_test.sh --mode flow` against a fresh `docker compose up --build`.
+3. Open the PR: `gh pr create --base main --head homologacao`, listing the issues it delivers.
+4. When the eight checks are green and the base is current, rebase-merge it. `homologacao` is protected from deletion, so it stays.
+5. Synchronize: the promoted commits get new hashes on `main`, so an administrator rebases `homologacao` onto `main` and force-pushes it. Commits already promoted drop out and later work is kept:
+
+   ```bash
+   git fetch origin && git switch homologacao && git reset --hard origin/homologacao
+   git rebase origin/main
+   git push --force-with-lease=homologacao:<previous-homologacao-sha> origin homologacao
+   ```
+
+6. Unfreeze `homologacao` and tell the team to rebase open work branches on it.
 
 ### After merging
 
