@@ -449,6 +449,7 @@ three local test accounts; use `AUTH_BACKEND=cognito` with both local-session fl
 disabled to connect Cognito without code changes. See [`docs/autenticacao.md`](docs/autenticacao.md).
 The local chat also requires login now: no anonymous test identity is injected.
 The standard smoke test in local mode creates and revokes an opaque test session.
+It also checks the three forbidden approval actions with authenticated local accounts.
 Local HTTP cookies are HttpOnly and SameSite=Lax; Cognito cookies are also Secure.
 Never enable local sessions in a deployed environment; runtime guards refuse AWS markers.
 For the persisted approval queue and producer contract, see [`docs/aprovacoes.md`](docs/aprovacoes.md).

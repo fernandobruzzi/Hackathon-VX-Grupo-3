@@ -152,6 +152,27 @@ class Smoke:
         )
         csrf = me["csrf_token"]
         self.chat(csrf)
+        for persona, area in [
+            ("SOLICITANTE_OPERACAO", "TECHNICAL"),
+            ("GESTOR_CADASTRO", "FISCAL"),
+            ("AUDITOR_FISCAL", "TECHNICAL"),
+        ]:
+            me = self.json(
+                "/api/v1/auth/local-session", payload={"persona": persona}, headers={"Origin": self.base_url}
+            )
+            csrf = me["csrf_token"]
+            self.request(
+                f"/api/v1/sanitization/{uuid.uuid4()}/decide",
+                expected=403,
+                payload={
+                    "expected_version": 1,
+                    "review_area": area,
+                    "decision": "REJECT",
+                    "reason": "Smoke de autorização",
+                },
+                headers={"Origin": self.base_url, "X-CSRF-Token": csrf, "Idempotency-Key": str(uuid.uuid4())},
+            )
+        print("PASS RBAC: Solicitante não aprova saneamento, Governança não decide fiscal e Fiscal não unifica")
         self.json("/api/v1/auth/logout", payload={}, headers={"Origin": self.base_url, "X-CSRF-Token": csrf})
         self.request("/api/v1/auth/me", expected=401)
         print("PASS sessão local opaca, identidade do servidor e logout; Cognito não validado na AWS")
