@@ -4575,7 +4575,14 @@
             "type": "string"
           },
           "effective_role": {
-            "$ref": "#/components/schemas/Role"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "action": {
             "type": "string"
@@ -4606,6 +4613,13 @@
           "after": {
             "type": "object",
             "additionalProperties": true
+          },
+          "actor_type": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "SYSTEM"
+            ]
           }
         },
         "required": [
@@ -4616,7 +4630,8 @@
           "entity",
           "reason",
           "request_id",
-          "created_at"
+          "created_at",
+          "actor_type"
         ],
         "additionalProperties": false
       },

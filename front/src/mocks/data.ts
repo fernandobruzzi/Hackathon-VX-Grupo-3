@@ -185,6 +185,7 @@ export const audit: AuditEvent[] = [
   {
     id: "a-9",
     actor: "Auditoria Fiscal",
+    actor_type: "USER",
     effective_role: "ROLE_AUDITOR_FISCAL",
     action: "NCM_REVIEW_APPROVE",
     entity: "proposta p-porca-ncm",
@@ -195,6 +196,7 @@ export const audit: AuditEvent[] = [
   {
     id: "a-8",
     actor: "Fernanda · Cadastro",
+    actor_type: "USER",
     effective_role: "ROLE_GOVERNANCA_PDM",
     action: "MERGE_APPROVE",
     entity: "proposta p-rolamento-merge",
@@ -205,6 +207,7 @@ export const audit: AuditEvent[] = [
   {
     id: "a-7",
     actor: "Fernanda · Cadastro",
+    actor_type: "USER",
     effective_role: "ROLE_GOVERNANCA_PDM",
     action: "MERGE_REJECT",
     entity: "proposta p-filtro-diferente",
@@ -215,6 +218,7 @@ export const audit: AuditEvent[] = [
   {
     id: "a-6",
     actor: "Operação Demo",
+    actor_type: "USER",
     effective_role: "ROLE_SOLICITANTE",
     action: "ORDER_SUBMIT",
     entity: "pedido o-003",
@@ -225,6 +229,7 @@ export const audit: AuditEvent[] = [
   {
     id: "a-5",
     actor: "Fernanda · Cadastro",
+    actor_type: "USER",
     effective_role: "ROLE_GOVERNANCA_PDM",
     action: "BATCH_START",
     entity: "job job-0007",
