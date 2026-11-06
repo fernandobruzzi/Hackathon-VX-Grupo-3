@@ -65,7 +65,7 @@ services:
       APP_ENV: ${APP_ENV:-local}
       LOCAL_TEST_SESSION: ${LOCAL_TEST_SESSION:-true}
       AUTH_BACKEND: ${AUTH_BACKEND:-disabled}
-      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8000}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${API_BIND_PORT:-8000}}
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
     ports:
       - "127.0.0.1:${API_BIND_PORT:-8000}:8000"
