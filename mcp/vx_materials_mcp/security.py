@@ -3,6 +3,7 @@
 import json
 import os
 from dataclasses import dataclass
+from uuid import UUID
 
 import jwt
 
@@ -21,8 +22,15 @@ class Caller:
     """Identidade vinculada à execução pela API. Nunca vem de parâmetros disponíveis ao LLM."""
 
     user_id: str
+    tenant_id: str
     permissions: frozenset[str]
     center_codes: frozenset[str] = frozenset()
+
+    def __post_init__(self):
+        try:
+            UUID(self.tenant_id)
+        except (ValueError, TypeError, AttributeError) as error:
+            raise InvalidInternalToken("tenant_id invalido") from error
 
 
 def inventory_view(caller: Caller) -> str:
@@ -53,13 +61,18 @@ def verify_internal_token(token: str, secret: str) -> Caller:
             algorithms=[_ALGORITHM],
             audience=INTERNAL_TOKEN_AUDIENCE,
             issuer=INTERNAL_TOKEN_ISSUER,
-            options={"require": ["exp", "iat", "sub", "aud", "iss"]},
+            options={"require": ["exp", "iat", "sub", "aud", "iss", "tenant_id"]},
         )
     except jwt.PyJWTError as error:
         raise InvalidInternalToken(str(error)) from error
     permissions = _string_list(claims, "permissions")
     center_codes = _string_list(claims, "center_codes")
-    return Caller(user_id=claims["sub"], permissions=frozenset(permissions), center_codes=frozenset(center_codes))
+    return Caller(
+        user_id=claims["sub"],
+        tenant_id=claims["tenant_id"],
+        permissions=frozenset(permissions),
+        center_codes=frozenset(center_codes),
+    )
 
 
 def _string_list(claims: dict, name: str) -> list[str]:
@@ -74,6 +87,7 @@ def caller_to_environment(caller: Caller) -> str:
     return json.dumps(
         {
             "user_id": caller.user_id,
+            "tenant_id": caller.tenant_id,
             "permissions": sorted(caller.permissions),
             "center_codes": sorted(caller.center_codes),
         }
@@ -88,6 +102,7 @@ def caller_from_environment() -> Caller | None:
     data = json.loads(raw)
     return Caller(
         user_id=data["user_id"],
+        tenant_id=data.get("tenant_id"),
         permissions=frozenset(data.get("permissions", [])),
         center_codes=frozenset(data.get("center_codes", [])),
     )

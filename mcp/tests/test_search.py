@@ -8,12 +8,13 @@ import pytest
 from sqlalchemy import text
 
 from pipelines.search_index import run_index
+from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_mcp.chatbot.mcp_client import McpToolError, connect
 
 KIT = Path(__file__).parents[2] / "data" / "desafio01"
 PDM = str(KIT / "03_padrao_cadastro_PDM.xlsx")
 CENTERS = ["1100", "1200", "1300", "2100", "2200", "9000"]
-REQUESTER = {"user_id": "u1", "permissions": ["inventory:read"], "center_codes": CENTERS}
+REQUESTER = {"user_id": "u1", "tenant_id": str(TENANT_ID), "permissions": ["inventory:read"], "center_codes": CENTERS}
 FISCAL = {**REQUESTER, "permissions": ["inventory:read", "metrics:financial"]}
 
 
@@ -83,7 +84,7 @@ def test_ranking_score_does_not_authorize_a_merge(database):
 
 @pytest.mark.parametrize(
     ("caller", "has_stock", "has_prices"),
-    [(None, False, False), (REQUESTER, True, False), (FISCAL, True, True)],
+    [(REQUESTER, True, False), (FISCAL, True, True)],
 )
 def test_stock_respects_caller_permissions(database, caller, has_stock, has_prices):
     top = search(database, caller, query="filtro Fleetguard LF 9009")["candidates"][0]
@@ -110,6 +111,49 @@ def test_query_and_index_must_share_the_same_version(database):
                 text("UPDATE material_search_index SET normalization_version = :v"),
                 {"v": database["indexed"]["index_version"]},
             )
+
+
+def test_reader_keeps_catalog_index_and_stock_inside_authenticated_tenant(database):
+    """Mesmo centro e referência não tornam o catálogo da outra empresa visível."""
+    other = "22222222-2222-4222-8222-222222222222"
+    code = "16031971"
+    with database["admin"].begin() as connection:
+        material_id = connection.execute(
+            text("SELECT id FROM materials_master WHERE material_code = :code"), {"code": code}
+        ).scalar_one()
+        for table in ("materials_master", "material_search_index", "material_inventory_snapshots"):
+            column = "id" if table == "materials_master" else "material_id"
+            connection.execute(
+                text(f"UPDATE {table} SET tenant_id = CAST(:tenant AS uuid) WHERE {column} = :id"),
+                {"tenant": other, "id": material_id},
+            )
+    try:
+        for caller in (REQUESTER, FISCAL):
+            result = search(database, caller, query="filtro Fleetguard LF 9009")
+            assert all(c["material_code"] != code for c in result["candidates"])
+            own = search(database, {**caller, "tenant_id": other}, query="filtro Fleetguard LF 9009")
+            top = own["candidates"][0]
+            assert top["material_code"] == code and top["identity_verified"]
+            assert top["inventory"]
+            assert bool(top["inventory"][0].get("unit_price")) is (caller is FISCAL)
+            outside = {**caller, "tenant_id": other, "center_codes": ["9999"]}
+            assert search(database, outside, query="filtro Fleetguard LF 9009")["candidates"][0]["inventory"] == []
+        # Um índice inconsistente não pode apontar para o material de outro tenant.
+        with database["admin"].begin() as connection:
+            connection.execute(
+                text("UPDATE material_search_index SET tenant_id = :tenant WHERE material_id = :id"),
+                {"tenant": TENANT_ID, "id": material_id},
+            )
+        result = search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+        assert all(c["material_code"] != code for c in result["candidates"])
+    finally:
+        with database["admin"].begin() as connection:
+            for table in ("materials_master", "material_search_index", "material_inventory_snapshots"):
+                column = "id" if table == "materials_master" else "material_id"
+                connection.execute(
+                    text(f"UPDATE {table} SET tenant_id = CAST(:tenant AS uuid) WHERE {column} = :id"),
+                    {"tenant": str(TENANT_ID), "id": material_id},
+                )
 
 
 def test_embedding_search_needs_an_index_with_the_same_signature(database, monkeypatch):
@@ -157,3 +201,8 @@ def test_reference_without_item_type_requires_review_for_a_named_candidate(datab
     assert candidate["identity_verified"] is False
     assert "SUBSTANTIVO_NAO_CONFIRMADO" in candidate["pending_checks"]
     assert result["match_status"] == "REVIEW_REQUIRED"
+
+
+def test_search_without_authenticated_tenant_is_refused(database):
+    with pytest.raises(McpToolError, match="Tenant autenticado ausente"):
+        search(database, query="filtro Fleetguard LF 9009")

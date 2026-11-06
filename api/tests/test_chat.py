@@ -159,6 +159,7 @@ def test_agent_receives_short_internal_token_and_no_identity_fields(client, agen
     )
     assert claims["sub"] == str(identity.user_id)
     assert claims["center_codes"] == ["1100", "1200"]
+    assert claims["tenant_id"] == str(identity.tenant_id)
     assert claims["exp"] - claims["iat"] <= 60
     assert request.headers["X-Request-ID"].startswith("req-")
     assert not {"role", "roles", "actor_id", "user_id", "tenant_id"} & set(agent.payload())
