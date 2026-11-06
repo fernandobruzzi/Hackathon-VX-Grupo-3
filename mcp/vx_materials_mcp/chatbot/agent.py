@@ -9,6 +9,7 @@ import time
 from typing import Any, Protocol
 
 from domain.contracts import ClassificationStatus, PdmClass
+from domain.identity import reference_review_reasons
 from vx_materials_mcp.chatbot.candidates import (
     DuplicateDecision,
     card_signature,
@@ -115,6 +116,8 @@ async def _search(
     arguments: dict[str, Any] = {"query": " ".join(user_messages(request)), "limit": 5}
     if pdm_class_id:
         arguments["pdm_class_id"] = pdm_class_id
+    if context.item_name:
+        arguments["item_name"] = context.item_name
     attributes = {name: value for name, value in context.attributes.items() if value}
     if attributes:
         arguments["attributes"] = attributes
@@ -245,7 +248,17 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     template_names = [attribute["name"] for attribute in (template or {}).get("attributes", [])]
     card_attributes = {name: context.attributes.get(name) for name in template_names} or dict(context.attributes)
     previous = request.context.duplicate_check
-    if needs_search(previous, card_signature(pdm_class.id, card_attributes), request.action, request.message):
+    review = reference_review_reasons(
+        pdm_class,
+        {name: value for name, value in context.attributes.items() if value},
+        *user_messages(request),
+    )
+    if review or needs_search(
+        previous,
+        card_signature(pdm_class.id, card_attributes, _class_name(pdm_class, context.item_name)),
+        request.action,
+        request.message,
+    ):
         search = await _search(recorder, request, context, pdm_class.id)
         decision = decide(search, request.message, offered, dismissed, request.action)
     else:

@@ -7,7 +7,8 @@ geral 10 do PDM; e mesmo assim a unificação de cadastro existentes só acontec
 from dataclasses import dataclass, field
 
 from domain.contracts import AnalyzedMaterial, ClassificationInput, MaterialRecord, PdmCatalog
-from domain.identity import compare_attributes, material_manufacturer, material_review_reasons, partial_identity_key
+from domain.identity import compare_attributes, item_name_review_reasons, partial_identity_key, resolve_item_name
+from domain.identity_decision import decide_identity
 from domain.pdm_validator import validate_pdm
 from repositories.candidates.tokens_v1 import tokens
 from vx_materials_mcp.security import INVENTORY_PERMISSION, Caller, inventory_view
@@ -23,6 +24,7 @@ class SearchQuery:
     pdm_class_id: str | None = None
     attributes: dict[str, str] = field(default_factory=dict)
     limit: int = 5
+    item_name: str | None = None
 
 
 class HybridV1SearchRepository:
@@ -40,7 +42,7 @@ class HybridV1SearchRepository:
         self._embedder = embedder
 
     def search(self, query: SearchQuery) -> dict:
-        classification = None if query.pdm_class_id else self._classifier.classify(ClassificationInput(query.query))
+        classification = self._classifier.classify(ClassificationInput(query.query))
         class_id = query.pdm_class_id or classification.pdm_class_id
         if class_id is None:
             # "filtro X" pode ser filtro de óleo, ar ou combustível. Em classes de referência isso não
@@ -50,18 +52,32 @@ class HybridV1SearchRepository:
         attributes = dict(query.attributes)
         key = None
         missing: list[str] = []
+        requested = None
         if pdm_class is not None:
             extracted = self._extractor.extract(pdm_class, query.query)
             attributes = {**{n: a.value for n, a in extracted.attributes.items()}, **attributes}
-            validation = validate_pdm(self._pdm, class_id, attributes, item_name=self._item(pdm_class))
+            item_name, name_review = self._item(pdm_class, classification)
+            if query.item_name is not None:
+                item_name, name_review = query.item_name, ()
+            if query.item_name is not None and query.item_name not in pdm_class.item_names:
+                raise ValueError("Nome do item desconhecido para a classe PDM")
+            validation = validate_pdm(self._pdm, class_id, attributes, item_name=item_name)
             key = validation.identity_key or partial_identity_key(pdm_class, attributes)
             missing = [m.name for m in validation.missing_attributes]
+            requested = AnalyzedMaterial(
+                MaterialRecord("", "ATIVO", query.query),
+                classification.pdm_class_id or class_id,
+                item_name,
+                attributes,
+                key,
+                review_reasons=name_review,
+            )
 
         rows = {row["id"]: row for row in self._catalog.by_identity(key, self._version)} if key else {}
         for row in self._similar_rows(query, attributes, class_id):
             rows.setdefault(row["id"], row)
 
-        candidates = [self._candidate(row, pdm_class, attributes, key, missing, query.query) for row in rows.values()]
+        candidates = [self._candidate(row, pdm_class, requested, missing) for row in rows.values()]
         candidates.sort(key=lambda c: (-c["ranking_score"], c["material_code"]))
         candidates = candidates[: max(1, min(query.limit, 20))]
         self._attach_inventory(candidates)
@@ -95,36 +111,42 @@ class HybridV1SearchRepository:
         return found[0] if len(found) == 1 else None
 
     @staticmethod
-    def _item(pdm_class) -> str | None:
-        return pdm_class.item_names[0] if len(pdm_class.item_names) == 1 else None
+    def _item(pdm_class, classification) -> tuple[str | None, tuple[str, ...]]:
+        matched = tuple(e.matched_name for e in classification.evidence if e.class_id == pdm_class.id)
+        return resolve_item_name(pdm_class, matched), item_name_review_reasons(pdm_class, matched)
 
-    def _candidate(
-        self, row: dict, pdm_class, attributes: dict, key: str | None, missing: list[str], query_text: str
-    ) -> dict:
+    def _candidate(self, row: dict, pdm_class, requested: AnalyzedMaterial | None, missing: list[str]) -> dict:
         same_class = pdm_class is not None and row["proposed_class_id"] == pdm_class.id
+        attributes = requested.attributes if requested else {}
         their = row["extracted_attributes"] or {}
-        conflicts, matching = compare_attributes(pdm_class, attributes, their) if same_class else ([], 0)
         review = []
+        verified = False
         if same_class:
-            requested = AnalyzedMaterial(MaterialRecord("", "ATIVO", query_text), pdm_class.id, None, attributes, key)
+            record = MaterialRecord(
+                row["material_code"],
+                row["status"],
+                row["original_description_long"] or "",
+                manufacturer=row.get("manufacturer") or "",
+                reference=row.get("manufacturer_reference") or "",
+            )
+            classification = self._classifier.classify(ClassificationInput(record.description))
+            extraction = self._extractor.extract(pdm_class, record.description)
+            # Evidência atual conhecida vence o índice, que só recupera candidatos.
+            their = {**their, **{name: value.value for name, value in extraction.attributes.items()}}
+            item_name, name_review = self._item(pdm_class, classification)
             candidate = AnalyzedMaterial(
-                MaterialRecord(
-                    row["material_code"],
-                    row["status"],
-                    row["original_description_long"] or "",
-                    manufacturer=row.get("manufacturer") or "",
-                    reference=row.get("manufacturer_reference") or "",
-                ),
-                pdm_class.id,
-                None,
+                record,
+                classification.pdm_class_id or row["proposed_class_id"],
+                item_name,
                 their,
                 row["candidate_identity_key"],
+                review_reasons=name_review,
             )
-            review.extend(material_review_reasons(requested, pdm_class))
-            review.extend(material_review_reasons(candidate, pdm_class))
-            if material_manufacturer(requested) != material_manufacturer(candidate):
-                review.append("FABRICANTE_DIFERENTE_OU_NAO_CONFIRMADO")
-        verified = bool(key) and row["candidate_identity_key"] == key and same_class and not review and not conflicts
+            decision = decide_identity(self._pdm, requested, candidate)
+            verified = bool(requested.identity_key) and decision.status == "SAME_MATERIAL"
+            if decision.status != "SAME_MATERIAL":
+                review.extend(decision.reasons)
+        conflicts, matching = compare_attributes(pdm_class, attributes, their) if same_class else ([], 0)
         matching_names = [n for n in attributes if n in their and n not in conflicts] if same_class else []
         pending = [] if verified else [f"ATRIBUTO_AUSENTE: {name}" for name in missing]
         pending.extend(dict.fromkeys(review))

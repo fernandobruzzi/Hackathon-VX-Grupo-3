@@ -1,6 +1,5 @@
 """Envio explícito de ficha do chat com sessão local, banco real e revisão posterior."""
 
-import json
 import uuid
 
 import httpx
@@ -13,6 +12,7 @@ from test_orders import case as case
 from test_orders import catalog as catalog
 from test_orders import decide, headers, index, login, material
 
+from domain.identity import identity_signature
 from domain.pdm_validator import validate_pdm
 from vx_materials_api.db.models import AuditLog, ChatSession, MaterialMaster, RegistrationOrder
 from vx_materials_api.services.agent_client import AgentClient
@@ -154,13 +154,8 @@ def test_submission_rechecks_saved_state_and_current_domain(ready, change, code)
         context["material_card"] = {**context["material_card"], "validation_status": "INCOMPLETE"}
     elif change == "invalid":
         context["material_card"]["attributes"]["FABRICANTE"] = ""
-        context["duplicate_check"]["signature"] = json.dumps(
-            {
-                "pdm_class_id": "PDM110",
-                "attributes": {k: v for k, v in context["material_card"]["attributes"].items() if v},
-            },
-            sort_keys=True,
-            ensure_ascii=False,
+        context["duplicate_check"]["signature"] = identity_signature(
+            "PDM110", context["material_card"].get("pdm_class_name"), context["material_card"]["attributes"]
         )
     elif change == "changed_signature":
         context["material_card"]["attributes"]["FABRICANTE"] = "SKF"

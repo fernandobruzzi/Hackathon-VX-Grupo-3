@@ -52,7 +52,8 @@ def scalar(engine, query):
 
 def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
     first, _, admin, _ = sanitized
-    assert first["merges"] > 1000
+    # O número de propostas não pode forçar a aceitação de identidades inconclusivas.
+    assert first["merges"] > 0
     assert first["proposals"] == first["merges"] + sum(first["corrections"]["proposals"].values())
     assert first["inserted"] == total(first)
     assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == total(first)

@@ -10,8 +10,8 @@ import io
 from dataclasses import dataclass, field
 
 from domain.contracts import ClassificationInput, ClassificationRepository, ExtractionRepository, PdmCatalog
+from domain.identity import resolve_item_name
 from domain.pdm_validator import validate_pdm
-from pipelines.sanitize import _item_name
 
 STATUS_OUT_OF_SCOPE = "OUT_OF_SCOPE"
 STATUS_INCOMPLETE = "INCOMPLETE"
@@ -64,7 +64,7 @@ def analyze_order(
     if class_id is None:
         return OrderAnalysis(STATUS_OUT_OF_SCOPE)
     pdm_class = catalog.classes[class_id]
-    item_name = _item_name(pdm_class.item_names, [evidence.matched_name for evidence in classification.evidence])
+    item_name = resolve_item_name(pdm_class, [evidence.matched_name for evidence in classification.evidence])
     extraction = extractor.extract(pdm_class, text)
     attributes = {name: value.value for name, value in extraction.attributes.items()}
     validation = validate_pdm(catalog, class_id, attributes, item_name=item_name)

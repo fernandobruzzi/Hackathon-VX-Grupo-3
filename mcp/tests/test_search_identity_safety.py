@@ -1,5 +1,6 @@
 """Busca sem banco: um índice exato não pode contornar a revisão de fabricante ou referência."""
 
+import csv
 from pathlib import Path
 
 import pytest
@@ -29,11 +30,11 @@ def pdm():
     return load_pdm(KIT)
 
 
-def search(pdm, class_id, query, attributes, *, manufacturer="", reference="", description=""):
+def search(pdm, class_id, query, attributes, *, manufacturer="", reference="", description="", candidate_item=None):
     # A chave simulada coincide até nos casos inseguros: a verificação precisa conferir a evidência.
     from domain.pdm_validator import validate_pdm
 
-    key = validate_pdm(pdm, class_id, attributes).identity_key or partial_identity_key(
+    key = validate_pdm(pdm, class_id, attributes, item_name=candidate_item).identity_key or partial_identity_key(
         pdm.classes[class_id], attributes
     )
     row = {
@@ -60,7 +61,7 @@ def test_unknown_manufacturer_is_not_treated_as_the_same_as_a_named_oil(pdm):
     result = search(pdm, "PDM090", "OLEO LUBRIFICANTE", attributes, manufacturer="MOBIL")
     assert result["match_status"] == "REVIEW_REQUIRED"
     assert result["candidates"][0]["identity_verified"] is False
-    assert "FABRICANTE_DIFERENTE_OU_NAO_CONFIRMADO" in result["candidates"][0]["pending_checks"]
+    assert "FABRICANTE_NAO_CONFIRMADO" in result["candidates"][0]["pending_checks"]
 
 
 def test_an_unambiguous_reference_still_finds_the_existing_filter(pdm):
@@ -87,3 +88,121 @@ def test_revision_requires_review_even_when_a_stale_index_key_matches(pdm, revis
     assert result["match_status"] == "REVIEW_REQUIRED"
     assert result["candidates"][0]["identity_verified"] is False
     assert "REVISAO_DE_PECA_NAO_CONFIRMADA" in result["candidates"][0]["pending_checks"]
+
+
+def test_real_sulzer_covers_with_equal_pn_and_different_nouns_require_review(pdm):
+    with (KIT.parent / "01_base_materiais.csv").open(encoding="utf-8-sig") as stream:
+        records = {
+            r["CODIGO_MATERIAL"]: r for r in csv.DictReader(stream) if r["CODIGO_MATERIAL"] in {"25187467", "21290535"}
+        }
+    requested, candidate = records["25187467"], records["21290535"]
+    attributes = {
+        name: item.value
+        for name, item in get_extraction_repository()
+        .extract(pdm.classes["PDM110"], requested["DESCRICAO_LONGA"])
+        .attributes.items()
+    }
+    result = search(
+        pdm,
+        "PDM110",
+        requested["DESCRICAO_LONGA"],
+        attributes,
+        manufacturer=candidate["FABRICANTE"],
+        reference=candidate["REFERENCIA_FABRICANTE"],
+        description=candidate["DESCRICAO_LONGA"],
+    )
+    item = result["candidates"][0]
+    assert item["identity_verified"] is False
+    assert result["match_status"] == "REVIEW_REQUIRED"
+    assert item["pending_checks"]
+
+
+def test_identical_niple_is_verified_when_the_query_names_the_item(pdm):
+    attributes = {
+        "DIAMETRO NOMINAL": "1/2POL",
+        "CLASSE PRESSAO": "6000#",
+        "MATERIAL": "ACO CARBONO FORJADO A105",
+        "CONEXAO": "ROSCA NPT",
+    }
+    result = search(pdm, "PDM050", "NIPLE", attributes, candidate_item="NIPLE")
+    assert result["match_status"] == "EXISTING_FOUND"
+    assert result["candidates"][0]["identity_verified"] is True
+
+
+def test_stale_index_does_not_hide_a_known_current_dimension_conflict(pdm):
+    attributes = {
+        "ROSCA": "METRICA GROSSA",
+        "BITOLA": "M12",
+        "COMPRIMENTO": "50MM",
+        "MATERIAL": "ACO CARBONO",
+        "CLASSE RESISTENCIA": "8.8",
+        "ACABAMENTO": "ZINCADO BRANCO",
+        "NORMA": "DIN 933",
+    }
+    result = search(
+        pdm,
+        "PDM001",
+        "PARAFUSO SEXTAVADO M12X50",
+        attributes,
+        description="PARAFUSO SEXTAVADO M16X50",
+        candidate_item="PARAFUSO SEXTAVADO",
+    )
+    assert result["candidates"][0]["identity_verified"] is False
+    assert "BITOLA" in result["candidates"][0]["conflicts"]
+
+
+def test_requested_class_does_not_override_a_contradictory_current_noun(pdm):
+    attributes = {
+        "ROSCA": "METRICA GROSSA",
+        "BITOLA": "M12",
+        "COMPRIMENTO": "50MM",
+        "MATERIAL": "ACO CARBONO",
+        "CLASSE RESISTENCIA": "8.8",
+        "ACABAMENTO": "ZINCADO BRANCO",
+        "NORMA": "DIN 933",
+    }
+    result = search(
+        pdm,
+        "PDM001",
+        "ARRUELA LISA",
+        attributes,
+        description="PARAFUSO SEXTAVADO M12X50",
+        candidate_item="PARAFUSO SEXTAVADO",
+    )
+    assert result["candidates"][0]["identity_verified"] is False
+    assert "CLASSES_DIFERENTES" in result["candidates"][0]["pending_checks"]
+
+
+def test_structured_reference_cannot_hide_a_contradictory_original_pn(pdm):
+    attributes = {"FABRICANTE": "FLEETGUARD", "REFERENCIA FABRICANTE": "LF9009"}
+    result = search(
+        pdm,
+        "PDM100",
+        "filtro Fleetguard LF9009",
+        attributes,
+        manufacturer="FLEETGUARD",
+        reference="LF9009",
+        description="FILTRO FLEETGUARD LF9999",
+    )
+    assert result["candidates"][0]["identity_verified"] is False
+    assert result["match_status"] == "REVIEW_REQUIRED"
+    assert result["candidates"][0]["pending_checks"]
+
+
+@pytest.mark.parametrize("ambiguous_side", ["query", "candidate"])
+def test_explicitly_ambiguous_names_are_not_generic_missing_names(pdm, ambiguous_side):
+    attributes = {"FABRICANTE": "METSO", "REFERENCIA FABRICANTE": "N1234567"}
+    generic, ambiguous = "METSO N1234567", "MANTO EIXO METSO N1234567"
+    result = search(
+        pdm,
+        "PDM110",
+        ambiguous if ambiguous_side == "query" else generic,
+        attributes,
+        manufacturer="METSO",
+        reference="N1234567",
+        description=ambiguous if ambiguous_side == "candidate" else generic,
+    )
+    candidate = result["candidates"][0]
+    assert candidate["identity_verified"] is False
+    assert "SUBSTANTIVO_AMBIGUO" in candidate["pending_checks"]
+    assert result["match_status"] == "REVIEW_REQUIRED"

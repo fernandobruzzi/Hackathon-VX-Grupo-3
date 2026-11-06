@@ -177,7 +177,7 @@ def test_validated_identity_reaches_the_server_not_the_tools(client, callers, ex
 
 
 def test_existing_item_is_shown_with_authorized_stock(db_client):
-    body = run(db_client, "filtro Fleetguard LF 9009").json()
+    body = run(db_client, "filtro oleo lubrificante Fleetguard LF 9009").json()
 
     card = body["material_card"]
     assert card["duplicate_check_status"] == "MATCH_FOUND"
@@ -195,7 +195,7 @@ def _saved_check(body):
     """Verificação que a API salva depois de um turno: assinatura da ficha e decisão."""
     card = body["material_card"]
     check = {
-        "signature": card_signature(card["pdm_class_id"], card["attributes"]),
+        "signature": card_signature(card["pdm_class_id"], card["attributes"], card["pdm_class_name"]),
         "status": card["duplicate_check_status"],
         "similar_candidates": card["similar_candidates"],
     }
@@ -438,3 +438,38 @@ def test_recorder_stops_after_five_calls():
     with pytest.raises(ToolLimitExceeded):
         asyncio.run(call())
     assert len(recorder.calls) == 5
+
+
+def test_changed_noun_rechecks_even_when_the_attributes_are_unchanged(client, executed):
+    attributes = {
+        "DIAMETRO NOMINAL": "1/2POL",
+        "CLASSE PRESSAO": "6000#",
+        "MATERIAL": "ACO CARBONO FORJADO A105",
+        "CONEXAO": "ROSCA NPT",
+    }
+    first = run(client, "NIPLE", confirmed=attributes).json()
+    # Simula uma verificação aceita quando o catálogo estava disponível no turno anterior.
+    previous = _saved_check(first)
+    previous["status"] = "NO_MATCH"
+    before = _searches(executed)
+    second = run(client, "COTOVELO 90 GRAUS", history=[("user", "NIPLE")], confirmed=attributes, check=previous).json()
+    assert second["context_patch"]["item_name"] == "COTOVELO 90 GRAUS"
+    assert _searches(executed) == before + 1
+    search_input = next(args for name, args in reversed(executed) if name == "search_similar_materials")
+    assert search_input["item_name"] == "COTOVELO 90 GRAUS"
+
+
+def test_new_revision_evidence_cannot_reuse_the_previous_identity_check(client, executed):
+    first = run(client, "MANTO METSO N1234567").json()
+    previous = _saved_check(first)
+    previous["status"] = "NO_MATCH"
+    before = _searches(executed)
+    second = run(
+        client,
+        "MANTO METSO N1234567 REV A",
+        history=[("user", "MANTO METSO N1234567")],
+        confirmed=first["context_patch"]["confirmed_attributes"],
+        check=previous,
+    ).json()
+    assert second["material_card"]["attributes"] == first["material_card"]["attributes"]
+    assert _searches(executed) == before + 1

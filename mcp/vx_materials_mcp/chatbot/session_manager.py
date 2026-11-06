@@ -15,6 +15,7 @@ from domain.contracts import (
     ExtractionRepository,
     PdmClass,
 )
+from domain.identity import resolve_item_name
 from vx_materials_mcp.chatbot.candidates import is_reply_to_candidates
 from vx_materials_mcp.schemas.agent import AgentRunRequest
 
@@ -51,15 +52,6 @@ def _classify(messages: list[str], classifier: ClassificationRepository) -> Clas
     return next((r for r in results if r.status == ClassificationStatus.UNRESOLVED), results[0])
 
 
-def _item_name(pdm_class: PdmClass, result: ClassificationResult) -> str | None:
-    """Classes com vários itens precisam do nome usado na mensagem; as demais dispensam."""
-    if len(pdm_class.item_names) <= 1:
-        return None
-    matched = {evidence.matched_name for evidence in result.evidence if evidence.class_id == pdm_class.id}
-    names = [name for name in pdm_class.item_names if name in matched]
-    return names[0] if len(names) == 1 else None
-
-
 def build_turn_context(
     request: AgentRunRequest,
     catalog_classes: dict[str, PdmClass],
@@ -84,4 +76,5 @@ def build_turn_context(
         # A extração deixa vazio o que não reconhece com segurança: não apaga valores anteriores.
         extracted = extractor.extract(pdm_class, text).attributes
         attributes.update({name: value.value for name, value in extracted.items()})
-    return TurnContext(classification, pdm_class, _item_name(pdm_class, classification), attributes)
+    names = (e.matched_name for e in classification.evidence if e.class_id == pdm_class.id)
+    return TurnContext(classification, pdm_class, resolve_item_name(pdm_class, names), attributes)

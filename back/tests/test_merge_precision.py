@@ -12,11 +12,19 @@ KIT = Path(__file__).parents[2] / "data" / "desafio01"
 
 @pytest.fixture(scope="module")
 def evaluated():
+    review = {}
     merges, _, _ = _propose(
-        read_csv_records(str(KIT / "01_base_materiais.csv")), _catalog(str(KIT / "03_padrao_cadastro_PDM.xlsx")), None
+        read_csv_records(str(KIT / "01_base_materiais.csv")),
+        _catalog(str(KIT / "03_padrao_cadastro_PDM.xlsx")),
+        None,
+        identity_review=review,
     )
     manifest, groups, pairs = load_cohorts()
-    return {**compare_merges(merges, groups, pairs, manifest["group_review_additions"]), "current_merges": merges}
+    return {
+        **compare_merges(merges, groups, pairs, manifest["group_review_additions"]),
+        "current_merges": merges,
+        "identity_review": review,
+    }
 
 
 def test_frozen_cohort_is_not_replaced_when_the_candidates_change(evaluated):
@@ -59,14 +67,14 @@ def test_aliases_cohort_retains_labels_and_records_conservative_abstention(evalu
     assert sum(case["same_item"] is True for case in groups["reviewed"]) == 39
     report = compare_merges(evaluated["current_merges"], groups, pairs, cohort["review_additions"])["groups"]
     assert report["counts"]["reviewed"] == 38
-    # identity-v2 retém seis positivos históricos, dois inconclusivos e o erro conhecido.
+    # identity-v3 retém sete positivos históricos, dois inconclusivos e o erro conhecido.
     # Os rótulos não mudam para esconder essa perda de cobertura.
-    assert report["precision"]["denominator"] == 31
+    assert report["precision"]["denominator"] == 30
     assert report["counts"]["wrong"] == 0
     assert report["inconclusive_reviews"] == 2
-    assert report["positive_recovery_in_cohort"]["numerator"] == 31
+    assert report["positive_recovery_in_cohort"]["numerator"] == 30
     assert report["positive_recovery_in_cohort"]["denominator"] == 37
-    assert report["algorithm_abstention"]["numerator"] == 9
+    assert report["algorithm_abstention"]["numerator"] == 10
     assert report["precision"]["value"] >= 0.95
 
 
@@ -77,4 +85,10 @@ def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
     current = {tuple(sorted(proposal.material_codes)) for proposal in evaluated["current_merges"]}
     assert sample["review_kind"] == "DEVELOPMENT_REGRESSION" and sample["independent"] is False
     assert len(sample["reviewed"]) == 40
-    assert all(tuple(sorted(item["codes"])) in current and item["same_item"] is True for item in sample["reviewed"])
+    assert all(item["same_item"] is True for item in sample["reviewed"])
+    withdrawn = [item for item in sample["reviewed"] if tuple(sorted(item["codes"])) not in current]
+    assert withdrawn
+    pending = {
+        row["evidence"]["material_code"]: row["reasons"] for row in evaluated["identity_review"]["manual_review"]
+    }
+    assert all("SUFIXO_REFERENCIA_NAO_CONFIRMADO" in pending[code] for item in withdrawn for code in item["codes"])

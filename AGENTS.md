@@ -423,7 +423,8 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 **Domain rules** (PDM general rules and architecture)
 
 - Wrongly merging different items costs more than missing a duplicate. Prefer precision, and send doubt to review.
-- Same item means same class, noun and qualifier, and same required attributes; or, in manufacturer-reference classes, same manufacturer and reference.
+- Same item requires the shared decision in `back/domain/identity_decision.py`: same class, noun/qualifier and applicable required attributes; or genuine manufacturer/part reference without contradictory evidence. Equal keys alone never override conflicts. See [`docs/identidade-materiais.md`](docs/identidade-materiais.md) and the glossary in [`CONTEXT.md`](CONTEXT.md).
+- Batch, MCP search and transactional approval use that decision. Missing or conflicting identity evidence remains for review, including unconfirmed revisions and reference suffixes. Chat/API search signatures include the item noun; changing it requires a new search.
 - Equivalent products from different manufacturers stay separate. Record the equivalence instead of merging.
 - `ranking_score` only orders results. It never authorizes a merge.
 - Packaging units without a known factor block automatic quantity consolidation.

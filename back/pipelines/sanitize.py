@@ -13,6 +13,7 @@ import uuid
 from collections import Counter
 from collections.abc import Iterable
 from decimal import Decimal
+from itertools import combinations
 
 from domain.contracts import (
     AnalyzedMaterial,
@@ -31,10 +32,13 @@ from domain.contracts import (
 from domain.identity import (
     IDENTITY_RULES_VERSION,
     compare_attributes,
+    item_name_review_reasons,
     material_review_reasons,
     merge_partition,
     partial_identity_key,
+    resolve_item_name,
 )
+from domain.identity_decision import decide_identity
 from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
@@ -84,7 +88,8 @@ def analyze_material(
     if class_id is None:
         return AnalyzedMaterial(record, None, None, {}, None)
     pdm_class = catalog.classes[class_id]
-    item_name = _item_name(pdm_class.item_names, [evidence.matched_name for evidence in classification.evidence])
+    matched_names = [evidence.matched_name for evidence in classification.evidence if evidence.class_id == pdm_class.id]
+    item_name = resolve_item_name(pdm_class, matched_names)
     extraction = extractor.extract(
         pdm_class,
         description,
@@ -94,17 +99,11 @@ def analyze_material(
     attributes = {name: value.value for name, value in extraction.attributes.items()}
     validation = validate_pdm(catalog, class_id, attributes, item_name=item_name)
     identity_key = validation.identity_key or partial_identity_key(pdm_class, attributes)
-    material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key)
+    review = item_name_review_reasons(pdm_class, matched_names)
+    material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key, review)
     if material_review_reasons(material, pdm_class):
-        return AnalyzedMaterial(record, class_id, item_name, attributes, None)
+        return AnalyzedMaterial(record, class_id, item_name, attributes, None, review)
     return material
-
-
-def _item_name(item_names: tuple[str, ...], evidence: Iterable[str]) -> str | None:
-    if len(item_names) == 1:
-        return item_names[0]
-    matches = [name for name in evidence if name in item_names]
-    return max(matches, key=len) if matches else None
 
 
 def build_proposal(
@@ -122,6 +121,10 @@ def build_proposal(
         raise ValueError("MERGE recusado: fabricante, nome da peca ou referencia exige revisao")
     if group.identity_verified and (not members[0].identity_key or len({m.identity_key for m in members}) != 1):
         raise ValueError("MERGE recusado: identidade declarada nao confere com os membros")
+    if group.identity_verified and any(
+        decide_identity(catalog, left, right).status != "SAME_MATERIAL" for left, right in combinations(members, 2)
+    ):
+        raise ValueError("MERGE recusado: evidencia contraditoria ou identidade nao confirmada")
     primary = _suggest_primary(members)
     conflicts: list[str] = []
     if not group.identity_verified:

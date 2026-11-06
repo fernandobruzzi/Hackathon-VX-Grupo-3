@@ -19,7 +19,7 @@ from vx_materials_api.db.models import (
 from vx_materials_api.schemas.proposals import evidence_hash
 
 
-@pytest.mark.parametrize("reference", ["LF 9009", "LF-9009", "LF/9009", "LF9009-00"])
+@pytest.mark.parametrize("reference", ["LF 9009", "LF-9009", "LF/9009"])
 def test_reference_variants_follow_shared_domain_identity(approval_case, reference):
     case = approval_case
     case["materials"][1].manufacturer_reference = reference
