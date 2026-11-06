@@ -44,6 +44,12 @@ def test_batch_substitution_is_shown_as_system_without_human_role(approval_case)
         assert event["before"]["status"] == "PENDING" and event["after"]["status"] == "STALE"
         assert event["reason"] and event["created_at"]
         assert event["request_id"] == ""  # A função não inventa uma requisição HTTP.
+    # Uma substituição exclusivamente fiscal não integra a visão técnica.
+    original.technical_review_status = "NOT_REQUIRED"
+    original.fiscal_review_status = "PENDING"
+    db.commit()
+    assert audit_events(db, case["principals"][0])["items"] == []
+    assert len(audit_events(db, case["principals"][1])["items"]) == 1
     assert audit_events(db, case["principals"][2])["items"] == []
     assert audit_events(db, replace(case["principals"][0], center_codes=frozenset({"1100"})))["items"] == []
     assert audit_events(db, replace(case["principals"][1], tenant_id=uuid.uuid4()))["items"] == []
