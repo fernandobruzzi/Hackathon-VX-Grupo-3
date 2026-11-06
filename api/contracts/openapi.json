@@ -4085,6 +4085,121 @@
           }
         }
       }
+    },
+    "/api/v1/registration-orders/{id}": {
+      "get": {
+        "operationId": "getOrderReview",
+        "summary": "Consultar ficha técnica, duplicidade e condições fiscais antes de decidir.",
+        "tags": [
+          "registration-orders"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderReview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6216,6 +6331,42 @@
           "reason": {
             "type": "string",
             "minLength": 1
+          },
+          "ncm_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ncm_source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ncm_evaluation_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 64,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -7961,6 +8112,169 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "OrderReview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/RegistrationOrder"
+          },
+          "attachment_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "item_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "formatted_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_material_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "pdm_version": {
+            "type": "string"
+          },
+          "pdm_source_sha256": {
+            "type": "string"
+          },
+          "index_version": {
+            "type": "string"
+          },
+          "ncm_assessment": {
+            "$ref": "#/components/schemas/NcmAssessment"
+          },
+          "ncm_proposed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ncm_references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "codes",
+                "condition"
+              ],
+              "properties": {
+                "codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "condition": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "review_data": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "fiscal_decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderFiscalDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "technical_review_current": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "order",
+          "attachment_text",
+          "item_name",
+          "attributes",
+          "formatted_description",
+          "candidate_material_ids",
+          "pdm_version",
+          "pdm_source_sha256",
+          "index_version",
+          "ncm_assessment",
+          "ncm_proposed",
+          "ncm_references",
+          "review_data",
+          "fiscal_decision",
+          "technical_review_current"
+        ]
+      },
+      "OrderFiscalDecision": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ncm_code",
+          "source",
+          "reason",
+          "actor_user_id",
+          "approved_version",
+          "assessment"
+        ],
+        "properties": {
+          "ncm_code": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "actor_user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "approved_version": {
+            "type": "integer"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/NcmAssessment"
           }
         }
       }

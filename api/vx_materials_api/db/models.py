@@ -336,6 +336,7 @@ class RegistrationOrder(Base):
     pdm_class_id: Mapped[str | None] = mapped_column(Text)
     item_name: Mapped[str | None] = mapped_column(Text)
     attributes: Mapped[Any] = _jsonb()
+    review_data: Mapped[Any] = _jsonb()
     missing_attributes: Mapped[Any] = _jsonb("[]")
     candidate_material_ids: Mapped[Any] = _jsonb("[]")
     status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'DRAFT'"))

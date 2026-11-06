@@ -17,6 +17,9 @@ class OrderDecisionRequest(_Contract):
     expected_version: int = Field(ge=1)
     decision: Literal["APPROVE", "REJECT"]
     reason: str = Field(min_length=1)
+    ncm_code: str | None = Field(default=None, min_length=8, max_length=10)
+    ncm_source: str | None = Field(default=None, min_length=1, max_length=1000)
+    ncm_evaluation_hash: str | None = Field(default=None, min_length=64, max_length=64)
 
 
 class OrderComplementRequest(_Contract):

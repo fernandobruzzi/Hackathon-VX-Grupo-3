@@ -15,12 +15,14 @@ import json
 import re
 import uuid
 from collections import Counter
+from dataclasses import asdict
 from datetime import UTC, datetime
 
 from sqlalchemy import BigInteger, cast, func, or_, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
+from domain.ncm_rules import check_ncm_consistency
 from domain.pdm_validator import validate_pdm
 from pipelines.import_orders import STATUS_READY, OrderAnalysis, OrderRow, analyze_order
 from pipelines.search_index import index_version
@@ -269,6 +271,7 @@ def _audit(db, identity, role, order, action, reason, before, request_id, *, aft
                 "version": order.version,
                 "material_id": str(order.material_id) if order.material_id else None,
                 "candidate_material_ids": list(order.candidate_material_ids or []),
+                "review_data": dict(order.review_data or {}),
             },
             reason=reason,
             request_id=request_id,
@@ -391,7 +394,7 @@ def _publish(db, order, catalog, analysis: OrderAnalysis) -> MaterialMaster:
         manufacturer=attributes.get("FABRICANTE"),
         manufacturer_reference=attributes.get("REFERENCIA FABRICANTE"),
         unit=pdm_class.default_unit,
-        ncm=ncm_for(pdm_class, attributes, analysis.item_name),
+        ncm=order.review_data["fiscal"]["ncm_code"],
         ncm_review_status="APPROVED",
         identity_key=analysis.identity_key,
         is_canonical=True,
@@ -406,7 +409,7 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
     operation = "registration_order.decide"
     db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:t, 1))"), {"t": str(identity.tenant_id)})
     previous, payload_hash = _idempotent(
-        db, identity, operation, key, {"order_id": str(order_id), **decision.model_dump(mode="json")}
+        db, identity, operation, key, {"order_id": str(order_id), **decision.model_dump(mode="json", exclude_none=True)}
     )
     order = _locked_order(db, identity, order_id, replay=previous is not None)
     if previous is not None:
@@ -430,9 +433,13 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
         raise ApiProblem(409, "INVALID_TRANSITION", "Este pedido não aguarda decisão.", order_status=order.status)
     role = require_permission(identity, permission)
     _check_version(order, decision.expected_version)
-    before = _state(order)
+    if permission != FISCAL and any((decision.ncm_code, decision.ncm_source, decision.ncm_evaluation_hash)):
+        raise ApiProblem(403, "FORBIDDEN", "Só o Fiscal pode definir NCM.")
+    before = {**_state(order), "review_data": dict(order.review_data or {})}
     action = "ORDER_REJECTED"
     if decision.decision == "REJECT":
+        if any((decision.ncm_code, decision.ncm_source, decision.ncm_evaluation_hash)):
+            raise ApiProblem(422, "INVALID_DECISION", "A rejeição não define NCM.")
         order.status = "REJECTED"
     else:
         # Avalia de novo com as regras atuais: aprovar exige o mesmo pedido completo, na mesma classe.
@@ -444,12 +451,61 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
         if existing:
             order.status, order.candidate_material_ids, action = "EXISTING", existing, "ORDER_FOUND_EXISTING"
         elif order.status == "READY_FOR_REVIEW":
+            order.review_data = {
+                "technical": {
+                    "signature": _review_signature(catalog, analysis, version),
+                    "approved_version": order.version,
+                    "pdm_class_id": analysis.pdm_class_id,
+                    "item_name": analysis.item_name,
+                    "attributes": dict(analysis.attributes),
+                    "pdm_source_sha256": catalog.source_sha256,
+                    "index_version": version,
+                    "actor_user_id": str(identity.user_id),
+                }
+            }
             order.status, action = "PENDING_FISCAL", "ORDER_APPROVED_TECHNICAL"
         else:
-            if ncm_for(catalog.classes[order.pdm_class_id], analysis.attributes, analysis.item_name) is None:
+            signature = _review_signature(catalog, analysis, version)
+            if (order.review_data or {}).get("technical", {}).get("signature") != signature:
                 raise ApiProblem(
-                    422, "NCM_UNDETERMINED", "A classe tem mais de um NCM possível; ainda não dá para publicar."
+                    422,
+                    "TECHNICAL_REVIEW_CHANGED",
+                    "A ficha ou as regras mudaram após a revisão técnica; é necessária nova revisão.",
                 )
+            code = decision.ncm_code or ncm_for(
+                catalog.classes[order.pdm_class_id], analysis.attributes, analysis.item_name
+            )
+            if code is None:
+                raise ApiProblem(
+                    422, "NCM_UNDETERMINED", "Informe a escolha fiscal de NCM e sua fonte antes de publicar."
+                )
+            assessment = check_ncm_consistency(
+                catalog, order.pdm_class_id, analysis.attributes, code, item_name=analysis.item_name
+            )
+            displayed = check_ncm_consistency(
+                catalog, order.pdm_class_id, analysis.attributes, None, item_name=analysis.item_name
+            )
+            if decision.ncm_evaluation_hash and decision.ncm_evaluation_hash != displayed.evaluation_hash:
+                raise ApiProblem(
+                    409, "NCM_ASSESSMENT_CHANGED", "A avaliação fiscal foi alterada; consulte a ficha novamente."
+                )
+            if assessment.technical_consistency != "CONSISTENT":
+                raise ApiProblem(422, "NCM_REFERENCE_MISMATCH", "NCM incompatível com as condições atuais do PDM.")
+            if decision.ncm_code and (not decision.ncm_source or not decision.ncm_source.strip()):
+                raise ApiProblem(422, "NCM_SOURCE_REQUIRED", "Informe a fonte que fundamenta a escolha fiscal.")
+            if not decision.reason.strip():
+                raise ApiProblem(422, "REASON_REQUIRED", "Informe a justificativa fiscal.")
+            order.review_data = {
+                **order.review_data,
+                "fiscal": {
+                    "ncm_code": assessment.normalized_ncm,
+                    "source": decision.ncm_source or assessment.reference_source,
+                    "reason": decision.reason,
+                    "actor_user_id": str(identity.user_id),
+                    "approved_version": order.version,
+                    "assessment": asdict(assessment),
+                },
+            }
             try:
                 with db.begin_nested():
                     material = _publish(db, order, catalog, analysis)
@@ -528,3 +584,49 @@ def complement_order(db, identity, catalog, order_id, payload, key, request_id=N
     _remember(db, identity, operation, key, payload_hash, order.id, body)
     db.commit()
     return body
+
+
+def _review_signature(catalog, analysis, version):
+    data = {
+        "class": analysis.pdm_class_id,
+        "item": analysis.item_name,
+        "attributes": analysis.attributes,
+        "pdm_sha256": catalog.source_sha256,
+        "rules": version,
+    }
+    return hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def get_order_review(db, identity, catalog, order_id):
+    require_permission(identity, "orders:read_own")
+    order = _locked_order(db, identity, order_id)
+    require_resource_scope(identity, order.tenant_id, [order.center_code] if order.center_code else ())
+    classifier, extractor, version = _rules(catalog)
+    analysis = _analysis(order, catalog, classifier, extractor)
+    cls = catalog.classes.get(analysis.pdm_class_id)
+    ncm = check_ncm_consistency(
+        catalog, analysis.pdm_class_id or "", analysis.attributes, None, item_name=analysis.item_name
+    )
+    candidates = (
+        existing_materials(db, identity.tenant_id, analysis.identity_key, version) if analysis.identity_key else []
+    )
+    return {
+        "order": to_contract(db, order),
+        "attachment_text": order.attachment_text,
+        "item_name": analysis.item_name,
+        "attributes": analysis.attributes,
+        "formatted_description": analysis.formatted_description,
+        "candidate_material_ids": candidates,
+        "pdm_version": catalog.version,
+        "pdm_source_sha256": catalog.source_sha256,
+        "index_version": version,
+        "ncm_assessment": asdict(ncm),
+        "ncm_proposed": ncm_for(cls, analysis.attributes, analysis.item_name) if cls else None,
+        "ncm_references": [{"codes": list(ref.codes), "condition": ref.rule} for ref in cls.ncm_references]
+        if cls
+        else [],
+        "review_data": dict(order.review_data or {}),
+        "fiscal_decision": (order.review_data or {}).get("fiscal"),
+        "technical_review_current": (order.review_data or {}).get("technical", {}).get("signature")
+        == _review_signature(catalog, analysis, version),
+    }
