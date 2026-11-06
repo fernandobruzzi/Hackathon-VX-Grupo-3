@@ -51,7 +51,13 @@ encontrados pelos positivos conhecidos daquela coorte; não é recall de todas a
 duplicidades da base. Sem denominador, o valor é `null`.
 
 A cobertura da base inteira reaproveita o cálculo do batch: um desfecho por material,
-com soma igual ao total de entrada. Proposta, pendência e registro sem mudança não
+com soma igual ao total de entrada (`coverage.materials_total`, denominador de todos
+os desfechos). Inclui MERGE, PDM_CORRECTION, UNIT_CORRECTION e NCM_CORRECTION;
+um material com somente correção de NCM também recebe PROPOSTA. Os códigos são
+contados uma vez, mesmo com propostas de vários tipos. O teste no kit compara os
+conjuntos completos de tipos/membros e os desfechos com o processamento batch.
+Essa cobertura adicional não altera coortes, rótulos ou precisão.
+Proposta, pendência e registro sem mudança não
 significam acerto técnico. Motivos de pendência podem se sobrepor.
 
 Um grupo incorreto não torna automaticamente negativos todos os seus pares. A

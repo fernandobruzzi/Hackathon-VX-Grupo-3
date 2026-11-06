@@ -185,11 +185,45 @@ def test_proxy_metrics_have_no_invented_precision_without_labels():
     assert all(value["precision_percent"] is None and value["coverage_percent"] is None for value in report.values())
 
 
-def test_real_report_exposes_denominators_and_development_provenance(tmp_path):
+def test_real_report_exposes_denominators_and_development_provenance(tmp_path, monkeypatch):
+    from domain.pdm_loader import load_pdm
+    from pipelines import evaluate_sanitization, full_run
     from pipelines.evaluate_sanitization import sanitization_evaluation
     from pipelines.measure_extraction import DATA
+    from pipelines.sanitize import read_csv_records
 
+    captured = {}
+    original_coverage = evaluate_sanitization.coverage
+
+    def capture(records, proposals, pending, errors):
+        captured["evaluation"] = proposals
+        return original_coverage(records, proposals, pending, errors)
+
+    monkeypatch.setattr(evaluate_sanitization, "coverage", capture)
     report = sanitization_evaluation(str(DATA / "01_base_materiais.csv"), str(DATA / "03_padrao_cadastro_PDM.xlsx"))
+
+    def save(proposals, records, context):
+        captured["batch"] = proposals
+        return len(proposals)
+
+    monkeypatch.setattr(full_run, "save_all", save)
+    metrics = full_run.run_full(
+        read_csv_records(DATA / "01_base_materiais.csv"),
+        load_pdm(DATA / "03_padrao_cadastro_PDM.xlsx"),
+        full_run.RunContext(engine=None, tenant_id="test"),
+    )
+    evaluation_members = {c for p in captured["evaluation"] for c in p.material_codes}
+    batch_members = {c for p in captured["batch"] for c in p.material_codes}
+    assert evaluation_members == batch_members
+    assert {(p.proposal_type, p.material_codes) for p in captured["evaluation"]} == {
+        (p.proposal_type, p.material_codes) for p in captured["batch"]
+    }
+    assert report["coverage"] == metrics["coverage"]
+    ncm_members = {c for p in captured["evaluation"] if p.proposal_type == "NCM_CORRECTION" for c in p.material_codes}
+    other_members = {c for p in captured["evaluation"] if p.proposal_type != "NCM_CORRECTION" for c in p.material_codes}
+    assert ncm_members - other_members
+    assert report["coverage"]["outcomes"]["PROPOSTA"] == len(evaluation_members)
+
     assert report["evaluation_kind"] == "DEVELOPMENT_EVALUATION"
     assert report["independent_review"] is False and report["authorizes_merge"] is False
     assert report["coverage"]["materials_total"] == sum(report["coverage"]["outcomes"].values()) == 23554
