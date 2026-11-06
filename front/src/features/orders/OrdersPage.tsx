@@ -1,31 +1,116 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button, Code, PageHeader, Table, Tabs, Td, Th } from "@/components/ui";
 import { OrderStatusBadge } from "@/components/ui/status";
+import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { fmtDate } from "@/lib/format";
-import { orders } from "@/mocks/data";
+import type { RegistrationOrder } from "@/types/api";
+import { orders as sample } from "@/mocks/data";
 
-/** Pedidos de cadastro. Solicitante vê os próprios; Governança também vê a fila de publicação (READY_FOR_REVIEW). */
+type Tab = "mine" | "review" | "all";
+
+/**
+ * Pedidos de cadastro. O Solicitante vê os próprios. A Governança aprova a parte técnica dos
+ * pedidos prontos e o Fiscal publica os que aguardam NCM; a API confere papel e duplicidade.
+ */
 export function OrdersPage() {
-  const { me } = useAuth();
-  const gov = can(me, "orders:decide");
-  const [tab, setTab] = useState<"mine" | "review">("mine");
+  const { me, backend, api } = useAuth();
+  const governance = can(me, "orders:decide");
+  const fiscal = can(me, "ncm:decide");
+  const reviewer = governance || fiscal;
+  const awaiting = governance ? "READY_FOR_REVIEW" : "PENDING_FISCAL";
+  const [tab, setTab] = useState<Tab>(reviewer ? "review" : "mine");
+  const [remote, setRemote] = useState<RegistrationOrder[] | null>(null);
+  const [more, setMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    if (!backend || !me) return;
+    const controller = new AbortController();
+    setError(null);
+    api
+      .request("get", "/api/v1/registration-orders", {
+        query: { limit: 100, ...(tab === "review" ? { status: awaiting } : {}) },
+        signal: controller.signal,
+      })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        setRemote(result.items);
+        setMore(result.next_cursor !== null);
+      })
+      .catch((err: unknown) => {
+        if (!controller.signal.aborted)
+          setError(err instanceof ApiError ? err.message : "Não foi possível carregar os pedidos.");
+      });
+    return () => controller.abort();
+  }, [api, awaiting, backend, me, retry, tab]);
+
+  const all = backend ? (remote ?? []) : sample;
   const rows =
     tab === "mine"
-      ? orders.filter((o) => o.origin === "CHAT")
-      : orders.filter((o) => o.status === "READY_FOR_REVIEW" || o.origin === "IMPORT");
+      ? all.filter(
+          (o) => o.origin === "CHAT" && (!backend || o.requester === me?.user.display_name),
+        )
+      : tab === "review"
+        ? all.filter((o) => o.status === awaiting)
+        : all;
+
+  const decide = (order: RegistrationOrder, decision: "APPROVE" | "REJECT") => {
+    const reason =
+      decision === "REJECT"
+        ? "Rejeitado na tela de pedidos."
+        : governance
+          ? "Parte técnica aprovada na tela de pedidos: classe e atributos do PDM conferidos."
+          : "NCM aprovado e cadastro publicado na tela de pedidos.";
+    setBusy(order.id);
+    setError(null);
+    api
+      .request("post", "/api/v1/registration-orders/{id}/decide", {
+        params: { id: order.id },
+        body: { expected_version: order.version, decision, reason },
+      })
+      .then(() => setRetry((value) => value + 1))
+      .catch((err: unknown) =>
+        setError(err instanceof ApiError ? err.message : "Não foi possível registrar a decisão."),
+      )
+      .finally(() => setBusy(null));
+  };
+
+  const tabs = [
+    ...(reviewer
+      ? [
+          {
+            value: "review" as const,
+            label: governance ? "Para aprovar" : "Aguardando NCM",
+            // Com mais páginas, a contagem seria só da primeira: fica sem número.
+            count: more ? undefined : all.filter((o) => o.status === awaiting).length,
+          },
+          { value: "all" as const, label: "Todos" },
+        ]
+      : []),
+    { value: "mine" as const, label: "Meus pedidos" },
+  ];
+
   return (
     <>
       <PageHeader
         n="01"
         eyebrow="Pedidos de cadastro"
-        title={tab === "mine" ? "Seus pedidos" : "Pedidos para publicar"}
-        description="Todo pedido passa pela checagem de duplicidade antes de virar cadastro. Pedidos incompletos voltam com os campos que faltam."
+        title={
+          tab === "mine"
+            ? "Seus pedidos"
+            : governance
+              ? "Pedidos para aprovar"
+              : "Pedidos para publicar"
+        }
+        description="Todo pedido passa pela checagem de duplicidade antes de virar cadastro e de novo antes de cada aprovação. Pedidos incompletos voltam com os campos que faltam."
         actions={
           <Link href="/chat/">
             <Button>
@@ -34,20 +119,22 @@ export function OrdersPage() {
           </Link>
         }
       />
-      {gov && (
+      {!backend && (
+        <p role="status" className="mb-4 text-sm text-aviso">
+          Demonstração simulada: estes pedidos são exemplos.
+        </p>
+      )}
+      {reviewer && (
         <div className="mb-4">
-          <Tabs
-            value={tab}
-            onChange={setTab}
-            items={[
-              { value: "mine", label: "Meus pedidos" },
-              {
-                value: "review",
-                label: "Para publicar",
-                count: orders.filter((o) => o.status === "READY_FOR_REVIEW").length,
-              },
-            ]}
-          />
+          <Tabs value={tab} onChange={setTab} items={tabs} />
+        </div>
+      )}
+      {error && (
+        <div role="alert" className="mb-4 text-alerta">
+          {error}{" "}
+          <Button size="sm" onClick={() => setRetry((value) => value + 1)}>
+            Tentar novamente
+          </Button>
         </div>
       )}
       <Table>
@@ -66,14 +153,14 @@ export function OrdersPage() {
           {rows.map((o) => (
             <tr key={o.id} className="hover:bg-ink/60">
               <Td>
-                <Code>{o.id}</Code>
+                <Code>{o.id.slice(0, 8)}</Code>
                 <p className="mt-1 text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">
                   {o.origin === "IMPORT" ? "importado" : "chat"}
                 </p>
               </Td>
               <Td className="max-w-md text-sm">{o.original_text}</Td>
               <Td>
-                <Code>{o.center_code}</Code>
+                <Code>{o.center_code || "—"}</Code>
               </Td>
               <Td>
                 <Code className="text-muted">{o.pdm_class_id ?? "—"}</Code>
@@ -89,13 +176,24 @@ export function OrdersPage() {
                 )}
                 {o.material_code && (
                   <span>
-                    Use <Code className="text-verde">{o.material_code}</Code>
+                    {o.status === "REGISTERED" ? "Cadastrado como " : "Use "}
+                    <Code className="text-verde">{o.material_code}</Code>
                   </span>
                 )}
-                {o.status === "READY_FOR_REVIEW" && gov && tab === "review" && (
-                  <Button size="sm" className="mt-1">
-                    Publicar cadastro
-                  </Button>
+                {backend && o.status === awaiting && reviewer && (
+                  <span className="mt-1 flex flex-wrap gap-2">
+                    <Button size="sm" disabled={busy === o.id} onClick={() => decide(o, "APPROVE")}>
+                      {governance ? "Aprovar parte técnica" : "Publicar cadastro"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy === o.id}
+                      onClick={() => decide(o, "REJECT")}
+                    >
+                      Rejeitar
+                    </Button>
+                  </span>
                 )}
               </Td>
               <Td>
@@ -105,6 +203,9 @@ export function OrdersPage() {
           ))}
         </tbody>
       </Table>
+      {backend && remote && rows.length === 0 && (
+        <p className="mt-4 text-sm text-muted">Nenhum pedido nesta lista.</p>
+      )}
     </>
   );
 }
