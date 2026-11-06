@@ -485,3 +485,26 @@ def test_decimal_inches_share_fractional_identity(catalog, decimal, fraction):
 @pytest.mark.parametrize("size", ["0,3POL", "0,50POL", "0.5POL"])
 def test_unsupported_decimal_inches_are_not_read_as_whole_suffix(catalog, size):
     assert "DIAMETRO NOMINAL" not in values(catalog, "PDM040", f"VALVULA ESFERA {size}")
+
+
+@pytest.mark.parametrize("notation", ["M12X1,75X50", "M12X1.75X50", "M12X2X50"])
+def test_unknown_explicit_metric_pitch_stays_pending(catalog, notation):
+    result = RuleBasedV1ExtractionRepository().extract(
+        catalog.classes["PDM001"],
+        f"PARAFUSO SEXTAVADO {notation} 8.8 ACO CARBONO ZINCADO BRANCO DIN 933",
+    )
+    found = {name: attribute.value for name, attribute in result.attributes.items()}
+    assert any(notation in part for part in result.unresolved)
+    assert "BITOLA" not in found
+    assert "COMPRIMENTO" not in found
+    assert "ROSCA" not in found
+    validation = validate_pdm(catalog, "PDM001", found)
+    assert not validation.can_submit
+    assert validation.identity_key is None
+
+
+def test_supported_explicit_metric_pitch_keeps_real_length(catalog):
+    found = values(catalog, "PDM001", "PARAFUSO SEXTAVADO M12X1,5X50")
+    assert found["BITOLA"] == "M12X1,5"
+    assert found["COMPRIMENTO"] == "50MM"
+    assert found["ROSCA"] == "METRICA FINA"

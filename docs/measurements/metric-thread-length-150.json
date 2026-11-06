@@ -1,0 +1,370 @@
+{
+  "baseline_commit": "d1936ec",
+  "scope": "development coverage, not independent precision",
+  "base_before": {
+    "repository": "rule_based_v1",
+    "rows": 23554,
+    "statuses": {
+      "VALID": 10846,
+      "INCOMPLETE": 7111,
+      "SEM_CLASSE": 5597
+    },
+    "valid_percent": 46.0,
+    "invalid_values": 0,
+    "by_group": {
+      "ELE01": {
+        "VALID": 579,
+        "INCOMPLETE": 459,
+        "SEM_CLASSE": 445
+      },
+      "EPI01": {
+        "INCOMPLETE": 242,
+        "SEM_CLASSE": 236,
+        "VALID": 131
+      },
+      "FER01": {
+        "VALID": 97,
+        "INCOMPLETE": 77,
+        "SEM_CLASSE": 76
+      },
+      "FIL01": {
+        "VALID": 682,
+        "SEM_CLASSE": 172,
+        "INCOMPLETE": 83
+      },
+      "FIX01": {
+        "SEM_CLASSE": 2093,
+        "INCOMPLETE": 1319,
+        "VALID": 1104
+      },
+      "INS01": {
+        "INCOMPLETE": 151,
+        "VALID": 111,
+        "SEM_CLASSE": 69
+      },
+      "LUB01": {
+        "VALID": 69,
+        "SEM_CLASSE": 56,
+        "INCOMPLETE": 40
+      },
+      "MAN01": {
+        "SEM_CLASSE": 714,
+        "INCOMPLETE": 509,
+        "VALID": 322
+      },
+      "ROL01": {
+        "SEM_CLASSE": 264,
+        "VALID": 181,
+        "INCOMPLETE": 39
+      },
+      "SOB01": {
+        "VALID": 5812,
+        "INCOMPLETE": 1728,
+        "SEM_CLASSE": 133
+      },
+      "SOL01": {
+        "VALID": 72,
+        "SEM_CLASSE": 69,
+        "INCOMPLETE": 54
+      },
+      "TRA01": {
+        "SEM_CLASSE": 177,
+        "VALID": 151,
+        "INCOMPLETE": 128
+      },
+      "TUB01": {
+        "INCOMPLETE": 908,
+        "VALID": 575,
+        "SEM_CLASSE": 234
+      },
+      "VAL01": {
+        "INCOMPLETE": 791,
+        "SEM_CLASSE": 299,
+        "VALID": 252
+      },
+      "VED01": {
+        "VALID": 708,
+        "INCOMPLETE": 583,
+        "SEM_CLASSE": 560
+      }
+    },
+    "top_missing": {
+      "PDM110/MODELO EQUIPAMENTO": 960,
+      "PDM110/APLICACAO": 921,
+      "PDM050/MATERIAL": 637,
+      "PDM001/ACABAMENTO": 463,
+      "PDM001/MATERIAL": 318,
+      "PDM110/FABRICANTE": 234,
+      "PDM040/ACIONAMENTO": 215,
+      "PDM110/REFERENCIA FABRICANTE": 205,
+      "PDM050/CONEXAO": 201,
+      "PDM040/CONEXAO": 189,
+      "PDM011/TERMINAL B": 183,
+      "PDM040/MATERIAL CORPO": 181,
+      "PDM011/TERMINAL A": 176,
+      "PDM001/NORMA": 167,
+      "PDM050/FACE": 153,
+      "PDM003/ACABAMENTO": 150,
+      "PDM033/ANEL INTERNO": 148,
+      "PDM001/COMPRIMENTO": 144,
+      "PDM003/CLASSE RESISTENCIA": 137,
+      "PDM010/REFORCO": 135
+    },
+    "rules": {
+      "value.exact": 29131,
+      "value.unlabeled": 14376,
+      "field.manufacturer": 5756,
+      "field.manufacturer_reference": 4876,
+      "measure.mm": 3804,
+      "measure.inches": 2911,
+      "value.as_written": 2304,
+      "value.alias": 2281,
+      "measure.metric_thread": 975,
+      "measure.integer": 902,
+      "measure.inches.unlabeled": 787,
+      "measure.mm.unlabeled": 774,
+      "pdm.thread_from_gauge": 678,
+      "reference.unlabeled": 510,
+      "value.contained": 433,
+      "measure.dn_to_inches": 421,
+      "value.unique_words": 420,
+      "measure.bar": 361,
+      "bearing.reference": 356,
+      "value.spelling": 350,
+      "measure.amps.unlabeled": 254,
+      "measure.seal_notation": 237,
+      "measure.compact_notation": 227,
+      "measure.mm2": 226,
+      "measure.amps": 205,
+      "measure.ring_notation": 156,
+      "measure.mm2.unlabeled": 114,
+      "measure.psi_to_bar": 107,
+      "measure.psi_to_bar.unlabeled": 84,
+      "measure.bar.unlabeled": 76,
+      "measure.dn_to_inches.unlabeled": 76,
+      "pdm.bearing_suffix": 71,
+      "measure.watts": 67,
+      "measure.dash_size": 42,
+      "measure.range": 36,
+      "bearing.reference.unlabeled": 35,
+      "measure.watts.unlabeled": 30,
+      "value.as_written.unlabeled": 8,
+      "measure.meters": 6,
+      "value.exact.unlabeled": 1
+    },
+    "against_columns": {
+      "FABRICANTE": {
+        "rows": 5552,
+        "filled": 5259,
+        "correct": 5259,
+        "coverage_percent": 94.7,
+        "precision_percent": 100.0
+      },
+      "REFERENCIA FABRICANTE": {
+        "rows": 4721,
+        "filled": 4499,
+        "correct": 4391,
+        "coverage_percent": 95.3,
+        "precision_percent": 97.6
+      }
+    },
+    "known_pairs": {
+      "pairs": 202,
+      "same_identity": 59,
+      "different_identity": 1,
+      "undecided": 142
+    }
+  },
+  "base_after": {
+    "repository": "rule_based_v1",
+    "rows": 23554,
+    "statuses": {
+      "VALID": 10846,
+      "INCOMPLETE": 7111,
+      "SEM_CLASSE": 5597
+    },
+    "valid_percent": 46.0,
+    "invalid_values": 0,
+    "by_group": {
+      "ELE01": {
+        "VALID": 579,
+        "INCOMPLETE": 459,
+        "SEM_CLASSE": 445
+      },
+      "EPI01": {
+        "INCOMPLETE": 242,
+        "SEM_CLASSE": 236,
+        "VALID": 131
+      },
+      "FER01": {
+        "VALID": 97,
+        "INCOMPLETE": 77,
+        "SEM_CLASSE": 76
+      },
+      "FIL01": {
+        "VALID": 682,
+        "SEM_CLASSE": 172,
+        "INCOMPLETE": 83
+      },
+      "FIX01": {
+        "SEM_CLASSE": 2093,
+        "INCOMPLETE": 1319,
+        "VALID": 1104
+      },
+      "INS01": {
+        "INCOMPLETE": 151,
+        "VALID": 111,
+        "SEM_CLASSE": 69
+      },
+      "LUB01": {
+        "VALID": 69,
+        "SEM_CLASSE": 56,
+        "INCOMPLETE": 40
+      },
+      "MAN01": {
+        "SEM_CLASSE": 714,
+        "INCOMPLETE": 509,
+        "VALID": 322
+      },
+      "ROL01": {
+        "SEM_CLASSE": 264,
+        "VALID": 181,
+        "INCOMPLETE": 39
+      },
+      "SOB01": {
+        "VALID": 5812,
+        "INCOMPLETE": 1728,
+        "SEM_CLASSE": 133
+      },
+      "SOL01": {
+        "VALID": 72,
+        "SEM_CLASSE": 69,
+        "INCOMPLETE": 54
+      },
+      "TRA01": {
+        "SEM_CLASSE": 177,
+        "VALID": 151,
+        "INCOMPLETE": 128
+      },
+      "TUB01": {
+        "INCOMPLETE": 908,
+        "VALID": 575,
+        "SEM_CLASSE": 234
+      },
+      "VAL01": {
+        "INCOMPLETE": 791,
+        "SEM_CLASSE": 299,
+        "VALID": 252
+      },
+      "VED01": {
+        "VALID": 708,
+        "INCOMPLETE": 583,
+        "SEM_CLASSE": 560
+      }
+    },
+    "top_missing": {
+      "PDM110/MODELO EQUIPAMENTO": 960,
+      "PDM110/APLICACAO": 921,
+      "PDM050/MATERIAL": 637,
+      "PDM001/ACABAMENTO": 463,
+      "PDM001/MATERIAL": 318,
+      "PDM110/FABRICANTE": 234,
+      "PDM040/ACIONAMENTO": 215,
+      "PDM110/REFERENCIA FABRICANTE": 205,
+      "PDM050/CONEXAO": 201,
+      "PDM040/CONEXAO": 189,
+      "PDM011/TERMINAL B": 183,
+      "PDM040/MATERIAL CORPO": 181,
+      "PDM011/TERMINAL A": 176,
+      "PDM001/NORMA": 167,
+      "PDM050/FACE": 153,
+      "PDM003/ACABAMENTO": 150,
+      "PDM033/ANEL INTERNO": 148,
+      "PDM001/COMPRIMENTO": 144,
+      "PDM003/CLASSE RESISTENCIA": 137,
+      "PDM010/REFORCO": 135
+    },
+    "rules": {
+      "value.exact": 29131,
+      "value.unlabeled": 14376,
+      "field.manufacturer": 5756,
+      "field.manufacturer_reference": 4876,
+      "measure.mm": 3804,
+      "measure.inches": 2911,
+      "value.as_written": 2304,
+      "value.alias": 2281,
+      "measure.metric_thread": 975,
+      "measure.integer": 902,
+      "measure.inches.unlabeled": 787,
+      "measure.mm.unlabeled": 774,
+      "pdm.thread_from_gauge": 678,
+      "reference.unlabeled": 510,
+      "value.contained": 433,
+      "measure.dn_to_inches": 421,
+      "value.unique_words": 420,
+      "measure.bar": 361,
+      "bearing.reference": 356,
+      "value.spelling": 350,
+      "measure.amps.unlabeled": 254,
+      "measure.seal_notation": 237,
+      "measure.compact_notation": 227,
+      "measure.mm2": 226,
+      "measure.amps": 205,
+      "measure.ring_notation": 156,
+      "measure.mm2.unlabeled": 114,
+      "measure.psi_to_bar": 107,
+      "measure.psi_to_bar.unlabeled": 84,
+      "measure.bar.unlabeled": 76,
+      "measure.dn_to_inches.unlabeled": 76,
+      "pdm.bearing_suffix": 71,
+      "measure.watts": 67,
+      "measure.dash_size": 42,
+      "measure.range": 36,
+      "bearing.reference.unlabeled": 35,
+      "measure.watts.unlabeled": 30,
+      "value.as_written.unlabeled": 8,
+      "measure.meters": 6,
+      "value.exact.unlabeled": 1
+    },
+    "against_columns": {
+      "FABRICANTE": {
+        "rows": 5552,
+        "filled": 5259,
+        "correct": 5259,
+        "coverage_percent": 94.7,
+        "precision_percent": 100.0
+      },
+      "REFERENCIA FABRICANTE": {
+        "rows": 4721,
+        "filled": 4499,
+        "correct": 4391,
+        "coverage_percent": 95.3,
+        "precision_percent": 97.6
+      }
+    },
+    "known_pairs": {
+      "pairs": 202,
+      "same_identity": 59,
+      "different_identity": 1,
+      "undecided": 142
+    }
+  },
+  "orders_before": {
+    "rows": 520,
+    "statuses": {
+      "READY_FOR_REVIEW": 229,
+      "INCOMPLETE": 205,
+      "OUT_OF_SCOPE": 86
+    },
+    "identities": 229
+  },
+  "orders_after": {
+    "rows": 520,
+    "statuses": {
+      "READY_FOR_REVIEW": 229,
+      "INCOMPLETE": 205,
+      "OUT_OF_SCOPE": 86
+    },
+    "identities": 229
+  }
+}
