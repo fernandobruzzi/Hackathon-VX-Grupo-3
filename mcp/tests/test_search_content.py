@@ -320,3 +320,45 @@ def test_failed_index_update_leaves_a_recoverable_pending_state(searchable, monk
         search(case, "LF9009")
     assert run_index(PDM, case["batch"], if_stale=True)["pending"] == 0
     assert search(case, "LF9009").match_status == "EXISTING_FOUND"
+
+
+def test_an_active_indexer_keeps_a_second_refresh_from_competing(searchable):
+    from pipelines.search_index import _index_lock
+
+    case = searchable
+    with _index_lock(case["engine"], str(TENANT_ID), wait=True) as locked:
+        assert locked
+        result = run_index(PDM, case["batch"], if_stale=True)
+        assert result["busy"] and result["written"] == 0
+        with pytest.raises(ToolError, match="INDEX_UPDATING"):
+            search(case, "LF9009")
+    assert run_index(PDM, case["batch"], if_stale=True)["pending"] == 0
+    assert search(case, "LF9009").match_status == "EXISTING_FOUND"
+
+
+def test_a_late_old_payload_cannot_overwrite_a_newer_material_revision(searchable, monkeypatch):
+    from pipelines import search_index
+    from repositories.batch_repository import write_search_index
+
+    case = searchable
+    old_rows = []
+    write = search_index.write_search_index
+
+    def capture(engine, tenant, version, rows):
+        old_rows.extend(deepcopy(rows))
+        return write(engine, tenant, version, rows)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(search_index, "write_search_index", capture)
+        initial = run_index(PDM, case["batch"])
+    material = case["materials"][0]
+    with case["engine"].begin() as connection:
+        connection.execute(text("UPDATE materials_master SET version=version+1 WHERE id=:id"), {"id": material.id})
+    run_index(PDM, case["batch"], if_stale=True)
+    write_search_index(case["engine"], str(TENANT_ID), initial["index_version"], old_rows)
+    with case["engine"].connect() as connection:
+        version = connection.scalar(
+            text("SELECT source_version FROM material_search_index WHERE material_id=:id"), {"id": material.id}
+        )
+    assert version == 2
+    assert search(case, "LF9009").match_status == "EXISTING_FOUND"
