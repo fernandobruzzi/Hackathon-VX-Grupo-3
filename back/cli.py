@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     classify.add_argument("csv_path")
     classify.add_argument("--input-kind", choices=["materials", "orders"], required=True)
     classify.add_argument("--pdm-workbook", required=True)
-    classify.add_argument("--repository", help="Padrao: CLASSIFICATION_REPOSITORY ou rule_based_v1")
+    classify.add_argument("--repository", help="Padrao: CLASSIFICATION_REPOSITORY ou aliases_v1")
     evaluate = commands.add_parser("classification-evaluate", help="Mede precisao e cobertura na amostra rotulada")
     evaluate.add_argument("sample_path")
     evaluate.add_argument("--pdm-workbook", required=True)
