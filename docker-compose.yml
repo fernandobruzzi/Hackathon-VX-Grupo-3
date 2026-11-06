@@ -54,6 +54,27 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Índice de busca do chat na versão das regras atuais. Faz parte do `up`, então `up --build`
+  # reconstrói esta imagem junto e o chat nunca encontra um índice de regras antigas. Pula em
+  # poucos segundos quando a versão atual já cobre todos os materiais.
+  index:
+    init: true
+    build:
+      context: .
+      target: batch
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
+      PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+    command: ["vx-back", "index", "--if-stale"]
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+
   api:
     init: true
     build:
@@ -112,7 +133,7 @@ services:
     volumes:
       - ./data:/data:ro
     depends_on:
-      bootstrap:
+      index:
         condition: service_completed_successfully
 
   batch:

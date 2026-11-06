@@ -176,7 +176,9 @@ jobs:
         with:
           context: .
           target: batch
-          tags: vx-ci-batch:latest
+          tags: |
+            vx-ci-batch:latest
+            vx-ci-index:latest
           load: true
           cache-from: type=gha,scope=image-batch
           cache-to: type=gha,scope=image-batch,mode=max
@@ -185,10 +187,8 @@ jobs:
           docker run --rm vx-ci-agent python -c 'import os; from domain.pdm_loader import load_pdm; assert load_pdm(os.environ["PDM_WORKBOOK_PATH"]).classes'
           docker run --rm vx-ci-batch vx-back --help
           docker run --rm vx-ci-api python -c 'import ssl; assert ssl.create_default_context(cafile="/app/certs/rds-global-bundle.pem").cert_store_stats()["x509_ca"] > 0'
-      - name: Start isolated Compose stack
-        run: docker compose up -d --no-build --wait --wait-timeout 180 api
-      - name: Build real search index
-        run: docker compose run --rm --no-deps batch vx-back index
+      - name: Start isolated Compose stack, real search index included
+        run: docker compose up -d --no-build --wait --wait-timeout 300 api
       - name: Verify frontend and real MCP turn
         run: scripts/smoke_test.sh http://127.0.0.1:18000 --mode local
       - name: Measure bounded Agent concurrency and cancellation cleanup
