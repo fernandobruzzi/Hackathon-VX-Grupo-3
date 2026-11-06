@@ -131,8 +131,8 @@ def test_fiscal_only_correction_does_not_canonicalize_or_change_technical_data(a
     proposal.technical_review_status = "NOT_REQUIRED"
     proposal.fiscal_review_status = "PENDING"
     changes = copy.deepcopy(proposal.changeset)
-    codes = [code for ref in case["catalog"].classes["PDM100"].ncm_references for code in ref.codes]
-    changes["after"]["ncm"] = next(code for code in codes if code != "8421.23.00")
+    case["materials"][0].ncm = "8421.31.00"
+    changes["after"]["ncm"] = "8421.23.00"
     changes["sources"]["ncm"] = "Referencia fiscal conferida."
     proposal.changeset = changes
     persist(case)
