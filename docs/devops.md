@@ -81,11 +81,11 @@ Revalidar estes itens na versão atual de `main`, pois há entregas simultâneas
 
 | Tema | Entrega / ação |
 |---|---|
-| Login, sessão BFF e CSRF | #7, já atribuído; não substituir por sessão local na AWS |
-| RBAC e aprovação transacional | #9 e #20; smoke autenticado exige essas rotas |
+| Login, sessão BFF e CSRF | Implementados localmente; homologação Cognito/HTTPS na #91 |
+| RBAC e aprovação transacional | Implementados; smoke autenticado exige uma sessão real |
 | Identidade por turno no MCP | Corrigida no `main` usado nesta entrega: Caller e centros seguem do JWT ao subprocesso sem alterar `os.environ` global; preservar em novas implementações |
-| Batch RunTask/heartbeat | #21; separar tarefa administrativa de carga inicial do lançamento por usuário |
-| Rotas estáticas com IDs reais | #6: trocar páginas exportadas de IDs mock por rotas fixas com query/client fetch |
+| Batch RunTask/heartbeat | Runner `ecs_fargate` preparado na #6; testar PassRole e task real na conta |
+| Rotas estáticas com IDs reais | Saneamento já usa `/saneamento/revisao?id=...`; enriquecimento ainda tem páginas mock |
 | Implantação ECS/RDS | #6; ainda precisa validação real na conta do workshop |
 | HTTPS alternativo | #29; testar antes da demonstração |
 | Seed/reset da demo | #34; bootstrap idempotente não equivale a reset de sessão/proposta |
@@ -121,6 +121,10 @@ que resolva para o IP estável da EC2 reduz dependências de infraestrutura, mas
 certificado padrão, mas exige espera de implantação e encaminhamento de cookies,
 query e headers, sem cache em auth/API. Um ALB novo não fornece certificado válido
 para seu próprio hostname por si só.
+
+Preflight, configuração de tasks, segredos por serviço e sequência de publicação
+estão em [`deployment/README.md`](../deployment/README.md). Os comandos sem `--apply`
+renderizam offline e não comprovam permissões ou conectividade da conta do workshop.
 
 ## Referências oficiais
 

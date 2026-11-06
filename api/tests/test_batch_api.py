@@ -217,6 +217,8 @@ def test_resume_continues_from_checkpoint_without_duplicates(clean_jobs, storage
     resumed = post(client, f"/api/v1/batch/jobs/{job['id']}/resume")
     assert resumed.status_code == 202 and resumed.json()["status"] == "QUEUED"
     assert [r.job_id for r in runner.launched] == [job["id"], job["id"]]
+    assert runner.launched[0].attempt_id
+    assert runner.launched[0].attempt_id != runner.launched[1].attempt_id
     metrics = run_sanitize(PDM, job["id"], database_url=batch_url, store=storage, manifest_key=manifest_key)
 
     done = client.get(f"/api/v1/batch/jobs/{job['id']}").json()

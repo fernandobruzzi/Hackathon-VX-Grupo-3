@@ -59,6 +59,9 @@ jobs:
             **/pyproject.toml
       - run: uv sync --locked
       - run: uv run pytest
+      - if: matrix.module == 'back'
+        run: uv run --package vx-materials-back python -m unittest discover -s scripts/tests -p 'test_aws.py'
+        working-directory: .
 
   database:
     runs-on: ubuntu-latest
@@ -171,6 +174,7 @@ jobs:
         run: |
           docker run --rm vx-ci-agent python -c 'import os; from domain.pdm_loader import load_pdm; assert load_pdm(os.environ["PDM_WORKBOOK_PATH"]).classes'
           docker run --rm vx-ci-batch vx-back --help
+          docker run --rm vx-ci-api python -c 'import ssl; assert ssl.create_default_context(cafile="/app/certs/rds-global-bundle.pem").cert_store_stats()["x509_ca"] > 0'
       - name: Start isolated Compose stack
         run: docker compose up -d --no-build --wait --wait-timeout 180 api
       - name: Build real search index

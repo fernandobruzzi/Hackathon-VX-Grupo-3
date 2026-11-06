@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Provisionar os recursos na AWS. Ver #6.
-# RDS: migration_user precisa de CREATEROLE e rds_superuser. Ver "Database on AWS" em AGENTS.md.
-echo "Ainda nao implementado: ver issue #6." >&2
-exit 1
+# Prepara ECR, logs, bucket e cluster; IAM/rede/RDS vêm da conta autorizada.
+# Sem --apply, apenas valida/renderiza offline. Consulte deployment/README.md.
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec uv run --locked --project "$script_dir/.." --package vx-materials-back python "$script_dir/aws_deploy.py" bootstrap "$@"

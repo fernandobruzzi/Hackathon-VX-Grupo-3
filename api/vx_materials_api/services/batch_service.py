@@ -61,7 +61,7 @@ def _active_job(db: Session, tenant_id: uuid.UUID) -> BatchJob | None:
 
 def _launch(db: Session, job: BatchJob, runner: BatchRunner) -> None:
     try:
-        job.task_arn = runner.launch(LaunchRequest(str(job.id), manifest_key(job.id)))
+        job.task_arn = runner.launch(LaunchRequest(str(job.id), manifest_key(job.id), job.updated_at.isoformat()))
     except Exception as error:
         job.status = "FAILED"
         job.error_summary = f"LAUNCH_FAILED: {type(error).__name__}: {error}"[:500]

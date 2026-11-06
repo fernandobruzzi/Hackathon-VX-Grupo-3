@@ -7,6 +7,7 @@ from mcp.types import ToolAnnotations
 
 from domain.contracts import PdmCatalog
 from domain.pdm_loader import load_pdm
+from domain.runtime import check_simulated_clients
 from vx_materials_mcp.schemas.tools import PdmTemplate, PdmValidation, SimilarMaterials
 from vx_materials_mcp.security import caller_from_environment
 from vx_materials_mcp.tools import get_pdm_template as get_pdm_template_tool
@@ -61,6 +62,7 @@ def build_server(catalog: PdmCatalog, search: SimilarMaterialsSearch | None = No
 
 
 def main() -> None:
+    check_simulated_clients()
     catalog = load_pdm(os.environ.get(PDM_PATH_VARIABLE, DEFAULT_PDM_PATH))
     search = SimilarMaterialsSearch(catalog, os.environ.get("DATABASE_URL"), caller_from_environment())
     build_server(catalog, search).run("stdio")

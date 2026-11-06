@@ -13,6 +13,32 @@ from mcp import ClientSession
 from vx_materials_mcp.security import CALLER_VARIABLE
 from vx_materials_mcp.server import PDM_PATH_VARIABLE
 
+# Somente configuração/credenciais do próprio Agent; segredos da API não atravessam o stdio.
+INHERITED_VARIABLES = (
+    "APP_ENV",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_CA_BUNDLE",
+    "AWS_CONFIG_FILE",
+    "AWS_CONTAINER_AUTHORIZATION_TOKEN",
+    "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+    "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+    "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+    "AWS_DEFAULT_REGION",
+    "AWS_PROFILE",
+    "AWS_REGION",
+    "AWS_ROLE_ARN",
+    "AWS_ROLE_SESSION_NAME",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SESSION_TOKEN",
+    "AWS_SHARED_CREDENTIALS_FILE",
+    "AWS_WEB_IDENTITY_TOKEN_FILE",
+    "CLASSIFICATION_REPOSITORY",
+    "EXTRACTION_REPOSITORY",
+    "NORMALIZATION_REPOSITORY",
+    "REQUESTS_CA_BUNDLE",
+    "SSL_CERT_FILE",
+)
+
 
 class McpToolError(RuntimeError):
     """A tool foi chamada, mas devolveu um erro."""
@@ -53,7 +79,7 @@ async def connect(
     `caller` é a identidade já validada pela API, em JSON. Ela vai para o processo do servidor, nunca
     para os parâmetros das tools.
     """
-    env = {}
+    env = {name: os.environ[name] for name in INHERITED_VARIABLES if name in os.environ}
     for variable, value in (
         (PDM_PATH_VARIABLE, pdm_path or os.environ.get(PDM_PATH_VARIABLE)),
         ("DATABASE_URL", database_url or os.environ.get("DATABASE_URL")),

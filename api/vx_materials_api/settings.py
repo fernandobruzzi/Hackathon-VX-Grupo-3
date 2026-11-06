@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from domain.runtime import check_simulated_clients
+
 
 def front_dist_dir() -> Path | None:
     """Pasta do build estatico do front, quando configurada."""
@@ -53,6 +55,7 @@ def local_test_session_enabled() -> bool:
 
 def check_local_shortcuts() -> None:
     """Impede que a sessão de teste suba fora do ambiente local."""
+    check_simulated_clients()
     deployed = any(
         os.environ.get(key)
         for key in (

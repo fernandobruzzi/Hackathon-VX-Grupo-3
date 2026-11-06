@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from domain.contracts import PdmCatalog
 from domain.pdm_loader import load_pdm
+from domain.runtime import check_simulated_clients
 from repositories.classification import get_classification_repository
 from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot import mcp_client
@@ -98,6 +99,7 @@ def create_app(
 
 
 def main() -> None:
+    check_simulated_clients()
     secret = os.environ.get(INTERNAL_TOKEN_SECRET_VARIABLE)
     if not secret:
         raise RuntimeError(f"Variavel de ambiente ausente: {INTERNAL_TOKEN_SECRET_VARIABLE}")

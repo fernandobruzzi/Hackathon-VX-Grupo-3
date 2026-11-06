@@ -16,7 +16,8 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
-| `scripts/` | Deploy, demo data, policy check and HTTP smoke test | Deploy/demo scripts remain placeholders; checks implemented |
+| `scripts/` | AWS preflight/ECS tooling, demo data, policy check and HTTP smoke test | AWS tooling tested offline; EC2/demo scripts remain placeholders |
+| `deployment/` | Explicit AWS configuration and deployment runbook | Local preparation; account validation still required |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
 | `design/` | Presentation template and design system, source for brand values | Reference |
 | `Dockerfile`, `docker-compose.yml`, `.env.example` | Images `api`, `agent`, `batch`, and local setup | Ready for integration |
@@ -173,6 +174,20 @@ include the original data kit. `DB_PORT` and `API_BIND_PORT` choose local ports;
 published ports bind to loopback. CI also checks branch/commit policy and runs the
 installed migration command twice. Operational limits, authenticated smoke usage
 and required GitHub admin settings are in [`docs/devops.md`](docs/devops.md).
+
+AWS preparation runs offline without credentials by default:
+
+```bash
+scripts/preflight_aws.sh --config deployment/aws.example.json --offline
+scripts/deploy_ecs.sh --config deployment/aws.example.json
+```
+
+Use `--apply` only with a real workshop configuration. Bootstrap reuses approved
+IAM/network/RDS resources; it does not assume permission to create them. The exact
+sequence, secret formats, HTTPS/Cognito stages and lock recovery are in
+[`deployment/README.md`](deployment/README.md). ECS batch is selectable through
+`BATCH_RUNNER=ecs_fargate`, with a fixed task-definition ARN and no API credentials
+in task overrides. AWS validation remains part of #6.
 
 ## Workflow
 

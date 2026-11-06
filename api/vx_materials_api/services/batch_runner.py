@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from vx_materials_api import settings
+from vx_materials_api.services.ecs_batch_runner import EcsFargateRunner
 
 # Variáveis que o batch pode receber da API. Todo o resto do ambiente, incluindo segredos da API,
 # fica de fora: o batch usa a própria credencial do banco.
@@ -37,6 +38,7 @@ INHERITED_VARIABLES = (
 class LaunchRequest:
     job_id: str
     manifest_key: str
+    attempt_id: str | None = None
 
 
 class BatchRunner(Protocol):
@@ -87,6 +89,7 @@ class LocalProcessRunner:
 
 
 RUNNERS: dict[str, Callable[[], BatchRunner]] = {
+    EcsFargateRunner.name: EcsFargateRunner,
     LocalProcessRunner.name: LocalProcessRunner,
 }
 
