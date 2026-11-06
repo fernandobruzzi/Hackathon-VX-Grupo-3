@@ -195,9 +195,9 @@ docker compose up --build
 scripts/smoke_test.sh
 ```
 
-`up` runs the one-shot `index` service before the Agent starts: it rebuilds the search
-index when the rules changed and skips in seconds otherwise, so a clean clone needs no
-AWS account and no extra step for chat search. The integration smoke exercises the
+`up` starts the existing `index` service with `vx-back index --watch`. The Agent waits
+for its first successful cycle; subsequent cycles update changed materials automatically
+with the batch credential. A clean clone needs no AWS account or manual indexing step. The integration smoke exercises the
 static front and a real MCP chat turn:
 
 ```bash
@@ -616,7 +616,7 @@ To change the default, measure against `back/tests/fixtures/merge_review.json`. 
 
 ## Similar material search
 
-`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Changing classification or extraction rules changes that version, so rebuild the index after pulling such a change: `docker compose up --build` does it through the `index` service, which skips when the current version already covers every material (`vx-back index --if-stale`). It only checks version and coverage, so after approvals change material content, `docker compose run --rm --build batch` reindexes everything. Embeddings are optional, set with `EMBEDDING_REPOSITORY`, and stay off by default. On the 202 pairs the base declares identical, a local model (`ollama_nomic_v1`) found 126 in the top 10 against 124 without embeddings, at three times the cost. Titan on AWS is still to be measured. Compare any change with:
+`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Changing classification or extraction rules changes that version, so rebuild the index after pulling such a change: `docker compose up --build` does it through the `index` service, which also tracks each material revision (`vx-back index --if-stale`). The existing index service refreshes publications and approved changes automatically. Search checks complete current coverage in the same read-only repeatable-read transaction as its queries; pending or failed indexing returns `INDEX_UPDATING`, never an empty-base conclusion. Approved master attributes and descriptions override inferred values even for noncanonical materials. See [search freshness](docs/search-freshness.md) for recovery and deployment limits. Embeddings are optional, set with `EMBEDDING_REPOSITORY`, and stay off by default. On the 202 pairs the base declares identical, a local model (`ollama_nomic_v1`) found 126 in the top 10 against 124 without embeddings, at three times the cost. Titan on AWS is still to be measured. Compare any change with:
 
 ```bash
 uv run python -m vx_materials_mcp.evaluation --repository hybrid_embeddings_v1 --tenant-id <tenant-uuid>
@@ -624,7 +624,7 @@ uv run python -m vx_materials_mcp.evaluation --repository hybrid_embeddings_v1 -
 
 That runs from `mcp/`, needs `DATABASE_URL` and an index built with the same `EMBEDDING_REPOSITORY`. The local model runs with `docker compose --profile embeddings up -d embeddings`.
 
-The index version holds the PDM label and the workbook's SHA-256, each algorithm's name and `revision`, `IDENTITY_RULES_VERSION` and, when set, the embedding model's signature. Bump `revision` when you change a classifier's or extractor's rules or tables, `IDENTITY_RULES_VERSION` when identity rules change, and `INDEX_FORMAT` when the search text or tokens change. After any of these, or a new PDM workbook, search answers "Indice de busca ausente" until you rebuild the index with `docker compose up --build`, `docker compose run --rm --build batch`, or `uv run vx-back index` from `back/` with the `batch_user` connection.
+The index version holds the PDM label and the workbook's SHA-256, each algorithm's name and `revision`, `IDENTITY_RULES_VERSION` and, when set, the embedding model's signature. Bump `revision` when you change a classifier's or extractor's rules or tables, `IDENTITY_RULES_VERSION` when identity rules change, and `INDEX_FORMAT` when the search text or tokens change. After any of these, or a new PDM workbook, search answers `INDEX_UPDATING` until the index service completes a compatible refresh; an operator can also rebuild with `docker compose up --build`, `docker compose run --rm --build batch`, or `uv run vx-back index` from `back/` with the `batch_user` connection.
 
 The Agent passes the caller validated from the internal token to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock. Search requires the signed tenant, also bound to `VX_CALLER`; missing or invalid tenants are refused. Every catalog, index, target and inventory read is restricted to that tenant. The token carries the user's tenant, permissions and authorized centers, and stock outside those centers never reaches the chat.
 

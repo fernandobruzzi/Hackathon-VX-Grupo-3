@@ -74,3 +74,70 @@ def test_every_classifier_declares_a_revision(catalog, name):
 @pytest.mark.parametrize("name", sorted(extraction.REPOSITORIES))
 def test_every_extractor_declares_a_revision(name):
     assert extraction.REPOSITORIES[name]().revision
+
+
+def test_index_uses_current_approved_attributes_even_without_canonical_flag(catalog, repositories):
+    from domain.contracts import MaterialRecord
+    from pipelines.search_index import analyze_source
+    from repositories.batch_repository import SearchSource
+
+    source = SearchSource(
+        MaterialRecord("1", "ATIVO", "FILTRO OLEO FLEETGUARD LF9009"),
+        "PDM100",
+        {"FABRICANTE": "FLEETGUARD", "REFERENCIA FABRICANTE": "LF9999"},
+    )
+    current = analyze_source(source, catalog, *repositories)
+    assert current.attributes["REFERENCIA FABRICANTE"] == "LF9999"
+    assert "LF9999" in current.identity_key
+    assert "LF9009" not in current.identity_key
+    assert source.record.description == "FILTRO OLEO FLEETGUARD LF9009"
+
+
+def test_watch_retries_failures_without_claiming_a_pending_index_is_ready(monkeypatch, tmp_path, capsys):
+    from pipelines import search_index
+
+    ready = tmp_path / "ready"
+    monkeypatch.setattr(search_index, "Path", lambda path: ready)
+    attempts = iter(
+        [RuntimeError("sensitive connection details"), {"pending": 1, "written": 0}, {"pending": 0, "written": 1}]
+    )
+    states = []
+
+    def run(*args, **kwargs):
+        result = next(attempts)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    def pause(seconds):
+        assert seconds == 2
+        states.append(ready.exists())
+        if len(states) == 3:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(search_index, "run_index", run)
+    monkeypatch.setattr(search_index.time, "sleep", pause)
+    with pytest.raises(KeyboardInterrupt):
+        search_index.watch_index()
+    assert states == [False, False, True]
+    captured = capsys.readouterr()
+    assert "INDEX_REFRESH_FAILED" in captured.err
+    assert "sensitive connection details" not in captured.err
+
+
+def test_partial_approved_unknown_value_does_not_reuse_an_old_inferred_identity(catalog, repositories):
+    from domain.contracts import MaterialRecord
+    from pipelines.search_index import analyze_source
+    from repositories.batch_repository import SearchSource
+
+    source = SearchSource(
+        MaterialRecord("1", "ATIVO", "FILTRO OLEO FLEETGUARD LF9009"),
+        "PDM100",
+        {
+            "FABRICANTE": "FLEETGUARD",
+            "REFERENCIA FABRICANTE": None,
+        },
+    )
+    current = analyze_source(source, catalog, *repositories)
+    assert "REFERENCIA FABRICANTE" not in current.attributes
+    assert current.identity_key is None

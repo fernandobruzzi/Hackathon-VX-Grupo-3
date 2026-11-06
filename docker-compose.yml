@@ -54,9 +54,8 @@ services:
       migrate:
         condition: service_completed_successfully
 
-  # Índice de busca do chat na versão das regras atuais. Faz parte do `up`, então `up --build`
-  # reconstrói esta imagem junto e o chat nunca encontra um índice de regras antigas. Pula em
-  # poucos segundos quando a versão atual já cobre todos os materiais.
+  # O indexador existente acompanha revisões do cadastro com a credencial batch, sem escrever na master.
+  # O primeiro ciclo libera o Agent; depois, publicações e aprovações são reindexadas automaticamente.
   index:
     init: true
     build:
@@ -68,7 +67,13 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
-    command: ["vx-back", "index", "--if-stale"]
+    command: ["vx-back", "index", "--watch"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "from pathlib import Path; assert Path('/tmp/vx-index-ready').is_file()"]
+      interval: 2s
+      timeout: 3s
+      retries: 150
     volumes:
       - ./data:/data:ro
     depends_on:
@@ -134,7 +139,7 @@ services:
       - ./data:/data:ro
     depends_on:
       index:
-        condition: service_completed_successfully
+        condition: service_healthy
 
   batch:
     init: true

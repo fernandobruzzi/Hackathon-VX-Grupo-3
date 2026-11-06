@@ -34,7 +34,7 @@ def first_code(database, query):
 
 def test_index_covers_the_whole_base(database):
     assert database["indexed"]["materials"] == 23554
-    assert database["indexed"]["index_version"].startswith("search-index-v1|pdm-kit-v1|")
+    assert database["indexed"]["index_version"].startswith("search-index-v2|pdm-kit-v1|")
 
 
 def test_filter_with_confirmed_type_finds_the_existing_item(database):
@@ -103,7 +103,7 @@ def test_query_and_index_must_share_the_same_version(database):
     with database["admin"].begin() as connection:
         connection.execute(text("UPDATE material_search_index SET normalization_version = 'versao-antiga'"))
     try:
-        with pytest.raises(McpToolError, match="versao"):
+        with pytest.raises(McpToolError, match="INDEX_UPDATING"):
             search(database, REQUESTER, query="filtro Fleetguard LF 9009")
     finally:
         with database["admin"].begin() as connection:

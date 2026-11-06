@@ -51,7 +51,7 @@ class SearchIndexMissing(ApiProblem):
         super().__init__(
             503,
             "SEARCH_INDEX_MISSING",
-            "Índice de busca ausente para as regras atuais: rode o batch antes de verificar duplicidade.",
+            "Índice de busca pendente para os materiais atuais: aguarde a atualização e tente novamente.",
             index_version=version,
         )
 
@@ -63,18 +63,12 @@ def _rules(catalog):
 
 def existing_materials(db, tenant_id, identity_key: str, version: str) -> list[str]:
     """Ativos com a mesma identidade, no índice da versão atual ou já publicados como principais."""
-    indexed = db.scalar(
-        select(func.count())
-        .select_from(MaterialSearchIndex)
-        .where(MaterialSearchIndex.tenant_id == tenant_id, MaterialSearchIndex.normalization_version == version)
-    )
-    if not indexed:
-        # Sem índice não dá para afirmar que o item é novo; duplicar custa mais que esperar.
-        raise SearchIndexMissing(version)
     from_index = select(MaterialSearchIndex.material_id).where(
         MaterialSearchIndex.tenant_id == tenant_id,
         MaterialSearchIndex.normalization_version == version,
         MaterialSearchIndex.candidate_identity_key == identity_key,
+        MaterialSearchIndex.source_version == MaterialMaster.version,
+        MaterialSearchIndex.material_id == MaterialMaster.id,
     )
     rows = db.scalars(
         select(MaterialMaster.id)
@@ -85,7 +79,24 @@ def existing_materials(db, tenant_id, identity_key: str, version: str) -> list[s
         )
         .order_by(MaterialMaster.material_code)
     )
-    return [str(material_id) for material_id in rows]
+    result = [str(material_id) for material_id in rows]
+    if result:
+        return result
+    total = db.scalar(select(func.count()).select_from(MaterialMaster).where(MaterialMaster.tenant_id == tenant_id))
+    current = db.scalar(
+        select(func.count())
+        .select_from(MaterialSearchIndex)
+        .join(MaterialMaster, MaterialMaster.id == MaterialSearchIndex.material_id)
+        .where(
+            MaterialSearchIndex.tenant_id == tenant_id,
+            MaterialMaster.tenant_id == tenant_id,
+            MaterialSearchIndex.normalization_version == version,
+            MaterialSearchIndex.source_version == MaterialMaster.version,
+        )
+    )
+    if not total or current != total:
+        raise SearchIndexMissing(version)
+    return result
 
 
 def _evaluate(db, tenant_id, analysis: OrderAnalysis, version: str) -> tuple[str, list[str]]:
