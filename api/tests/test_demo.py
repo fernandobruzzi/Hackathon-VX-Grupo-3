@@ -26,6 +26,8 @@ def prepared(migrated_url, tmp_path_factory):
     first = demo.reset(migrated_url, KIT, store, PDM)
     engine = create_engine(migrated_url)
     yield migrated_url, store, first, engine
+    # Os módulos seguintes esperam o banco sem o estado da demo, como os demais testes deixam.
+    demo.wipe(engine)
     engine.dispose()
 
 
@@ -60,7 +62,14 @@ def test_reset_prepares_proposals_orders_and_the_three_personas(prepared):
     assert counts["proposals"] == counts["pending_proposals"] > 0
     assert summary["proposals_by_type"]["MERGE"] > 0
     assert counts["material_search_index"] == 23554
-    for empty in ("audit_events", "chat_sessions", "operation_requests", "inventory_consolidations", "batch_jobs"):
+    for empty in (
+        "audit_events",
+        "chat_sessions",
+        "operation_requests",
+        "inventory_consolidations",
+        "batch_jobs",
+        "quality_snapshots",
+    ):
         assert counts[empty] == 0, empty
     picks = summary["demo_proposals"]
     assert picks["governance"]["fiscal_review_status"] == "NOT_REQUIRED"
@@ -70,10 +79,12 @@ def test_reset_prepares_proposals_orders_and_the_three_personas(prepared):
             select(UserSso.subject, UserSso.roles_snapshot).where(UserSso.issuer == demo.LOCAL_ISSUER)
         ).all()
         orders = connection.execute(
-            text("SELECT DISTINCT origin, status, requester_user_id IS NULL FROM registration_orders")
+            text("SELECT DISTINCT origin, requester_user_id IS NULL FROM registration_orders")
         ).all()
     assert {subject for subject, _ in users} == {"SOLICITANTE_OPERACAO", "GESTOR_CADASTRO", "AUDITOR_FISCAL"}
-    assert orders == [("IMPORT", "DRAFT", True)]
+    # Importados sem solicitante; o status vem da análise da #24 contra o PDM e o índice.
+    assert orders == [("IMPORT", True)]
+    assert sum(summary["orders_by_status"].values()) == 520
 
 
 def _login(client, persona):
