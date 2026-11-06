@@ -32,6 +32,7 @@ from domain.identity import IDENTITY_RULES_VERSION, compare_attributes, partial_
 from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
+from domain.proposal_validation import approval_blockers
 from pipelines.corrections import propose_corrections, summarize_corrections
 from pipelines.ncm_corrections import propose_ncm_corrections
 from repositories.candidates import get_candidate_repository
@@ -130,9 +131,19 @@ def build_proposal(
         if other is not primary:
             differing, _ = compare_attributes(pdm_class, primary.attributes, other.attributes)
             conflicts.extend(f"ATRIBUTO_DIVERGENTE: {name}" for name in differing)
-    conflicts = list(dict.fromkeys(conflicts))
 
     item_name = primary.item_name or next((m.item_name for m in members if m.item_name), None)
+    target_unit = normalizer.normalize_unit(primary.record.unit).value or primary.record.unit
+    # Mesma validação da aprovação: sem isso, a fila ofereceria o que a aprovação recusa.
+    conflicts.extend(
+        approval_blockers(
+            catalog,
+            {"pdm_class_id": pdm_class.id, "item_name": item_name, "attributes": attributes, "unit": target_unit},
+            [_member(member) for member in members],
+        )
+    )
+    conflicts = list(dict.fromkeys(conflicts))
+
     changeset = {
         "match_type": group.match_type.value,
         "identity_verified": group.identity_verified,
@@ -148,7 +159,7 @@ def build_proposal(
         "after": {
             "pdm_class_id": pdm_class.id,
             "item_name": item_name,
-            "unit": normalizer.normalize_unit(primary.record.unit).value or primary.record.unit,
+            "unit": target_unit,
             "ncm": target_ncm,
             "description": format_description(pdm_class, item_name, attributes) if item_name else None,
             "attributes": attributes,

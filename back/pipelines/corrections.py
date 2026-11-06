@@ -19,6 +19,7 @@ from domain.contracts import (
     NormalizationRepository,
     PdmCatalog,
 )
+from domain.proposal_validation import approval_blockers
 
 _NAMESPACE = uuid.UUID("6b8f3e21-2c4d-4a9e-b1f7-93d05c8a7e14")
 PROPOSAL_TYPES = ("PDM_CORRECTION", "UNIT_CORRECTION")
@@ -71,6 +72,16 @@ def build_correction_proposal(
     record = material.record
     after = {"description": record.description, "merchandise_group": record.group or None, "unit": record.unit}
     after.update({change.field: change.after for change in changes})
+    conflicts = list(pending)
+    if proposal_type == "PDM_CORRECTION":
+        # A aprovação publica a identidade PDM com a unidade atual: o batch aplica a mesma validação.
+        candidate = {
+            "pdm_class_id": material.pdm_class_id,
+            "item_name": material.item_name,
+            "attributes": material.attributes,
+            "unit": after["unit"],
+        }
+        conflicts.extend(approval_blockers(catalog, candidate))
     changeset = {
         "correction_repository": repository_name,
         "pdm_class_id": material.pdm_class_id,
@@ -83,7 +94,7 @@ def build_correction_proposal(
             for change in changes
         ],
         "after": {**after, "ncm": record.ncm or None, "attributes": material.attributes},
-        "conflicts": list(pending),
+        "conflicts": conflicts,
     }
     payload = json.dumps(changeset, sort_keys=True, ensure_ascii=False)
     return MergeProposal(
@@ -95,7 +106,7 @@ def build_correction_proposal(
         members=(_member(material),),
         changeset=changeset,
         changeset_hash=hashlib.sha256(payload.encode()).hexdigest(),
-        conflicts=tuple(pending),
+        conflicts=tuple(conflicts),
         # NCM não muda aqui; correções fiscais são NCM_CORRECTION, com revisão fiscal.
         fiscal_review_required=False,
         ranking_score=float(len(changes)),

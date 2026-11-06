@@ -232,8 +232,10 @@ def test_each_proposal_carries_only_its_own_pending(analyze, catalog, tools):
     assert "PDM_CORRECTION" not in proposals
 
 
-def test_packaging_without_factor_does_not_block_the_description(analyze, catalog, tools):
-    # 10017576: embalagem CT sem fator. A correção de descrição e grupo segue sem esse conflito.
+def test_packaging_without_factor_keeps_the_description_proposal_but_not_approvable(analyze, catalog, tools):
+    # 10017576: embalagem CT sem fator. A correção de descrição e grupo continua proposta, mas a
+    # aprovação publica a identidade PDM com a unidade atual e recusa CT. O batch marca o mesmo motivo,
+    # para a fila não oferecer como aprovável o que a aprovação recusaria.
     material = analyze("10017576")
     result = get_correction_repository().correct(material, catalog, tools[2])
     assert any(reason.startswith("UNIDADE_SEM_FATOR") for reason in result.pending)
@@ -241,7 +243,11 @@ def test_packaging_without_factor_does_not_block_the_description(analyze, catalo
     proposals = correction_proposals(material, result, catalog, "head_noun_v1")
 
     assert [p.proposal_type for p in proposals] == ["PDM_CORRECTION"]
-    assert proposals[0].conflicts == ()
+    assert not any(reason.startswith("UNIDADE_SEM_FATOR") for reason in proposals[0].conflicts)
+    assert proposals[0].conflicts == (
+        "PDM_INVALIDO: resultado não atende ao PDM (UNIDADE inválido (UNIT_NOT_CLASS_DEFAULT))",
+    )
+    assert proposals[0].changeset["conflicts"] == list(proposals[0].conflicts)
 
 
 def test_class_unit_difference_still_blocks_the_unit_correction(analyze, catalog, tools):

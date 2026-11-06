@@ -198,12 +198,35 @@ def test_divergent_ncm_requires_fiscal_review(catalog, tools):
     same = proposal_for(
         catalog,
         tools,
-        material(catalog, tools, "1", FILTER, ncm="84212300"),
-        material(catalog, tools, "2", FILTER, ncm="8421.23.00"),
+        material(catalog, tools, "1", FILTER, ncm="84212300", unit="PC"),
+        material(catalog, tools, "2", FILTER, ncm="8421.23.00", unit="PC"),
     )
     # Mesmo código fiscal, mas mudar a grafia persistida também exige autorização fiscal.
     assert same.fiscal_review_required is True
     assert not same.conflicts
+
+
+def test_merge_with_incomplete_member_is_not_approvable(catalog, tools):
+    # Linhas reais do kit: DENTE CACAMBA Komatsu 993-94-91874. Mesmo fabricante e referência
+    # (regra 10), mas 21670888 não informa o modelo do equipamento. A aprovação valida cada
+    # membro pelo PDM e recusaria com PDM_INVALID; o batch marca o mesmo motivo.
+    codes = {"15041048", "21670888", "23553709"}
+    records = [record for record in read_csv_records(DATA / "01_base_materiais.csv") if record.code in codes]
+    analyzed = [analyze_material(record, catalog, tools[0], tools[1]) for record in records]
+    proposal = proposal_for(catalog, tools, *analyzed)
+    assert set(proposal.material_codes) == codes
+    blockers = [conflict for conflict in proposal.conflicts if conflict.startswith("PDM_INVALIDO")]
+    assert blockers == ["PDM_INVALIDO: membro 21670888 não atende ao PDM (faltam MODELO EQUIPAMENTO)"]
+    assert proposal.changeset["conflicts"] == list(proposal.conflicts)
+
+
+def test_merge_with_complete_members_stays_approvable(catalog, tools):
+    # Negativo: os dois membros completos do mesmo grupo continuam sem conflito.
+    codes = {"15041048", "23553709"}
+    records = [record for record in read_csv_records(DATA / "01_base_materiais.csv") if record.code in codes]
+    analyzed = [analyze_material(record, catalog, tools[0], tools[1]) for record in records]
+    proposal = proposal_for(catalog, tools, *analyzed)
+    assert not [conflict for conflict in proposal.conflicts if conflict.startswith("PDM_INVALIDO")]
 
 
 def test_redirect_prefix_is_ignored_when_analyzing(catalog, tools):
