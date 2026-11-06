@@ -20,6 +20,9 @@ from vx_materials_api.routes import (
     chat,
     dashboard,
     enrichment,
+
+
+    manual_reviews,
     materials,
     registration_orders,
     sanitization,
@@ -99,6 +102,7 @@ def create_app(
 
     app.include_router(dashboard.router)
     app.include_router(batch.router)
+    app.include_router(manual_reviews.router)
     app.include_router(chat.router)
     app.include_router(materials.router)
     app.include_router(auth.router)

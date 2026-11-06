@@ -1080,10 +1080,15 @@
       "pdm_class_id": "PDM020",
       "status": "PENDING",
       "technical_review_status": "PENDING",
-        "fiscal_review_status": "NOT_REQUIRED",
-        "allowed_actions": ["APPROVE", "REJECT"],
-        "pending_attributes": ["VEDACAO"],
-        "evidence": [
+      "fiscal_review_status": "NOT_REQUIRED",
+      "allowed_actions": [
+        "APPROVE",
+        "REJECT"
+      ],
+      "pending_attributes": [
+        "VEDACAO"
+      ],
+      "evidence": [
         {
           "attribute": "DIAMETRO INTERNO",
           "current_value": null,
@@ -1915,6 +1920,111 @@
       },
       "order_id": "44444444-4444-4444-8444-444444444444",
       "submission": null
+    }
+  },
+  {
+    "name": "manual-review-list",
+    "path": "/api/v1/manual-reviews",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "run_id": "68686868-6868-4868-8868-686868686868",
+      "job_id": null,
+      "items": [
+        {
+          "id": "68686868-6868-4868-8868-686868686868",
+          "run_id": "68686868-6868-4868-8868-686868686868",
+          "job_id": null,
+          "material_id": "68686868-6868-4868-8868-686868686868",
+          "expected_material_version": 1,
+          "reasons": [
+            "DESCRICAO_FORA_DO_PADRAO"
+          ],
+          "observation": {
+            "material_code": "100",
+            "status": "ATIVO",
+            "description": "FILTRO FLEETGUARD",
+            "unit": "PC",
+            "ncm": "8421.23.00",
+            "pdm_class_id": "PDM100",
+            "item_name": "FILTRO OLEO LUBRIFICANTE",
+            "attributes": {
+              "FABRICANTE": "FLEETGUARD"
+            }
+          },
+          "rules_signature": "pdm-kit-v1|corrector:head_noun_v1",
+          "pdm_version": "pdm-kit-v1",
+          "pdm_source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "proposal_id": null,
+          "proposal_status": null,
+          "created_at": "2026-11-06T12:00:00Z"
+        }
+      ],
+      "counts_by_reason": {
+        "DESCRICAO_FORA_DO_PADRAO": 1
+      },
+      "materials_total": 1,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "manual-review-propose",
+    "path": "/api/v1/manual-reviews/{review_id}/propose",
+    "method": "post",
+    "params": {
+      "review_id": "68686868-6868-4868-8868-686868686868"
+    },
+    "request_headers": {
+      "X-CSRF-Token": "csrf",
+      "Idempotency-Key": "68686868-6868-4868-8868-686868686868"
+    },
+    "request": {
+      "expected_material_version": 1,
+      "pdm_class_id": "PDM100",
+      "item_name": "FILTRO OLEO LUBRIFICANTE",
+      "attributes": {
+        "FABRICANTE": "FLEETGUARD",
+        "REFERENCIA FABRICANTE": "LF9009"
+      },
+      "unit": "PC",
+      "ncm": "8421.23.00",
+      "source": "Catálogo conferido pela Governança.",
+      "reason": "Completar a referência ausente."
+    },
+    "status": 202,
+    "response": {
+      "review_id": "68686868-6868-4868-8868-686868686868",
+      "proposal_id": "68686868-6868-4868-8868-686868686868",
+      "status": "PENDING"
+    }
+  },
+  {
+    "name": "manual-review-catalog",
+    "path": "/api/v1/manual-reviews/catalog",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "pdm_version": "pdm-kit-v1",
+      "classes": [
+        {
+          "id": "PDM100",
+          "item_names": [
+            "FILTRO OLEO LUBRIFICANTE"
+          ],
+          "unit": "PC",
+          "attributes": [
+            {
+              "name": "FABRICANTE",
+              "required": true,
+              "format": "texto",
+              "allowed_values": []
+            }
+          ],
+          "ncm_codes": [
+            "8421.23.00"
+          ]
+        }
+      ]
     }
   }
 ]

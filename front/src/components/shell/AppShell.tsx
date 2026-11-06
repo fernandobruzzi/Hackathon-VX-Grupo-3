@@ -62,6 +62,12 @@ const NAV: { section: string; items: NavItem[] }[] = [
         icon: FileSearch,
         perms: ["enrichment:decide", "queue:read_audit"],
       },
+      {
+        href: "/pendencias/",
+        label: "Pendências manuais",
+        icon: ClipboardList,
+        perms: ["merge:decide"],
+      },
       { href: "/batch/", label: "Processamento em lote", icon: PlayCircle, perms: ["batch:run"] },
     ],
   },

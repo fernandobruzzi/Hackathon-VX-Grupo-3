@@ -11,6 +11,7 @@ from vx_materials_api.db.cli import PASSWORD_VARIABLES, alembic_config, set_pass
 from vx_materials_api.db.models import Base
 
 TABLES = {
+    "manual_reviews",
     "login_transactions",
     "users_sso",
     "auth_sessions",
@@ -277,3 +278,12 @@ def test_set_passwords_targets_the_application_roles_by_default():
 def test_migration_history_has_one_unambiguous_head():
     scripts = ScriptDirectory.from_config(alembic_config())
     assert len(scripts.get_heads()) == 1
+
+
+def test_manual_observations_cannot_be_rewritten_by_application_roles(connection):
+    as_role(connection, "api_user", "SELECT * FROM manual_reviews")
+    as_role(connection, "batch_user", "SELECT * FROM manual_reviews")
+    for role in ("api_user", "batch_user"):
+        denied(connection, role, "UPDATE manual_reviews SET reasons = ARRAY['OUTRO']")
+        denied(connection, role, "DELETE FROM manual_reviews")
+    denied(connection, "mcp_reader", "SELECT * FROM manual_reviews")
