@@ -158,12 +158,14 @@ def test_fixed_reviewed_cohort_eliminates_false_merges_and_explains_held_revisio
     assert result["retained_false_groups"] == 0
     # Dois positivos históricos adicionais ficam retidos por sufixo sem confirmação.
     # Seus rótulos e os dois erros históricos permanecem no mesmo arquivo.
-    assert result["retained_true_groups"] == 32
+    # A #133 também retém 16490712/25536305: ACO ZINCADO não informa CARBONO.
+    assert result["retained_true_groups"] == 31
     assert result["retained_precision"] == 1.0
     assert result["unreviewed_changed_groups"] == []
     removed_codes = {tuple(item["original_codes"]) for item in result["removed"]}
     assert set(OILS) in [set(codes) for codes in removed_codes]
     assert set(PARTS) in [set(codes) for codes in removed_codes]
+    assert ("16490712", "25536305") in removed_codes
     pending = {item["evidence"]["material_code"] for item in result["cohort_manual_review"]}
     assert set(REVISIONS) <= pending
     for material in materials.values():

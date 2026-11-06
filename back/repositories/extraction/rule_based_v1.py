@@ -185,7 +185,7 @@ def _compact(value: str) -> str:
 
 
 def _loose_value(attribute: PdmAttribute, raw: str) -> tuple[str, str] | None:
-    """Mesma grafia sem separadores (TC12 e TC-12), ou o único valor que contém todas as palavras do texto."""
+    """Aceita grafia/ordem diferentes, sem completar palavras técnicas ausentes no texto."""
     if attribute.allowed_values is None:
         return None
     if any(c.isdigit() for c in raw):
@@ -195,7 +195,7 @@ def _loose_value(attribute: PdmAttribute, raw: str) -> tuple[str, str] | None:
     words = {_WORD_ALIASES.get(word, word) for word in raw.split()}
     if len(words) < 2:
         return None
-    matches = [v for v in attribute.allowed_values if words <= set(v.split())]
+    matches = [v for v in attribute.allowed_values if words == set(v.split())]
     return (matches[0], "value.unique_words") if len(matches) == 1 else None
 
 
@@ -250,7 +250,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "3"
+    revision = "5"
 
     def extract(
         self,

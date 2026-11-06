@@ -1,0 +1,4673 @@
+{
+  "schema": "explicit-values-development-diff-v1",
+  "baseline_commit": "b162946086621ef6ec8f65818b68a7c3a3010439",
+  "baseline_extractor_sha256": "2945644fd01b6da9f2f64da481daf9f603938568cec9074654927439c24caf32",
+  "candidate_extractor_sha256": "a99f493fca493d8e3d51ca80de5c4e347fada1a3dd474aba1f0093eb6a67a2de",
+  "revisions": {
+    "before": "2",
+    "after": "4"
+  },
+  "inputs_sha256": {
+    "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+    "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+  },
+  "method": "Mesmo classificador e pipelines; apenas o extrator varia. Contagens não são acurácia técnica independente.",
+  "materials": {
+    "total": 23554,
+    "before": {
+      "OUT_OF_SCOPE": 5856,
+      "filled_attributes": 73520,
+      "identity_keys": 12139,
+      "VALID": 10688,
+      "INCOMPLETE": 7010
+    },
+    "after": {
+      "OUT_OF_SCOPE": 5856,
+      "filled_attributes": 73103,
+      "identity_keys": 12038,
+      "VALID": 10587,
+      "INCOMPLETE": 7111
+    },
+    "changed": 339,
+    "field_deltas": {
+      "added": {},
+      "removed": {
+        "MATERIAL": 28,
+        "CONEXAO": 101,
+        "MATERIAL TERMINAIS": 92,
+        "TERMINAL B": 62,
+        "MATERIAL CORPO": 56,
+        "TERMINAL A": 73,
+        "MATERIAL DISCO": 5
+      },
+      "changed": {}
+    },
+    "changes": [
+      {
+        "code": "24071713",
+        "class": "PDM110",
+        "description": "PARAF. HEXAGONAL ROSCA DE METRICA FINA COM DIAMETRO M 14X1,5 COMPRIMENTO 80MM RESISTENCIA DE 8.8 MATERIAL AC CARBONO COM REVESTIMENTO ZB DIN 931",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14546699",
+        "class": "PDM050",
+        "description": "UNIAO DIAMETRO 1-1/2\", 6000#, COM MAT ACO FORJADO, COM CONEXAO ENCAIXE SOLDA, COM NORMA ASME B16.11 - COMPRA LOCAL",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11576613",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;TERMINAIS: ACO CARBONO;DIAMETRO: DN31;PT: 5075 PSI;COMP: 2500MM;TERMINAL B: FEMEA 90 JIC;NORMA CONSTRUCAO: EN 856 4SH",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29872620",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA COM DIAM 6 IN, FLANGEADA, MATERIAL CORPO FERRO NODULAR, COM MATERIAL DISCO INOX 316, TEFLON, COM ACIONAMENTO MANUAL, CONFORME CATALOGO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18489187",
+        "class": "PDM050",
+        "description": "COTOVELO 45 GRAUS - DIAM:DN100 - SCHEDULE:SCH 80 - MAT:WPB - LIGACAO:SOLDA TOPO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27548311",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 853 1SN DI DE 1\" PRESSAO TRABALHO DE 88BAR COM COMP 1200MM TERMINAL 1 FEM CURVA 90 JIC COM TERMINAL 2 FEMEA RETA JIC 37 GRAUS TERMINAIS DE ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14364539",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:EN 853 2SN, PT:5800 PSI, TERMINAL B:MACHO RETO NPT, FEMEA GIRATORIA JIC, COMP:750MM, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29280441",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA; DIAM 4POL; TIPO CORPO WAFER; MATERIAL ACO CARBONO; MATERIAL DISCO BRONZE ALUMINIO; VEDACAO SEDE BORRACHA EPDM; ACIONAMENTO PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26405629",
+        "class": "PDM110",
+        "description": "PARAFUSO SEXT. ROSCA DE UNC, 7/16 POL, COMPRIMENTO DE 2-1/4\", GRAU SAE GRAU 5, MAT DE AC CARBONO, REVESTIMENTO S/ACAB",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29295118",
+        "class": "PDM011",
+        "description": "MANGUEIRA  HIDRAULICA MONTADA, PADRAO:EN 856 4SP, DI:1\", COMPRIMENTO:600 MM, TERM A:MACHO BSP, LADO B:NPT MACHO, ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12444117",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA, DIAMETRO NOMINAL: 8\", TIPO CORPO: WAFER, CORPO: FERRO FUNDIDO, ACO INOX FUNDIDO A351 CF8M, VEDACAO SEDE: BUNA-N, ACIONAMENTO: MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          },
+          "MATERIAL DISCO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29313054",
+        "class": "PDM110",
+        "description": "PARAF. SEXT. ROSCA ROSCA GROSSA, COM ROSCA M-10, 140 MM, 8.8, MAT DE ACO CARBONO, REVESTIMENTO S/ACABAMENTO, DIN 931",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14633337",
+        "class": "PDM050",
+        "description": "LUVA; BITOLA:1.1/2POL; LIGACAO:ENCAIXE SOLDA; ACO FORJADO; RATING:6000#",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24174864",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:EN 853 2SN, DIAMETRO:1/2 IN, PRESSAO:3990 PSI, COMPRIMENTO:1800 MM, TERMINAL 1:FEM CURVA 90 JIC, LADO B:BSP FEMEA GIRATORIA, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11617020",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 856 4SP, COM DI 3/4POL, COMP 6000MM, TERM A NPT MACHO, TERMINAL B FEMEA RETA JIC 37 GRAUS, MATERIAL TERMINAIS DE ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17438283",
+        "class": "PDM050",
+        "description": "TE; DIAM NOMINAL:1\"; CL:3000#; NORMA:ASME B16.11; CONEXAO:SOLDA ENCAIXE; MATERIAL:A182 F316",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19692653",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAM NOMINAL:DN 100, MAT CORPO:FERRO FUNDIDO, VEDACAO SEDE:BORRACHA NITRILICA, MATERIAL DISCO:CF8M, ACIONAMENTO:MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27064114",
+        "class": "PDM110",
+        "description": "PARAF HEXAGONAL ROSCA METRICA GROSSA, COM ROSCA M 30, 120MM, 10.9, MATERIAL AC CARBONO, COM REVESTIMENTO DACROMET, NORMA CONSTRUCAO DIN 933",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12661526",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF: EN 853 2SN, DIAMETRO INTERNO: 1,25POL, PRESSAO MAX: 127KGF/CM2, COMPRIMENTO: 6000MM, TERMINAL A: FEMEA 45 JIC, FEM RETA JIC, MATERIAL TERMINAIS: INOX 316",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11383447",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 853 2SN, DIAM INT:1,25POL, COMPRIMENTO:1100MM, TERMINAL 1:FEMEA 90 ORFS, TERM B:DKO FEMEA 90",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21341920",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 1SN, DIAM INT:5/8 POL, PT:1885 PSI, COMPRIMENTO:1600MM, JIC FEMEA 90, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20686861",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO - DIAM:1.1/4POL - DIAMETRO REDUZIDO:1/2\" - PRESSAO NOMINAL:6000# - MAT:INOX - TIPO CONEXAO:SOLDA ENCAIXE - NORMA CONSTRUCAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29537510",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA PADRAO EN 856 4SH, COM D.I. 1.1/2 IN, COM PRESSAO 290BAR, COM C 1500,0MM, LADO A MACHO RETO BSP, COM LADO B FEMEA 90 DKO, TERMINAIS ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16380824",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, TERM A:JIC FEMEA 90, PT:5075 PSI, C:4500MM, DIAMETRO INTERNO:5/8POL (-10), TERM B:FEMEA RETA ORFS, MATERIAL TERMINAIS:SS316",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24365338",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS DIAMETRO NOMINAL DE 1.1/2POL 3000# MATERIAL DE ACO FORJADO CONEXAO ENCAIXE SOLDA NORMA CONSTRUCAO ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17275021",
+        "class": "PDM044",
+        "description": "VALV.  BORBOLETA, VEDACAO SEDE: EPDM, TIPO CORPO: WAFER, MATERIAL: ACO INOX, MATERIAL DISCO: FERRO FUNDIDO NODULAR NIQUELADO, DIAM NOMINAL: 8POL, MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17940698",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:SAE 100R2AT, DIAM INTERNO:1/4\", COMPR:1100MM, TERM A:FEM CURVA 90 JIC, TERM B:JIC FEMEA, MAT TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17305713",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; CONF EN 853 1SN; D.I. 1/4 POL; PRESS TRAB 225BAR; COMP 500MM; TERMINAL A FEM RETA JIC; TERMINAL B FEMEA 90 ORFS; MATERIAL TERMINAIS ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21567608",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DN: 24\", ACIONAMENTO: REDUTOR, MATERIAL CORPO: FERRO NODULAR, MATERIAL DISCO: FERRO FUNDIDO NODULAR NIQUELADO, TIPO CORPO: LUG",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26931870",
+        "class": "PDM110",
+        "description": "PARAFUSO  HEXAGONAL COM ROSCA METRICA GROSSA, COM DIAMETRO M-22, COMPR DE 60MM, 8.8, MATERIAL AC CARBONO, REVESTIMENTO PRETO, NORMA CONSTRUCAO DIN 931",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22573370",
+        "class": "PDM011",
+        "description": "NAO UTILIZAR - USAR COD 29966424 - MANGUEIRA HIDRAULICA MONTADA;PADRAO: EN 853 1SN;PT: 915PSI;COMPRIMENTO: 450MM;LADO A: FEMEA CURVA 90 GRAUS ORFS;FEMEA 90G JIC;TERMINAIS: ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15508391",
+        "class": "PDM110",
+        "description": "VALVULA RET, TIPO:PISTAO, PRESSAO NOMINAL:800#, MATERIAL:ACO CARBONO, CONEXAO:SW, BITOLA:1 1/4 POL",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26813296",
+        "class": "PDM043",
+        "description": "VALVULA RETENCAO, DIAMETRO NOMINAL:DN50, CLASSE PRESSAO:PN 16, MATERIAL:FERRO NODULAR, EXTREMIDADE:FLG FF, MODELO:PORTINHOLA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10902779",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 2SN, DIAMETRO:1 IN, PRESSAO MAX:165 BAR, COMPRIMENTO:900MM, LADO A:BSP MACHO, TERMINAL 2:JIC FEMEA 90, MAT TERMINAIS:ACO ZINCADO VER DESENHO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11975018",
+        "class": "PDM050",
+        "description": "TE REDUCAO; DIAM NOMINAL:1POL; DIAMETRO REDUZIDO:1/2POL; CLASSE:150#; MATERIAL:FERRO MALEAVEL; EXTREMIDADE:ROSCADA BSP; PADRAO:NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14217178",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PRESS TRAB:1885 PSI, COMPRIMENTO:300 MM, LADO A:FEMEA RETA JIC, TERMINAL B:ORFS FEMEA 90, MAT TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22306818",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS, DIAM NOMINAL:10\", SCHEDULE:SCH 40S, MATERIAL:A403 WP316, EXTREMIDADE:SOLDA TOPO, ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29942286",
+        "class": "PDM110",
+        "description": "PARAFUSO SEXT ROSCA ROSCA GROSSA, ROSCA DE M30, COM C 180 MM, COM CLASSE 8.8, MATERIAL AC CARBONO, REVESTIMENTO OXIDADO, COM NORMA DIN 931",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15365653",
+        "class": "PDM050",
+        "description": "BUCHA  REDUCAO, DIAMETRO REDUZIDO:1/2POL, CLASSE PRESSAO:3000#, MATERIAL:ACO CARBONO FORJADO A105, EXTREMIDADE:ENCAIXE SOLDA, NORMA CONSTRUCAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28364554",
+        "class": "PDM050",
+        "description": "TE, DN:6POL, SCH 80, CONEXAO:SOLDA TOPO, PADRAO:ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26528844",
+        "class": "PDM040",
+        "description": "VALVULA  ESFERA, DIAM NOMINAL:2.1/2 IN, CL:300#, ACO CARBONO FUNDIDO A216 WCB, CONEXAO:SOLDA TOPO, PASSAGEM:FULL BORE, VEDACAO SEDE:PTFE, ACIONAMENTO:ALAVANCA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12751095",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA; DIAMETRO:6POL; TIPO CORPO:WAFER; CORPO:FERRO NODULAR; MATERIAL DISCO:BRONZE ALUMINIO; VEDACAO SEDE:NITRILICA; ACIONAMENTO:ATUADOR ELETRICO, REF ANTIGA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11770694",
+        "class": "PDM050",
+        "description": "LUVA, DIAM NOMINAL:1 IN, PADRAO:ASME B16.11, MAT:F316, EXTREMIDADE:ENCAIXE SOLDA, CLASSE:6000#",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22839670",
+        "class": "PDM040",
+        "description": "VALVULA  ESF, DIAM: 1.1/2 IN, PRESSAO NOMINAL: 800#, MAT CORPO: F316, ACIONAMENTO: ATUADOR PNEUMATICO, PASSAGEM: FULL BORE, VEDACAO SEDE: TEFLON REFORCADO, EXTREMIDADE: ENCAIXE SOLDA REF ANTIGA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26422543",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAMETRO:6POL, TIPO CORPO:LUG, MAT CORPO:ACO CARBONO, MATERIAL DISCO:CF8M, VEDACAO SEDE:NBR, ACIONAMENTO:MANOPLA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20224186",
+        "class": "PDM044",
+        "description": "VALV  BORBOLETA; DN:2 1/2POL; TIPO CORPO:WAFER; MATERIAL:FERRO FUNDIDO; MATERIAL DISCO:ACO INOX; VEDACAO SEDE:BUNA-N; ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          },
+          "MATERIAL DISCO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10935109",
+        "class": "PDM050",
+        "description": "LUVA, DIAM:3/8\", MATERIAL:F316, 3000#, TIPO CONEXAO:SOLDA ENCAIXE, PADRAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11958143",
+        "class": "PDM110",
+        "description": "PARAFUSO HEXAGONAL, UNC, ROSCA 1/4POL, CLASSE RESISTENCIA SAE GRAU 5, MATERIAL ACO CARBONO, REVESTIMENTO ZINCADO BRANCO, CONF ASME B18.2.1",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11466241",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAMETRO:8\", TIPO CORPO:LUG, CORPO:FERRO FUNDIDO, MATERIAL DISCO:ACO INOX FUNDIDO A351 CF8M, VEDACAO SEDE:EPDM, ACIONAMENTO:REDUTOR",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22262820",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 853 1SN, DIAM INTERNO:5/8POL, PRESSAO MAX:130BAR, COMPR:3000MM, TERMINAL A:JIC MACHO, TERMINAL B:FEMEA GIRATORIA JIC, TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11747187",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA: EN 853 2SN, DI: 1 IN, PRESS TRAB: 2395PSI, COMPR: 300MM, TERM A: FEMEA RETA ORFS, ORFS FEMEA 90, MAT TERMINAIS: ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15420830",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA LUG, COM CORPO FERRO NODULAR, FERRO FUNDIDO NODULAR NIQUELADO, VEDACAO SEDE TEFLON, COM ACIONAMENTO PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26620356",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:SAE 100R1AT, DIAM INTERNO:1/2\", PRESSAO TRABALHO:135BAR, C:2500MM, TERMINAL 1:MACHO BSP, TERMINAL B:MACHO RETO BSP, MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28100668",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA SAE 100R1AT, D.I. 3/8POL, PRESSAO TRABALHO 2250PSI, COMP 1800 MM, TERM A JIC MACHO, TERMINAL 2 FEMEA 90G JIC, TERMINAIS ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22825019",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA; DIAM:DN 50; TIPO CORPO:WAFER; MATERIAL CORPO:FERRO FUNDIDO; MATERIAL DISCO:CF8M; PTFE; MANOPLA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26262031",
+        "class": "PDM050",
+        "description": "TE;PRESSAO NOMINAL:3000#;DIAM NOMINAL:DN20;MAT:ACO FORJADO;CONEXAO:ENCAIXE SOLDA;NORMA CONSTRUCAO:ASME B16.11, ITEM CRITICO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17112759",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; EN 853 2SN; DIAMETRO INTERNO:-6; PRESSAO TRAB:330BAR; COMPRIMENTO:600MM; TERMINAL 1:FEMEA RETA JIC; FEMEA RETA DKO; MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15702348",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA CONF DE EN 856 4SP, DN10, 445BAR, COM C 4000 MM, FEMEA RETA DKOL, TERMINAL B DE FEMEA RETA DKO, MATERIAL TERMINAIS ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14252638",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO EN 856 4SP, DIAMETRO INTERNO 1\", PRESSAO MAX 4060PSI, C 1200MM, TERMINAL A FEM CURVA 90 JIC, TERM B FEMEA GIRATORIA JIC, TERMINAIS ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15941857",
+        "class": "PDM050",
+        "description": "TE, DIAMETRO NOMINAL: 3/4 IN, CLASSE: 3000#, MAT: ACO INOX FORJADO A182 F316, LIGACAO: ENCAIXE SOLDA, PADRAO: ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21316473",
+        "class": "PDM011",
+        "description": "MANGUEIRA  HIDRAULICA MONTADA, CONF:EN 853 1SN, DIAM INT:DN25, PRESSAO MAX:1275PSI, COMPR:2500MM, TERMINAL 1:JIC FEMEA 90, TERMINAL B:FEMEA RETA JIC, MAT TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24479226",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA EN 853 2SN, COM DIAM INT 1/4 IN, COMPR 700MM, TERMINAL A FEMEA GIRATORIA JIC, TERMINAL B ORFS FEMEA 90, TERMINAIS ACO ZINCADO, CONF AMOSTRA",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25314696",
+        "class": "PDM050",
+        "description": "TE REDUCAO, DIAMETRO NOMINAL:2POL, DIAMETRO REDUZIDO:1.1/2POL, CLASSE:3000#, MAT:ACO CARBONO FORJADO A105, EXTREMIDADE:SOLDA ENCAIXE, ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19451500",
+        "class": "PDM042",
+        "description": "VALVULA GLOBO, DIAM NOMINAL:1 1/2 POL, ACIONAMENTO:VOLANTE, EXTREMIDADE:SOLDA ENCAIXE, CLASSE:800#",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26230589",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO;DIAMETRO NOMINAL: 1.1/4\";DIAMETRO REDUZIDO: 3/4POL;CL: 3000#;TIPO CONEXAO: SOLDA ENCAIXE;CONF: ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14665446",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:SAE 100R2AT, DIAMETRO INTERNO:DN12, PRESSAO TRAB:3480PSI, COMP:500 MM, TERM A:ORFS FEMEA 90, TERMINAL B:FEMEA CURVA 90 GRAUS ORFS, ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16927357",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 853 2SN DIAM INTERNO 1.1/4 IN PRESSAO TRAB DE 125BAR C DE 3500 MM LADO A DE FEMEA 45 JIC TERM B DE DKO FEMEA COM TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21263783",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:SAE 100R1AT, DI:-16, PRESSAO:69BAR, COMPRIMENTO:450MM, TERMINAL 1:FEMEA 90 ORFS, TERMINAL 2:MACHO BSP, TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27033524",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;NORMA CONSTRUCAO:EN 853 1SN;DIAM INT:3/8POL;COMPRIMENTO:1000MM;TERMINAL A:FEMEA 90G JIC;LADO B:FEMEA RETA DKO;MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11045406",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DIAMETRO:12\", CLASSE:150#, MATERIAL:ACO CARBONO, TIPO CONEXAO:SOLDA TOPO, PASSAGEM:PLENA, VEDACAO SEDE:PTFE, ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29928706",
+        "class": "PDM042",
+        "description": "VALVULA GLOBO, DIAMETRO:2\", RATING:800#, CORPO:ACO CARBONO, LIGACAO:ENCAIXE SOLDA, ACIONAMENTO:VOLANTE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19563713",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; NORMA CONSTRUCAO:EN 856 4SH; DI:3/4POL; PRESSAO TRABALHO:420BAR; COMPRIMENTO:3500MM; TERMINAL A:NPT MACHO; LADO B:DKO FEMEA 90; TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23454968",
+        "class": "PDM044",
+        "description": "VÁLVULA BORBOLETA, DIÂMETRO:4POL, TIPO CORPO:WAFER, MATERIAL:FERRO NODULAR, MATERIAL DISCO:AÇO INOX FUNDIDO A351 CF8M, BORRACHA EPDM",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29370725",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 2SN, DIAM INTERNO:-6, PRESSAO MAX:330BAR, C:900MM, TERMINAL 2:FEMEA GIRATORIA JIC, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29774444",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, SAE 100R2AT, DIAM INTERNO:3/8POL, PRESSAO TRABALHO:275BAR, COMP:400MM, TERMINAL B:JIC FEMEA 90, MAT TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19918262",
+        "class": "PDM050",
+        "description": "TE COM DIAMETRO 1/4\" CLASSE PRESSAO 3000# MATERIAL A105 COM CONEXAO ENCAIXE SOLDA NORMA CONSTRUCAO DE ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18367798",
+        "class": "PDM041",
+        "description": "VALV. GAVETA DIAM NOMINAL 8POL, RATING DE PN 16, CORPO DE FERRO FUNDIDO, FLANGEADA, COM CASTELO ROSCADO, COM ACIONAMENTO VOLANTE",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21528837",
+        "class": "PDM050",
+        "description": "LUVA, BITOLA: 1\", 6000#, MAT: A105, LIGACAO: ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22084568",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, PRESSAO NOMINAL:6000#, DIAMETRO REDUZIDO:1 1/4 POL, DIAM NOMINAL:2POL, EXTREMIDADE:SOLDA ENCAIXE, NORMA:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24391414",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA COM NORMA CONSTRUCAO EN 856 4SP, 3/8 POL, COMPRIMENTO DE 800MM, FEMEA RETA BSP, LADO B DE BSP FEMEA GIRATORIA",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13544244",
+        "class": "PDM011",
+        "description": "NAO UTILIZAR - USAR COD 16070767 - MANGUEIRA HIDRAULICA MONTADA, CONF: EN 856 4SP, D.I.: 1.1/2POL, PRESS TRAB: 2685PSI, C: 1800MM, LADO A: FEMEA 90 JIC, TERMINAL B: MACHO FIXO NPT",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13880442",
+        "class": "PDM050",
+        "description": "TE, DIAM NOMINAL:3/4\", 3000#, MATERIAL:F316, EXTREMIDADE:SOLDA ENCAIXE, NORMA CONSTRUCAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20625683",
+        "class": "PDM050",
+        "description": "TE  REDUCAO, DIAMETRO:6POL, DIAMETRO REDUZIDO:4 POL, SCHEDULE:SCH 40S, MATERIAL:WP316, ASME B16.9, EXTREMIDADE:SOLDA TOPO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10638870",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:SAE 100R2AT, DI:-12, PT:155BAR, C:1100MM, TERMINAL A:FEMEA RETA DKO, TERMINAL 2:NPT MACHO, MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20067653",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:SAE 100R2AT, PRESSAO TRAB:240 BAR, COMP:3500MM, TERMINAL 1:FEMEA 45 JIC, TERMINAL B:JIC FEMEA 90, MAT TERMINAIS:AISI 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25041918",
+        "class": "PDM011",
+        "description": "NAO UTILIZAR - USAR COD 19004266 - MANGUEIRA HIDRAULICA MONTADA EN 853 1SN COM DIAM INT 1 1/4 POL PRESSAO TRAB DE 915 PSI COMPRIMENTO DE 4000MM COM TERMINAL 1 FEMEA 90 ORFS TERMINAL B DE MACHO RETO BSP TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28731866",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO: SAE 100R1AT, DIAM INT: -4, PRESSAO TRAB: 190BAR, COMPRIMENTO: 300,0MM, LADO A: FEMEA 45 JIC, TERMINAL 2: FEMEA 45 JIC, SS316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18496910",
+        "class": "PDM041",
+        "description": "VALVULA GAVETA, DN:3 POL, RATING:600#, MATERIAL:CF8M, EXTREMIDADE:SOLDA TOPO, CASTELO:APARAFUSADO, ACIONAMENTO:VOLANTE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20243700",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, DIAMETRO NOMINAL:1POL, DIAMETRO REDUZIDO:3/8POL, PRESSAO NOMINAL:3000#, LIGACAO:SOLDA ENCAIXE, MATERIAL:ACO FORJADO, NORMA CONSTRUCAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17907660",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, SAE 100R1AT, DIAMETRO INTERNO:1.1/4POL, PRESS TRAB:655PSI, COMPRIMENTO:2500MM, FEMEA CURVA 90 GRAUS DKO, TERMINAL B:ORFS FEMEA, TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10553433",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:EN 853 1SN, DIAM INTERNO:1POL, PRESSAO:88BAR, COMPRIMENTO:450MM, LADO A:DKO FEMEA 90, TERMINAL 2:FEMEA RETA JIC, ACO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24557800",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 2SN, DIAM INT:DN31, PRESSAO TRAB:125 BAR, C:6000MM, LADO A:FEMEA 90 JIC, LADO B:MACHO RETO BSP, ACO CARBONO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20408626",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA COM CONF EN 853 2SN, DIAMETRO INTERNO DE 1 1/4 POL, PRESSAO TRABALHO DE 125 BAR, 800 MM, LADO A FEMEA CURVA 90 GRAUS DKO, TERMINAL B DE JIC FEMEA 90, ACO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21170286",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DN: 24\", ACIONAMENTO: REDUTOR, MATERIAL CORPO: FERRO NODULAR, MATERIAL DISCO: FERRO FUNDIDO NODULAR NIQUELADO, TIPO CORPO: LUG",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27218100",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF: EN 856 4SP, DIAMETRO INTERNO: 3/8POL (-6), COMPR: 800MM, TERMINAL A: MACHO JIC, FEMEA GIRATORIA JIC, TERMINAIS: ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29255797",
+        "class": "PDM110",
+        "description": "PARAFUSO SEXT. ROSCA DE UNC, BITOLA 5/8POL, COMP DE 1-3/4\", COM MATERIAL ACO CARBONO, REVESTIMENTO ZINCADO BRANCO, ASME B18.2.1",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10937717",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA CONSTRUCAO DE EN 853 2SN, DIAMETRO INTERNO DE 3/4\", PRESSAO TRABALHO 215BAR, 500,0MM, TERMINAL A DE FEM RETA JIC, MAT TERMINAIS DE ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24246468",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 2SN, DIAM INTERNO:3/8POL, PRESSAO TRAB:4785LBS, C:600MM, TERMINAL 1:FEMEA CURVA 90 GRAUS JIC, TERMINAL B:JIC FEMEA, TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24217827",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, BITOLA:2 POL, LIGACAO:ENCAIXE SOLDA, MATERIAL:ACO CARBONO FORJADO A105, RATING:3000#",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13390151",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 2SN, DIAM INT:DN12, PRESSAO MAX:275BAR, COMPR:3500MM, TERM A:FEM CURVA 90 JIC, TERMINAL B:FEMEA 90 DKO, INOX 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13079058",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;PADRAO SAE 100R1AT;DIAM INTERNO 1/2 IN;PRESSAO TRABALHO 135BAR;COMP 900,0MM;DKO FEMEA 90;TERMINAL B MACHO NPT;MAT TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27497447",
+        "class": "PDM110",
+        "description": "PARAF SEXTAVADO, ROSCA METRICA GROSSA, BITOLA M24, COMPRIMENTO 90MM, GRAU 10.9, MATERIAL ACO CARBONO, REVESTIMENTO GF, NORMA CONSTRUCAO DIN 933",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21303709",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, BITOLA:1/2\", PRESSAO NOMINAL:800#, CORPO:ACO FORJADO, CONEXAO:SOLDA ENCAIXE, PASSAGEM:FULL BORE, PTFE, ACIONAMENTO:ATUADOR PNEUM, CONF AMOSTRA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12997804",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA, DIAM NOMINAL: 2\", TIPO CORPO: LUG, MATERIAL CORPO: FERRO NODULAR, MATERIAL DISCO: A351 CF8M, VEDACAO SEDE: PTFE, ACIONAMENTO: REDUTOR",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29825337",
+        "class": "PDM041",
+        "description": "VALV GAVETA;BITOLA:1/2POL;RATING:800#;CORPO:ACO INOX FORJADO A182 F316;LIGACAO:SOLDA ENCAIXE;CASTELO:APARAFUSADO;ACIONAMENTO:VOLANTE, CONF AMOSTRA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15052296",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 1SN, DIAM INTERNO:3/4POL, PRESSAO:1525LBS, COMP:4500MM, TERMINAL A:FEMEA RETA DKO, TERMINAL B:FEMEA BSP, MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25131914",
+        "class": "PDM050",
+        "description": "TE REDUCAO, DIAM NOMINAL:1-1/2\", DIAMETRO REDUZIDO:1POL, CLASSE:6000#, MATERIAL:ACO FORJADO, EXTREMIDADE:ENCAIXE SOLDA, ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17032640",
+        "class": "PDM050",
+        "description": "NIPLE BITOLA DE 2 POL, CLASSE PRESSAO 3000#, MAT DE A182 F316, COM LIGACAO ENCAIXE SOLDA, NORMA CONSTRUCAO DE ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20268225",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 856 4SP, DIAM INT:1/2POL, PRESSAO:6020 PSI, TERM A:FEMEA GIRATORIA JIC, FEM RETA JIC, TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25359485",
+        "class": "PDM050",
+        "description": "TE REDUCAO, DN:DN 100, DIAMETRO REDUZIDO:3POL, MATERIAL:ACO CARBONO A234 WPB, EXTREMIDADE:SOLDA TOPO, CONF:ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14154550",
+        "class": "PDM042",
+        "description": "VALVULA GLOBO, DN:DN 200, RATING:PN 16, MAT CORPO:FERRO FUNDIDO, ACIONAMENTO:MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20703014",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 2SN, DIAM INTERNO:1/4\", C:1000 MM, TERMINAL A:FEMEA 90G JIC, TERMINAL B:FEM CURVA 90 JIC, TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26740839",
+        "class": "PDM041",
+        "description": "VALV GAVETA, DIAM:1 1/2 POL, MATERIAL:FERRO FUNDIDO, VOLANTE, CASTELO:APARAFUSADO, LIGACAO:FLG FF",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10668061",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA; DN:DN 200; TIPO CORPO:WAFER; MATERIAL:FERRO NODULAR; MATERIAL DISCO:FERRO FUNDIDO NODULAR NIQUELADO; VEDACAO SEDE:BUNA-N; ACIONAMENTO:ALAVANCA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19801938",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:SAE 100R1AT, DIAMETRO:1/4POL, PRESSAO TRABALHO:190BAR, COMPR:750MM, TERMINAL 1:FEMEA 90 DKO, MACHO RETO NPT, MAT TERMINAIS:INOX 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28876150",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - NORMA:EN 853 2SN - DIAMETRO:1 POL - PRESSAO TRAB:2395PSI - COMP:900 MM - FEM CURVA 90 JIC - TERMINAL B:FEMEA BSP - MATERIAL TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20263139",
+        "class": "PDM050",
+        "description": "NIPLE; DIAM NOMINAL:1.1/4\"; PRESSAO NOMINAL:3000#; MAT:ACO CARBONO FORJADO A105; LIGACAO:SOLDA ENCAIXE; NORMA:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27375914",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS, DN:1/2\", CLASSE:150#, MAT:FERRO MALEAVEL, ROSCA BSP, NORMA:NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24729287",
+        "class": "PDM050",
+        "description": "LUVA 1/2 IN, 6000#, F316, EXTREMIDADE DE ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21075561",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA BITOLA DE 4POL, TIPO CORPO WAFER, COM MATERIAL FERRO NODULAR, VEDACAO SEDE EPDM, COM ACIONAMENTO ATUADOR ELETRICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17148475",
+        "class": "PDM043",
+        "description": "VALVULA RETENCAO DN 80, COM RATING PN 16, COM MATERIAL CORPO FERRO FUNDIDO, TIPO CONEXAO FLANGEADA, COM TIPO PORTINHOLA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20775952",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS DIAM 2,5POL, SCH 40S, COM MAT WP316, EXTREMIDADE DE SOLDA TOPO, PADRAO DE ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12796177",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA 1/2\" PRESSAO NOMINAL DE 800# CORPO A182 F316 CONEXAO DE SOLDA ENCAIXE PASSAGEM DE REDUZIDA VEDACAO SEDE METAL-METAL ALAVANCA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25229698",
+        "class": "PDM050",
+        "description": "CAP, DIAM NOMINAL:1/2\", CLASSE:150#, MAT:FERRO MALEAVEL, BSP",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15431138",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:EN 856 4SP, DIAMETRO:1-1/4\", PRESS TRAB:210BAR, COMP:4500MM, TERMINAL A:FEMEA 90 DKO, LADO B:FEMEA GIRATORIA JIC",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23168536",
+        "class": "PDM110",
+        "description": "VERGALHAO ROSCADA ROSCA DE M16 COMP 1 M COM MATERIAL AC CARBONO REVESTIMENTO ZB NORMA CONSTRUCAO DE DIN 975",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12780247",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:SAE 100R1AT, DIAM INTERNO:1POL, PRESSAO:1000PSI, C:1200MM, JIC FEMEA 90, TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23732833",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DN:4\", TIPO CORPO:WAFER, MATERIAL CORPO:ACO CARBONO, MATERIAL DISCO:ACO INOX FUNDIDO A351 CF8M, VEDACAO SEDE:NBR, ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23606688",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - PADRAO:EN 853 2SN - DIAM INT:1POL (-16) - C:5000MM - FEM RETA JIC - TERMINAL B:BSP MACHO - MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12475200",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, D.I. 1.1/2\", PRESSAO TRAB 2685 PSI, COMP 1800MM, TERMINAL A FEM CURVA 90 JIC, LADO B MACHO FIXO NPT, MATERIAL TERMINAIS ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29967620",
+        "class": "PDM041",
+        "description": "VALVULA GAVETA; DIAM: 2 POL; MATERIAL: ACO FUNDIDO; CLASSE PRESSAO: 600#; TIPO CONEXAO: SOLDA TOPO; CASTELO: APARAFUSADO; ACIONAMENTO: VOLANTE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19377072",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, SAE 100R2AT, DIAM INTERNO:1/4 IN, PRESSAO TRABALHO:5005LBS, COMPRIMENTO:450 MM, LADO A:MACHO NPT, LADO B:FEMEA RETA BSP, MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11729010",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 856 4SP, DIAM INTERNO:1.1/4 IN, PRESSAO MAX:210BAR, COMPRIMENTO:2500MM, TERMINAL A:JIC FEMEA 90, TERM B:MACHO NPT, MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22272353",
+        "class": "PDM041",
+        "description": "VALVULA GAVETA; DIAM:1.1/4POL; 800#; MATERIAL CORPO:A105; ACIONAMENTO:VOLANTE; CASTELO:APARAFUSADO; EXTREMIDADE:ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25818146",
+        "class": "PDM050",
+        "description": "COTOVELO 45 GRAUS, DN:DN 8, TIPO CONEXAO:SOLDA ENCAIXE, MAT:A182 F316, CLASSE:3000#, NORMA:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14108083",
+        "class": "PDM011",
+        "description": "NAO UTILIZAR - USAR COD 14529447 - MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 2SN, DIAM INT:-20, TERMINAL A:FEMEA 90 JIC, COMP:1600MM, PRESSAO TRAB:125BAR, ORFS FEMEA, TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17090392",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA, DIAMETRO NOMINAL:4POL, TIPO CORPO:LUG, CORPO:FERRO FUNDIDO, MATERIAL DISCO:FERRO FUNDIDO NODULAR NIQUELADO, PTFE, ACIONAMENTO:REDUTOR",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24594675",
+        "class": "PDM050",
+        "description": "LUVA REDUCAO, DIAM NOMINAL:1 1/2POL, DIAMETRO REDUZIDO:1 1/4POL, CLASSE PRESSAO:3000#, MATERIAL:ACO CARBONO, LIGACAO:ENCAIXE SOLDA, PADRAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11629190",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAMETRO NOMINAL:2.1/2 IN, TIPO CORPO:WAFER, ACIONAMENTO:CAIXA REDUTORA, MATERIAL DISCO:ACO INOX FUNDIDO A351 CF8M, VEDACAO SEDE:NBR, CORPO:FERRO NODULAR",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11469758",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, BITOLA:24 IN, ACIONAMENTO:REDUTOR MANUAL, MATERIAL CORPO:FERRO NODULAR, MATERIAL DISCO:FERRO FUNDIDO NODULAR NIQUELADO, VEDACAO SEDE:BORRACHA EPDM, TIPO CORPO:FLANGEADA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16777966",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA: EN 853 2SN, DIAM INT: 5/8\", PRESSAO MAX: 3625 PSI, C: 1100MM, TERMINAL A: NPT MACHO, LADO B: FEMEA RETA DKOL, MATERIAL TERMINAIS: ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27688164",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;NORMA CONSTRUCAO:SAE 100R1AT;D.I.:1POL;COMPR:1300MM;TERMINAL A:FEMEA RETA JIC;MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29338662",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:EN 853 2SN, DIAM INT:3/4\", COMPRIMENTO:2200MM, TERMINAL A:JIC FEMEA 90, TERM B:ORFS FEMEA, MAT TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23990545",
+        "class": "PDM050",
+        "description": "CAP 2\", CLASSE DE 3000#, ACO INOX FORJADO A182 F316, COM TIPO CONEXAO SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12593078",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA, DIAMETRO:DN100, MATERIAL:ACO CARBONO, MATERIAL DISCO:BRONZE ALUMINIO, VEDACAO SEDE:BORRACHA NITRILICA, ACIONAMENTO:ATUADOR PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28295267",
+        "class": "PDM050",
+        "description": "LUVA, DIAMETRO NOMINAL: 1 1/4POL, MAT: ACO CARBONO FORJADO A105, 6000#, CONEXAO: SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26236250",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA DIAMETRO NOMINAL 1,5POL, PN 16, MATERIAL CORPO DE FERRO NODULAR, EXTREMIDADE FLANGEADA, COM PASSAGEM REDUZIDA, VEDACAO SEDE PTFE, ALAVANCA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17982369",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DN: 3\", TIPO CORPO: WAFER, CORPO: FERRO FUNDIDO, FERRO FUNDIDO NODULAR NIQUELADO, VEDACAO SEDE: ETILENO PROPILENO, ACIONAMENTO: ATUADOR PNEUM",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27425296",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA, DIAM:8POL, TIPO CORPO:FLANGEADA, CORPO:FERRO FUNDIDO, MATERIAL DISCO:INOX 316, VEDACAO SEDE:ETILENO PROPILENO, ACIONAMENTO:CAIXA REDUTORA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12255007",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, DIAM NOMINAL: 1POL, DIAMETRO REDUZIDO: 3/4POL, CLASSE PRESSAO: 150#, MAT: FERRO MALEAVEL, TIPO CONEXAO: ROSCA BSP, PADRAO: NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15738763",
+        "class": "PDM050",
+        "description": "TE, DIAMETRO NOMINAL:3/8POL, MAT:ACO FORJADO, LIGACAO:SOLDA ENCAIXE, CONF:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12061896",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - CONF:SAE 100R2AT - DIAMETRO INTERNO:1/4 POL - PT:352KGF/CM2 - C:450 MM - LADO A:DKO FEMEA - LADO B:JIC FEMEA 90 - MATERIAL TERMINAIS:ACO ZINCADO, APLICACAO GERAL",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25061470",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 2SN, DI: 3/8POL (-6), PT: 4785PSI, C: 4000MM, TERM A: JIC FEMEA 90, TERM B: FEMEA RETA BSP, ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23733564",
+        "class": "PDM050",
+        "description": "CAP DIAM NOMINAL DE 6POL, SCHEDULE DE SCH 40, MATERIAL ACO CARBONO A234 WPB, EXTREMIDADE SOLDA TOPO, ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28955733",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA; CORPO:ACO FUNDIDO; TIPO CORPO:FLANGEADA; DIAMETRO:12\"; MATERIAL DISCO:ACO INOX; VEDACAO SEDE:BORRACHA NITRILICA; ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "MATERIAL DISCO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27153770",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:EN 853 2SN, D.I.:5/8POL, PRESSAO MAX:250BAR, COMPRIMENTO:800MM, TERMINAL 2:FEMEA 90G JIC, TERMINAL A:FEMEA 90 JIC, ACO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18202983",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA, DIAMETRO NOMINAL:12 IN, LUG, MATERIAL CORPO:ACO CARBONO, MATERIAL DISCO:A351 CF8M, VEDACAO SEDE:NBR, ACIONAMENTO:CAIXA REDUTORA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13222553",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;CONF:EN 853 1SN;PRESSAO TRAB:88BAR;COMP:800MM;LADO B:BSP MACHO;TERMINAL A:FEMEA RETA ORFS;TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10893701",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA SAE 100R2AT, PRESSAO MAX DE 5005PSI, COMPR DE 3500MM, COM TERMINAL A BSP MACHO, TERMINAL 2 FEMEA RETA JIC 37 GRAUS, MAT TERMINAIS INOX",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23376554",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - CONF:EN 856 4SH - DIAM INT:2\" - PRESS TRAB:250BAR - C:900 MM - TERM A:FEMEA RETA JIC 37 GRAUS - TERMINAL B:FEMEA RETA DKOL - MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16929878",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA EN 856 4SH, D.I. 1 1/2 POL, MATERIAL TERMINAIS INOX 316, TERM A FEMEA 90 JIC, JIC FEMEA, COMPRIMENTO 1200MM",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17984897",
+        "class": "PDM050",
+        "description": "LUVA, DIAMETRO NOMINAL:3/4 POL, PRESSAO NOMINAL:3000#, MATERIAL:INOX 316, NORMA:ASME B16.11, CONEXAO:ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22632397",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAMETRO NOMINAL:6 IN, VEDACAO SEDE:EPDM, CORPO:FERRO NODULAR, WAFER, CAIXA REDUTORA, VER DESENHO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16737177",
+        "class": "PDM050",
+        "description": "TE  DIAMETRO NOMINAL DE 1/4 IN 3000# MATERIAL DE ACO FORJADO COM EXTREMIDADE ENCAIXE SOLDA COM PADRAO ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11581458",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA, DN:DN 50, TIPO CORPO:LUG, MATERIAL:ACO CARBONO, VEDACAO SEDE:NBR, MATERIAL DISCO:BRONZE ALUMINIO, ACIONAMENTO:MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29271586",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:EN 856 4SH, DIAM INT:1 1/4POL, PRESS TRAB:350BAR, COMPR:450MM, TERM A:MACHO BSP, TERM B:DKO FEMEA 90, TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21534906",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA, DIAMETRO NOMINAL:DN200, TIPO CORPO:LUG, MAT CORPO:FERRO NODULAR, MATERIAL DISCO:ACO INOX FUNDIDO A351 CF8M, TEFLON, ACIONAMENTO:MANOPLA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29199748",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - SAE 100R1AT - MAT TERMINAIS:ACO CARBONO - COMP:1800MM - TERMINAL A:FEMEA 90G JIC - MACHO RETO JIC - PRESSAO:655PSI",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23573569",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA, LUG, DIAMETRO: 14 POL, MATERIAL CORPO: FOFO NODULAR, MATERIAL DISCO: ACO INOX, EPDM, CAIXA REDUTORA",
+        "fields": {
+          "MATERIAL DISCO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16490712",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA EN 853 1SN COM DIAMETRO -8 PRESSAO TRAB 160BAR C DE 700 MM MACHO RETO JIC TERM B FEMEA CURVA 90 GRAUS JIC COM MAT TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14529447",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 2SN, DIAM INT:-20, TERMINAL A:FEMEA 90 JIC, COMP:1600MM, PRESSAO TRAB:125BAR, ORFS FEMEA, TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20084323",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, BITOLA:1 POL, DIAMETRO REDUZIDO:3/8\", MAT:INOX 316, LIGACAO:SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24388289",
+        "class": "PDM040",
+        "description": "VALV ESFERA, DIAM NOMINAL:DN 15, 800#, MATERIAL:A105, EXTREMIDADE:ENCAIXE SOLDA, PASSAGEM:FULL BORE, ATUADOR PNEUM",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16014924",
+        "class": "PDM041",
+        "description": "VALV. GAVETA - CL:300# - ACIONAMENTO:VOLANTE - CONEXAO:SOLDA TOPO - APARAFUSADO - MAT CORPO:ACO CARBONO FUNDIDO A216 WCB",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23535886",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE SAE 100R1AT 1/4POL (-4) FEMEA RETA JIC COM TERMINAL B FEMEA RETA DKO MATERIAL TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24545295",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;NORMA:EN 853 1SN;MAT TERMINAIS:ACO ZINCADO;PRESS TRAB:915 PSI;COMPR:400,0MM;FEMEA RETA DKO;TERMINAL B:MACHO FIXO NPT;DIAM INTERNO:1.1/4POL",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11899618",
+        "class": "PDM040",
+        "description": "VALVULA  ESF;DIAM NOMINAL:DN 65;150#;CORPO:A216 WCB;EXTREMIDADE:SOLDA TOPO;PASSAGEM:FULL BORE;ACIONAMENTO:MANOPLA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12912398",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:EN 853 2SN, PT:5800 PSI, TERMINAL B:MACHO RETO NPT, FEMEA GIRATORIA JIC, COMP:750MM, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16277038",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 1SN, DI:1 1/4 POL, PRESSAO:64KGF/CM2, C:1300MM, MACHO RETO JIC, TERMINAL B:FEMEA 45 JIC, AISI 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25653533",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA - DIAMETRO:3 POL - TIPO CORPO:WAFER - MATERIAL:ACO CARBONO - MATERIAL DISCO:A351 CF8M - VEDACAO SEDE:BORRACHA NITRILICA - ACIONAMENTO:ATUADOR PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11351582",
+        "class": "PDM110",
+        "description": "PARAFUSO SEXT, ROSCA: METRICA, REVESTIMENTO: ZINCADO BRANCO, C: 70MM, GRAU: 10.9, MATERIAL: ACO CARBONO, ROSCA: M30, DIN 933",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22536407",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; EN 853 2SN; DIAM INT:1/4POL (-4); PRESSAO TRAB:400BAR; C:1000MM; LADO A:JIC FEMEA; TERMINAL B:MACHO RETO JIC; TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17085785",
+        "class": "PDM050",
+        "description": "TE REDUCAO, BITOLA:3/4\", DIAMETRO REDUZIDO:3/8\", CLASSE PRESSAO:150#, MATERIAL:FERRO MALEAVEL, BSP, PADRAO:NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10414556",
+        "class": "PDM050",
+        "description": "NIPLE, BITOLA:1/2POL, 6000#, MATERIAL:INOX, LIGACAO:ENCAIXE SOLDA, ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24317928",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF: EN 856 4SH, DIAMETRO INTERNO: 1,25POL, PT: 350BAR, COMP: 3000 MM, TERMINAL A: FEMEA DKO, TERM B: JIC FEMEA 90, TERMINAIS: ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26946121",
+        "class": "PDM043",
+        "description": "VALVULA RETENCAO;DIAM:3POL;PRESSAO NOMINAL:150#;A216 WCB;TIPO CONEXAO:SOLDA TOPO;TIPO:ESFERA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23374707",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, DIAM:1/2POL, DIAMETRO REDUZIDO:1/8POL, MAT:ACO CARBONO FORJADO A105, EXTREMIDADE:SOLDA ENCAIXE, CONF:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19074330",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; NORMA:SAE 100R2AT; DIAM INTERNO:3/8\"; PRESSAO MAX:280KGF/CM2; COMPRIMENTO:300MM; FEMEA CURVA 90 GRAUS JIC; TERMINAL 2:BSP MACHO; TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26069973",
+        "class": "PDM110",
+        "description": "PARAF SEXTAVADO ROSCA ROSCA GROSSA, DIAMETRO M10, COMP DE 35MM, COM RESISTENCIA 8.8, MATERIAL DE AC CARBONO, COM REVESTIMENTO PRETO, PADRAO DE DIN 931",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25097692",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA CONF EN 853 2SN, COM DIAMETRO INTERNO DN19, COMPR DE 1300MM, COM LADO A FEMEA RETA BSP, TERMINAL B DKO FEMEA, TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29180801",
+        "class": "PDM050",
+        "description": "TE REDUCAO; BITOLA:1 IN; PRESSAO NOMINAL:6000#; MATERIAL:ACO INOX FORJADO A182 F316; PADRAO:ASME B16.11; TIPO CONEXAO:SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15944813",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 856 4SH, DI:DN51, PRESSAO TRAB:255KGF/CM2, COMP:4500MM, FEMEA RETA BSP, FEMEA RETA DKOL, TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22475011",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, TERMINAL 1:FEMEA RETA ORFS, COMPR:1300 MM, PADRAO:EN 856 4SP, TERM B:JIC FEMEA, MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18911854",
+        "class": "PDM042",
+        "description": "VALVULA GLOBO; DIAM NOMINAL:DN65; ACIONAMENTO:VOLANTE; CORPO:FERRO NODULAR; LIGACAO:FLANGEADA; RATING:PN 16",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27921813",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:SAE 100R1AT, DIAM INTERNO:1POL, PRESS TRAB:69 BAR, COMPR:1200MM, TERM A:MACHO FIXO NPT, TERM B:BSP MACHO, TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16265658",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, SAE 100R2AT, DI:1/4 POL, PRESSAO TRAB:345BAR, COMP:3500 MM, FEMEA RETA JIC 37 GRAUS, LADO B:NPT MACHO, ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA RETA JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29537807",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, MATERIAL TERMINAIS:ACO CARBONO, DIAMETRO:-16, COMPRIMENTO:700MM, FEMEA 90G JIC, EN 853 2SN",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14068408",
+        "class": "PDM110",
+        "description": "PARAFUSO CAB SEXTAVADA COM ROSCA UNC 1/2\" 2.1/4POL CLASSE SAE GRAU 5 MATERIAL AC CARBONO REVESTIMENTO GF NORMA CONSTRUCAO ASME B18.2.1",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17253526",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - CONF:EN 856 4SP - TERMINAIS:AISI 316 - PRESSAO TRABALHO:445BAR - COMPR:700 MM - TERM A:JIC FEMEA 90 - TERMINAL B:MACHO FIXO NPT - DIAM INTERNO:3/8\"",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25201962",
+        "class": "PDM050",
+        "description": "LUVA, DIAMETRO NOMINAL: 1/4\", CLASSE PRESSAO: 3000#, MATERIAL: ACO CARBONO FORJADO A105, CONEXAO: SOLDA ENCAIXE, PADRAO: ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17588735",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA COM DIAMETRO INTERNO 1/4POL 2755 PSI COM C 900 MM TERMINAL A DE MACHO BSP TERM B DE FEMEA RETA DKO COM MAT TERMINAIS ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13563770",
+        "class": "PDM050",
+        "description": "TE, DIAMETRO NOMINAL:2.1/2 IN, SCHEDULE:SCH 40, MATERIAL:ACO CARBONO A234 WPB, LIGACAO:SOLDA TOPO, NORMA CONSTRUCAO:ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26964724",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DIAMETRO NOMINAL 1/2POL, PRESSAO NOMINAL 800#, MATERIAL CORPO ACO FORJADO, LIGACAO SOLDA ENCAIXE, PASSAGEM REDUZIDA, VEDACAO SEDE METAL-METAL, ACIONAMENTO ATUADOR PNEUMATICO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29970529",
+        "class": "PDM110",
+        "description": "ARR  LISA PARA PARAFUSO DE M 30, COM DI 31MM, 56 MM, COM E 4MM, MAT AC CARBONO, COM REVESTIMENTO GALVANIZADO A FOGO, NORMA DIN 125",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18745412",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA COM NORMA CONSTRUCAO EN 853 1SN D.I. DE 3/8POL (-6) PRESS TRAB 180BAR C 600MM FEMEA RETA JIC LADO B DE FEM CURVA 90 JIC MAT TERMINAIS INOX",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA RETA JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28611241",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - PADRAO: EN 856 4SP - DIAM INTERNO: -16 - PRESSAO: 286KGF/CM2 - COMPRIMENTO: 2000,0MM - TERMINAL A: MACHO RETO NPT - TERMINAL B: FEMEA 90 JIC - MATERIAL TERMINAIS: ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14630051",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA; DIAMETRO:6 IN; TIPO CORPO:WAFER; MATERIAL CORPO:FERRO NODULAR; MATERIAL DISCO:BRONZE ALUMINIO; BUNA-N; ACIONAMENTO:ATUADOR ELETRICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11166017",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DIAMETRO NOMINAL 1/2POL, PRESSAO NOMINAL 800#, MATERIAL CORPO ACO FORJADO, LIGACAO SOLDA ENCAIXE, PASSAGEM REDUZIDA, VEDACAO SEDE METAL-METAL, ACIONAMENTO ATUADOR PNEUMATICO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20405283",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS; BITOLA:3/8\"; PRESSAO NOMINAL:3000#; MATERIAL:ACO FORJADO; CONEXAO:SOLDA ENCAIXE; NORMA:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26446597",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:SAE 100R2AT, DIAMETRO INTERNO:5/8 POL, PRESSAO:190BAR, COMP:1800MM, TERMINAL A:JIC FEMEA 90, TERMINAL B:FEMEA RETA JIC",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17216046",
+        "class": "PDM041",
+        "description": "VALVULA GAVETA DN 6\", PRESSAO NOMINAL PN 16, MATERIAL CORPO FERRO FUNDIDO, TIPO CONEXAO DE FLG FF, CASTELO DE ROSCADO, ACIONAMENTO DE REDUTOR - REF ANTIGA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28402580",
+        "class": "PDM040",
+        "description": "VALVULA ESF, DIAMETRO NOMINAL:3/4POL, CL:800#, INOX 316, LIGACAO:SOLDA ENCAIXE, PASSAGEM:PLENA, VEDACAO SEDE:PTFE, ACIONAMENTO:ATUADOR PNEUMATICO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14392357",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DN:2 IN, CORPO:FERRO FUNDIDO, MATERIAL DISCO:A351 CF8M, VEDACAO SEDE:EPDM, ACIONAMENTO:ATUADOR ELETRICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19556203",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA;BITOLA:2\";TIPO CORPO:WAFER;CORPO:FERRO NODULAR;FERRO FUNDIDO NODULAR NIQUELADO;VEDACAO SEDE:NITRILICA;ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14676359",
+        "class": "PDM050",
+        "description": "CAP, BITOLA:10 IN, SCHEDULE:SCH 40, MAT:ACO CARBONO, TIPO CONEXAO:SOLDA TOPO, ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26400720",
+        "class": "PDM050",
+        "description": "TE, DIAM NOMINAL 8 IN, SCH 40S, MATERIAL INOX 316, TIPO CONEXAO SOLDA TOPO, ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16539573",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, CF8M, TIPO CONEXAO:SOLDA TOPO, PASSAGEM:PLENA, VEDACAO SEDE:PTFE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20941520",
+        "class": "PDM110",
+        "description": "PARAFUSO HEXAGONAL ROSCA DE MA, DIAMETRO DE M 6, COMPR 10MM, COM CLASSE 8.8, MATERIAL DE AC CARBONO, COM REVESTIMENTO BICROMATIZADO, DIN 933",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12504677",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, MATERIAL TERMINAIS ACO CARBONO, DI 1,25POL, COMP 700 MM, TERMINAL A FEMEA RETA JIC 37 GRAUS, TERM B FEMEA CURVA 45 GRAUS JIC, CONF EN 853 2SN",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28469425",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA DIAM DE 1.1/4POL CORPO CF8M COM CONEXAO SOLDA TOPO COM PASSAGEM STD VEDACAO SEDE PTFE ACIONAMENTO DE ALAVANCA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27799825",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:SAE 100R1AT, DI:5/8POL, PRESSAO TRABALHO:1525 PSI, C:800MM, TERMINAL A:FEMEA RETA JIC 37 GRAUS, TERMINAL B:MACHO RETO NPT, TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25169236",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, DIAMETRO NOMINAL: DN8, CLASSE: 3000#, MATERIAL: INOX 316, TIPO CONEXAO: ENCAIXE SOLDA, ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19979824",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; PADRAO:EN 856 4SH; DIAM INTERNO:1POL; COMPR:1100MM; TERM A:FEM RETA JIC; TERMINAL 2:FEMEA 90 JIC; MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11326777",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - NORMA:EN 856 4SH - PRESSAO MAX:380BAR - COMPR:600 MM - TERMINAL 1:FEMEA RETA DKOL - TERMINAL B:FEMEA RETA JIC - MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12991222",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, BITOLA:2 POL, LIGACAO:ENCAIXE SOLDA, MATERIAL:ACO CARBONO FORJADO A105, RATING:3000#",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28032032",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA; BITOLA:6 POL; TIPO CORPO:LUG; CORPO:ACO INOX; MATERIAL DISCO:BRONZE ALUMINIO; EPDM; ACIONAMENTO:CAIXA REDUTORA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16152980",
+        "class": "PDM050",
+        "description": "UNIAO, DIAMETRO NOMINAL:3/8 POL, CLASSE PRESSAO:3000#, MATERIAL:ACO INOX FORJADO A182 F316, TIPO CONEXAO:ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29806180",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; PADRAO:EN 853 2SN; DIAM INTERNO:5/8POL; PRESSAO TRAB:3625PSI; COMP:300 MM; JIC FEMEA 90; FEMEA GIRATORIA JIC; MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25132661",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA DIAM DE 12POL, TIPO CORPO DE LUG, MAT CORPO FERRO FUNDIDO, MATERIAL DISCO FERRO FUNDIDO NODULAR NIQUELADO, VEDACAO SEDE DE EPDM, PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12317163",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; MATERIAL TERMINAIS:ACO CARBONO; DIAM INT:-24; PRESS TRAB:2685 PSI; COMPR:1500MM; LADO A:MACHO RETO JIC; TERMINAL 2:JIC FEMEA; NORMA:EN 856 4SP",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16876999",
+        "class": "PDM040",
+        "description": "VALV ESFERA, CLASSE: 800#, MATERIAL CORPO: ACO FORJADO, EXTREMIDADE: ENCAIXE SOLDA, PLENA, VEDACAO SEDE: PTFE REFORCADO, ACIONAMENTO: ATUADOR PNEUM",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19125671",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 2SN, DIAM INTERNO:DN10, COMPR:3000MM, PT:330 BAR, LADO A:DKO FEMEA 90, MACHO RETO NPT, ACO CARBONO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19877390",
+        "class": "PDM050",
+        "description": "CAP, DIAMETRO NOMINAL: DN10, MATERIAL: FERRO MALEAVEL, EXTREMIDADE: BSP, NORMA: NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23927906",
+        "class": "PDM044",
+        "description": "VALV.  BORBOLETA, VEDACAO SEDE: EPDM, TIPO CORPO: WAFER, MATERIAL: ACO INOX, MATERIAL DISCO: FERRO FUNDIDO NODULAR NIQUELADO, DIAM NOMINAL: 8POL, MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22884663",
+        "class": "PDM050",
+        "description": "LUVA REDUCAO, DIAMETRO:2POL, DIAMETRO REDUZIDO:1.1/4 IN, CL:6000#, MATERIAL:ACO FORJADO, CONEXAO:SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12019976",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, DIAM INTERNO:1 IN, PRESSAO TRAB:69BAR, COMPR:1800MM, TERMINAL A:FEMEA RETA DKO, TERM B:FEMEA 45 JIC, TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15449567",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, PADRAO:EN 853 2SN, DIAM INT:3/4POL (-12), PRESS TRAB:215BAR, COMPR:2000MM, TERMINAL A:FEMEA ORFS, TERMINAL B:JIC MACHO, TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24273112",
+        "class": "PDM011",
+        "description": "NAO UTILIZAR - USAR COD 10553433 - MANGUEIRA HIDRAULICA MONTADA, CONF:EN 853 1SN, DIAM INTERNO:1POL, PRESSAO:88BAR, COMPRIMENTO:450MM, LADO A:DKO FEMEA 90, TERMINAL 2:FEMEA RETA JIC, ACO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27495321",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA PADRAO DE EN 853 2SN COM DIAM INTERNO -12 PT 215BAR COMPRIMENTO DE 500MM TERMINAL A DE FEMEA CURVA 90 GRAUS JIC TERMINAL B NPT MACHO MAT TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14504193",
+        "class": "PDM050",
+        "description": "BUCHA  REDUCAO, DIAMETRO:1.1/2 IN, PRESSAO NOMINAL:3000#, MATERIAL:A105, LIGACAO:SOLDA ENCAIXE, NORMA:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27303011",
+        "class": "PDM050",
+        "description": "COTOVELO 45 GRAUS;DN:1.1/4POL;PRESSAO NOMINAL:3000#;MATERIAL:INOX;CONEXAO:ENCAIXE SOLDA;CONF:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13740846",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 853 1SN, DIAM INT:1.1/4\", C:1300MM, MACHO JIC, TERMINAL B:FEMEA 45 JIC, TERMINAIS:INOX 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12705632",
+        "class": "PDM050",
+        "description": "NIPLE, DIAM:3/4 IN, CLASSE PRESSAO:150#, MATERIAL:FERRO MALEAVEL, CONEXAO:ROSCA BSP, NORMA:NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28098885",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA COM PADRAO EN 853 1SN, 3/8\", PRESSAO TRABALHO 180BAR, COM COMPRIMENTO 1500MM, LADO A FEMEA RETA JIC 37 GRAUS, FEMEA BSP, COM TERMINAIS ACO ZINCADO, VER DESENHO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18817096",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - NORMA:EN 853 2SN - DIAM INTERNO:1/2POL - C:900MM - TERMINAL A:FEMEA 90G JIC - LADO B:FEM RETA JIC - MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13018290",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA COM NORMA CONSTRUCAO EN 853 1SN, -20, COM PRESSAO TRABALHO 63BAR, 900MM, TERMINAL A DE FEMEA GIRATORIA JIC, COM LADO B MACHO NPT, ACO CARBONO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12712279",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - CONF:EN 856 4SP - D.I.:1POL - COMPRIMENTO:4500MM - PRESSAO TRAB:280BAR - LADO A:FEMEA 90 ORFS - FEM CURVA 90 JIC",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11222482",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA EN 853 2SN DI 1/2 IN PRESSAO TRAB 3990PSI COMPRIMENTO 1100MM LADO A JIC FEMEA TERMINAL 2 FEMEA 90 ORFS COM TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18015040",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - EN 856 4SP - DIAM INTERNO:3/8 IN - PRESSAO TRABALHO:445BAR - COMPR:4500MM - TERMINAL A:DKO FEMEA - TERMINAL B:FEMEA BSP - MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17438885",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; LADO B: FEMEA CURVA 90 GRAUS JIC; DIAMETRO INTERNO: 1 1/4 POL; PRESSAO TRAB: 1595LBS; C: 1500MM; TERMINAL A: JIC MACHO; CONF: SAE 100R2AT; INOX 316",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20033844",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DIAM:DN 150, PN 16, MATERIAL CORPO:FERRO NODULAR, CONEXAO:FLG FF, PASSAGEM:PASSAGEM PLENA, VEDACAO SEDE:TEFLON, ACIONAMENTO:PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10571793",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS; DN 12 IN; SCHEDULE SCH 40; MATERIAL A234 WPB; LIGACAO SOLDA TOPO; NORMA ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10827100",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, C:450MM, DI:1POL, PT:1000LBS, NORMA:SAE 100R1AT, LADO A:FEMEA CURVA 90 GRAUS ORFS, TERMINAL B:FEMEA GIRATORIA JIC, MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19962523",
+        "class": "PDM050",
+        "description": "TE REDUCAO - DIAMETRO:12\" - DIAMETRO REDUZIDO:10POL - SCH 40S - MATERIAL:A403 WP316 - TIPO CONEXAO:SOLDA TOPO - CONF:ASME B16.9",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29593363",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 2SN, D.I.:1\", PRESSAO:168KGF/CM2, C:700MM, TERMINAL A:JIC FEMEA 90, FEMEA ORFS, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23183253",
+        "class": "PDM040",
+        "description": "VALV ESFERA, DIAM NOMINAL: 6 IN, 150#, ACO FUNDIDO, TIPO CONEXAO: SOLDA TOPO, PASSAGEM: STD, TEFLON, ACIONAMENTO: REDUTOR",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13605304",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA; DIAMETRO NOMINAL:2\"; TIPO CORPO:WAFER; CORPO:FERRO FUNDIDO; INOX 316; VEDACAO SEDE:NBR; ACIONAMENTO:MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11784148",
+        "class": "PDM050",
+        "description": "NIPLE, DIAM NOMINAL:1/2\", PADRAO:NBR 6943, MATERIAL:FERRO MALEAVEL, CONEXAO:ROSCADA BSP, PRESSAO NOMINAL:150#",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24248102",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DN:1/4 POL, CL:800#, MATERIAL:ACO INOX FORJADO A182 F316, CONEXAO:SOLDA ENCAIXE, PASSAGEM:PLENA, VEDACAO SEDE:TEFLON REFORCADO, ACIONAMENTO:ALAVANCA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16407073",
+        "class": "PDM050",
+        "description": "COTOVELO 45 GRAUS DN 40, COM CL 3000#, COM EXTREMIDADE ENCAIXE SOLDA, COM NORMA ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15215027",
+        "class": "PDM050",
+        "description": "UNIAO;  RATING:3000#; F316; CONEXAO:ENCAIXE SOLDA; NORMA:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26567150",
+        "class": "PDM043",
+        "description": "VALVULA RETENCAO, BITOLA:1POL, PRESSAO NOMINAL:PN 16, MATERIAL:FERRO NODULAR, FLANGEADA FF, MODELO:PORTINHOLA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23796118",
+        "class": "PDM050",
+        "description": "TE REDUCAO - DIAMETRO REDUZIDO: 1/2POL - 3000# - NORMA: ASME B16.11 - LIGACAO: ENCAIXE SOLDA - MATERIAL: F316",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22146787",
+        "class": "PDM050",
+        "description": "TE REDUCAO; DIAMETRO: 1-1/4\"; DIAMETRO REDUZIDO: 1/2\"; 3000#; INOX 316; CONEXAO: ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18502652",
+        "class": "PDM042",
+        "description": "VALV GLOBO - DIAM NOMINAL: 1,25POL - PRESSAO NOMINAL: PN 16 - ACIONAMENTO: VOLANTE - FLANGEADA FF - CORPO: FERRO FUNDIDO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22729693",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, DIAMETRO: -8, MAT TERMINAIS: ACO CARBONO, TERMINAL A: FEMEA RETA JIC, TERMINAL B: FEMEA RETA JIC, PRESSAO: 6020PSI",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25417723",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:EN 853 1SN, DIAMETRO:1/2 IN, PRESSAO MAX:160BAR, FEMEA CURVA 45 GRAUS JIC, COMPRIMENTO:1100MM, LADO B:MACHO JIC, MAT TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27748842",
+        "class": "PDM011",
+        "description": "MANGUEIRA  HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 853 2SN, D.I.:1 IN, PRESS TRAB:2395PSI, TERMINAL 1:FEM CURVA 90 JIC, TERMINAL 2:FEMEA ORFS, TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "12513087",
+        "class": "PDM110",
+        "description": "PARAF. SEXTAVADO ROSCA DE METRICA C DE 70MM CL DE 10.9 MAT DE AC CARBONO REVESTIMENTO DE GF DIN 931",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29033583",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 1SN, DIAMETRO:-6, PRESS TRAB:2610PSI, TERMINAL A:JIC FEMEA 45, COMP:600MM, FEM RETA JIC, AISI 316",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21461204",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; NORMA CONSTRUCAO:EN 856 4SH; COMPRIMENTO:3500MM; DIAM INT:3/4POL (-12); MACHO RETO NPT; TERMINAL B:FEMEA 90 DKO; MATERIAL TERMINAIS:ACO CARBONO ZINCADO - COMPRA LOCAL",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20675164",
+        "class": "PDM050",
+        "description": "UNIAO, DN:2\", RATING:3000#, A105, CONEXAO:ENCAIXE SOLDA, ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18614718",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 856 4SP, DIAM INT:1.1/2\", PRESS TRAB:189KGF/CM2, COMPRIMENTO:4000MM, TERMINAL 1:FEMEA 90 DKO, MAT TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28869820",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 856 4SP COM DIAMETRO 3/8\" PRESSAO TRABALHO 445 BAR C 450 MM COM TERM A NPT MACHO COM TERMINAL B MACHO RETO BSP ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13062362",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:SAE 100R1AT, DI:1POL, COMP:3500 MM, TERMINAL 1:MACHO NPT, TERMINAIS:ACO CARBONO, TERMINAL 2:FEMEA RETA JIC 37 GRAUS",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19079986",
+        "class": "PDM050",
+        "description": "LUVA REDUCAO COM DN DN 15 1/4POL PRESSAO NOMINAL DE 3000# COM MATERIAL ACO CARBONO FORJADO A105 COM LIGACAO ENCAIXE SOLDA NORMA CONSTRUCAO ASME B16.11 - REF ANTIGA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20368620",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA, DIAM:12\", TIPO CORPO:WAFER, MATERIAL:ACO INOX, MATERIAL DISCO:FERRO FUNDIDO NODULAR NIQUELADO, VEDACAO SEDE:EPDM, ACIONAMENTO:CAIXA REDUTORA",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20352797",
+        "class": "PDM011",
+        "description": "MANGUEIRA  HIDRAULICA MONTADA COM NORMA EN 856 4SP, DIAM INT DE 1POL, PT DE 4060 PSI, 1000MM, TERMINAL A MACHO NPT, LADO B DE MACHO NPT, MAT TERMINAIS ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17728411",
+        "class": "PDM044",
+        "description": "VALV BORBOLETA;BORRACHA NITRILICA;TIPO CORPO:FLANGEADA;MATERIAL CORPO:ACO CARBONO;MATERIAL DISCO:CF8M;DIAMETRO:14POL;ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "ACO CARBONO FUNDIDO A216 WCB",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22105516",
+        "class": "PDM042",
+        "description": "VALVULA GLOBO - 150# - DIAMETRO: 4POL - EXTREMIDADE: SOLDA TOPO - ACIONAMENTO: VOLANTE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29420721",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 853 2SN COM DIAMETRO INTERNO 1POL PRESSAO MAX 2395 PSI C DE 450 MM COM TERMINAL A FEMEA 90 DKO COM TERMINAL B JIC MACHO ACO CARBONO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26491192",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, SAE 100R1AT, DIAMETRO: DN12, PRESSAO TRAB: 1960PSI, TERMINAL A: FEM RETA JIC, TERM B: FEMEA RETA JIC, TERMINAIS: ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13751478",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - EN 853 2SN - D.I.: 1/4POL - C: 450 MM - TERMINAL 1: FEMEA 90 JIC - TERM B: FEMEA 90 ORFS - TERMINAIS: ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS ORFS",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19454746",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, BITOLA:1.1/4POL, DIAMETRO REDUZIDO:1POL, CLASSE:6000#, CONEXAO:SOLDA ENCAIXE, PADRAO:ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22375462",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 853 1SN, DIAMETRO:DN31, PRESSAO:915 PSI, COMP:4500,0MM, LADO A:MACHO NPT, LADO B:DKO FEMEA, TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23043843",
+        "class": "PDM042",
+        "description": "VALV. GLOBO, DIAMETRO NOMINAL:DN 50, CL:300#, ACIONAMENTO:MANUAL, LIGACAO:SOLDA TOPO, ACO CARBONO FUNDIDO A216 WCB",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10364000",
+        "class": "PDM043",
+        "description": "VALVULA RETENCAO, DIAMETRO NOMINAL:1POL, CLASSE:800#, MAT CORPO:F316, CONEXAO:ENCAIXE SOLDA, TIPO:PORTINHOLA, REF ANTIGA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27138809",
+        "class": "PDM050",
+        "description": "CAP, DIAM NOMINAL: 4\", MAT: A234 WPB, SCHEDULE: SCH 40, TIPO CONEXAO: SOLDA TOPO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25609061",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAM NOMINAL 10 IN, TIPO CORPO WAFER, MATERIAL CORPO FERRO NODULAR, MATERIAL DISCO ACO INOX, VEDACAO SEDE NBR",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          },
+          "MATERIAL DISCO": {
+            "kind": "removed",
+            "before": "ACO INOX FUNDIDO A351 CF8M",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27234364",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA CONSTRUCAO EN 856 4SH DI DE 2POL (-32) PRESSAO DE 250BAR COMPR 5000MM LADO B DE MACHO NPT MATERIAL TERMINAIS DE ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11555086",
+        "class": "PDM041",
+        "description": "VALVULA GAVETA, DIAMETRO NOMINAL:8\", 300#, CORPO:ACO CARBONO, EXTREMIDADE:SOLDA TOPO, CASTELO:APARAFUSADO, ACIONAMENTO:MANUAL",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19773289",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:EN 856 4SH, DIAMETRO INTERNO:DN19, PRESSAO MAX:428KGF/CM2, COMP:300MM, TERMINAL A:MACHO BSP, TERMINAL 2:JIC FEMEA 90, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22472822",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA; DIAMETRO NOMINAL:2 POL; TIPO CORPO:WAFER; MAT CORPO:FERRO NODULAR; MATERIAL DISCO:CF8M; EPDM; REDUTOR",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25198497",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:SAE 100R2AT, DIAMETRO INTERNO:3/4 IN, PRESS TRAB:2250PSI, COMP:900MM, FEMEA 90 ORFS, TERMINAL 2:JIC FEMEA 90, MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24009975",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, DIAMETRO INTERNO:1/2 POL, PRESSAO TRABALHO:160 BAR, TERMINAIS:ACO CARBONO, TERMINAL A:MACHO FIXO NPT, TERMINAL 2:BSP FEMEA GIRATORIA, C:1100 MM",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23969949",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA EN 856 4SP 1POL PRESSAO TRAB 280 BAR C DE 900MM TERMINAL A DE ORFS FEMEA FEMEA CURVA 90 GRAUS DKO COM MATERIAL TERMINAIS ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26377911",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; NORMA CONSTRUCAO: EN 853 2SN; D.I.: 3/4POL; PRESS TRAB: 3120 PSI; COMPR: 1800MM; MACHO RETO NPT; TERMINAL B: FEMEA BSP; TERMINAIS: ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27498097",
+        "class": "PDM050",
+        "description": "UNIAO, DIAM:1/2\", RATING:150#, MAT:FERRO MALEAVEL, TIPO CONEXAO:ROSCA, NORMA CONSTRUCAO:NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18670349",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DIAMETRO NOMINAL:DN 20, PRESSAO NOMINAL:300#, CORPO:ACO INOX, LIGACAO:SOLDA TOPO, PASSAGEM:PLENA, TEFLON, ALAVANCA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28490747",
+        "class": "PDM011",
+        "description": "MANGUEIRA  HIDRAULICA MONTADA;NORMA:EN 853 2SN;DIAM INT:-4;PRESSAO TRABALHO:400 BAR;TERMINAL 2:DKO FEMEA 90;FEMEA 45 JIC;COMPRIMENTO:3000 MM;TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS DKO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13700396",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; SAE 100R1AT; D.I.:1/2\"; PRESS TRAB:1960 PSI; C:1200MM; LADO A:JIC FEMEA 90; TERM B:JIC FEMEA; TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24662441",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, EN 853 1SN, DIAM INTERNO:3/4POL, PRESSAO MAX:105BAR, C:4500MM, MAT TERMINAIS:ACO ZINCADO, TERMINAL 2:DKO FEMEA, TERMINAL A:FEMEA BSP",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA RETA BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17837670",
+        "class": "PDM050",
+        "description": "COTOVELO 90 GRAUS DIAM NOMINAL DE 1.1/2POL, CLASSE PRESSAO DE 150#, MATERIAL FERRO MALEAVEL, EXTREMIDADES DE BSP, CONF DE NBR 6943",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "FERRO MALEAVEL GALVANIZADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13827342",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, DIAMETRO NOMINAL:DN 50, TIPO CORPO:WAFER, MAT CORPO:FERRO FUNDIDO, MATERIAL DISCO:FERRO FUNDIDO NODULAR NIQUELADO, VEDACAO SEDE:BUNA-N, ACIONAMENTO:REDUTOR MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22565407",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA; PADRAO:EN 856 4SP; DI:-6; PRESSAO TRAB:6455PSI; TERM B:MACHO RETO NPT; LADO A:FEMEA ORFS; C:3000MM; MATERIAL TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17317484",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA CONSTRUCAO DE EN 853 2SN, DIAMETRO INTERNO DE 3/4\", PRESSAO TRABALHO 215BAR, 500,0MM, TERMINAL A DE FEM RETA JIC, MAT TERMINAIS DE ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18902954",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, BITOLA:2 IN, DIAMETRO REDUZIDO:1 POL, RATING:3000#, MAT:INOX 316, LIGACAO:SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22502041",
+        "class": "PDM110",
+        "description": "PARAF. SEXT;REVESTIMENTO:OXIDADO;BITOLA:M24;COMPRIMENTO:160MM;GRAU:10.9;MAT:AC CARBONO;ROSCA:METRICA;NORMA:DIN 933",
+        "fields": {
+          "MATERIAL": {
+            "kind": "removed",
+            "before": "ACO CARBONO SAE 1045",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23676341",
+        "class": "PDM040",
+        "description": "VALV ESFERA, BITOLA:3/4 POL, CL:800#, MAT CORPO:ACO CARBONO FORJADO A105, TIPO CONEXAO:ENCAIXE SOLDA, PASSAGEM:STD, PTFE, MANUAL",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "23967954",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:SAE 100R2AT, DIAMETRO INTERNO:1\", PRESSAO:140BAR, COMP:600 MM, ORFS FEMEA, TERMINAL B:MACHO BSP, MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO BSP",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "22258783",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA 3\", CLASSE DE PN 16, COM MATERIAL CORPO FERRO NODULAR, TIPO CONEXAO FLG FF, PASSAGEM PLENA, COM VEDACAO SEDE METAL-METAL, ACIONAMENTO MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29966424",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA EN 853 1SN, COM DI -20, 450MM, TERM B DE FEMEA 90 JIC, TERMINAIS DE ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "21930624",
+        "class": "PDM050",
+        "description": "BUCHA  REDUCAO, DIAM:1 1/4 POL, DIAMETRO REDUZIDO:1/2POL, CLASSE PRESSAO:6000#, MATERIAL:INOX, CONEXAO:SOLDA ENCAIXE, ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "20548288",
+        "class": "PDM043",
+        "description": "VALVULA  RETENCAO, DIAMETRO NOMINAL:DN32, PRESSAO NOMINAL:800#, CORPO:ACO FORJADO, EXTREMIDADE:ENCAIXE SOLDA, MODELO:PORTINHOLA - VER DESENHO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29133208",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, D.I.:1.1/2POL, PRESSAO TRAB:290 BAR, TERMINAL 2:FEMEA CURVA 90 GRAUS JIC, TERMINAL A:DKO FEMEA, COMPR:1500MM, MATERIAL TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29426752",
+        "class": "PDM044",
+        "description": "VALV. BORBOLETA, DIAMETRO NOMINAL:DN 200, TIPO CORPO:LUG, MAT CORPO:FERRO NODULAR, MATERIAL DISCO:A351 CF8M, VEDACAO SEDE:NBR, ACIONAMENTO:ATUADOR PNEUMATICO",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16660462",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA SAE 100R2AT, DN31, 110BAR, 500 MM, COM LADO A FEMEA RETA JIC 37 GRAUS, COM LADO B JIC FEMEA 45, MATERIAL TERMINAIS DE ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "14390848",
+        "class": "PDM044",
+        "description": "VALVULA BORBOLETA, BITOLA:3\", TIPO CORPO:LUG, MATERIAL:FERRO FUNDIDO, MATERIAL DISCO:A351 CF8M, EPDM",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13702186",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;CONF:EN 853 2SN;COMPR:4000MM;TERM A:FEMEA 90 JIC;TERMINAL B:FEMEA RETA JIC;MAT TERMINAIS:ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "15507632",
+        "class": "PDM040",
+        "description": "VALV. ESFERA; DIAMETRO NOMINAL: 2 POL; RATING: 800#; CORPO: INOX 316; LIGACAO: SOLDA ENCAIXE; VEDACAO SEDE: PTFE; MANOPLA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19537273",
+        "class": "PDM040",
+        "description": "VALVULA ESFERA, DIAMETRO:10 IN, PN 16, MATERIAL:FERRO FUNDIDO, EXTREMIDADES:FLG FF, PASSAGEM:STD, VEDACAO SEDE:TEFLON, ACIONAMENTO:MANUAL",
+        "fields": {
+          "MATERIAL CORPO": {
+            "kind": "removed",
+            "before": "FERRO FUNDIDO NODULAR",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "13924891",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA EN 853 1SN, 2320PSI, COM COMPR 600MM, FEMEA RETA JIC 37 GRAUS, TERMINAL B FEMEA 90 JIC, COM MAT TERMINAIS AISI 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA RETA JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27252279",
+        "class": "PDM050",
+        "description": "BUCHA REDUCAO, DIAM 1.1/2POL, DIAMETRO REDUZIDO 3/4POL, CLASSE PRESSAO 6000#, ACO FORJADO, EXTREMIDADE ENCAIXE SOLDA",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11264434",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA - NORMA CONSTRUCAO:EN 856 4SP - D.I.:3/8\" - PT:445BAR - COMP:5000MM - TERM A:MACHO NPT - LADO B:FEMEA 45 JIC - ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 45 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "17307059",
+        "class": "PDM050",
+        "description": "TE, ACO INOX FORJADO A182 F316, CLASSE:3000#, DIAM NOMINAL:1/4POL, TIPO CONEXAO:SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24255027",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:EN 853 1SN, TERMINAL 1:FEMEA RETA DKOL, PRESS TRAB:915PSI, C:400MM, DIAMETRO INTERNO:-20, TERMINAL B:MACHO NPT, MAT TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "16643682",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA CONSTRUCAO DE EN 853 2SN, 1.1/4POL, PRESSAO DE 125BAR, COM TERMINAL 1 FEM CURVA 90 JIC, COM TERMINAL B FEM CURVA 90 JIC, MAT TERMINAIS DE ACO ZINCADO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          },
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          },
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "26298380",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA NORMA CONSTRUCAO DE EN 856 4SP DIAM INTERNO -8 COM PRESSAO 415BAR COM COMPR 1800MM FEMEA DKO MATERIAL TERMINAIS DE ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "25628866",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:SAE 100R2AT, DIAM INTERNO:1/4\", COMPR:1100MM, TERM A:FEM CURVA 90 JIC, TERM B:JIC FEMEA, MAT TERMINAIS:ACO CARBONO ZINCADO",
+        "fields": {
+          "TERMINAL A": {
+            "kind": "removed",
+            "before": "FEMEA CURVA 90 GRAUS JIC",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28051261",
+        "class": "PDM042",
+        "description": "VALV GLOBO, LIGACAO: SOLDA ENCAIXE, RATING: 800#, DIAMETRO NOMINAL: 1POL, ACIONAMENTO: VOLANTE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "11008145",
+        "class": "PDM050",
+        "description": "BUCHA  REDUCAO; DIAMETRO REDUZIDO:1\"; DIAM:2\"; CLASSE PRESSAO:6000#; MATERIAL:A105; EXTREMIDADE:SOLDA ENCAIXE",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "19983868",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA:SAE 100R1AT, DIAMETRO:5/8 POL, PT:105BAR, COMPR:800MM, TERM A:MACHO RETO BSP, TERMINAL B:ORFS FEMEA, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "29915152",
+        "class": "PDM040",
+        "description": "VALV ESF;DIAMETRO NOMINAL:1/2 POL;CL:800#;MAT CORPO:ACO FORJADO;EXTREMIDADE:SOLDA ENCAIXE;PASSAGEM:STD;VEDACAO SEDE:PTFE;ACIONAMENTO:MANUAL",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "24835205",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:EN 853 2SN, DIAM INTERNO:5/8\", PRESS TRAB:250BAR, ACO CARBONO, FEMEA 90 JIC, LADO B:NPT MACHO, COMPR:2200 MM ITEM CRITICO",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "28766406",
+        "class": "PDM040",
+        "description": "VALV.  ESFERA; DIAMETRO NOMINAL:4 IN; 300#; ACO INOX; EXTREMIDADE:SOLDA TOPO; PASSAGEM:PASSAGEM PLENA; VEDACAO SEDE:RPTFE; ATUADOR PNEUMATICO",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA TOPO BW",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "18746359",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA;EN 853 1SN;MAT TERMINAIS:ACO ZINCADO;COMPRIMENTO:400 MM;MACHO FIXO NPT;TERM B:FEMEA GIRATORIA JIC;DIAM INTERNO:3/4\"",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27144870",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, CONF:SAE 100R1AT, DIAM INT:3/4\", PRESSAO TRABALHO:85BAR, COMPR:900 MM, FEMEA RETA BSP, TERMINAL 2:FEMEA RETA BSP, MAT TERMINAIS:ACO CARBONO",
+        "fields": {
+          "MATERIAL TERMINAIS": {
+            "kind": "removed",
+            "before": "ACO CARBONO ZINCADO",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "10683211",
+        "class": "PDM011",
+        "description": "MANGUEIRA HIDRAULICA MONTADA, NORMA CONSTRUCAO:EN 853 2SN, DI:-20, COMPR:4000 MM, TERMINAL B:NPT MACHO, TERMINAL 1:JIC FMEA 90, MATERIAL TERMINAIS:ACO INOX 316",
+        "fields": {
+          "TERMINAL B": {
+            "kind": "removed",
+            "before": "MACHO RETO NPT",
+            "after": null
+          }
+        }
+      },
+      {
+        "code": "27201464",
+        "class": "PDM050",
+        "description": "CAP, BITOLA 1/2\", CL 6000#, MATERIAL ACO CARBONO, LIGACAO ENCAIXE SOLDA, NORMA CONSTRUCAO ASME B16.11",
+        "fields": {
+          "CONEXAO": {
+            "kind": "removed",
+            "before": "SOLDA ENCAIXE SW",
+            "after": null
+          }
+        }
+      }
+    ]
+  },
+  "orders": {
+    "total": 520,
+    "statuses": {
+      "before": {
+        "READY_FOR_REVIEW": 229,
+        "INCOMPLETE": 205,
+        "OUT_OF_SCOPE": 86
+      },
+      "after": {
+        "READY_FOR_REVIEW": 229,
+        "INCOMPLETE": 205,
+        "OUT_OF_SCOPE": 86
+      }
+    },
+    "changed": 0,
+    "field_deltas": {
+      "added": {},
+      "removed": {},
+      "changed": {}
+    },
+    "changes": []
+  },
+  "proposals": {
+    "before": {
+      "merges": 1165,
+      "merge_materials": 2672,
+      "conflict_free_merges": 784,
+      "corrections": {
+        "PDM_CORRECTION": 7202,
+        "UNIT_CORRECTION": 887,
+        "NCM_CORRECTION": 3991
+      },
+      "conflict_free_corrections": {
+        "PDM_CORRECTION": 6998,
+        "UNIT_CORRECTION": 870,
+        "NCM_CORRECTION": 3991
+      },
+      "correction_fields": {
+        "description": 6923,
+        "merchandise_group": 542,
+        "unit": 887,
+        "ncm": 3991
+      },
+      "pending_reasons": {
+        "SEM_CLASSE_CONFIAVEL": 4959,
+        "DESCRICAO_FORA_DO_PADRAO": 5526,
+        "UNIDADE_SEM_FATOR": 624,
+        "MATERIAL_NAO_ATIVO": 3540,
+        "CLASSE_NAO_CONFIRMADA": 573,
+        "UNIDADE_DIFERENTE_DA_CLASSE": 319
+      },
+      "historical_group_counts": {
+        "cases": 40,
+        "proposed": 40,
+        "reviewed": 37,
+        "positive_labels": 35,
+        "correct": 35,
+        "wrong": 2,
+        "unreviewed_proposals": 3
+      },
+      "historical_group_precision": {
+        "numerator": 35,
+        "denominator": 37,
+        "value": 0.9459459459459459
+      }
+    },
+    "after": {
+      "merges": 1154,
+      "merge_materials": 2650,
+      "conflict_free_merges": 779,
+      "corrections": {
+        "PDM_CORRECTION": 7126,
+        "UNIT_CORRECTION": 887,
+        "NCM_CORRECTION": 3960
+      },
+      "conflict_free_corrections": {
+        "PDM_CORRECTION": 6919,
+        "UNIT_CORRECTION": 870,
+        "NCM_CORRECTION": 3960
+      },
+      "correction_fields": {
+        "description": 6844,
+        "merchandise_group": 542,
+        "unit": 887,
+        "ncm": 3960
+      },
+      "pending_reasons": {
+        "SEM_CLASSE_CONFIAVEL": 4959,
+        "DESCRICAO_FORA_DO_PADRAO": 5605,
+        "UNIDADE_SEM_FATOR": 624,
+        "MATERIAL_NAO_ATIVO": 3540,
+        "CLASSE_NAO_CONFIRMADA": 573,
+        "UNIDADE_DIFERENTE_DA_CLASSE": 319
+      },
+      "historical_group_counts": {
+        "cases": 40,
+        "proposed": 39,
+        "reviewed": 37,
+        "positive_labels": 35,
+        "correct": 34,
+        "wrong": 2,
+        "unreviewed_proposals": 3
+      },
+      "historical_group_precision": {
+        "numerator": 34,
+        "denominator": 36,
+        "value": 0.9444444444444444
+      }
+    }
+  },
+  "merge_groups_removed": [
+    ["10847626", "13751478"],
+    ["10935109", "14603333"],
+    ["11896218", "25229698"],
+    ["11975018", "23227303"],
+    ["12751095", "13380016"],
+    ["13563770", "29792424"],
+    ["13827342", "19556203"],
+    ["16152980", "21306332"],
+    ["16490712", "25536305"],
+    ["16566118", "21316473"],
+    ["23096408", "26946121"]
+  ],
+  "merge_groups_added": [],
+  "ncm_correction_materials_removed": [
+    ["10364000"],
+    ["10935109"],
+    ["11264434"],
+    ["11729010"],
+    ["11784148"],
+    ["13062362"],
+    ["13751478"],
+    ["16152980"],
+    ["16265658"],
+    ["16277038"],
+    ["16490712"],
+    ["17085785"],
+    ["17112759"],
+    ["17438283"],
+    ["17837670"],
+    ["19801938"],
+    ["19918262"],
+    ["20263139"],
+    ["20775952"],
+    ["21263783"],
+    ["21316473"],
+    ["23732833"],
+    ["23733564"],
+    ["23990545"],
+    ["25229698"],
+    ["26422543"],
+    ["26620356"],
+    ["26946121"],
+    ["27138809"],
+    ["27495321"],
+    ["29271586"]
+  ],
+  "ncm_correction_materials_added": [],
+  "limitations": [
+    "Sem novos rótulos de revisão técnica ou precisão populacional.",
+    "Coortes históricas não alteradas; campos removidos são abstenções, não automaticamente erros corrigidos."
+  ],
+  "previous_measurement": {
+    "baseline_commit": "8f3e40301a06aa905c42a6eb9eeaa832a5d04493",
+    "materials_orders_and_non_fiscal_counts_unchanged": true
+  }
+}

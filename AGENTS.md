@@ -487,6 +487,8 @@ Extraction prefers leaving a field empty to guessing, because a wrong value can 
 
 Orders and chat messages arrive as sentences and lines. A value followed by sentence punctuation is read without it (`DIN 933.` is `DIN 933`), while a period followed by a letter or digit stays part of the value (`8.8`, `ASME B18.2.1`, and `DIN 931.1` doesn't match `DIN 931`). A line break, with its bullet, separates items, and so does a period before a new `LABEL:`. A period followed by a space alone doesn't, since `REF. 123` is an abbreviation. Base descriptions have no line breaks or trailing periods, so these rules change orders and chat only.
 
+Reordered words may match a PDM value only when all its words are present; an incomplete value is never completed just because only one PDM option contains it. `FERRO FUNDIDO` does not establish `FERRO FUNDIDO NODULAR`, and `FEMEA BSP` does not establish a straight fitting. Explicit aliases and complete values still work. With shared identity-v3 and sentence/line parsing, #133 uses extraction revision `5`: rebuild the search index through `docker compose up --build` or `docker compose run --rm --build batch` after updating. Development counts, coverage held for review and the unchanged historical labels are recorded in [the extraction measurement](docs/extracao-valores-explicitos.md).
+
 ## Duplicate proposals
 
 The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.

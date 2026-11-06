@@ -223,7 +223,7 @@ def test_other_manufacturer_with_same_code_stays_distinct(catalog):
                 "NORMA": "EN 853 2SN",
                 "DIAMETRO INTERNO": "3/8POL",
                 "COMPRIMENTO": "900MM",
-                "TERMINAL A": "FEMEA RETA BSP",
+                # "FEMEA BSP" não informa que o terminal é reto (#133).
             },
         ),
         (
