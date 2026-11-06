@@ -91,7 +91,7 @@ Efeito na base de materiais, comparado ao `rule_based_v1`:
   linhas reais dos aliases estão em `tests/test_classification_aliases.py`.
 
 Mudar a tabela ou a revisão do repositório muda a versão do índice de busca. Reconstrua o
-índice antes de usar o chat: `docker compose build batch` e `docker compose run --rm batch`.
+índice antes de usar o chat: `docker compose up --build` faz isso pelo serviço `index`.
 
 ## Executar localmente
 

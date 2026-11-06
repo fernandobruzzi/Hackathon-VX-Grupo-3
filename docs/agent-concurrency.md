@@ -72,7 +72,6 @@ Depois de subir a aplicação e construir o índice:
 
 ```bash
 docker compose up --build -d --wait
-docker compose run --rm batch vx-back index
 docker compose exec -T agent python - --requests 8 < scripts/measure_agent.py
 ```
 

@@ -91,10 +91,10 @@ Propose merges and corrections without writing anything, from `back/`:
 uv run vx-back sanitize-report ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-Rebuild the search index and write proposals to the local database, from the repo root, after `docker compose up`. Search in chat needs this index:
+Rebuild the search index and write proposals to the local database, from the repo root, after `docker compose up`. `docker compose up` already builds the index chat search needs; this also writes proposals. Keep `--build`, since the batch image sits behind a profile and `up --build` doesn't rebuild it:
 
 ```bash
-docker compose run --rm batch
+docker compose run --rm --build batch
 ```
 
 Import the kit's 520 registration orders, from the repo root, after the index exists. Repeating it duplicates nothing ([details](docs/pedidos.md)):
@@ -174,12 +174,33 @@ docker compose up --build
 scripts/smoke_test.sh
 ```
 
-The integration smoke exercises the static front and a real MCP chat turn after
-building the search index:
+`up` runs the one-shot `index` service before the Agent starts: it rebuilds the search
+index when the rules changed and skips in seconds otherwise, so a clean clone needs no
+AWS account and no extra step for chat search. The integration smoke exercises the
+static front and a real MCP chat turn:
 
 ```bash
 scripts/smoke_test.sh http://localhost:8000 --mode local
 ```
+
+The full local flow (#47) loads the demo state, then goes through the three local
+accounts over HTTP: chat with similar-material search to a ready card, `/materiais`
+with scoped stock, a batch job started by Governança, imported orders, a technical
+approval applied, a merge that needs Governança and then Fiscal, the three decisions
+in the audit, and an after snapshot on the dashboard. It changes the database, so
+reset the demo again before a rehearsal:
+
+```bash
+DEMO_MODE=true scripts/load_demo_data.sh
+```
+
+```bash
+scripts/smoke_test.sh http://localhost:8000 --mode flow
+```
+
+Nothing in this flow calls Bedrock: chat plans with rules, the batch reports zero
+model usage and says so, and embeddings stay off. The only model-backed option,
+embeddings, has `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
 
 CI runs the same flow in an isolated Compose project, with cached images that
 include the original data kit. `DB_PORT` and `API_BIND_PORT` choose local ports;
@@ -449,7 +470,7 @@ To change the default, measure against `back/tests/fixtures/merge_review.json`. 
 
 ## Similar material search
 
-`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Changing classification or extraction rules changes that version, so rebuild the index after pulling such a change: `docker compose build batch`, then `docker compose run --rm batch`. `docker compose up --build` doesn't rebuild the batch image. Embeddings are optional, set with `EMBEDDING_REPOSITORY`, and stay off by default. On the 202 pairs the base declares identical, a local model (`ollama_nomic_v1`) found 126 in the top 10 against 124 without embeddings, at three times the cost. Titan on AWS is still to be measured. Compare any change with:
+`search_similar_materials` combines exact identity and PostgreSQL full-text, then compares attributes. It reads the index the batch builds with `vx-back index`, and refuses an index built with other rules: index and query must share the same version, PDM and algorithms. Changing classification or extraction rules changes that version, so rebuild the index after pulling such a change: `docker compose up --build` does it through the `index` service, which skips when the current version already covers every material (`vx-back index --if-stale`). It only checks version and coverage, so after approvals change material content, `docker compose run --rm --build batch` reindexes everything. Embeddings are optional, set with `EMBEDDING_REPOSITORY`, and stay off by default. On the 202 pairs the base declares identical, a local model (`ollama_nomic_v1`) found 126 in the top 10 against 124 without embeddings, at three times the cost. Titan on AWS is still to be measured. Compare any change with:
 
 ```bash
 uv run python -m vx_materials_mcp.evaluation --repository hybrid_embeddings_v1
@@ -457,7 +478,7 @@ uv run python -m vx_materials_mcp.evaluation --repository hybrid_embeddings_v1
 
 That runs from `mcp/`, needs `DATABASE_URL` and an index built with the same `EMBEDDING_REPOSITORY`. The local model runs with `docker compose --profile embeddings up -d embeddings`.
 
-The index version holds the PDM label and the workbook's SHA-256, each algorithm's name and `revision`, `IDENTITY_RULES_VERSION` and, when set, the embedding model's signature. Bump `revision` when you change a classifier's or extractor's rules or tables, `IDENTITY_RULES_VERSION` when identity rules change, and `INDEX_FORMAT` when the search text or tokens change. After any of these, or a new PDM workbook, search answers "Indice de busca ausente" until you rebuild the index with `docker compose run --rm batch`, or `uv run vx-back index` from `back/` with the `batch_user` connection.
+The index version holds the PDM label and the workbook's SHA-256, each algorithm's name and `revision`, `IDENTITY_RULES_VERSION` and, when set, the embedding model's signature. Bump `revision` when you change a classifier's or extractor's rules or tables, `IDENTITY_RULES_VERSION` when identity rules change, and `INDEX_FORMAT` when the search text or tokens change. After any of these, or a new PDM workbook, search answers "Indice de busca ausente" until you rebuild the index with `docker compose up --build`, `docker compose run --rm --build batch`, or `uv run vx-back index` from `back/` with the `batch_user` connection.
 
 The Agent passes the caller validated from the internal token to the MCP server in `VX_CALLER`, never as a tool parameter. Without it, search returns no stock. The token carries the user's permissions and authorized centers, and stock outside those centers never reaches the chat.
 

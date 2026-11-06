@@ -65,7 +65,6 @@ do workspace, mas preservam a camada das dependências externas.
 
 ```bash
 docker compose up --build -d --wait api
-docker compose run --rm batch vx-back index
 scripts/smoke_test.sh http://localhost:8000 --mode local
 node --test scripts/tests/*.test.cjs
 ```
