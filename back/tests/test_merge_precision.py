@@ -39,5 +39,5 @@ def test_merge_precision_on_random_sample(reviewed):
     decided = [item for item in reviewed["reviewed"] if item["same_item"] is not None]
     precision = sum(item["same_item"] for item in decided) / len(decided)
     assert len(decided) == SIZE
-    # Medido: 38 de 40. O mínimo só deve subir.
+    # Medido: 39 de 40 (amostra sorteada de novo com aliases_v1). O mínimo só deve subir.
     assert precision >= 0.95

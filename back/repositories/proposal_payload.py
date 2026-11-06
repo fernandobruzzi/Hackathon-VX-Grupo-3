@@ -3,6 +3,7 @@
 import os
 
 from domain.proposals import proposal_hash
+from repositories.classification import DEFAULT_REPOSITORY as CLASSIFICATION_DEFAULT
 from repositories.normalization import get_normalization_repository
 
 
@@ -62,7 +63,8 @@ def approval_payload(proposal, ids, dataset_id):
         "conflicts": conflicts,
         "changes": changes,
         "sources": {
-            "pdm_class_id": "Classificação batch: " + os.environ.get("CLASSIFICATION_REPOSITORY", "rule_based_v1"),
+            "pdm_class_id": "Classificação batch: "
+            + os.environ.get("CLASSIFICATION_REPOSITORY", CLASSIFICATION_DEFAULT),
             "attributes": "Extração batch: "
             + os.environ.get("EXTRACTION_REPOSITORY", "rule_based_v1")
             + "; validação PDM e originais no dataset",
