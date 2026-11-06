@@ -3,21 +3,50 @@
 A referência do fabricante fica como ele informa, então `LF 9009` e `LF-9009` só se igualam aqui.
 """
 
+import json
 import re
 import unicodedata
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
 
 from domain.contracts import AnalyzedMaterial, IdentityMode, PdmClass
 
 # Mude ao alterar as regras de identidade: a revisão entra na versão do índice de busca.
-IDENTITY_RULES_VERSION = "identity-v2"
+IDENTITY_RULES_VERSION = "identity-v3"
 _MANUFACTURER = "FABRICANTE"
 _REFERENCE = "REFERENCIA FABRICANTE"
 _REFERENCE_SEPARATORS = re.compile(r"[\s.\-/]")
 # A própria base trata N80767044-00 e N80767044 como a mesma peça.
 _REFERENCE_NEUTRAL_SUFFIX = re.compile(r"-00$")
 _REVISION = re.compile(r"\bREV(?:IS[AÃ]O|ISION)?(?:\s*[:.\-]\s*|\s+)[A-Z0-9]+\b", re.IGNORECASE)
+
+
+def resolve_item_name(pdm_class: PdmClass, matched_names: Iterable[str]) -> str | None:
+    """Usa a evidência do classificador; classe com vários itens não ganha um nome arbitrário."""
+    if len(pdm_class.item_names) == 1:
+        return pdm_class.item_names[0]
+    matches = {name for name in matched_names if name in pdm_class.item_names}
+    specific = {name for name in matches if not any(other.startswith(name + " ") for other in matches)}
+    return specific.pop() if len(specific) == 1 else None
+
+
+def item_name_review_reasons(pdm_class: PdmClass, matched_names: Iterable[str]) -> tuple[str, ...]:
+    """Distingue ausência de nome de evidência explícita de tipos contraditórios."""
+    names = tuple(name for name in matched_names if name in pdm_class.item_names)
+    return ("SUBSTANTIVO_AMBIGUO",) if names and resolve_item_name(pdm_class, names) is None else ()
+
+
+def identity_signature(pdm_class_id: str | None, item_name: str | None, attributes: Mapping[str, str | None]) -> str:
+    """Vincula a verificação à ficha completa; assinaturas antigas exigem nova busca."""
+    return json.dumps(
+        {
+            "pdm_class_id": pdm_class_id,
+            "item_name": item_name,
+            "attributes": {k: v for k, v in attributes.items() if v},
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+    )
 
 
 def manufacturer_key(value: str) -> str:
@@ -54,13 +83,22 @@ def reference_review_reasons(pdm_class: PdmClass, attributes: Mapping[str, str],
 
 
 def material_review_reasons(material: AnalyzedMaterial, pdm_class: PdmClass) -> tuple[str, ...]:
-    reasons = list(
-        reference_review_reasons(pdm_class, material.attributes, material.record.description, material.record.reference)
-    )
+    reasons = [
+        *material.review_reasons,
+        *reference_review_reasons(
+            pdm_class, material.attributes, material.record.description, material.record.reference
+        ),
+    ]
     structured = manufacturer_key(material.record.manufacturer)
     extracted = manufacturer_key(material.attributes.get(_MANUFACTURER, ""))
     if structured and extracted and structured != extracted:
         reasons.append("FABRICANTE_CONFLITANTE")
+    reference = material.attributes.get(_REFERENCE, "")
+    if material.record.reference and reference:
+        if reference_key(material.record.reference) != reference_key(reference):
+            reasons.append("REFERENCIA_CONFLITANTE")
+        elif reference_spelling_key(material.record.reference) != reference_spelling_key(reference):
+            reasons.append("SUFIXO_REFERENCIA_NAO_CONFIRMADO")
     return tuple(reasons)
 
 
@@ -71,7 +109,12 @@ def merge_partition(material: AnalyzedMaterial) -> tuple[str | None, str, str | 
 
 def reference_key(reference: str) -> str:
     """Forma de comparar referências: ignora separadores e o sufixo neutro `-00`."""
-    return _REFERENCE_SEPARATORS.sub("", _REFERENCE_NEUTRAL_SUFFIX.sub("", reference))
+    return reference_spelling_key(_REFERENCE_NEUTRAL_SUFFIX.sub("", reference))
+
+
+def reference_spelling_key(reference: str) -> str:
+    """Compara grafia sem descartar sufixos: a chave legada é só um candidato à identidade."""
+    return _REFERENCE_SEPARATORS.sub("", reference)
 
 
 def compare_attributes(

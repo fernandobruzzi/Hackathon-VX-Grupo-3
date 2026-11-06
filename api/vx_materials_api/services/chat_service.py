@@ -9,7 +9,6 @@ Um turno passa por duas transações curtas, e o Agent é chamado entre elas, se
 Se o Agent falhar, a reserva é liberada sem mudar a versão, e nada da mensagem fica gravado.
 """
 
-import json
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -18,6 +17,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from domain.identity import identity_signature
 from domain.pdm_loader import DEFAULT_PDM_VERSION
 from vx_materials_api.db.models import ChatMessage, ChatSession
 from vx_materials_api.errors import ApiProblem
@@ -51,9 +51,8 @@ _NOT_RUN = object()
 
 
 def card_signature(card: MaterialCard) -> str:
-    """Classe e atributos preenchidos da ficha. O Agent calcula igual para decidir se busca de novo."""
-    filled = {name: value for name, value in card.attributes.items() if value}
-    return json.dumps({"pdm_class_id": card.pdm_class_id, "attributes": filled}, sort_keys=True, ensure_ascii=False)
+    """Classe, nome efetivo e atributos; o Agent calcula igual antes de reaproveitar a busca."""
+    return identity_signature(card.pdm_class_id, card.pdm_class_name, card.attributes)
 
 
 def _search_candidates(result: AgentRunResponse) -> list[dict[str, Any]] | None | object:
@@ -75,6 +74,9 @@ def effective_candidates(
     search = _search_candidates(result)
     if search is not _NOT_RUN:
         return search, False
+    named = result.context_patch.get("item_name")
+    if named is not None and named != result.material_card.pdm_class_name:
+        return None, False
     if saved and saved.get("signature") == card_signature(result.material_card):
         return saved.get("candidates", []), True
     return None, False

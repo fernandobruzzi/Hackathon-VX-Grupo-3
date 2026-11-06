@@ -156,7 +156,9 @@ def test_fixed_reviewed_cohort_eliminates_false_merges_and_explains_held_revisio
     result = evaluate(sample, proposals, identity_review_report(analyzed, catalog))
     assert (result["baseline_groups"], result["baseline_true"], result["baseline_false"]) == (40, 38, 2)
     assert result["retained_false_groups"] == 0
-    assert result["retained_true_groups"] == 34
+    # Dois positivos históricos adicionais ficam retidos por sufixo sem confirmação.
+    # Seus rótulos e os dois erros históricos permanecem no mesmo arquivo.
+    assert result["retained_true_groups"] == 32
     assert result["retained_precision"] == 1.0
     assert result["unreviewed_changed_groups"] == []
     removed_codes = {tuple(item["original_codes"]) for item in result["removed"]}

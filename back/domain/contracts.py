@@ -234,6 +234,7 @@ class AnalyzedMaterial:
     item_name: str | None
     attributes: dict[str, str]
     identity_key: str | None
+    review_reasons: tuple[str, ...] = ()
 
 
 class MatchType(StrEnum):

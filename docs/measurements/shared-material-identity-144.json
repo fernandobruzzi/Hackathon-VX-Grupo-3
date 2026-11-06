@@ -1,0 +1,3923 @@
+{
+  "schema": "shared-material-identity-development-diff-v1",
+  "evaluation_kind": "DEVELOPMENT_EVALUATION",
+  "independent_review": false,
+  "authorizes_merge": false,
+  "baseline": {
+    "commit": "dadd4becd7843a309a6a456e8615f7df9a5a13ec",
+    "identity_rules_version": "identity-v2",
+    "analysis_signature": "pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v1@1|extractor:rule_based_v1@3|identity-v2",
+    "implementation": {
+      "sha256": "8431557c9fc25ee66eface0753f5d5d8291b74a3c9055854c35ae90c400cad64",
+      "source_files": 40
+    },
+    "material_counts": {
+      "identity_key_present": 11655,
+      "pdm_statuses": {
+        "OUT_OF_SCOPE": 5856,
+        "VALID": 10719,
+        "INCOMPLETE": 6979
+      }
+    },
+    "merge_summary": {
+      "proposals": 1049,
+      "materials": 2390,
+      "identity_verified": 1049,
+      "fiscal_review_required": 762,
+      "conflicts": {
+        "PDM_INVALIDO": 409,
+        "NCM_DIVERGENTE": 241,
+        "UNIDADE_SEM_FATOR": 93,
+        "UNIDADES_DIFERENTES": 37
+      }
+    },
+    "identity_review_summary": {
+      "equivalence_groups": 5,
+      "manual_review_materials": 549,
+      "reasons": {
+        "REFERENCIA_DE_PECA_AUSENTE": 118,
+        "REVISAO_DE_PECA_NAO_CONFIRMADA": 431
+      }
+    },
+    "group_hashes": {
+      "member_sets_sha256": "5329c4a091c3ac0fd18e0c3f42c23ae789edfdb6bb5cbe4d56bb208323760372",
+      "member_sets_and_changeset_hashes_sha256": "53b095ae8a6a227c6537e6871d40e7d593ec54cedd3b67019bdbcb7e7b7ef75b"
+    },
+    "search_source_sha256": "8abf9c08b35922afd342e9a5aae4a23b37de9117abd0c649e98fe9f9a3b6b946"
+  },
+  "candidate": {
+    "source": "Estado final da worktree fix/144-shared-material-identity sobre o baseline, após confrontar referência textual original e preservar ambiguidade nos checkpoints; vinculado aos fingerprints.",
+    "identity_rules_version": "identity-v3",
+    "analysis_signature": "pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v1@1|extractor:rule_based_v1@3|identity-v3",
+    "implementation": {
+      "sha256": "5e3328945c77aadea6f4a5102560fa97db6267c05ed1b029422934542adc1fbe",
+      "source_files": 41
+    },
+    "material_counts": {
+      "identity_key_present": 11655,
+      "pdm_statuses": {
+        "OUT_OF_SCOPE": 5856,
+        "VALID": 10719,
+        "INCOMPLETE": 6979
+      }
+    },
+    "merge_summary": {
+      "proposals": 978,
+      "materials": 2215,
+      "identity_verified": 978,
+      "fiscal_review_required": 710,
+      "conflicts": {
+        "PDM_INVALIDO": 376,
+        "NCM_DIVERGENTE": 222,
+        "UNIDADE_SEM_FATOR": 82,
+        "UNIDADES_DIFERENTES": 34
+      }
+    },
+    "identity_review_summary": {
+      "equivalence_groups": 5,
+      "manual_review_materials": 821,
+      "reasons": {
+        "REFERENCIA_DE_PECA_AUSENTE": 118,
+        "SUFIXO_REFERENCIA_NAO_CONFIRMADO": 175,
+        "REVISAO_DE_PECA_NAO_CONFIRMADA": 431,
+        "SUBSTANTIVO_CONTRADIZ_REFERENCIA": 11,
+        "FABRICANTE_NAO_CONFIRMADO": 86
+      }
+    },
+    "group_hashes": {
+      "member_sets_sha256": "bc15cd0d159087bf4fc8c5d3d46bd5924e12424b149a49d53be7627c9ee74ea9",
+      "member_sets_and_changeset_hashes_sha256": "48b6c4a543cd5030a5c92824b0737114b01b266699dc1a52d864a0ee4f0f9a44"
+    },
+    "search_source_sha256": "e564e7d965545b1b7e37241c2be30f37bbe7419bcf86a255d5ff31c5da09cde6",
+    "consumer_sources_sha256": {
+      "api/vx_materials_api/services/approval_service.py": "fd5434c46f19c58d0b09db6c54197f82599d064c29ff995cb2c21fd39b64dcd7",
+      "mcp/vx_materials_mcp/repositories/search/hybrid_v1.py": "e564e7d965545b1b7e37241c2be30f37bbe7419bcf86a255d5ff31c5da09cde6",
+      "back/domain/contracts.py": "85727673212e8dbe0765b64449f0179e9321e049345f13e1aceb1f4f558bb955",
+      "back/pipelines/sanitize.py": "d490224c5c9ccf12798adbc51cb55782c9daf841ead2b72f17a9288ec31067b5",
+      "back/pipelines/full_run.py": "ea1079f6dbd12c1d3a32d500da038aaecc45e6983050a976a5f69a5c70a82a42"
+    }
+  },
+  "inputs_sha256": {
+    "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+    "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+  },
+  "frozen_cohorts": {
+    "manifest_file": "back/pipelines/evaluation_data/manifest_v2.json",
+    "manifest_sha256": "3059ac435fee8aa0a76e1011e8754b05bee0250c62af6279731bf02d6bd5069b",
+    "manifest": {
+      "schema_version": "evaluation-v1",
+      "cohort_id": "sanitization-development-v2",
+      "evaluation_kind": "DEVELOPMENT",
+      "source_commit": "59ed4ea1f69f4e36b9ecbe83dc0cf53b8acc02fe",
+      "dataset_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+      "legacy_files": {
+        "merge_groups_v1.json": "e8063327ec344fb68adf8d361d6a6804c2040859b37d9b9d153df1692bd5f863",
+        "merge_pairs_v1.json": "83eab76706889291283562386045ab194ce43562d8632e558322024c6a43f88b",
+        "merge_groups_aliases_v2.json": "a03efefc9525814c3bc119804cc85156a0fa40e84ffb5537b4b3f4907d599b81"
+      },
+      "selection": "Preserva grupos históricos v1, grupos aliases_v1 recebidos da main como coorte v2, pares históricos e amostra técnica dirigida. Sem revisão independente.",
+      "group_review_additions": [
+        {
+          "codes": ["16387785", "18402570", "23858996"],
+          "author": "bepo7",
+          "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+          "label": null,
+          "evidence": [
+            "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+            "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+          ]
+        },
+        {
+          "codes": ["17947145", "29993231"],
+          "author": "bepo7",
+          "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+          "label": null,
+          "evidence": [
+            "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+            "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+          ]
+        },
+        {
+          "codes": ["18757471", "27417776"],
+          "author": "bepo7",
+          "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+          "label": null,
+          "evidence": [
+            "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+            "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+          ]
+        }
+      ],
+      "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+      "technical_file_sha256": "d39083084960678d4cb8948ccf6ddbad4f5785262232d79fad5605d25a57f23b",
+      "additional_group_cohorts": [
+        {
+          "id": "aliases-development-v2",
+          "file": "merge_groups_aliases_v2.json",
+          "source_commit": "f0a81c4",
+          "selection": "Sorteio com semente 32 após aliases_v1, recebido da main sem alterar seus rótulos.",
+          "review_additions": [
+            {
+              "codes": ["14630464", "16137946", "28868287"],
+              "author": "bepo7",
+              "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+              "label": null,
+              "evidence": [
+                "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+                "A nota exige confirmação de revisão de peça, ainda não registrada."
+              ]
+            },
+            {
+              "codes": ["27462146", "29167585"],
+              "author": "bepo7",
+              "author_role": "DEVELOPMENT_ARTIFACT_OWNER",
+              "label": null,
+              "evidence": [
+                "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao; unidades diferentes bloqueiam a consolidacao de quantidade",
+                "A nota exige confirmação de revisão de peça, ainda não registrada."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "labels_or_sources_changed": false
+  },
+  "materials": 23554,
+  "groups": {
+    "withdrawn": [
+      {
+        "codes": ["10016508", "12455675", "21891860"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["10430441", "18342502", "25251140", "28178506"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["10467529", "14565536"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["10547638", "12746420", "15761751", "24866076", "27799387"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["10706730", "23896964"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["10785442", "11384720", "13607600", "20009709"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["10941382", "22541419"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11010127", "24729718"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11117106", "18173507", "20760498"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11179082", "25348179"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11182533", "12371348", "20607446", "21469708"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11375285", "19758278"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11854316", "26556337"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["11973796", "12795984", "28312509"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["12463623", "13089929"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["12516319", "13916919"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["12561237", "21381158"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["12587546", "27378290"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["12925707", "28413547", "29892678"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["12996948", "13241995", "14914572", "17136094"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13151376", "13243590"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13250292", "13673877", "24230386"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13256054", "25918763"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13587845", "18270595"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13721776", "14732141"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13736358", "17109558", "23697825", "28758749"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13892760", "23601641", "27474654"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13933340", "17598008", "22306760", "23223299"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["13943679", "23511425"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["14203851", "16755410", "20171581", "29491227"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15109751", "28497283"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15270611", "26332471", "28826067"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15325389", "20565465"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15331267", "19689912"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15543103", "19531642", "28907487"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15845002", "22045268"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["15928304", "23699961"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["16047270", "16929219"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["16180440", "16395984"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["16250611", "19867703", "23752137"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["16748190", "18176062"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["16777202", "17606664", "19750675"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["17275697", "29903036"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["17637157", "23028078", "27024160"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["17723438", "19740101", "21038689"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["18090998", "21958859"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["18675010", "25808476", "27155952"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["18742068", "24185800", "28803784"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["18863961", "28149437"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["19860011", "24879730"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["20088271", "26822398"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["20457112", "23350830"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["20673766", "24560074"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["20797757", "23566562"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["22052743", "27957363"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["22213564", "25311414", "27881704"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["22355538", "25925699"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["22476988", "29164346"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["22749318", "28973644"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["23584892", "24920390"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["23693816", "24218240"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["23870842", "25992759"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["24004458", "27246988", "29591363"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["24060174", "28686015"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["24577814", "28751101"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["24719622", "26641912"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["25560261", "26630613"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["26092542", "26582419"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["27220149", "29031946"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["27926288", "28463628"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "codes": ["28357227", "28727662"],
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      }
+    ],
+    "withdrawal_reason_group_counts": {
+      "SUFIXO_REFERENCIA_NAO_CONFIRMADO": 71
+    },
+    "new_groups": [],
+    "counts": {
+      "retained": 978,
+      "withdrawn": 71,
+      "new": 0,
+      "retained_changeset_hash_changed": 978,
+      "retained_conflicts_changed": 0
+    }
+  },
+  "manual_review": {
+    "before": 549,
+    "after": 821,
+    "retained_materials": 549,
+    "new_materials": 272,
+    "removed_materials": 0,
+    "new_reason_counts": {
+      "SUFIXO_REFERENCIA_NAO_CONFIRMADO": 175,
+      "SUBSTANTIVO_CONTRADIZ_REFERENCIA": 11,
+      "FABRICANTE_NAO_CONFIRMADO": 86
+    },
+    "new_cases": [
+      {
+        "code": "10016508",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10255234",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "10428680",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10430441",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10467529",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10547638",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10623313",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10623889",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10706730",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10785442",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10847626",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "10941382",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11010127",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11082376",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11117106",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11179082",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11182533",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11187898",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "11270097",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11375285",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11384720",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11472033",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11591985",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11716175",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11825361",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "11854316",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "11973796",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12183956",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12319985",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12369431",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12371348",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12455675",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12463623",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12516319",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12561237",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12587546",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12591177",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12746420",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12795984",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12925707",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "12996948",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13066654",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13077379",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "13089929",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13151376",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13214262",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13241995",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13243590",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13250292",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13251345",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13256054",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13316120",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13587845",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13607600",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13673877",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13721776",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13729495",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13736358",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13751478",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13892760",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13916919",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13933340",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "13943679",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14203851",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14292727",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14548232",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14565536",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14732141",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14769070",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "14914572",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15002251",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15042147",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15109751",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15195267",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15270611",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15325389",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15331267",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15446420",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15469748",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15543103",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15555512",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15611966",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15703468",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15761751",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15845002",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15913089",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15928304",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "15953542",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16040488",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16047270",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16180440",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16250611",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16395984",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16397109",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16435139",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16744718",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16748190",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16755410",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16777202",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16929219",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "16990757",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17109558",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17136094",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17200716",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "17275697",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17468315",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17533649",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17598008",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17606664",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17637157",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17723438",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "17765761",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18090998",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18173507",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18176062",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18269222",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18270595",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18325550",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18342502",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18571940",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18675010",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18742068",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18863961",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18900827",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18916264",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "18996423",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19439946",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19531642",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19594284",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19689912",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19729889",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "19740101",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19750675",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19758278",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19831475",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19860011",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "19867703",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20009709",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20088271",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20171581",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20213295",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20457112",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20565465",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20607446",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20673766",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20698658",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20760498",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20797757",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "20883602",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21038689",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21290535",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "21381158",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21469708",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21758942",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21862603",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21891860",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21941349",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "21958859",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22045268",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22052743",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22213564",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22306760",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22355538",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22356020",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22476988",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22541419",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22555714",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "22558243",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "22749318",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23028078",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23163983",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23170473",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23223299",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23350830",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23383790",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23420306",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23492616",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23511425",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23553217",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23566562",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23584892",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23601641",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23693816",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23697825",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23699961",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23752137",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23870842",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23871670",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23896964",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "23940629",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24004458",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24060174",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24124382",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24136335",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24185800",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24218240",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24230386",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24288464",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24484437",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24560074",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24577814",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24719622",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24729718",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24866076",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24879730",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "24920390",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25187467",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "25251140",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25311414",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25348179",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25383359",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25410510",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25548981",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25560261",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25808476",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25896568",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25918763",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25925699",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "25992759",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26063287",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "26092542",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26332471",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26556337",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26559362",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26582419",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26630613",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26641912",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26822398",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "26967650",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27024160",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27048426",
+        "reasons": ["SUBSTANTIVO_CONTRADIZ_REFERENCIA"]
+      },
+      {
+        "code": "27155952",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27220149",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27246988",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27378290",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27474654",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27646814",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27799387",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27881704",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27926288",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "27957363",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28149437",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28178506",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28253403",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28312509",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28357227",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28411573",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28413547",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28463628",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28497283",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28686015",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28704316",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28722100",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28727662",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28751101",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28758749",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28789235",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28803784",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28826067",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28868610",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28907487",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "28973644",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29031946",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29164346",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29491227",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29591363",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29889044",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29892678",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29895855",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29903036",
+        "reasons": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29943284",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      },
+      {
+        "code": "29973475",
+        "reasons": ["FABRICANTE_NAO_CONFIRMADO"]
+      }
+    ]
+  },
+  "cohorts": {
+    "legacy-v1": {
+      "groups": {
+        "before": {
+          "unit": "PROPOSAL_GROUP",
+          "counts": {
+            "cases": 40,
+            "proposed": 32,
+            "reviewed": 37,
+            "positive_labels": 35,
+            "correct": 32,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 32,
+            "denominator": 32,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 32,
+            "denominator": 40,
+            "value": 0.8
+          },
+          "review_coverage": {
+            "numerator": 37,
+            "denominator": 40,
+            "value": 0.925
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 32,
+            "denominator": 35,
+            "value": 0.9142857142857143
+          },
+          "algorithm_abstention": {
+            "numerator": 8,
+            "denominator": 40,
+            "value": 0.2
+          },
+          "inconclusive_reviews": 3,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": {
+            "method": "WILSON",
+            "level": 0.95,
+            "lower": 0.8928208017449293,
+            "upper": 1.0
+          },
+          "interval_scope": "Grupos decididos da coorte; hipótese binomial. Não certifica a população nem corrige viés.",
+          "population_duplicate_recall": null
+        },
+        "after": {
+          "unit": "PROPOSAL_GROUP",
+          "counts": {
+            "cases": 40,
+            "proposed": 30,
+            "reviewed": 37,
+            "positive_labels": 35,
+            "correct": 30,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 30,
+            "denominator": 30,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 30,
+            "denominator": 40,
+            "value": 0.75
+          },
+          "review_coverage": {
+            "numerator": 37,
+            "denominator": 40,
+            "value": 0.925
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 30,
+            "denominator": 35,
+            "value": 0.8571428571428571
+          },
+          "algorithm_abstention": {
+            "numerator": 10,
+            "denominator": 40,
+            "value": 0.25
+          },
+          "inconclusive_reviews": 3,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": {
+            "method": "WILSON",
+            "level": 0.95,
+            "lower": 0.8864866068260312,
+            "upper": 0.9999999999999999
+          },
+          "interval_scope": "Grupos decididos da coorte; hipótese binomial. Não certifica a população nem corrige viés.",
+          "population_duplicate_recall": null
+        },
+        "new_abstentions": [
+          {
+            "codes": [
+              "10547638",
+              "12746420",
+              "15761751",
+              "24866076",
+              "27799387"
+            ],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (sufixo -00). Unidade CX e NCM divergentes ja sinalizados"
+                ]
+              }
+            ],
+            "proposed": false,
+            "current_status": "NOT_PROPOSED",
+            "withdrawal_causes": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+          },
+          {
+            "codes": ["15845002", "22045268"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+                ]
+              }
+            ],
+            "proposed": false,
+            "current_status": "NOT_PROPOSED",
+            "withdrawal_causes": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+          }
+        ],
+        "new_recoveries": [],
+        "known_false_cases": [
+          {
+            "codes": ["19547027", "22125549"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": [
+                  "itens diferentes: BUCHA e RODA GUIA. 6030 e o modelo da escavadeira, nao a referencia do fabricante; a classe de sobressalentes juntou nomes de item diferentes"
+                ]
+              }
+            ]
+          },
+          {
+            "codes": ["17590309", "27863373"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": [
+                  "fabricantes diferentes (PETRONAS e MOBIL): produtos equivalentes ficam separados pela regra do time, com a equivalencia registrada, sem unificar"
+                ]
+              }
+            ]
+          }
+        ],
+        "inconclusive_cases_preserved": [
+          {
+            "codes": ["16387785", "18402570", "23858996"],
+            "expected": null,
+            "historical_label": true,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao"
+                ]
+              },
+              {
+                "author": "bepo7",
+                "label": null,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+                  "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+                ]
+              }
+            ]
+          },
+          {
+            "codes": ["17947145", "29993231"],
+            "expected": null,
+            "historical_label": true,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao"
+                ]
+              },
+              {
+                "author": "bepo7",
+                "label": null,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+                  "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+                ]
+              }
+            ]
+          },
+          {
+            "codes": ["18757471", "27417776"],
+            "expected": null,
+            "historical_label": true,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao"
+                ]
+              },
+              {
+                "author": "bepo7",
+                "label": null,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+                  "A revisão original pede confirmação de intercambiabilidade. Nenhuma confirmação técnica foi registrada; rótulo atual inconclusivo."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "pairs": {
+        "before": {
+          "unit": "MATERIAL_PAIR",
+          "counts": {
+            "cases": 95,
+            "proposed": 49,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 49,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 49,
+            "denominator": 49,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 49,
+            "denominator": 95,
+            "value": 0.5157894736842106
+          },
+          "review_coverage": {
+            "numerator": 77,
+            "denominator": 95,
+            "value": 0.8105263157894737
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 49,
+            "denominator": 61,
+            "value": 0.8032786885245902
+          },
+          "algorithm_abstention": {
+            "numerator": 46,
+            "denominator": 95,
+            "value": 0.4842105263157895
+          },
+          "inconclusive_reviews": 18,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": null,
+          "interval_scope": "Indisponível: pares selecionados e correlacionados não são ensaios independentes.",
+          "population_duplicate_recall": null
+        },
+        "after": {
+          "unit": "MATERIAL_PAIR",
+          "counts": {
+            "cases": 95,
+            "proposed": 46,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 46,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 46,
+            "denominator": 46,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 46,
+            "denominator": 95,
+            "value": 0.4842105263157895
+          },
+          "review_coverage": {
+            "numerator": 77,
+            "denominator": 95,
+            "value": 0.8105263157894737
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 46,
+            "denominator": 61,
+            "value": 0.7540983606557377
+          },
+          "algorithm_abstention": {
+            "numerator": 49,
+            "denominator": 95,
+            "value": 0.5157894736842106
+          },
+          "inconclusive_reviews": 18,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": null,
+          "interval_scope": "Indisponível: pares selecionados e correlacionados não são ensaios independentes.",
+          "population_duplicate_recall": null
+        },
+        "new_abstentions": [
+          {
+            "codes": ["20607446", "21469708"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": ["mesma referencia e fabricante"]
+              }
+            ],
+            "proposed": false
+          },
+          {
+            "codes": ["11384720", "20009709"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": ["mesma referencia e fabricante"]
+              }
+            ],
+            "proposed": false
+          },
+          {
+            "codes": ["14203851", "20171581"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": ["mesma referencia e fabricante"]
+              }
+            ],
+            "proposed": false
+          }
+        ],
+        "new_recoveries": [],
+        "known_false_cases": [
+          {
+            "codes": ["12764426", "27199121"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["6 e 2 condutores"]
+              }
+            ]
+          },
+          {
+            "codes": ["14029925", "21642380"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["enchimento grafite e PTFE"]
+              }
+            ]
+          },
+          {
+            "codes": ["20709197", "23698006"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["curva C e curva B"]
+              }
+            ]
+          },
+          {
+            "codes": ["19812338", "26278030"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["espessura 3 e 3,2 mm"]
+              }
+            ]
+          },
+          {
+            "codes": ["27593598", "29720327"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["acabamento diferente"]
+              }
+            ]
+          },
+          {
+            "codes": ["14346966", "14746601"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["acabamento e medidas diferentes"]
+              }
+            ]
+          },
+          {
+            "codes": ["17554179", "20119553"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["comprimento 750 e 1500 mm"]
+              }
+            ]
+          },
+          {
+            "codes": ["17715005", "23260796"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["faixa 870 e 580 PSI"]
+              }
+            ]
+          },
+          {
+            "codes": ["14347204", "15755710"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["tipo PP e flexivel"]
+              }
+            ]
+          },
+          {
+            "codes": ["13543613", "24548372"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["rosca grossa e fina"]
+              }
+            ]
+          },
+          {
+            "codes": ["10436289", "29588001"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["3 e 1 polos"]
+              }
+            ]
+          },
+          {
+            "codes": ["12431921", "13931254"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["API 5L e A106"]
+              }
+            ]
+          },
+          {
+            "codes": ["13469341", "26414935"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["comprimento 5000 e 3500 mm"]
+              }
+            ]
+          },
+          {
+            "codes": ["10417707", "18460940"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["acabamento diferente"]
+              }
+            ]
+          },
+          {
+            "codes": ["14529447", "18804419"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["diametro -20 e -10"]
+              }
+            ]
+          },
+          {
+            "codes": ["19516967", "23554609"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["60 PSI e 60 KGF/CM2"]
+              }
+            ]
+          }
+        ],
+        "inconclusive_cases_preserved": [
+          {
+            "codes": ["18155720", "25839210"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": [
+                  "mesma descricao, sem referencia informada: nao da para confirmar"
+                ]
+              }
+            ]
+          },
+          {
+            "codes": ["24103390", "27634773"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa material nem conexao"]
+              }
+            ]
+          },
+          {
+            "codes": ["14292727", "14317792"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa embalagem"]
+              }
+            ]
+          },
+          {
+            "codes": ["13377716", "22144219"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["descricao de um esta incompleta"]
+              }
+            ]
+          },
+          {
+            "codes": ["11651153", "16008043"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa bitola"]
+              }
+            ]
+          },
+          {
+            "codes": ["11831359", "15400484"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa contatos"]
+              }
+            ]
+          },
+          {
+            "codes": ["16280762", "24337489"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa schedule"]
+              }
+            ]
+          },
+          {
+            "codes": ["10377301", "16263252"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa contatos"]
+              }
+            ]
+          },
+          {
+            "codes": ["22832138", "29388576"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa diametro"]
+              }
+            ]
+          },
+          {
+            "codes": ["13917138", "16917648"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa secao"]
+              }
+            ]
+          },
+          {
+            "codes": ["10347025", "11135823"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa comprimento"]
+              }
+            ]
+          },
+          {
+            "codes": ["11973996", "13917138"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa secao"]
+              }
+            ]
+          },
+          {
+            "codes": ["16367892", "23406311"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa comprimento"]
+              }
+            ]
+          },
+          {
+            "codes": ["15506821", "19684675"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa CA"]
+              }
+            ]
+          },
+          {
+            "codes": ["15996756", "27906835"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa tipo"]
+              }
+            ]
+          },
+          {
+            "codes": ["12519571", "24718737"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["material e acionamento vagos"]
+              }
+            ]
+          },
+          {
+            "codes": ["19526338", "19601723"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa eixo"]
+              }
+            ]
+          },
+          {
+            "codes": ["20019825", "21032483"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["material e diametro vagos em um"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "aliases-development-v2": {
+      "groups": {
+        "before": {
+          "unit": "PROPOSAL_GROUP",
+          "counts": {
+            "cases": 40,
+            "proposed": 31,
+            "reviewed": 38,
+            "positive_labels": 37,
+            "correct": 31,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 31,
+            "denominator": 31,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 31,
+            "denominator": 40,
+            "value": 0.775
+          },
+          "review_coverage": {
+            "numerator": 38,
+            "denominator": 40,
+            "value": 0.95
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 31,
+            "denominator": 37,
+            "value": 0.8378378378378378
+          },
+          "algorithm_abstention": {
+            "numerator": 9,
+            "denominator": 40,
+            "value": 0.225
+          },
+          "inconclusive_reviews": 2,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": {
+            "method": "WILSON",
+            "level": 0.95,
+            "lower": 0.889744604539564,
+            "upper": 1.0
+          },
+          "interval_scope": "Grupos decididos da coorte; hipótese binomial. Não certifica a população nem corrige viés.",
+          "population_duplicate_recall": null
+        },
+        "after": {
+          "unit": "PROPOSAL_GROUP",
+          "counts": {
+            "cases": 40,
+            "proposed": 30,
+            "reviewed": 38,
+            "positive_labels": 37,
+            "correct": 30,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 30,
+            "denominator": 30,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 30,
+            "denominator": 40,
+            "value": 0.75
+          },
+          "review_coverage": {
+            "numerator": 38,
+            "denominator": 40,
+            "value": 0.95
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 30,
+            "denominator": 37,
+            "value": 0.8108108108108109
+          },
+          "algorithm_abstention": {
+            "numerator": 10,
+            "denominator": 40,
+            "value": 0.25
+          },
+          "inconclusive_reviews": 2,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": {
+            "method": "WILSON",
+            "level": 0.95,
+            "lower": 0.8864866068260312,
+            "upper": 0.9999999999999999
+          },
+          "interval_scope": "Grupos decididos da coorte; hipótese binomial. Não certifica a população nem corrige viés.",
+          "population_duplicate_recall": null
+        },
+        "new_abstentions": [
+          {
+            "codes": ["18675010", "25808476", "27155952"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (sufixo -00 na referencia)"
+                ]
+              }
+            ],
+            "proposed": false,
+            "current_status": "NOT_PROPOSED",
+            "withdrawal_causes": ["SUFIXO_REFERENCIA_NAO_CONFIRMADO"]
+          }
+        ],
+        "new_recoveries": [],
+        "known_false_cases": [
+          {
+            "codes": ["17590309", "27863373"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": [
+                  "fabricantes diferentes (PETRONAS e MOBIL): produtos equivalentes ficam separados pela regra do time, com a equivalencia registrada, sem unificar"
+                ]
+              }
+            ]
+          }
+        ],
+        "inconclusive_cases_preserved": [
+          {
+            "codes": ["14630464", "16137946", "28868287"],
+            "expected": null,
+            "historical_label": true,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao"
+                ]
+              },
+              {
+                "author": "bepo7",
+                "label": null,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao",
+                  "A nota exige confirmação de revisão de peça, ainda não registrada."
+                ]
+              }
+            ]
+          },
+          {
+            "codes": ["27462146", "29167585"],
+            "expected": null,
+            "historical_label": true,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao; unidades diferentes bloqueiam a consolidacao de quantidade"
+                ]
+              },
+              {
+                "author": "bepo7",
+                "label": null,
+                "evidence": [
+                  "mesmo item pela referencia; um membro traz o sufixo REV A. Tratado como o mesmo PN, mas revisao de peca pode mudar intercambiabilidade: confirmar com a manutencao; unidades diferentes bloqueiam a consolidacao de quantidade",
+                  "A nota exige confirmação de revisão de peça, ainda não registrada."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "pairs": {
+        "before": {
+          "unit": "MATERIAL_PAIR",
+          "counts": {
+            "cases": 95,
+            "proposed": 49,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 49,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 49,
+            "denominator": 49,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 49,
+            "denominator": 95,
+            "value": 0.5157894736842106
+          },
+          "review_coverage": {
+            "numerator": 77,
+            "denominator": 95,
+            "value": 0.8105263157894737
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 49,
+            "denominator": 61,
+            "value": 0.8032786885245902
+          },
+          "algorithm_abstention": {
+            "numerator": 46,
+            "denominator": 95,
+            "value": 0.4842105263157895
+          },
+          "inconclusive_reviews": 18,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": null,
+          "interval_scope": "Indisponível: pares selecionados e correlacionados não são ensaios independentes.",
+          "population_duplicate_recall": null
+        },
+        "after": {
+          "unit": "MATERIAL_PAIR",
+          "counts": {
+            "cases": 95,
+            "proposed": 46,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 46,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "precision": {
+            "numerator": 46,
+            "denominator": 46,
+            "value": 1.0
+          },
+          "prediction_coverage": {
+            "numerator": 46,
+            "denominator": 95,
+            "value": 0.4842105263157895
+          },
+          "review_coverage": {
+            "numerator": 77,
+            "denominator": 95,
+            "value": 0.8105263157894737
+          },
+          "positive_recovery_in_cohort": {
+            "numerator": 46,
+            "denominator": 61,
+            "value": 0.7540983606557377
+          },
+          "algorithm_abstention": {
+            "numerator": 49,
+            "denominator": 95,
+            "value": 0.5157894736842106
+          },
+          "inconclusive_reviews": 18,
+          "precision_bounds_including_unknown_labels": {
+            "lower": 1.0,
+            "upper": 1.0
+          },
+          "conditional_precision_interval": null,
+          "interval_scope": "Indisponível: pares selecionados e correlacionados não são ensaios independentes.",
+          "population_duplicate_recall": null
+        },
+        "new_abstentions": [
+          {
+            "codes": ["20607446", "21469708"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": ["mesma referencia e fabricante"]
+              }
+            ],
+            "proposed": false
+          },
+          {
+            "codes": ["11384720", "20009709"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": ["mesma referencia e fabricante"]
+              }
+            ],
+            "proposed": false
+          },
+          {
+            "codes": ["14203851", "20171581"],
+            "expected": true,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "historical_label": true,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": true,
+                "evidence": ["mesma referencia e fabricante"]
+              }
+            ],
+            "proposed": false
+          }
+        ],
+        "new_recoveries": [],
+        "known_false_cases": [
+          {
+            "codes": ["12764426", "27199121"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["6 e 2 condutores"]
+              }
+            ]
+          },
+          {
+            "codes": ["14029925", "21642380"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["enchimento grafite e PTFE"]
+              }
+            ]
+          },
+          {
+            "codes": ["20709197", "23698006"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["curva C e curva B"]
+              }
+            ]
+          },
+          {
+            "codes": ["19812338", "26278030"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["espessura 3 e 3,2 mm"]
+              }
+            ]
+          },
+          {
+            "codes": ["27593598", "29720327"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["acabamento diferente"]
+              }
+            ]
+          },
+          {
+            "codes": ["14346966", "14746601"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["acabamento e medidas diferentes"]
+              }
+            ]
+          },
+          {
+            "codes": ["17554179", "20119553"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["comprimento 750 e 1500 mm"]
+              }
+            ]
+          },
+          {
+            "codes": ["17715005", "23260796"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["faixa 870 e 580 PSI"]
+              }
+            ]
+          },
+          {
+            "codes": ["14347204", "15755710"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["tipo PP e flexivel"]
+              }
+            ]
+          },
+          {
+            "codes": ["13543613", "24548372"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["rosca grossa e fina"]
+              }
+            ]
+          },
+          {
+            "codes": ["10436289", "29588001"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["3 e 1 polos"]
+              }
+            ]
+          },
+          {
+            "codes": ["12431921", "13931254"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["API 5L e A106"]
+              }
+            ]
+          },
+          {
+            "codes": ["13469341", "26414935"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["comprimento 5000 e 3500 mm"]
+              }
+            ]
+          },
+          {
+            "codes": ["10417707", "18460940"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["acabamento diferente"]
+              }
+            ]
+          },
+          {
+            "codes": ["14529447", "18804419"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["diametro -20 e -10"]
+              }
+            ]
+          },
+          {
+            "codes": ["19516967", "23554609"],
+            "expected": false,
+            "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": false,
+                "evidence": ["60 PSI e 60 KGF/CM2"]
+              }
+            ]
+          }
+        ],
+        "inconclusive_cases_preserved": [
+          {
+            "codes": ["18155720", "25839210"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": [
+                  "mesma descricao, sem referencia informada: nao da para confirmar"
+                ]
+              }
+            ]
+          },
+          {
+            "codes": ["24103390", "27634773"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa material nem conexao"]
+              }
+            ]
+          },
+          {
+            "codes": ["14292727", "14317792"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa embalagem"]
+              }
+            ]
+          },
+          {
+            "codes": ["13377716", "22144219"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["descricao de um esta incompleta"]
+              }
+            ]
+          },
+          {
+            "codes": ["11651153", "16008043"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa bitola"]
+              }
+            ]
+          },
+          {
+            "codes": ["11831359", "15400484"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa contatos"]
+              }
+            ]
+          },
+          {
+            "codes": ["16280762", "24337489"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa schedule"]
+              }
+            ]
+          },
+          {
+            "codes": ["10377301", "16263252"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa contatos"]
+              }
+            ]
+          },
+          {
+            "codes": ["22832138", "29388576"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa diametro"]
+              }
+            ]
+          },
+          {
+            "codes": ["13917138", "16917648"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa secao"]
+              }
+            ]
+          },
+          {
+            "codes": ["10347025", "11135823"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa comprimento"]
+              }
+            ]
+          },
+          {
+            "codes": ["11973996", "13917138"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa secao"]
+              }
+            ]
+          },
+          {
+            "codes": ["16367892", "23406311"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa comprimento"]
+              }
+            ]
+          },
+          {
+            "codes": ["15506821", "19684675"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa CA"]
+              }
+            ]
+          },
+          {
+            "codes": ["15996756", "27906835"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa tipo"]
+              }
+            ]
+          },
+          {
+            "codes": ["12519571", "24718737"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["material e acionamento vagos"]
+              }
+            ]
+          },
+          {
+            "codes": ["19526338", "19601723"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["um nao informa eixo"]
+              }
+            ]
+          },
+          {
+            "codes": ["20019825", "21032483"],
+            "expected": null,
+            "historical_label": null,
+            "review_status": "INCONCLUSIVE",
+            "before_proposed": false,
+            "after_proposed": false,
+            "reviews": [
+              {
+                "author": "UNRECORDED_LEGACY",
+                "label": null,
+                "evidence": ["material e diametro vagos em um"]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "orders": {
+    "total": 520,
+    "before_statuses": {
+      "READY_FOR_REVIEW": 231,
+      "INCOMPLETE": 203,
+      "OUT_OF_SCOPE": 86
+    },
+    "after_statuses": {
+      "READY_FOR_REVIEW": 231,
+      "INCOMPLETE": 203,
+      "OUT_OF_SCOPE": 86
+    },
+    "changed_analyses": 0,
+    "scope": "analyze_order: classe, substantivo, atributos, status, pendências, descrição e chave; sem busca em banco."
+  },
+  "analysis_changes": {
+    "classifications": 0,
+    "resolved_item_names": 0,
+    "attributes": 0,
+    "identity_keys": 0,
+    "note": "O novo resolvedor não muda os substantivos deste kit. TAMPA MOLA resolve para o nome PDM TAMPA, sem inventar qualificador ausente no catálogo. Os testes sintéticos cobrem nomes disjuntos/ausentes; essas garantias não são contagens adicionais da base."
+  },
+  "search_diagnostics": {
+    "method": "Public search with diagnostic in-memory retrieval; identity result only, not DB ranking/inventory validation. ESTOQUE_NAO_AUTORIZADO is expected without caller.",
+    "cases": [
+      {
+        "requested_code": "25187467",
+        "target_code": "21290535",
+        "requested_original": "TAMPA PRESSAO; APLICACAO: BOMBA CENTRIFUGA; MODELO EQUIPAMENTO: AHLSTAR A22-80; FABRICANTE: SULZER; REFERENCIA FABRICANTE: 916678-994",
+        "target_original": "TAMPA MOLA; PART NUMBER: 916678-994; MOD: AHLSTAR A2280; FABRICANTE: SULZER; PARA: BOMBA CENTRIFUGA",
+        "query_attributes": {
+          "APLICACAO": "BOMBA CENTRIFUGA",
+          "MODELO EQUIPAMENTO": "AHLSTAR A22-80",
+          "FABRICANTE": "SULZER",
+          "REFERENCIA FABRICANTE": "916678-994"
+        },
+        "requested_resolved_item_name": "TAMPA PRESSAO",
+        "target_resolved_item_name": "TAMPA",
+        "before": {
+          "match_status": "EXISTING_FOUND",
+          "identity_verified": true,
+          "match_type": "EXACT_MANUFACTURER_REFERENCE",
+          "pending_checks": ["ESTOQUE_NAO_AUTORIZADO"],
+          "conflicts": []
+        },
+        "after": {
+          "match_status": "REVIEW_REQUIRED",
+          "identity_verified": false,
+          "match_type": "TEXT_SIMILARITY",
+          "pending_checks": [
+            "SUBSTANTIVO_CONTRADIZ_REFERENCIA",
+            "ESTOQUE_NAO_AUTORIZADO"
+          ],
+          "conflicts": []
+        }
+      },
+      {
+        "requested_code": "21290535",
+        "target_code": "25187467",
+        "requested_original": "TAMPA MOLA; PART NUMBER: 916678-994; MOD: AHLSTAR A2280; FABRICANTE: SULZER; PARA: BOMBA CENTRIFUGA",
+        "target_original": "TAMPA PRESSAO; APLICACAO: BOMBA CENTRIFUGA; MODELO EQUIPAMENTO: AHLSTAR A22-80; FABRICANTE: SULZER; REFERENCIA FABRICANTE: 916678-994",
+        "query_attributes": {
+          "APLICACAO": "BOMBA CENTRIFUGA",
+          "MODELO EQUIPAMENTO": "AHLSTAR A22-80",
+          "FABRICANTE": "SULZER",
+          "REFERENCIA FABRICANTE": "916678-994"
+        },
+        "requested_resolved_item_name": "TAMPA",
+        "target_resolved_item_name": "TAMPA PRESSAO",
+        "before": {
+          "match_status": "EXISTING_FOUND",
+          "identity_verified": true,
+          "match_type": "EXACT_MANUFACTURER_REFERENCE",
+          "pending_checks": ["ESTOQUE_NAO_AUTORIZADO"],
+          "conflicts": []
+        },
+        "after": {
+          "match_status": "REVIEW_REQUIRED",
+          "identity_verified": false,
+          "match_type": "TEXT_SIMILARITY",
+          "pending_checks": [
+            "SUBSTANTIVO_CONTRADIZ_REFERENCIA",
+            "ESTOQUE_NAO_AUTORIZADO"
+          ],
+          "conflicts": []
+        }
+      },
+      {
+        "requested_code": "25187467",
+        "target_code": "25187467",
+        "requested_original": "TAMPA PRESSAO; APLICACAO: BOMBA CENTRIFUGA; MODELO EQUIPAMENTO: AHLSTAR A22-80; FABRICANTE: SULZER; REFERENCIA FABRICANTE: 916678-994",
+        "target_original": "TAMPA PRESSAO; APLICACAO: BOMBA CENTRIFUGA; MODELO EQUIPAMENTO: AHLSTAR A22-80; FABRICANTE: SULZER; REFERENCIA FABRICANTE: 916678-994",
+        "query_attributes": {
+          "APLICACAO": "BOMBA CENTRIFUGA",
+          "MODELO EQUIPAMENTO": "AHLSTAR A22-80",
+          "FABRICANTE": "SULZER",
+          "REFERENCIA FABRICANTE": "916678-994"
+        },
+        "requested_resolved_item_name": "TAMPA PRESSAO",
+        "target_resolved_item_name": "TAMPA PRESSAO",
+        "before": {
+          "match_status": "EXISTING_FOUND",
+          "identity_verified": true,
+          "match_type": "EXACT_MANUFACTURER_REFERENCE",
+          "pending_checks": ["ESTOQUE_NAO_AUTORIZADO"],
+          "conflicts": []
+        },
+        "after": {
+          "match_status": "EXISTING_FOUND",
+          "identity_verified": true,
+          "match_type": "EXACT_MANUFACTURER_REFERENCE",
+          "pending_checks": ["ESTOQUE_NAO_AUTORIZADO"],
+          "conflicts": []
+        }
+      },
+      {
+        "requested_code": "15415712",
+        "target_code": "24000651",
+        "requested_original": "ADAPTADOR; APLICACAO: ESCAVADEIRA HIDRAULICA; MODELO EQUIPAMENTO: EX2600; FABRICANTE: HITACHI; REFERENCIA FABRICANTE: 4636502",
+        "target_original": "ADAPTADOR ESCAVADEIRA HIDRAULICA EX2600 HITACHI 4636502",
+        "query_attributes": {
+          "APLICACAO": "ESCAVADEIRA HIDRAULICA",
+          "MODELO EQUIPAMENTO": "EX2600",
+          "FABRICANTE": "HITACHI",
+          "REFERENCIA FABRICANTE": "4636502"
+        },
+        "requested_resolved_item_name": "ADAPTADOR",
+        "target_resolved_item_name": "ADAPTADOR",
+        "before": {
+          "match_status": "EXISTING_FOUND",
+          "identity_verified": true,
+          "match_type": "EXACT_MANUFACTURER_REFERENCE",
+          "pending_checks": ["ESTOQUE_NAO_AUTORIZADO"],
+          "conflicts": []
+        },
+        "after": {
+          "match_status": "EXISTING_FOUND",
+          "identity_verified": true,
+          "match_type": "EXACT_MANUFACTURER_REFERENCE",
+          "pending_checks": ["ESTOQUE_NAO_AUTORIZADO"],
+          "conflicts": []
+        }
+      }
+    ]
+  },
+  "interpretation": [
+    "978 grupos retidos, 71 retirados, nenhum novo. Todos os 71 retirados são abstenções por sufixo -00 versus ausente; não são 71 erros tecnicamente confirmados.",
+    "identity-v2 retirava o sufixo -00 da chave. identity-v3 conserva essa chave para recuperar candidatos, mas exige revisão da diferença de sufixo na decisão final.",
+    "Os 978 grupos retidos preservam os conflitos; seus changeset_hash mudam pela versão identity-v3. Grupos com conflito de sufixo são retirados inteiros; nenhum subgrupo novo é proposto ou herda rótulo.",
+    "Os 549 materiais já pendentes no baseline continuam pendentes. As 272 novas pendências são 175 de sufixo, 11 de substantivo versus referência e 86 de fabricante não confirmado; estes últimos já não eram MERGE no baseline.",
+    "As novas abstenções de positivos históricos permanecem com rótulos true nas coortes: 2 grupos v1, 1 grupo aliases e 3 pares. Nenhum falso conhecido é proposto antes ou depois; revisões inconclusivas permanecem inconclusivas.",
+    "Tampas 25187467 e 21290535 já estavam separadas no batch do baseline. A melhoria medida nesse exemplo ocorre na busca pública nos dois sentidos. O controle HITACHI 15415712 → 24000651 permanece verificado."
+  ],
+  "limitations": [
+    "Coortes de desenvolvimento dirigidas/congeladas, sem revisão independente, confirmação de especialista ou precisão populacional.",
+    "A busca usa recuperação determinística em memória para isolar a decisão; não valida ranking SQL, autorização de estoque, API transacional ou aplicação de propostas.",
+    "Nenhum cadastro, proposta, status, rótulo histórico ou evidência original foi alterado pela medição. A ausência de proposta nova não cancela propostas pendentes ou aplicadas.",
+    "O candidato é esta implementação sobre PR74; não incorpora outras branches de extrator/snapshot e exige reconstrução do índice por identity-v3."
+  ],
+  "reproduction": {
+    "method": "Executar os mesmos pipelines/repositórios padrões em árvore baseline isolada e na candidata; comparar conjuntos exatos de códigos, sem transferir rótulos. Os fontes de diagnóstico abaixo são metadados reproduzíveis; não há CLI nova.",
+    "baseline_commands": [
+      "mkdir -p /tmp/vx144-baseline-reproduce",
+      "git archive dadd4becd7843a309a6a456e8615f7df9a5a13ec | tar -x -C /tmp/vx144-baseline-reproduce"
+    ],
+    "existing_evaluation_command": "uv run vx-back sanitization-evaluate data/desafio01/01_base_materiais.csv --pdm-workbook data/desafio01/03_padrao_cadastro_PDM.xlsx",
+    "run_metadata_python": "Ler reproduction.analysis_python ou reproduction.search_python deste JSON e passar a subprocess.run([python,\"-c\",source], cwd=source_root, env={**os.environ,\"PYTHONPATH\":str(source_root/\"back\")+\":\"+str(source_root/\"mcp\")}, check=True, stdout=arquivo). Usar a .venv da candidata para ambas as árvores; salvar saídas baseline/candidata separadas. Os diagnósticos são somente leitura.",
+    "analysis_python": "import hashlib,json\nfrom pathlib import Path\nfrom collections import Counter\nfrom pipelines.sanitize import analyze_material,merge_proposals,read_csv_records,analysis_signature,summarize\nfrom pipelines.identity_review import identity_review_report\nfrom pipelines.evaluate_sanitization import load_cohorts,compare_merges,cohort_data,implementation_fingerprint\nfrom domain.pdm_loader import load_pdm\nfrom repositories.classification import get_classification_repository\nfrom repositories.extraction import get_extraction_repository\nfrom repositories.normalization import get_normalization_repository\nfrom repositories.candidates import get_candidate_repository\nkit=Path(\"data/desafio01\")\ncatalog=load_pdm(kit/\"03_padrao_cadastro_PDM.xlsx\")\nclassifier=get_classification_repository(catalog,\"aliases_v1\");extractor=get_extraction_repository(\"rule_based_v1\")\nmaterials=[analyze_material(r,catalog,classifier,extractor) for r in read_csv_records(str(kit/\"01_base_materiais.csv\"))]\nmerges=merge_proposals(materials,catalog,get_candidate_repository(\"exact_identity_v1\"),get_normalization_repository(\"rule_based_v1\"))\nreview=identity_review_report(materials,catalog)\nmanifest,groups,pairs=load_cohorts()\ncohorts={\"legacy-v1\":compare_merges(merges,groups,pairs,manifest[\"group_review_additions\"])}\nfor c in manifest.get(\"additional_group_cohorts\",[]):\n    cohorts[c[\"id\"]]=compare_merges(merges,json.loads(cohort_data(c[\"file\"])),pairs,c[\"review_additions\"])\nprint(json.dumps({\"implementation\":implementation_fingerprint(),\"analysis_signature\":analysis_signature(catalog,classifier,extractor),\"inputs_sha256\":{n:hashlib.sha256((kit/n).read_bytes()).hexdigest() for n in (\"01_base_materiais.csv\",\"02_pedidos_cadastro.csv\",\"03_padrao_cadastro_PDM.xlsx\")},\"merge_summary\":summarize(merges),\"groups\":sorted([{\"codes\":list(p.material_codes),\"changeset_hash\":p.changeset_hash,\"conflicts\":list(p.conflicts)} for p in merges],key=lambda g:g[\"codes\"]),\"manual_review\":[{\"code\":v[\"evidence\"][\"material_code\"],\"reasons\":v[\"reasons\"]} for v in review[\"manual_review\"]],\"cohorts\":cohorts},ensure_ascii=False))\n",
+    "search_python": "\"\"\"Real TAMPA pair through public search; in-memory retrieval, no DB.\"\"\"\nimport json,sys\nfrom pathlib import Path\nfrom domain.pdm_loader import load_pdm\nfrom pipelines.sanitize import analyze_material,read_csv_records\nfrom repositories.classification import get_classification_repository\nfrom repositories.extraction import get_extraction_repository\nfrom vx_materials_mcp.repositories.search.hybrid_v1 import HybridV1SearchRepository,SearchQuery\n\nroot=Path.cwd(); catalog=load_pdm(root/'data/desafio01/03_padrao_cadastro_PDM.xlsx')\nclassifier=get_classification_repository(catalog,\"aliases_v1\"); extractor=get_extraction_repository(\"rule_based_v1\")\nrecords={r.code:r for r in read_csv_records(str(root/'data/desafio01/01_base_materiais.csv')) if r.code in {'25187467','21290535','15415712','24000651'}}\nmaterials={code:analyze_material(r,catalog,classifier,extractor) for code,r in records.items()}\noutput=[]\nfor requested_code,target_code in [('25187467','21290535'),('21290535','25187467'),('25187467','25187467'),('15415712','24000651')]:\n requested,target=materials[requested_code],materials[target_code]\n row={'id':target_code,'material_code':target_code,'proposed_class_id':target.pdm_class_id,'extracted_attributes':target.attributes,'candidate_identity_key':target.identity_key,'status':target.record.status,'original_description_long':target.record.description,'manufacturer':target.record.manufacturer,'manufacturer_reference':target.record.reference,'pdm_description':None,'rank':1.0,'target_code':None,'target_status':None,'target_id':None}\n class MemoryCatalog:\n  def by_identity(self,key,version): return [row] if row['candidate_identity_key']==key else []\n  def full_text(self,*args): return [row]\n repo=HybridV1SearchRepository(MemoryCatalog(),catalog,classifier,extractor,'diagnostic-only',None)\n result=repo.search(SearchQuery(query=requested.record.description,pdm_class_id=requested.pdm_class_id,attributes=requested.attributes))\n output.append({'requested_code':requested_code,'target_code':target_code,'query_original':requested.record.description,'query_item_name_analyzed':requested.item_name,'candidate_item_name_analyzed':target.item_name,'public_search_result':result})\n\nfor case in output: print(json.dumps(case,ensure_ascii=False))\n",
+    "hash_serialization": "SHA256 de json.dumps(valor,sort_keys=True,ensure_ascii=False,separators=(\",\",\":\")), UTF8. member_sets usa listas de códigos ordenadas por grupo; member_sets_and_changeset_hashes usa objetos codes+changeset_hash na mesma ordem.",
+    "temporary_raw_evidence": {
+      "path": "/tmp/vx144-delta.json",
+      "bytes": 767576,
+      "sha256": "3abd85a68e5e720e6342a1b92701f87dbf437ff4ca61a8a1f7e3e92b6364d908",
+      "scope": "Arquivo local temporário de cerca de 765 KB, não é fonte versionada nem necessário para executar os pipelines acima."
+    },
+    "runner_python": "import json,os,subprocess\nfrom pathlib import Path\ncandidate=Path.cwd()\nreport=json.loads((candidate/\"docs/measurements/shared-material-identity-144.json\").read_text())\npython=str(candidate/\".venv/bin/python\")\nfor label,source in ((\"baseline\",Path(\"/tmp/vx144-baseline-reproduce\")),(\"candidate\",candidate)):\n    env={**os.environ,\"PYTHONPATH\":str(source/\"back\")+\":\"+str(source/\"mcp\")}\n    for method in (\"analysis\",\"search\"):\n        with open(f\"/tmp/vx144-reproduced-{label}-{method}.json\",\"w\") as output:\n            subprocess.run([python,\"-c\",report[\"reproduction\"][method+\"_python\"]],cwd=source,env=env,check=True,stdout=output)\n",
+    "repository_selection": {
+      "classification": "aliases_v1",
+      "extraction": "rule_based_v1",
+      "candidates": "exact_identity_v1",
+      "normalization": "rule_based_v1"
+    }
+  },
+  "current_main_revalidation": {
+    "comparison": "CURRENT_MAIN_REVALIDATION",
+    "baseline_commit": "03ff9a61a5b5013282e3915d75457586f24c4040",
+    "candidate_commit": "0b5bba375cb9c6fd8f80b6527aa1531b1d7fdd06",
+    "baseline": {
+      "analysis_signature": "pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v1@1|extractor:rule_based_v1@3|identity-v2",
+      "implementation": {
+        "sha256": "e90e1545a4459c3d26bea26b7edec28932b4b732b286c8ad16146cecef311ba4",
+        "source_files": 40
+      },
+      "merge_summary": {
+        "proposals": 1049,
+        "materials": 2390,
+        "identity_verified": 1049,
+        "fiscal_review_required": 762,
+        "conflicts": {
+          "PDM_INVALIDO": 409,
+          "NCM_DIVERGENTE": 241,
+          "UNIDADE_SEM_FATOR": 93,
+          "UNIDADES_DIFERENTES": 37
+        }
+      },
+      "material_counts": {
+        "identity_key_present": 11655,
+        "pdm_statuses": {
+          "OUT_OF_SCOPE": 5856,
+          "VALID": 10719,
+          "INCOMPLETE": 6979
+        }
+      },
+      "identity_review_summary": {
+        "equivalence_groups": 5,
+        "manual_review_materials": 549,
+        "reasons": {
+          "REFERENCIA_DE_PECA_AUSENTE": 118,
+          "REVISAO_DE_PECA_NAO_CONFIRMADA": 431
+        }
+      },
+      "group_hashes": {
+        "member_sets_sha256": "5329c4a091c3ac0fd18e0c3f42c23ae789edfdb6bb5cbe4d56bb208323760372",
+        "member_sets_and_changeset_hashes_sha256": "53b095ae8a6a227c6537e6871d40e7d593ec54cedd3b67019bdbcb7e7b7ef75b"
+      }
+    },
+    "candidate": {
+      "analysis_signature": "pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v1@1|extractor:rule_based_v1@3|identity-v3",
+      "implementation": {
+        "sha256": "0fecc5649aedc813059b330c5b2ad699853032c3dad7f47c0534a5c3d3b674eb",
+        "source_files": 41
+      },
+      "merge_summary": {
+        "proposals": 978,
+        "materials": 2215,
+        "identity_verified": 978,
+        "fiscal_review_required": 710,
+        "conflicts": {
+          "PDM_INVALIDO": 376,
+          "NCM_DIVERGENTE": 222,
+          "UNIDADE_SEM_FATOR": 82,
+          "UNIDADES_DIFERENTES": 34
+        }
+      },
+      "material_counts": {
+        "identity_key_present": 11655,
+        "pdm_statuses": {
+          "OUT_OF_SCOPE": 5856,
+          "VALID": 10719,
+          "INCOMPLETE": 6979
+        }
+      },
+      "identity_review_summary": {
+        "equivalence_groups": 5,
+        "manual_review_materials": 821,
+        "reasons": {
+          "REFERENCIA_DE_PECA_AUSENTE": 118,
+          "SUFIXO_REFERENCIA_NAO_CONFIRMADO": 175,
+          "REVISAO_DE_PECA_NAO_CONFIRMADA": 431,
+          "SUBSTANTIVO_CONTRADIZ_REFERENCIA": 11,
+          "FABRICANTE_NAO_CONFIRMADO": 86
+        }
+      },
+      "group_hashes": {
+        "member_sets_sha256": "bc15cd0d159087bf4fc8c5d3d46bd5924e12424b149a49d53be7627c9ee74ea9",
+        "member_sets_and_changeset_hashes_sha256": "48b6c4a543cd5030a5c92824b0737114b01b266699dc1a52d864a0ee4f0f9a44"
+      }
+    },
+    "group_counts": {
+      "retained": 978,
+      "withdrawn": 71,
+      "new": 0,
+      "retained_changeset_hash_changed": 978,
+      "retained_conflicts_changed": 0
+    },
+    "historical_comparison": {
+      "baseline_commit": "dadd4becd7843a309a6a456e8615f7df9a5a13ec",
+      "same_retained_and_withdrawn_member_sets": true,
+      "same_material_analyses": true,
+      "same_manual_review_codes_and_reasons": true,
+      "all_cohort_labels_and_sources_preserved": true,
+      "candidate_commit": "a6d006684fb500d88381c7c2609b38ed70ebb82a",
+      "candidate_implementation": {
+        "sha256": "5e3328945c77aadea6f4a5102560fa97db6267c05ed1b029422934542adc1fbe",
+        "source_files": 41
+      },
+      "candidate_fingerprint_matches_commit": true
+    },
+    "inputs_sha256": {
+      "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+      "02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+      "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+    },
+    "cohort_manifest_sha256": "3059ac435fee8aa0a76e1011e8754b05bee0250c62af6279731bf02d6bd5069b",
+    "cohorts": {
+      "legacy-v1": {
+        "groups": {
+          "before": {
+            "cases": 40,
+            "proposed": 32,
+            "reviewed": 37,
+            "positive_labels": 35,
+            "correct": 32,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "after": {
+            "cases": 40,
+            "proposed": 30,
+            "reviewed": 37,
+            "positive_labels": 35,
+            "correct": 30,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "new_abstentions": [
+            {
+              "codes": [
+                "10547638",
+                "12746420",
+                "15761751",
+                "24866076",
+                "27799387"
+              ],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": [
+                    "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (sufixo -00). Unidade CX e NCM divergentes ja sinalizados"
+                  ]
+                }
+              ],
+              "proposed": false,
+              "current_status": "NOT_PROPOSED"
+            },
+            {
+              "codes": ["15845002", "22045268"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": [
+                    "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia"
+                  ]
+                }
+              ],
+              "proposed": false,
+              "current_status": "NOT_PROPOSED"
+            }
+          ],
+          "new_recoveries": []
+        },
+        "pairs": {
+          "before": {
+            "cases": 95,
+            "proposed": 49,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 49,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "after": {
+            "cases": 95,
+            "proposed": 46,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 46,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "new_abstentions": [
+            {
+              "codes": ["20607446", "21469708"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": ["mesma referencia e fabricante"]
+                }
+              ],
+              "proposed": false
+            },
+            {
+              "codes": ["11384720", "20009709"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": ["mesma referencia e fabricante"]
+                }
+              ],
+              "proposed": false
+            },
+            {
+              "codes": ["14203851", "20171581"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": ["mesma referencia e fabricante"]
+                }
+              ],
+              "proposed": false
+            }
+          ],
+          "new_recoveries": []
+        }
+      },
+      "aliases-development-v2": {
+        "groups": {
+          "before": {
+            "cases": 40,
+            "proposed": 31,
+            "reviewed": 38,
+            "positive_labels": 37,
+            "correct": 31,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "after": {
+            "cases": 40,
+            "proposed": 30,
+            "reviewed": 38,
+            "positive_labels": 37,
+            "correct": 30,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "new_abstentions": [
+            {
+              "codes": ["18675010", "25808476", "27155952"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": [
+                    "mesmo item: mesmo fabricante e mesma referencia, com variacao so de grafia (sufixo -00 na referencia)"
+                  ]
+                }
+              ],
+              "proposed": false,
+              "current_status": "NOT_PROPOSED"
+            }
+          ],
+          "new_recoveries": []
+        },
+        "pairs": {
+          "before": {
+            "cases": 95,
+            "proposed": 49,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 49,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "after": {
+            "cases": 95,
+            "proposed": 46,
+            "reviewed": 77,
+            "positive_labels": 61,
+            "correct": 46,
+            "wrong": 0,
+            "unreviewed_proposals": 0
+          },
+          "new_abstentions": [
+            {
+              "codes": ["20607446", "21469708"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": ["mesma referencia e fabricante"]
+                }
+              ],
+              "proposed": false
+            },
+            {
+              "codes": ["11384720", "20009709"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": ["mesma referencia e fabricante"]
+                }
+              ],
+              "proposed": false
+            },
+            {
+              "codes": ["14203851", "20171581"],
+              "expected": true,
+              "review_status": "SINGLE_DEVELOPMENT_REVIEW",
+              "historical_label": true,
+              "reviews": [
+                {
+                  "author": "UNRECORDED_LEGACY",
+                  "label": true,
+                  "evidence": ["mesma referencia e fabricante"]
+                }
+              ],
+              "proposed": false
+            }
+          ],
+          "new_recoveries": []
+        }
+      }
+    },
+    "orders": {
+      "total": 520,
+      "baseline_statuses": {
+        "READY_FOR_REVIEW": 256,
+        "INCOMPLETE": 178,
+        "OUT_OF_SCOPE": 86
+      },
+      "candidate_statuses": {
+        "READY_FOR_REVIEW": 256,
+        "INCOMPLETE": 178,
+        "OUT_OF_SCOPE": 86
+      },
+      "analyses_changed_between_current_baseline_and_candidate": 0,
+      "upstream_delta_since_historical": {
+        "old_statuses": {
+          "READY_FOR_REVIEW": 231,
+          "INCOMPLETE": 203,
+          "OUT_OF_SCOPE": 86
+        },
+        "new_statuses": {
+          "READY_FOR_REVIEW": 256,
+          "INCOMPLETE": 178,
+          "OUT_OF_SCOPE": 86
+        },
+        "changed_analyses": 37,
+        "changed_fields": {
+          "attributes": 37,
+          "missing_attributes": 33,
+          "status": 25,
+          "identity_key": 25,
+          "formatted_description": 27
+        },
+        "transitions": [
+          {
+            "before": "INCOMPLETE",
+            "after": "INCOMPLETE",
+            "count": 10
+          },
+          {
+            "before": "INCOMPLETE",
+            "after": "READY_FOR_REVIEW",
+            "count": 25
+          },
+          {
+            "before": "READY_FOR_REVIEW",
+            "after": "READY_FOR_REVIEW",
+            "count": 2
+          }
+        ]
+      },
+      "attribution": "Os 25 pedidos que passaram de INCOMPLETE para READY_FOR_REVIEW decorrem das mudanças de extração de upstream entre o estado histórico e a main 03ff9a61. Não são ganhos da #144: o delta de pedidos entre a main atual e a candidata é zero, com as 520 análises integralmente iguais."
+    },
+    "read_only_evidence_paths": {
+      "baseline": "/tmp/vx144-main-baseline.json",
+      "candidate": "/tmp/vx144-candidate-rebased.json",
+      "delta": "/tmp/vx144-rebased-delta.json",
+      "upstream_orders": "/tmp/vx144-upstream-orders-delta.json"
+    },
+    "scope": "Development cohorts only; no DB, writes or independent technical review.",
+    "candidate_commit_scope": "O commit 0b5bba375cb9c6fd8f80b6527aa1531b1d7fdd06 identifica o código medido após rebase. Um commit posterior apenas de documentação preserva o fingerprint deste código.",
+    "reproduction": {
+      "historical_baseline_commit": "dadd4becd7843a309a6a456e8615f7df9a5a13ec",
+      "historical_candidate_commit": "a6d006684fb500d88381c7c2609b38ed70ebb82a",
+      "current_baseline_commit": "03ff9a61a5b5013282e3915d75457586f24c4040",
+      "current_candidate_code_commit": "0b5bba375cb9c6fd8f80b6527aa1531b1d7fdd06",
+      "method": "Reutilizar reproduction.analysis_python e reproduction.search_python deste artefato, com a mesma .venv, em árvores isoladas dos commits acima extraídas por git archive. PYTHONPATH deve apontar para back e mcp da árvore avaliada. Para reproduzir o histórico, usar a candidata a6d0066 em vez da worktree atual; para a revalidação atual, usar 03ff9a61 e 0b5bba3. Comparar os fingerprints registrados antes de interpretar os resultados. Os caminhos /tmp de evidência são somente locais e não substituem os fontes versionados."
+    },
+    "interpretation": "As contagens e os conjuntos exatos de MERGE, pendências e coortes permanecem iguais à comparação histórica. As melhorias de extração de upstream alteram 37 análises de pedidos e tornam 25 prontos; a mudança de identidade da #144 não altera esses pedidos na comparação com a main atual. Rótulos históricos e revisões inconclusivas permanecem preservados; esta continua sendo avaliação de desenvolvimento, sem homologação técnica independente."
+  }
+}

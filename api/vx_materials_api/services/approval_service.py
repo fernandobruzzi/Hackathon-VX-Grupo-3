@@ -11,10 +11,13 @@ from pydantic import ValidationError
 from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
-from domain.contracts import FieldStatus, PdmCatalog
-from domain.identity import reference_key
+from domain.contracts import AnalyzedMaterial, ClassificationInput, FieldStatus, MaterialRecord, PdmCatalog
+from domain.identity import item_name_review_reasons, reference_key, resolve_item_name
+from domain.identity_decision import decide_identity
 from domain.pdm_validator import validate_pdm
 from domain.proposal_validation import is_approvable
+from repositories.classification import get_classification_repository
+from repositories.extraction import get_extraction_repository
 from repositories.normalization import get_normalization_repository
 from vx_materials_api.db.models import (
     AuditLog,
@@ -540,12 +543,59 @@ def _decide_current(
         if proposal.proposal_type == "MERGE" and len(materials) < 2:
             raise ApiError(422, "INVALID_PROPOSAL", "Unificacao exige ao menos dois materiais.")
         if len(materials) > 1:
+            classifier = get_classification_repository(catalog)
+            extractor = get_extraction_repository()
+            target = AnalyzedMaterial(
+                MaterialRecord("", "ATIVO", ""),
+                changes.after.pdm_class_id,
+                changes.after.item_name,
+                {k: v for k, v in changes.after.attributes.items() if v},
+                validation.identity_key,
+            )
             for interpretation, material in [
                 (i, next(m for m in materials if m.id == i.material_id)) for i in interpretations
             ]:
                 checked = _validation(catalog, interpretation)
                 if checked.identity_key != validation.identity_key:
                     raise ApiError(422, "IDENTITY_CONFLICT", "Materiais diferentes nao podem ser unificados.")
+                record = MaterialRecord(
+                    material.material_code,
+                    material.status,
+                    material.original_description_long or "",
+                    manufacturer=material.manufacturer or "",
+                    reference=material.manufacturer_reference or "",
+                )
+                classification = classifier.classify(ClassificationInput(record.description))
+                pdm_class = catalog.classes[interpretation.pdm_class_id]
+                matched_names = [e.matched_name for e in classification.evidence if e.class_id == pdm_class.id]
+                evidence_item = resolve_item_name(pdm_class, matched_names)
+                extraction = extractor.extract(pdm_class, record.description)
+                current = AnalyzedMaterial(
+                    record,
+                    classification.pdm_class_id or interpretation.pdm_class_id,
+                    evidence_item or interpretation.item_name,
+                    {
+                        **{k: v for k, v in interpretation.attributes.items() if v},
+                        **{k: v.value for k, v in extraction.attributes.items()},
+                    },
+                    checked.identity_key,
+                    item_name_review_reasons(pdm_class, matched_names),
+                )
+                # A interpretação proposta e a evidência original não podem se contradizer.
+                proposed = AnalyzedMaterial(
+                    record,
+                    interpretation.pdm_class_id,
+                    interpretation.item_name,
+                    {k: v for k, v in interpretation.attributes.items() if v},
+                    checked.identity_key,
+                )
+                for candidate in (proposed, current):
+                    identity = decide_identity(catalog, target, candidate)
+                    if identity.status != "SAME_MATERIAL":
+                        code = (
+                            "IDENTITY_REVIEW_REQUIRED" if identity.status == "REVIEW_REQUIRED" else "IDENTITY_CONFLICT"
+                        )
+                        raise ApiError(422, code, "Identidade nao confirmada: " + ", ".join(identity.reasons))
                 if any(
                     value is not None and not _attribute_matches(name, value, changes.after.attributes.get(name))
                     for name, value in interpretation.attributes.items()

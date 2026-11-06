@@ -96,7 +96,14 @@ def _encode(material: AnalyzedMaterial) -> dict:
 
 def _decode(data: dict) -> AnalyzedMaterial:
     record = MaterialRecord(**{**data["record"], "inventory": tuple(data["record"]["inventory"])})
-    return AnalyzedMaterial(record, data["pdm_class_id"], data["item_name"], data["attributes"], data["identity_key"])
+    return AnalyzedMaterial(
+        record,
+        data["pdm_class_id"],
+        data["item_name"],
+        data["attributes"],
+        data["identity_key"],
+        tuple(data.get("review_reasons", ())),
+    )
 
 
 def _analysis_key(job_id: str, index: int) -> str:

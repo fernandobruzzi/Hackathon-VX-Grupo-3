@@ -14,12 +14,12 @@ A escolha fica salva na conversa: enquanto a ficha não muda, o turno reaproveit
 aceita pela API, sem nova busca.
 """
 
-import json
 import re
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
+from domain.identity import identity_signature
 from vx_materials_mcp.schemas.agent import (
     ChatAction,
     DuplicateCheckState,
@@ -58,10 +58,9 @@ def picked_code(text: str) -> str | None:
     return match.group(1) if match else None
 
 
-def card_signature(pdm_class_id: str | None, attributes: dict[str, str | None]) -> str:
-    """Identifica a ficha usada na busca: classe e atributos preenchidos. A API calcula igual."""
-    filled = {name: value for name, value in attributes.items() if value}
-    return json.dumps({"pdm_class_id": pdm_class_id, "attributes": filled}, sort_keys=True, ensure_ascii=False)
+def card_signature(pdm_class_id: str | None, attributes: dict[str, str | None], item_name: str | None = None) -> str:
+    """Classe, nome efetivo e atributos da ficha; a API usa o mesmo helper de domínio."""
+    return identity_signature(pdm_class_id, item_name, attributes)
 
 
 def wanted_code(action: ChatAction | None, message: str) -> str | None:

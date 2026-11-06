@@ -36,8 +36,8 @@ def test_index_covers_the_whole_base(database):
     assert database["indexed"]["index_version"].startswith("search-index-v1|pdm-kit-v1|")
 
 
-def test_briefing_filter_request_finds_the_existing_item(database):
-    result = search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+def test_filter_with_confirmed_type_finds_the_existing_item(database):
+    result = search(database, REQUESTER, query="filtro oleo lubrificante Fleetguard LF 9009")
     assert result["match_status"] == "EXISTING_FOUND"
     top = result["candidates"][0]
     assert top["material_code"] == "16031971"
@@ -126,7 +126,7 @@ def test_embedding_search_finds_the_existing_item(database, monkeypatch):
     monkeypatch.setenv("EMBEDDING_REPOSITORY", "simulated_v1")
     run_index(PDM, database_url=database["batch"])
     monkeypatch.setenv("SEARCH_REPOSITORY", "hybrid_embeddings_v1")
-    result = search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+    result = search(database, REQUESTER, query="filtro oleo lubrificante Fleetguard LF 9009")
     assert result["index_version"].endswith("simulated_v1:hashing-trigrams-v1:512")
     assert result["candidates"][0]["material_code"] == "16031971"
     assert result["candidates"][0]["identity_verified"] is True
@@ -149,3 +149,11 @@ def test_index_if_stale_skips_a_current_index_and_rebuilds_another_version(datab
             text("DELETE FROM material_search_index WHERE normalization_version = :v"),
             {"v": rebuilt["index_version"]},
         )
+
+
+def test_reference_without_item_type_requires_review_for_a_named_candidate(database):
+    result = search(database, REQUESTER, query="filtro Fleetguard LF 9009")
+    candidate = next(c for c in result["candidates"] if c["material_code"] == "16031971")
+    assert candidate["identity_verified"] is False
+    assert "SUBSTANTIVO_NAO_CONFIRMADO" in candidate["pending_checks"]
+    assert result["match_status"] == "REVIEW_REQUIRED"

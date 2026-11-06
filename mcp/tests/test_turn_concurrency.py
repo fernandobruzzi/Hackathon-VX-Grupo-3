@@ -322,7 +322,7 @@ def test_parallel_searches_keep_their_centers_and_financial_permissions(catalog,
                 ("fiscal", ["1200"], ["chat:use", "inventory:read", "metrics:financial"]),
             ]:
                 request = body(centers[0])
-                request["message"] = "Preciso de filtro Fleetguard LF 9009"
+                request["message"] = "Preciso de filtro oleo lubrificante Fleetguard LF 9009"
                 bearer = token(sub=user, center_codes=centers, permissions=permissions)
                 requests.append(
                     asyncio.create_task(
