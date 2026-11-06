@@ -27,6 +27,8 @@ TABLES = {
     "batch_jobs",
     "operation_requests",
     "inventory_consolidations",
+    "quality_snapshots",
+    "quality_snapshot_items",
 }
 VIEWS = {
     "mcp_catalog",
@@ -168,6 +170,13 @@ def test_other_credentials_have_no_audit_access(connection, tenant, role):
 def test_original_inventory_is_immutable_for_api(connection):
     denied(connection, "api_user", "UPDATE material_inventory_snapshots SET quantity = 0")
     denied(connection, "api_user", "DELETE FROM material_inventory_snapshots")
+
+
+@pytest.mark.parametrize("table", ["quality_snapshots", "quality_snapshot_items"])
+def test_published_quality_snapshots_are_immutable_for_api(connection, table):
+    denied(connection, "api_user", f"UPDATE {table} SET tenant_id = tenant_id")
+    denied(connection, "api_user", f"DELETE FROM {table}")
+    denied(connection, "batch_user", f"SELECT * FROM {table}")
 
 
 def test_mcp_reader_reads_views_only(connection, add_material):

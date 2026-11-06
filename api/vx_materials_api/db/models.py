@@ -425,3 +425,33 @@ class InventoryConsolidation(Base):
     factor: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     unit: Mapped[str] = mapped_column(Text, nullable=False)
     conversion_source: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class QualitySnapshot(Base):
+    """Situação da base depois das propostas aplicadas. Imutável: um novo estado gera outro snapshot."""
+
+    __tablename__ = "quality_snapshots"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id"), nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    applied_proposal_ids: Mapped[Any] = _jsonb("[]")
+    summary: Mapped[Any] = _jsonb()
+    export_key: Mapped[str] = mapped_column(Text, nullable=False)
+    content_sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = _created_at()
+
+
+class QualitySnapshotItem(Base):
+    """Estado de cada material no snapshot, com as propostas aplicadas que explicam a mudança."""
+
+    __tablename__ = "quality_snapshot_items"
+
+    snapshot_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("quality_snapshots.id"), primary_key=True)
+    material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    ncm: Mapped[str | None] = mapped_column(Text)
+    unit: Mapped[str | None] = mapped_column(Text)
+    proposal_ids: Mapped[Any] = _jsonb("[]")

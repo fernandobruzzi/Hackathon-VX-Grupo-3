@@ -76,9 +76,12 @@ def test_quality_uses_original_distinct_materials_and_has_no_financial_fields(da
         "obsolete": 0,
         "missing_ncm": 1,
         "noncanonical_unit": 1,
+        # O único outro membro da unificação já estava bloqueado no original.
+        "duplicate_codes": 0,
     }
     assert data["pipeline"] == {"proposals_total": 1, "pending": 1, "applied": 0, "rejected": 0, "stale": 0}
     assert data["comparison_status"] == "AFTER_SNAPSHOT_NOT_AVAILABLE" and data["after"] is None
+    assert data["after_snapshot"] is None
     assert data["evaluation"]["merge_precision"] is None
     assert data["evaluation"]["reviewed_pairs"] == 0
     assert "financial" not in data
@@ -254,3 +257,144 @@ def test_real_approval_and_idempotent_retry_count_one_application(dashboard_case
     login(client, "AUDITOR_FISCAL")
     financial = client.get(PATH + "?view=executive").json()["financial"]
     assert financial["inventory_book_value"] == "60" and financial["realized_savings"] is None
+
+
+SNAPSHOTS = "/api/v1/dashboard/snapshots"
+
+
+def write_headers(client, key=None):
+    me = client.get("/api/v1/auth/me").json()
+    return {
+        "Origin": "http://localhost:8000",
+        "X-CSRF-Token": me["csrf_token"],
+        "Idempotency-Key": key or str(uuid.uuid4()),
+    }
+
+
+def approve(client, proposal):
+    body = {
+        "expected_version": proposal.version,
+        "review_area": "TECHNICAL",
+        "decision": "APPROVE",
+        "reason": "Identidade e dados originais conferidos.",
+        "primary_material_code": "100",
+    }
+    response = client.post(f"/api/v1/sanitization/{proposal.id}/decide", json=body, headers=write_headers(client))
+    assert response.status_code == 200, response.text
+
+
+@pytest.fixture
+def storage(tmp_path, monkeypatch):
+    monkeypatch.setenv("STORAGE_BACKEND", "local")
+    monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
+    return tmp_path
+
+
+def test_snapshot_refuses_changes_without_an_applied_proposal(dashboard_case, storage):
+    """No caso semeado, a master difere do original e a unificação ainda está pendente."""
+    client, *_ = dashboard_case
+    login(client)
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    error = response.json()["error"]
+    assert error["code"] == "UNTRACEABLE_CHANGES"
+    assert error["details"]["material_codes"] == ["100", "200"]
+    assert not list(storage.rglob("*.json"))
+    assert client.get(PATH).json()["comparison_status"] == "AFTER_SNAPSHOT_NOT_AVAILABLE"
+
+
+def test_snapshot_after_approval_compares_before_and_after(dashboard_case, storage):
+    client, _, dataset, _, _, proposal, _ = dashboard_case
+    login(client)
+    approve(client, proposal)
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 201, response.text
+    snapshot = response.json()
+    assert snapshot["dataset_id"] == str(dataset.id)
+    assert snapshot["applied_proposals"] == 1 and snapshot["materials_changed"] == 1
+    assert snapshot["inventory_value_conserved"] is True
+    data = client.get(PATH).json()
+    assert data["comparison_status"] == "AVAILABLE"
+    assert data["after_snapshot"] == snapshot
+    # 100 ganhou NCM e unidade canônica; 200, bloqueado no original, continua bloqueado.
+    assert data["after"] == {
+        "materials_total": 2,
+        "active": 1,
+        "blocked": 1,
+        "obsolete": 0,
+        "missing_ncm": 0,
+        "noncanonical_unit": 0,
+        "duplicate_codes": 0,
+    }
+    from test_contracts import validator
+
+    validator({"$ref": "#/components/schemas/DashboardMetrics"}).validate(data)
+
+
+def test_every_change_in_the_export_traces_to_applied_proposals(dashboard_case, storage):
+    client, _, _, _, _, proposal, _ = dashboard_case
+    login(client)
+    approve(client, proposal)
+    snapshot = client.post(SNAPSHOTS, json={}, headers=write_headers(client)).json()
+    export = json.loads((storage / snapshot["export_key"]).read_text())
+    assert export["applied_proposal_ids"] == [str(proposal.id)]
+    assert [change["material_code"] for change in export["changes"]] == ["100"]
+    for change in export["changes"]:
+        assert change["proposal_ids"] == [str(proposal.id)]
+        assert set(change["before"]) == set(change["after"]) == set(change["fields"])
+    first = next(change for change in export["changes"] if change["material_code"] == "100")
+    assert first["before"] == {"ncm": None, "unit": "PÇ"} and first["after"] == {"ncm": "8421.23.00", "unit": "PC"}
+    assert export["summary"]["inventory_value_before"] == export["summary"]["inventory_value_after"] == "60.00"
+
+
+def test_snapshot_is_idempotent_and_needs_governance(dashboard_case, storage):
+    client, _, _, _, _, proposal, _ = dashboard_case
+    login(client)
+    approve(client, proposal)
+    key = str(uuid.uuid4())
+    first = client.post(SNAPSHOTS, json={}, headers=write_headers(client, key))
+    again = client.post(SNAPSHOTS, json={}, headers=write_headers(client, key))
+    assert first.status_code == again.status_code == 201
+    assert first.json() == again.json()
+    assert len(list(storage.rglob("quality_snapshot.json"))) == 1
+    other = client.post(SNAPSHOTS, json={"dataset_id": str(uuid.uuid4())}, headers=write_headers(client, key))
+    assert other.status_code == 409
+    assert client.post(SNAPSHOTS, json={}, headers={"Idempotency-Key": str(uuid.uuid4())}).status_code == 403
+    login(client, "AUDITOR_FISCAL")
+    assert client.post(SNAPSHOTS, json={}, headers=write_headers(client)).status_code == 403
+
+
+def test_after_counts_follow_the_snapshot_not_later_master_changes(dashboard_case, storage):
+    client, db, _, materials, _, proposal, _ = dashboard_case
+    login(client)
+    approve(client, proposal)
+    client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    after = client.get(PATH).json()["after"]
+    db.refresh(materials[0])
+    materials[0].ncm = None
+    db.commit()
+    assert client.get(PATH).json()["after"] == after
+
+
+def test_after_counts_respect_center_scope(dashboard_case, storage):
+    client, db, _, _, _, proposal, _ = dashboard_case
+    login(client)
+    approve(client, proposal)
+    client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    scoped = metrics(db, principal(("1200",)))
+    assert scoped.before.materials_total == scoped.after.materials_total == 1
+    assert scoped.after.blocked == 1
+
+
+def test_duplicates_before_and_after_follow_merge_proposals(dashboard_case, storage):
+    client, db, _, _, snapshots, proposal, _ = dashboard_case
+    for snapshot in snapshots:
+        snapshot.raw_record = {**snapshot.raw_record, "STATUS": "ATIVO"}
+    db.commit()
+    login(client)
+    assert client.get(PATH).json()["before"]["duplicate_codes"] == 1
+    approve(client, proposal)
+    client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    data = client.get(PATH).json()
+    assert data["before"]["duplicate_codes"] == 1
+    assert data["after"]["duplicate_codes"] == 0

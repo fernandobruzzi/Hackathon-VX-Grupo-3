@@ -361,8 +361,10 @@ export const dashboard = {
     obsolete: 1209,
     missing_ncm: 1173,
     noncanonical_unit: 2030,
+    duplicate_codes: 611,
   },
   after: null,
+  after_snapshot: null,
   pipeline: { proposals_total: 1284, pending: 1102, applied: 151, rejected: 27, stale: 4 },
   evaluation: { reviewed_pairs: 180, merge_precision: 0.967, duplicate_recall: null },
   financial: {

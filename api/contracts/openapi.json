@@ -1178,6 +1178,128 @@
         }
       }
     },
+    "/api/v1/dashboard/snapshots": {
+      "post": {
+        "operationId": "createQualitySnapshot",
+        "summary": "Gerar snapshot posterior com as propostas aplicadas; exige batch:run.",
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualitySnapshot"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QualitySnapshotRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/batch/jobs": {
       "get": {
         "operationId": "listBatchJobs",
@@ -3850,6 +3972,11 @@
               "noncanonical_unit": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "duplicate_codes": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Ativos apontados como duplicados por unificações pendentes ou aplicadas."
               }
             },
             "required": [
@@ -3858,7 +3985,8 @@
               "blocked",
               "obsolete",
               "missing_ncm",
-              "noncanonical_unit"
+              "noncanonical_unit",
+              "duplicate_codes"
             ],
             "additionalProperties": false
           },
@@ -3890,6 +4018,11 @@
                   "noncanonical_unit": {
                     "type": "integer",
                     "minimum": 0
+                  },
+                  "duplicate_codes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Ativos apontados como duplicados por unificações pendentes ou aplicadas."
                   }
                 },
                 "required": [
@@ -3898,9 +4031,20 @@
                   "blocked",
                   "obsolete",
                   "missing_ncm",
-                  "noncanonical_unit"
+                  "noncanonical_unit",
+                  "duplicate_codes"
                 ],
                 "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QualitySnapshot"
               },
               {
                 "type": "null"
@@ -4043,6 +4187,7 @@
           "comparison_status",
           "before",
           "after",
+          "after_snapshot",
           "evaluation",
           "pipeline"
         ],
@@ -5097,6 +5242,66 @@
           "signature",
           "status"
         ],
+        "additionalProperties": false
+      },
+      "QualitySnapshot": {
+        "type": "object",
+        "description": "Snapshot posterior gerado só com propostas aplicadas; imutável.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dataset_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "applied_proposals": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "materials_changed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "inventory_value_conserved": {
+            "type": "boolean"
+          },
+          "export_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dataset_id",
+          "created_at",
+          "applied_proposals",
+          "materials_changed",
+          "inventory_value_conserved",
+          "export_key"
+        ],
+        "additionalProperties": false
+      },
+      "QualitySnapshotRequest": {
+        "type": "object",
+        "description": "Sem dataset_id, usa o dataset importado mais recentemente.",
+        "properties": {
+          "dataset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
         "additionalProperties": false
       }
     },
