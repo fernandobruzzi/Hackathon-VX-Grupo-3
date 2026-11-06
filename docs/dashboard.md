@@ -44,14 +44,19 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
 
 1. Lê o estado atual de cada material do dataset (status, NCM e unidade) e o
    compara com o registro importado.
-2. Toda diferença precisa vir de uma proposta `APPLIED` do mesmo dataset que
-   inclua o material. Se houver diferença sem proposta aplicada, a API responde
-   409 `UNTRACEABLE_CHANGES` com os códigos, e nada é gravado.
+2. Cada campo e valor final diferente precisa corresponder a uma aplicação
+   auditada de proposta `APPLIED` do mesmo dataset e material. A autorização é
+   específica: revisão fiscal de NCM não autoriza unidade nem estado; bloqueio
+   exige a aplicação de uma unificação. Aplicações sucessivas são ordenadas pela
+   versão do material e seus valores anteriores precisam continuar a cadeia.
+   Campo adicional, valor final divergente ou histórico incompleto resulta em
+   409 `UNTRACEABLE_CHANGES` com os códigos, antes de gravar snapshot ou exportação.
 3. Recalcula o valor do estoque pelas consolidações (quantidade × fator, preço ÷
    fator) e confere que é igual ao original. Saldo sem valor impede a conferência.
 4. Grava `exports/{snapshot_id}/quality_snapshot.json` com as propostas aplicadas e,
    para cada material alterado, campos antes e depois e as propostas que explicam
-   a mudança. As tabelas `quality_snapshots` e `quality_snapshot_items` guardam o
+   a mudança. `field_proposal_ids` conserva a cadeia de propostas por campo,
+   além da união em `proposal_ids`. As tabelas `quality_snapshots` e `quality_snapshot_items` guardam o
    mesmo estado, sem permissão de UPDATE ou DELETE para a API.
 5. Registra `QUALITY_SNAPSHOT_CREATED` na auditoria.
 
