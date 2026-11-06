@@ -484,6 +484,8 @@ turns; start a new one for another item. See [`docs/pedidos.md`](docs/pedidos.md
 
 Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. PSI converts to BAR only when it is a whole bar written the kit's way, rounded to 5 PSI (`145PSI` is `10BAR`). Other PSI values, like `150PSI`, stay empty instead of rounding into another item's pressure. Tests hold real base rows with results checked by hand, so add one with each new rule.
 
+Orders and chat messages arrive as sentences and lines. A value followed by sentence punctuation is read without it (`DIN 933.` is `DIN 933`), while a period followed by a letter or digit stays part of the value (`8.8`, `ASME B18.2.1`, and `DIN 931.1` doesn't match `DIN 931`). A line break, with its bullet, separates items, and so does a period before a new `LABEL:`. A period followed by a space alone doesn't, since `REF. 123` is an abbreviation. Base descriptions have no line breaks or trailing periods, so these rules change orders and chat only.
+
 ## Duplicate proposals
 
 The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.
