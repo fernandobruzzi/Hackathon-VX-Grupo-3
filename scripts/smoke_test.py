@@ -4,6 +4,7 @@ import argparse
 import http.cookiejar
 import json
 import sys
+import time
 import uuid
 from html.parser import HTMLParser
 from urllib.error import HTTPError, URLError
@@ -11,6 +12,10 @@ from urllib.parse import urlsplit
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 MESSAGE = "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933."
+FULL_MESSAGE = "Preciso de parafuso sextavado M12x50, classe 8.8, aço carbono, zincado branco, norma DIN 933"
+AUTHORIZED_CENTERS = {"1100", "1200", "1300", "2100", "2200", "9000"}
+# Recusas da regra de aprovação para propostas que a fila ainda lista como aprováveis.
+REFUSED_ON_APPROVAL = {"PDM_INVALID", "NCM_REFERENCE_MISMATCH"}
 
 
 class SmokeFailure(Exception):
@@ -193,11 +198,186 @@ class Smoke:
         self.request("/api/v1/auth/me", expected=401)
         print("PASS sessão local opaca, identidade do servidor e logout; Cognito não validado na AWS")
 
+    # Fluxo completo (#47). Altera o banco: rode depois de `vx-demo reset` e de novo ao terminar.
+    def login(self, persona):
+        me = self.json("/api/v1/auth/local-session", payload={"persona": persona}, headers={"Origin": self.base_url})
+        return {"Origin": self.base_url, "X-CSRF-Token": me["csrf_token"]}
+
+    def write(self, path, payload, headers, expected=200):
+        return self.json(
+            path, expected=expected, payload=payload, headers={**headers, "Idempotency-Key": str(uuid.uuid4())}
+        )
+
+    def flow_chat(self):
+        headers = self.login("SOLICITANTE_OPERACAO")
+        turn = self.json(
+            "/api/v1/chat/message",
+            payload={
+                "session_id": None,
+                "client_message_id": str(uuid.uuid4()),
+                "expected_session_version": 0,
+                "message": FULL_MESSAGE,
+                "center_code": "1200",
+            },
+            headers=headers,
+        )
+        searched = [c for c in turn["tool_calls"] if c["name"] == "search_similar_materials"]
+        if not searched or searched[0]["status"] != "SUCCEEDED":
+            raise SmokeFailure("Chat não buscou similares: confira se o índice de busca está na versão atual")
+        card = turn["material_card"]
+        if card.get("missing_attributes"):
+            raise SmokeFailure(f"Ficha completa ficou com pendências: {card['missing_attributes']}")
+        offered = [c["material_code"] for c in card.get("similar_candidates") or []]
+        if turn["status"] == "NEEDS_INPUT" and offered:
+            turn = self.json(
+                "/api/v1/chat/message",
+                payload={
+                    "session_id": turn["session_id"],
+                    "client_message_id": str(uuid.uuid4()),
+                    "expected_session_version": turn["session_version"],
+                    "message": "Nenhum desses é o meu item",
+                    "center_code": "1200",
+                    "action": {"type": "DISMISS_CANDIDATES"},
+                },
+                headers=headers,
+            )
+        if turn["status"] not in {"READY_TO_SUBMIT", "EXISTING"}:
+            raise SmokeFailure(f"Chat terminou em {turn['status']}, esperado READY_TO_SUBMIT ou EXISTING")
+        print(f"PASS chat com busca de similares, {len(offered)} candidatos descartados e status {turn['status']}")
+        materials = self.json("/api/v1/materials?q=parafuso&limit=20")["items"]
+        centers = {row["center_code"] for item in materials for row in item["inventory"]}
+        if not materials or not centers <= AUTHORIZED_CENTERS:
+            raise SmokeFailure("/materiais sem resultados ou com estoque fora dos centros do usuário")
+        if any(key in json.dumps(materials) for key in ("unit_price", "total_value")):
+            raise SmokeFailure("/materiais expôs valores financeiros ao Solicitante")
+        print(f"PASS /materiais com {len(materials)} resultados e estoque só dos centros autorizados")
+
+    def pending_merges(self, fiscal):
+        """Unificações pendentes sem conflito, com a classe do roteiro (parafuso sextavado) primeiro."""
+        items, cursor = [], ""
+        for _ in range(20):
+            page = self.json(f"/api/v1/sanitization/queue?proposal_type=MERGE&status=PENDING&limit=100{cursor}")
+            items += [
+                item
+                for item in page["items"]
+                if not item["conflicts"] and (item["fiscal_review_status"] == "PENDING") == fiscal
+            ]
+            if not page["next_cursor"]:
+                break
+            cursor = f"&cursor={page['next_cursor']}"
+        if not items:
+            raise SmokeFailure(f"Nenhuma unificação pendente sem conflito (fiscal={fiscal}): rode o reset da demo")
+        return sorted(items, key=lambda item: not item["title"].startswith("PARAFUSO SEXTAVADO"))
+
+    def send(self, path, payload, headers):
+        """POST que devolve status e corpo, para tratar recusas esperadas sem abortar."""
+        request = Request(
+            self.base_url + path,
+            data=json.dumps(payload).encode(),
+            headers={"Accept": "application/json", "Content-Type": "application/json", **headers},
+        )
+        try:
+            response = self.opener.open(request, timeout=30)
+        except HTTPError as error:
+            response = error
+        with response:
+            return response.status, json.loads(response.read() or b"null")
+
+    def decide(self, item, area, headers):
+        payload = {
+            "expected_version": item["version"],
+            "review_area": area,
+            "decision": "APPROVE",
+            "reason": "Fluxo completo local (#47)",
+        }
+        path = f"/api/v1/sanitization/{item['id']}/decide"
+        return self.send(path, payload, {**headers, "Idempotency-Key": str(uuid.uuid4())})
+
+    def approve_first(self, items, area, headers):
+        """Aprova a primeira que a regra de aprovação aceita. A fila ainda lista algumas que ela recusa."""
+        refused = []
+        for item in items[:10]:
+            status, body = self.decide(item, area, headers)
+            if status == 200:
+                return item, body, refused
+            code = (body or {}).get("error", {}).get("code")
+            if status != 422 or code not in REFUSED_ON_APPROVAL:
+                raise SmokeFailure(f"Decisão da proposta {item['id']}: HTTP {status} {code}")
+            refused.append(code)
+        raise SmokeFailure(f"Nenhuma das 10 primeiras unificações pôde ser aprovada: {refused}")
+
+    def flow_approvals(self):
+        governance = self.login("GESTOR_CADASTRO")
+        orders = self.json("/api/v1/registration-orders?limit=100")["items"]
+        if not orders or {o["origin"] for o in orders} != {"IMPORT"}:
+            raise SmokeFailure("Pedidos do kit não foram importados: rode o reset da demo")
+        print(f"PASS pedidos importados e analisados ({len(orders)} na primeira página)")
+
+        _, applied, refused = self.approve_first(self.pending_merges(fiscal=False), "TECHNICAL", governance)
+        if applied["status"] != "APPLIED":
+            raise SmokeFailure(f"Unificação técnica não foi aplicada: {applied['status']}")
+        both, waiting, refused_fiscal = self.approve_first(self.pending_merges(fiscal=True), "TECHNICAL", governance)
+        if waiting["status"] != "PENDING" or waiting["fiscal_review_status"] != "PENDING":
+            raise SmokeFailure("Aprovação técnica aplicou uma unificação que ainda exige revisão fiscal")
+        fiscal = self.login("AUDITOR_FISCAL")
+        status, final = self.decide({**both, "version": waiting["version"]}, "FISCAL", fiscal)
+        if status != 200 or final["status"] != "APPLIED":
+            raise SmokeFailure(f"Aprovação fiscal não aplicou a unificação: HTTP {status} {final}")
+        if refused or refused_fiscal:
+            print(f"INFO fila listou como aprováveis unificações recusadas na decisão: {refused + refused_fiscal}")
+        events = {applied["audit_event_id"], waiting["audit_event_id"], final["audit_event_id"]}
+        # A Governança só vê a auditoria técnica; o Fiscal, ainda logado, vê as três decisões.
+        audit = {event["id"] for event in self.json("/api/v1/audit?limit=100")["items"]}
+        if not events <= audit:
+            raise SmokeFailure("Decisões aplicadas sem evento de auditoria correspondente")
+        print("PASS Governança aplica, Fiscal conclui a revisão fiscal e as três decisões estão na auditoria")
+
+    def flow_batch(self, timeout):
+        governance = self.login("GESTOR_CADASTRO")
+        jobs = self.json("/api/v1/batch/jobs")
+        job = self.write(
+            "/api/v1/batch/jobs",
+            {
+                "dataset_id": jobs["latest_dataset_id"],
+                "job_type": "SANITIZE",
+                "pdm_version": "pdm-kit-v1",
+                "ncm_version": "ncm-demo-v1",
+                "scope": {"pdm_class_ids": [], "include_statuses": ["ATIVO", "BLOQUEADO", "OBSOLETO"]},
+            },
+            governance,
+            expected=202,
+        )
+        deadline = time.monotonic() + timeout
+        while job["status"] in {"QUEUED", "RUNNING"}:
+            if time.monotonic() > deadline:
+                raise SmokeFailure(f"Job do batch não terminou em {timeout} s")
+            time.sleep(5)
+            job = self.json(f"/api/v1/batch/jobs/{job['id']}")
+        if job["status"] != "SUCCEEDED" or not job["counts"]["proposals"]:
+            raise SmokeFailure(f"Job do batch terminou em {job['status']}: {job.get('error')}")
+        print(f"PASS job do batch pela API: {job['counts']['proposals']} propostas")
+
+    def flow_dashboard(self):
+        governance = self.login("GESTOR_CADASTRO")
+        self.write("/api/v1/dashboard/snapshots", {}, governance, expected=201)
+        metrics = self.json("/api/v1/dashboard/metrics")
+        if metrics.get("after") is None or "financial" in metrics:
+            raise SmokeFailure("Dashboard sem snapshot posterior ou com valores financeiros na visão de qualidade")
+        print("PASS snapshot posterior registrado e comparado no dashboard")
+
+    def flow(self, batch_timeout):
+        self.flow_chat()
+        self.flow_batch(batch_timeout)
+        self.flow_approvals()
+        self.flow_dashboard()
+        print("PASS fluxo completo local; rode o reset da demo antes do próximo ensaio")
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base_url", nargs="?", default="http://localhost:8000")
-    parser.add_argument("--mode", choices=("health", "local", "authenticated"), default="health")
+    parser.add_argument("--mode", choices=("health", "local", "flow", "authenticated"), default="health")
+    parser.add_argument("--batch-timeout", type=int, default=600, help="Segundos para o job do batch no modo flow")
     parser.add_argument("--cookie-jar", help="Arquivo Netscape com sessão Solicitante real; nunca é impresso")
     args = parser.parse_args()
     url = urlsplit(args.base_url)
@@ -205,8 +385,10 @@ def main():
         parser.error("base_url deve ser uma origem HTTP(S), sem caminho, query ou fragmento")
     if url.username or url.password:
         parser.error("Não inclua credenciais na URL")
-    if args.mode == "local" and (url.scheme != "http" or url.hostname not in {"localhost", "127.0.0.1", "::1"}):
-        parser.error("modo local exige loopback HTTP")
+    if args.mode in {"local", "flow"} and (
+        url.scheme != "http" or url.hostname not in {"localhost", "127.0.0.1", "::1"}
+    ):
+        parser.error(f"modo {args.mode} exige loopback HTTP")
     jar = None
     if args.mode == "authenticated":
         if url.scheme != "https" or not args.cookie_jar:
@@ -223,6 +405,8 @@ def main():
         smoke.front()
         if args.mode == "authenticated":
             smoke.authenticated()
+        elif args.mode == "flow":
+            smoke.flow(args.batch_timeout)
         else:
             smoke.local()
     return 0
