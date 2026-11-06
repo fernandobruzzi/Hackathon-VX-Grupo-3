@@ -62,7 +62,8 @@ export function BatchPage() {
   const [type, setType] = useState<BatchJob["job_type"]>("SANITIZE");
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
@@ -70,9 +71,9 @@ export function BatchPage() {
       const list = await api.request("get", "/api/v1/batch/jobs", { query: { limit: 20 } });
       setJobs(list.items);
       setDatasetId(list.latest_dataset_id);
-      setError(null);
+      setQueryError(null);
     } catch (e) {
-      setError(errorMessage(e));
+      setQueryError(`Não foi possível atualizar os jobs: ${errorMessage(e)}`);
     } finally {
       setLoaded(true);
       setNow(Date.now());
@@ -93,13 +94,13 @@ export function BatchPage() {
     return () => clearInterval(timer);
   }, [allowed, active, load]);
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (label: string, action: () => Promise<unknown>) => {
     setBusy(true);
-    setError(null);
+    setActionError(null);
     try {
       await action();
     } catch (e) {
-      setError(errorMessage(e));
+      setActionError(`Não foi possível ${label}: ${errorMessage(e)}`);
     } finally {
       setBusy(false);
       await load();
@@ -107,7 +108,7 @@ export function BatchPage() {
   };
 
   const start = () =>
-    run(() =>
+    run("iniciar o job", () =>
       api.request("post", "/api/v1/batch/jobs", {
         body: {
           dataset_id: datasetId ?? "",
@@ -120,7 +121,7 @@ export function BatchPage() {
     );
 
   const resume = (job: BatchJob) =>
-    run(() =>
+    run(`reprocessar o job ${job.id.slice(0, 8)}`, () =>
       api.request("post", "/api/v1/batch/jobs/{id}/resume", {
         params: { id: job.id },
         body: {},
@@ -189,10 +190,13 @@ export function BatchPage() {
               {!datasetId && loaded && (
                 <p className="text-sm text-aviso">Nenhum dataset carregado: rode o bootstrap.</p>
               )}
-              {error && (
-                <p role="alert" className="text-sm text-alerta">
-                  {error}
-                </p>
+              {[actionError, queryError].map(
+                (message, index) =>
+                  message && (
+                    <p key={index} role="alert" className="text-sm text-alerta">
+                      {message}
+                    </p>
+                  ),
               )}
             </Card>
             {active ? (
