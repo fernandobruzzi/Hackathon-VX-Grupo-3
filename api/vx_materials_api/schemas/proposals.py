@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
-from domain.proposals import canonical_hash
+from domain.enrichment_rules import evidence_hash as evidence_hash
 from domain.proposals import proposal_hash as proposal_hash
 
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
@@ -72,6 +72,16 @@ class ReviewLane(StrictModel):
     reasons: list[str] = Field(default_factory=list)
 
 
+class EnrichmentContext(StrictModel):
+    schema_version: Literal["enrichment-v1"]
+    report_key: str = Field(min_length=1, max_length=1024)
+    manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    original_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    extraction_signature: str = Field(min_length=1, max_length=128)
+    divergent_attributes: list[str] = Field(default_factory=list)
+    blocked_attributes: list[str] = Field(default_factory=list)
+
+
 class ProposalChangeset(StrictModel):
     schema_version: Literal["proposal-v1"]
     dataset_id: UUID
@@ -88,16 +98,4 @@ class ProposalChangeset(StrictModel):
     ncm_assessment: dict[str, Any] | None = None
     ncm_before_assessment: dict[str, Any] | None = None
     review_lane: ReviewLane | None = None
-
-
-def evidence_hash(source) -> str:
-    fields = (
-        "attribute_name",
-        "proposed_value",
-        "source_url",
-        "source_title",
-        "source_excerpt",
-        "source_page",
-        "source_sha256",
-    )
-    return canonical_hash({field: getattr(source, field) for field in fields})
+    enrichment_context: EnrichmentContext | None = None

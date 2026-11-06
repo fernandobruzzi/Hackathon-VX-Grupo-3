@@ -553,6 +553,23 @@ Reordered words may match a PDM value only when all its words are present; an in
 
 For labels without separators, preserve the remaining attributes after a whole matched prefix. Generic `ZINCADO` stays pending; `ZINCADO BRANCO` supplies the complete finish. Boundary rules, all changed-value evidence, merge reviews and index-only rebuild instructions: [label boundaries](docs/label-boundaries.md).
 
+## Real product enrichment
+
+`vx-back enrich-real-products` reads the bootstrap manifest and preserves external
+evidence and draft proposal artifacts through `clients/storage.py`. Only the 15
+manifest codes are eligible. URLs come from a reviewed server catalog with HTTPS,
+public IP, redirect, byte and time limits. `ENRICHMENT_REPOSITORY` selects the
+registered extractor. Offline replay uses `--evidence-manifest-key`.
+`vx-back publish-enrichment --report-key <key> --pdm-workbook <path>` replays frozen
+documents, binds live material versions and persists evidence and approval proposals
+with the batch credential. It never edits master data. The enrichment screen reads
+the API and decides through the existing transactional approval endpoint. Partial
+evidence can fill missing attributes while the material stays noncanonical; absent,
+divergent or PDM-invalid values remain pending. Simulated evidence is local-only.
+Queue, evidence review and approval use the shared PDM predicate with an explicit
+partial-enrichment option. Merge results and members keep the strict default.
+See `docs/enriquecimento.md` for commands, source limitations and tests.
+
 ## Duplicate proposals
 
 The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.

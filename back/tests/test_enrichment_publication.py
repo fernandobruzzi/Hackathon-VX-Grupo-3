@@ -107,6 +107,12 @@ def test_filter_name_is_read_from_original_instead_of_first_option(catalog):
         == "FILTRO COMBUSTIVEL"
     )
     assert original_item_name(catalog, "PDM100", material() | {"original_description_long": "FILTRO LF9009"}) is None
+    assert (
+        original_item_name(
+            catalog, "PDM100", material() | {"original_description_long": "FILTRO COMBUSTIVEL E FILTRO AR LF9009"}
+        )
+        is None
+    )
 
 
 @pytest.mark.parametrize(

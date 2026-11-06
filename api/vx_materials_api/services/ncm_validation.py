@@ -7,7 +7,7 @@ from domain.proposals import canonical_hash
 from vx_materials_api.errors import ApiError
 
 
-def evaluate_proposed_ncm(catalog, changes):
+def evaluate_proposed_ncm(catalog, changes, *, require_consistency=True):
     result = asdict(
         check_ncm_consistency(
             catalog,
@@ -19,6 +19,6 @@ def evaluate_proposed_ncm(catalog, changes):
     )
     if changes.ncm_assessment is not None and canonical_hash(changes.ncm_assessment) != canonical_hash(result):
         raise ApiError(409, "NCM_ASSESSMENT_CHANGED", "A base fiscal mudou. Gere e revise uma nova proposta.")
-    if changes.after.ncm is not None and result["technical_consistency"] != "CONSISTENT":
+    if require_consistency and changes.after.ncm is not None and result["technical_consistency"] != "CONSISTENT":
         raise ApiError(422, "NCM_REFERENCE_MISMATCH", "NCM nao atende as condicoes da classe e dos atributos PDM.")
     return result
