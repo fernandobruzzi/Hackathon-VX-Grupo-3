@@ -1104,7 +1104,7 @@ A API exige ROLE_AUDITOR_FISCAL. Se ainda faltar aprovação técnica, retorna `
 
 ### 6.4. Dashboard
 
-A implementação local usa snapshots originais e propostas persistidas, com escopo por tenant, dataset e centros. O funil é calculado sem estimar precisão ou economia; detalhes em [dashboard.md](dashboard.md). A comparação posterior segue na #33.
+A implementação local usa snapshots originais e propostas persistidas, com escopo por tenant, dataset e centros. O funil é calculado sem estimar precisão ou economia; detalhes em [dashboard.md](dashboard.md). O depois vem de um snapshot posterior gerado só com propostas aplicadas; detalhes no mesmo documento.
 
 `GET /api/v1/dashboard/metrics?view=executive`
 
