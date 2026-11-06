@@ -385,6 +385,13 @@ def run_sanitize(
             finalization_attempt = None
             try:
                 metrics = context.checkpoint.get("final_metrics")
+                if metrics is not None:
+                    signature = analysis_signature(
+                        catalog, get_classification_repository(catalog), get_extraction_repository()
+                    )
+                    recorded = context.checkpoint.get("analysis_signature")
+                    if recorded != signature:
+                        raise AnalysisRulesChanged(_rules_changed(recorded, signature))
                 if metrics is None:
                     records = read_materials(engine, tenant_id)
                     metrics = run_full(records, catalog, context, repository_name, correction_repository)

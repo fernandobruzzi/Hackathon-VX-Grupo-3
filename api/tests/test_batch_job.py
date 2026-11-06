@@ -229,3 +229,33 @@ def test_resume_after_metrics_finalization_failure(base, tmp_path, monkeypatch, 
     assert completed["checkpoint"]["lease"]["worker"] != checkpoint["lease"]["worker"]
     assert len(completed["checkpoint"]["finalization_attempts"]) == 2
     assert "error" in completed["checkpoint"]["finalization_attempts"][0]
+
+
+def test_frozen_final_metrics_refuse_changed_rules(base, tmp_path, monkeypatch):
+    admin, batch_url = base
+    job_id = new_job(admin)
+    store = LocalObjectStore(tmp_path)
+    original_read = full_run.read_materials
+    monkeypatch.setattr(full_run, "read_materials", lambda engine, tenant: original_read(engine, tenant)[:2])
+    original_finish = full_run.finish_job
+
+    def fail_finish(*args):
+        raise Interrupted("finish")
+
+    monkeypatch.setattr(full_run, "finish_job", fail_finish)
+    with pytest.raises(Interrupted):
+        run_sanitize(PDM, job_id, database_url=batch_url, store=store)
+    original = store.get(f"runs/{job_id}/metrics.json")
+    current = full_run.get_extraction_repository()
+
+    class Revised(type(current)):
+        revision = current.revision + "-revisada"
+
+    monkeypatch.setattr(full_run, "finish_job", original_finish)
+    monkeypatch.setattr(full_run, "get_extraction_repository", Revised)
+    with pytest.raises(AnalysisRulesChanged, match="novo job"):
+        run_sanitize(PDM, job_id, database_url=batch_url, store=store)
+    row = job_row(admin, job_id)
+    assert row["status"] == "FAILED"
+    assert "novo job" in row["error_summary"]
+    assert store.get(f"runs/{job_id}/metrics.json") == original
