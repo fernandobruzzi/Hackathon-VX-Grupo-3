@@ -102,6 +102,10 @@ def test_chat_submission_lists_for_owner_and_governance_and_requires_both_approv
     body = response.json()
     validator({"$ref": "#/components/schemas/ChatSubmitResponse"}).validate(body)
     assert body["status"] == "READY_FOR_REVIEW" and body["session_version"] == turn["session_version"] + 1
+    restored = client.get(f"/api/v1/chat/sessions/{turn['session_id']}").json()
+    assert restored["submission"] == body
+    assert restored["order_id"] == body["order_id"]
+    assert restored["session_version"] == body["session_version"]
     assert db.scalar(select(func.count()).select_from(MaterialMaster)) == before
     order = db.get(RegistrationOrder, uuid.UUID(body["order_id"]))
     session = db.get(ChatSession, uuid.UUID(turn["session_id"]))

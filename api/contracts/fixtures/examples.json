@@ -1905,7 +1905,8 @@
         "duplicate_check_status": "PENDING",
         "can_submit": false
       },
-      "order_id": "44444444-4444-4444-8444-444444444444"
+      "order_id": "44444444-4444-4444-8444-444444444444",
+      "submission": null
     }
   }
 ]
