@@ -62,6 +62,10 @@ _POOL_REFERENCE = re.compile(
     r"(?<![\w/.\-])(?:[A-Z]{1,3}\s)?[A-Z0-9]*\d[A-Z0-9/.\-]*(?:\s\d[A-Z0-9/.\-]*)*(?![\w/.\-])"
 )
 _POOL_BEARING = re.compile(r"\b\d{4,5}[A-Z]*(?:[\s\-/]*(?:2RS|ZZ))?(?:[\s\-/]*C3)?\b")
+# Evidência exigida por aliases que completariam o valor (#158).
+_METRIC_THREADS = frozenset({"METRICA GROSSA", "METRICA FINA"})
+_METRIC_EVIDENCE = re.compile(r"(?<![A-Z0-9])(?:M[\s\-]?\d|(?:MA|MF)(?![A-Z]))")
+_BOTH_SHIELDS = re.compile(r"(?<![A-Z0-9])(?:ZZ|2Z)(?![A-Z0-9])")
 
 _WORD_ALIASES = {"FEM": "FEMEA", "AC": "ACO"}
 _MIN_UNLABELED_REFERENCE = 4
@@ -258,7 +262,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "8"
+    revision = "9"
 
     def extract(
         self,
@@ -286,7 +290,8 @@ class RuleBasedV1ExtractionRepository:
         pool = self._scan_inches(work, pool)
         pool = self._scan_bearing_reference(work, pool)
         pool = self._scan_manufacturer_reference(work, pool)
-        self._apply_documented_inferences(work)
+        blocked = self._require_alias_evidence(work, f"{text} {manufacturer_reference or ''}")
+        self._apply_documented_inferences(work, blocked)
 
         parts = (part.strip() for part in pool.split(" , "))
         unresolved = tuple(part for part in parts if part and not _ONLY_PUNCTUATION.match(part))
@@ -543,22 +548,54 @@ class RuleBasedV1ExtractionRepository:
         work.set("REFERENCIA FABRICANTE", code, code, "reference.unlabeled")
         return pool[: matches[0].start()] + pool[matches[0].end() :]
 
-    def _apply_documented_inferences(self, work: _Extraction) -> None:
+    @staticmethod
+    def _require_alias_evidence(work: _Extraction, evidence: str) -> frozenset[str]:
+        """Aliases que completariam o valor só valem com evidência no texto (#158).
+
+        `ROSCA GROSSA` vira `METRICA GROSSA` só se há bitola métrica quando a classe também aceita
+        UNC/UNF; `BLINDADO` vira `METALICA AMBOS LADOS` só se a referência tem ZZ ou 2Z. Sem
+        evidência o campo fica vazio, e nenhuma inferência o preenche contra o que foi escrito.
+        """
+        blocked: set[str] = set()
+        for name, found in list(work.found.items()):
+            if not found.rule.startswith("value."):
+                continue
+            original = found.original.upper()
+            allowed = work.by_name[name].allowed_values or ()
+            imperial = {"UNC", "UNF"} & set(allowed)
+            if found.value in _METRIC_THREADS and "METRICA" not in original and imperial:
+                if not _METRIC_EVIDENCE.search(evidence):
+                    del work.found[name]
+                    blocked.add(name)
+            elif found.value == "METALICA AMBOS LADOS" and "AMBOS" not in original:
+                if not _BOTH_SHIELDS.search(evidence):
+                    del work.found[name]
+                    blocked.add(name)
+        return frozenset(blocked)
+
+    def _apply_documented_inferences(self, work: _Extraction, blocked: frozenset[str] = frozenset()) -> None:
         """Só o que o próprio PDM autoriza deduzir."""
         thread = work.by_name.get("ROSCA")
         bitola = work.found.get("BITOLA")
-        if thread and thread.allowed_values and "ROSCA" not in work.found and bitola and bitola.value.startswith("M"):
+        if (
+            thread
+            and thread.allowed_values
+            and "ROSCA" not in work.found
+            and "ROSCA" not in blocked
+            and bitola
+            and bitola.value.startswith("M")
+        ):
             value = "METRICA FINA" if "X" in bitola.value else "METRICA GROSSA"
             if value in thread.allowed_values:
                 work.set("ROSCA", value, bitola.value, "pdm.thread_from_gauge")
         reference = work.found.get("REFERENCIA")
         if reference and "VEDACAO" in work.by_name and work.by_name["VEDACAO"].allowed_values:
             if "ABERTO" in work.by_name["VEDACAO"].allowed_values:
-                self._infer_bearing(work, reference.value)
+                self._infer_bearing(work, reference.value, seal_blocked="VEDACAO" in blocked)
 
-    def _infer_bearing(self, work: _Extraction, reference: str) -> None:
+    def _infer_bearing(self, work: _Extraction, reference: str, *, seal_blocked: bool = False) -> None:
         """O FORMATO da REFERENCIA do PDM020 define o que cada sufixo significa."""
-        if "VEDACAO" not in work.found:
+        if "VEDACAO" not in work.found and not seal_blocked:
             if "-2RS" in reference:
                 seal = "BORRACHA AMBOS LADOS"
             elif "-ZZ" in reference:
