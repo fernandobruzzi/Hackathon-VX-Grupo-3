@@ -194,9 +194,11 @@ POST /api/v1/auth/demo/switch
 
 ```json
 {
-  "session_handle": "demo_session_fiscal_01"
+  "session_handle": "AUDITOR_FISCAL"
 }
 ```
+
+O handle é a persona. `DEMO_ACCOUNTS` associa cada persona ao e-mail da conta Cognito de demonstração; o login marca a sessão com a persona só quando o e-mail está na lista e o token traz o papel daquela persona. Para autenticar as três contas no mesmo navegador, o seletor abre `GET /api/v1/auth/sso-start?prompt=login`, que pede um novo login ao Cognito sem sair da conta atual.
 
 O backend verifica:
 
@@ -206,7 +208,7 @@ O backend verifica:
 - Sessão não expirada ou revogada.
 - Token válido e proteção CSRF.
 
-Em seguida, troca o cookie da sessão ativa. O frontend descarta caches privados e busca novamente `/auth/me`.
+Em seguida, troca o cookie da sessão ativa: a sessão escolhida recebe um segredo novo, e a anterior continua disponível para voltar. O frontend recarrega a página, o que descarta caches privados e busca novamente `/auth/me`. Sem sessão daquela persona no navegador, a API responde 404 `DEMO_SESSION_NOT_FOUND` e o front pede o login da conta.
 
 Escolher uma persona não concede um papel. A troca exige uma sessão já autenticada daquela conta. Cada alteração continuará registrada com o usuário real correspondente.
 
