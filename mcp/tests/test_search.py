@@ -131,3 +131,21 @@ def test_embedding_search_finds_the_existing_item(database, monkeypatch):
     assert result["candidates"][0]["material_code"] == "16031971"
     assert result["candidates"][0]["identity_verified"] is True
     assert all(c["ranking_score"] < 1.0 for c in result["candidates"] if not c["identity_verified"])
+
+
+def test_index_if_stale_skips_a_current_index_and_rebuilds_another_version(database, monkeypatch):
+    skipped = run_index(PDM, database_url=database["batch"], if_stale=True)
+    assert skipped["skipped"] and skipped["written"] == 0
+    assert skipped["index_version"] == database["indexed"]["index_version"]
+    assert skipped["materials"] == database["indexed"]["materials"]
+
+    # Outra versão de regras: o índice atual não serve e é refeito.
+    monkeypatch.setattr("pipelines.search_index.INDEX_FORMAT", "search-index-teste")
+    rebuilt = run_index(PDM, database_url=database["batch"], if_stale=True)
+    assert "skipped" not in rebuilt
+    assert rebuilt["written"] == database["indexed"]["materials"]
+    with database["admin"].begin() as connection:
+        connection.execute(
+            text("DELETE FROM material_search_index WHERE normalization_version = :v"),
+            {"v": rebuilt["index_version"]},
+        )

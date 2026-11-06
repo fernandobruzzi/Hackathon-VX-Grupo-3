@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 
 from domain.contracts import AnalyzedMaterial, ClassificationRepository, ExtractionRepository, PdmCatalog
 from pipelines.sanitize import _REDIRECT_PREFIX, _catalog, analysis_signature, analyze_material
-from repositories.batch_repository import read_materials, single_tenant, write_search_index
+from repositories.batch_repository import index_coverage, read_materials, single_tenant, write_search_index
 from repositories.candidates.tokens_v1 import tokens
 from repositories.classification import get_classification_repository
 from repositories.embeddings import get_embedding_repository
@@ -49,7 +49,12 @@ def search_text(material: AnalyzedMaterial) -> str:
     return " ".join(tokens(" ".join(values)))
 
 
-def run_index(pdm_workbook: str | None = None, database_url: str | None = None) -> dict:
+def run_index(pdm_workbook: str | None = None, database_url: str | None = None, *, if_stale: bool = False) -> dict:
+    """Reconstrói o índice da versão atual.
+
+    Com `if_stale`, não refaz quando a versão atual já cobre todos os materiais. Só confere versão e
+    cobertura: depois de aprovar mudanças nos materiais, rode sem `if_stale` para reindexar o conteúdo.
+    """
     url = database_url or os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError("Defina DATABASE_URL com a credencial batch_user")
@@ -62,6 +67,17 @@ def run_index(pdm_workbook: str | None = None, database_url: str | None = None) 
         signature = embedder.signature if embedder else None
         version = index_version(catalog, classifier, extractor, signature)
         tenant_id = single_tenant(engine)
+        if if_stale:
+            materials, indexed = index_coverage(engine, tenant_id, version)
+            if materials and indexed == materials:
+                return {
+                    "index_version": version,
+                    "materials": materials,
+                    "written": 0,
+                    "skipped": "índice já está na versão atual",
+                    "embeddings": signature,
+                    "simulated": bool(embedder and embedder.simulated),
+                }
         records = read_materials(engine, tenant_id)
         analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
         vectors = embedder.embed([embedding_text(m) for m in analyzed], query=False) if embedder else None

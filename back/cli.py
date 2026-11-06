@@ -62,6 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     report_merges.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
     index = commands.add_parser("index", help="Reconstroi o indice de busca, com a credencial batch_user")
     index.add_argument("--pdm-workbook")
+    index.add_argument("--if-stale", action="store_true", help="Pula se a versao atual ja cobre todos os materiais")
     sanitize = commands.add_parser("sanitize", help="Grava propostas no banco, com a credencial batch_user")
     sanitize.add_argument("--pdm-workbook")
     sanitize.add_argument("--job-id")
@@ -70,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "index":
-        result = run_index(args.pdm_workbook)
+        result = run_index(args.pdm_workbook, if_stale=args.if_stale)
     elif args.command == "sanitize-report":
         result = sanitize_report(args.csv_path, args.pdm_workbook, args.repository)
     elif args.command == "sanitize":
