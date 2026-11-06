@@ -44,6 +44,14 @@ export function ChatPage() {
   );
   const operationBusy = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const pendingTurn = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      pendingTurn.current?.abort();
+      pendingTurn.current = null;
+    },
+    [],
+  );
   const height = useViewportHeight();
   useEffect(() => {
     // Rola só a área de mensagens: scrollIntoView rolaria a página e esconderia o campo de texto.
@@ -56,6 +64,8 @@ export function ChatPage() {
     const content = msg.trim();
     if (!content || operationBusy.current || submitted) return;
     operationBusy.current = true;
+    const turn = new AbortController();
+    pendingTurn.current = turn;
     const clientMessageId = crypto.randomUUID();
     setMessages((m) => [
       ...m,
@@ -66,6 +76,7 @@ export function ChatPage() {
     setBusy(true);
     try {
       const res = await api.request("post", "/api/v1/chat/message", {
+        signal: turn.signal,
         body: {
           session_id: session?.id ?? null,
           client_message_id: clientMessageId,
@@ -75,6 +86,7 @@ export function ChatPage() {
           ...(action ? { action } : {}),
         },
       });
+      if (pendingTurn.current !== turn) return;
       setSession({ id: res.session_id, version: res.session_version });
       setLast(res);
       setCalls((c) => [
@@ -91,13 +103,17 @@ export function ChatPage() {
         },
       ]);
     } catch (e) {
+      if (pendingTurn.current !== turn) return;
       // A mensagem não foi gravada: sai da conversa e volta para a caixa de texto.
       setMessages((m) => m.filter((item) => item.id !== clientMessageId));
       setText(content);
       setError(errorMessage(e));
     } finally {
-      operationBusy.current = false;
-      setBusy(false);
+      if (pendingTurn.current === turn) {
+        pendingTurn.current = null;
+        operationBusy.current = false;
+        setBusy(false);
+      }
     }
   };
 
@@ -137,6 +153,12 @@ export function ChatPage() {
   };
 
   const reset = () => {
+    // Abortar poupa a conexão; a identidade do turno também barra respostas já recebidas.
+    pendingTurn.current?.abort();
+    pendingTurn.current = null;
+    operationBusy.current = false;
+    setBusy(false);
+    setText("");
     setMessages([]);
     setSession(null);
     setError(null);
@@ -174,7 +196,12 @@ export function ChatPage() {
                 <option key={c}>{c}</option>
               ))}
             </Select>
-            <Button variant="ghost" size="sm" disabled={busy} onClick={reset}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy && pendingTurn.current === null}
+              onClick={reset}
+            >
               <RotateCcw className="size-4" /> Nova conversa
             </Button>
           </div>
