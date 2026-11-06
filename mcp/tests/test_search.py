@@ -114,6 +114,7 @@ def test_query_and_index_must_share_the_same_version(database):
 
 def test_embedding_search_needs_an_index_with_the_same_signature(database, monkeypatch):
     """Índice sem embeddings não serve para consulta com embeddings: modelo, dimensão e versão precisam casar."""
+    monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("EMBEDDING_REPOSITORY", "simulated_v1")
     monkeypatch.setenv("SEARCH_REPOSITORY", "hybrid_embeddings_v1")
     with pytest.raises(McpToolError, match="simulated_v1:hashing-trigrams-v1:512"):
@@ -121,6 +122,7 @@ def test_embedding_search_needs_an_index_with_the_same_signature(database, monke
 
 
 def test_embedding_search_finds_the_existing_item(database, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("EMBEDDING_REPOSITORY", "simulated_v1")
     run_index(PDM, database_url=database["batch"])
     monkeypatch.setenv("SEARCH_REPOSITORY", "hybrid_embeddings_v1")
