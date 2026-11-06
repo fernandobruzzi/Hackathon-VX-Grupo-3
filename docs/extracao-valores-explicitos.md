@@ -222,3 +222,33 @@ Para conferir as contagens correntes sem escrever no cadastro, de `back/`:
 ```bash
 uv run vx-back sanitize-report ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
+
+## Aliases explícitos que dependem de evidência (#158)
+
+A #158 revisou a tabela de aliases explícitos atrás de valores que o texto não
+sustenta. A maioria é equivalência direta (`CF8M`, `WCB`, `F316`, `A105` nomeiam
+o próprio grau; `VITON` é FKM). Três completariam o valor:
+
+| Alias | Valor do PDM | Por que depende de evidência | Evidência exigida |
+| ----- | ------------ | ---------------------------- | ----------------- |
+| `ROSCA GROSSA`, `ROSCA FINA` | `METRICA GROSSA`, `METRICA FINA` | O PDM001 também aceita `UNC` e `UNF` | Bitola métrica no texto (`M14`, `M6X25`, `MA`, `MF`), quando a classe aceita rosca em polegada |
+| `BLINDADO` | `METALICA AMBOS LADOS` | Blindagem pode ser de um lado só | `ZZ` ou `2Z` no texto ou na referência |
+| `EPI BOTINA` | `BOTINA CADARCO` | O PDM071 também tem `BOTINA ELASTICO` | Alias removido |
+
+Sem evidência, o campo fica vazio e a inferência da referência do rolamento não o
+substitui por `ABERTO`. Mantidos por equivalência de uso: `OXIDADO` (o único
+oxidado do PDM é `OXIDADO PRETO`), `MANOPLA` (`ALAVANCA`), `MINI DISJUNTOR`
+(`MINIDISJUNTOR DIN`) e `CARBONO` (`ACO CARBONO`).
+
+Na base, comparando material a material com a revisão anterior, só cinco
+parafusos mudam: escrevem `ROSCA GROSSA` ou `ROSCA FINA` sem bitola
+(29878298, 26323422, 22872566, 14943072 e 19083115) e perdem a rosca. Os cinco
+já estavam incompletos por falta de bitola, então nenhuma proposta, unificação
+ou correção muda. Os quatro rolamentos `BLINDADO` da base têm `ZZ` e continuam
+iguais; `EPI BOTINA` não aparece na base. Nos 520 pedidos nada muda. A medição de
+extração continua com 10.883 materiais válidos (46,2%), e a avaliação de
+classificação, com 36/36 decisões corretas.
+
+Regressões em `back/tests/test_alias_evidence.py`, com as linhas reais acima e os
+casos que precisam continuar reconhecidos.
+

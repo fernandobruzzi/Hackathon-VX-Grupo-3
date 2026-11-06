@@ -551,6 +551,8 @@ Orders and chat messages arrive as sentences and lines. A value followed by sent
 
 Reordered words may match a PDM value only when all its words are present; an incomplete value is never completed just because only one PDM option contains it. `FERRO FUNDIDO` does not establish `FERRO FUNDIDO NODULAR`, and `FEMEA BSP` does not establish a straight fitting. Explicit aliases and complete values still work. With shared identity-v3 and sentence/line parsing, #133 uses extraction revision `5`: rebuild the search index through `docker compose up --build` or `docker compose run --rm --build batch` after updating. Development counts, coverage held for review and the unchanged historical labels are recorded in [the extraction measurement](docs/extracao-valores-explicitos.md).
 
+An explicit alias must not add what the text leaves open either (#158). Where the class also accepts an imperial thread (`UNC`, `UNF`), `ROSCA GROSSA` or `ROSCA FINA` becomes metric only with a metric gauge in the text (`M14`, `M6X25`, `MA`); `BLINDADO` becomes `METALICA AMBOS LADOS` only with `ZZ` or `2Z`. Without that evidence the field stays empty, and a later inference never fills it against what was written. `EPI BOTINA` has no alias, because a boot can be laced or elastic. Extraction revision `7-alias-evidence-158` covers these rules.
+
 For labels without separators, preserve the remaining attributes after a whole matched prefix. Generic `ZINCADO` stays pending; `ZINCADO BRANCO` supplies the complete finish. Boundary rules, all changed-value evidence, merge reviews and index-only rebuild instructions: [label boundaries](docs/label-boundaries.md).
 
 An inline colon label also preserves preceding attributes: `M12 x 50 CLASSE: 8.8`
