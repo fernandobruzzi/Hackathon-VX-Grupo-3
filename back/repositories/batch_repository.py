@@ -90,6 +90,16 @@ def _record(row, inventory: list[dict], total: Decimal) -> MaterialRecord:
     )
 
 
+_INDEX_COVERAGE = text(
+    """
+    SELECT
+        (SELECT count(*) FROM materials_master WHERE tenant_id = :tenant_id) AS materials,
+        (
+            SELECT count(DISTINCT material_id) FROM material_search_index
+            WHERE tenant_id = :tenant_id AND normalization_version = :version
+        ) AS indexed
+    """
+)
 _DELETE_INDEX = text(
     "DELETE FROM material_search_index WHERE tenant_id = :tenant_id AND normalization_version = :version"
 )
@@ -106,6 +116,13 @@ _INSERT_INDEX = text(
     )
     """
 )
+
+
+def index_coverage(engine: Engine, tenant_id: str, version: str) -> tuple[int, int]:
+    """Materiais da empresa e quantos deles têm linha no índice desta versão."""
+    with engine.connect() as connection:
+        row = connection.execute(_INDEX_COVERAGE, {"tenant_id": tenant_id, "version": version}).one()
+    return row.materials, row.indexed
 
 
 def write_search_index(engine: Engine, tenant_id: str, version: str, rows: list[dict]) -> int:
