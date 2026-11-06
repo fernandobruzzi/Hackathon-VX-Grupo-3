@@ -91,6 +91,12 @@ Rebuild the search index and write proposals to the local database, from the rep
 docker compose run --rm batch
 ```
 
+Import the kit's 520 registration orders, from the repo root, after the index exists. Repeating it duplicates nothing ([details](docs/pedidos.md)):
+
+```bash
+docker compose run --rm bootstrap vx-import-orders
+```
+
 Measure attribute extraction on the whole base, from `back/`:
 
 ```bash
