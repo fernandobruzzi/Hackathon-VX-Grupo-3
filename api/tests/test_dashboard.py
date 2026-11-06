@@ -30,10 +30,17 @@ def dashboard_case(connection, monkeypatch):
     catalog, dataset, materials, snapshots, proposal, _ = seed_case(db, TENANT_ID)
     for snapshot in snapshots:
         snapshot.raw_record = {
-            "STATUS": "ATIVO" if snapshot.material_id == materials[0].id else "BLOQUEADO",
+            "STATUS": "ATIVO",
             "NCM": "" if snapshot.material_id == materials[0].id else "8421.23.00",
             "UNIDADE_MEDIDA": "PÇ" if snapshot.material_id == materials[0].id else "PC",
         }
+    # Estado importado realista: os valores só mudam durante a aplicação auditada.
+    materials[0].ncm, materials[0].unit = None, "PÇ"
+    proposal.fiscal_review_status = "PENDING"
+    proposal.changeset = {**proposal.changeset, "sources": {"ncm": "Referência PDM", "unit": "Alias da unidade"}}
+    from vx_materials_api.schemas.proposals import proposal_hash
+
+    proposal.changeset_hash = proposal_hash(proposal.members, proposal.changeset)
     db.commit()
     app = create_app(session_factory=lambda: Session(bind=connection, join_transaction_mode="create_savepoint"))
     app.state.pdm_catalog = catalog
@@ -71,13 +78,13 @@ def test_quality_uses_original_distinct_materials_and_has_no_financial_fields(da
     assert data["dataset_id"] == str(dataset.id)
     assert data["before"] == {
         "materials_total": 2,
-        "active": 1,
-        "blocked": 1,
+        "active": 2,
+        "blocked": 0,
         "obsolete": 0,
         "missing_ncm": 1,
         "noncanonical_unit": 1,
-        # O único outro membro da unificação já estava bloqueado no original.
-        "duplicate_codes": 0,
+        # Os dois membros estão ativos no original; um é duplicado proposto.
+        "duplicate_codes": 1,
     }
     assert data["pipeline"] == {"proposals_total": 1, "pending": 1, "applied": 0, "rejected": 0, "stale": 0}
     assert data["comparison_status"] == "AFTER_SNAPSHOT_NOT_AVAILABLE" and data["after"] is None
@@ -167,7 +174,8 @@ def test_counts_track_status_changes_without_inventing_after_or_accuracy(dashboa
         proposal.status = status
         db.commit()
         data = client.get(PATH).json()
-        assert data["before"] == before
+        # Os indicadores brutos são estáveis; duplicados seguem propostas pendentes/aplicadas.
+        assert data["before"] == {**before, "duplicate_codes": int(status in {"PENDING", "APPLIED"})}
         assert data["pipeline"][status.lower()] == 1
         assert data["pipeline"]["proposals_total"] == 1
         assert data["after"] is None and data["evaluation"]["merge_precision"] is None
@@ -249,12 +257,19 @@ def test_real_approval_and_idempotent_retry_count_one_application(dashboard_case
     for _ in range(2):
         response = client.post(f"/api/v1/sanitization/{proposal.id}/decide", json=body, headers=headers)
         assert response.status_code == 200, response.text
-        assert response.json()["status"] == "APPLIED"
+        assert response.json()["status"] == "PENDING"
         data = client.get(PATH).json()
-        assert data["pipeline"] == {"proposals_total": 1, "pending": 0, "applied": 1, "rejected": 0, "stale": 0}
+        assert data["pipeline"] == {"proposals_total": 1, "pending": 1, "applied": 0, "rejected": 0, "stale": 0}
         assert data["before"] == before
         assert data["after"] is None and data["evaluation"]["merge_precision"] is None
     login(client, "AUDITOR_FISCAL")
+    fiscal = {**body, "expected_version": response.json()["version"], "review_area": "FISCAL"}
+    fiscal.pop("primary_material_code")
+    fiscal_headers = write_headers(client)
+    for _ in range(2):
+        applied = client.post(f"/api/v1/sanitization/{proposal.id}/decide", json=fiscal, headers=fiscal_headers)
+        assert applied.status_code == 200 and applied.json()["status"] == "APPLIED", applied.text
+        assert client.get(PATH).json()["pipeline"]["applied"] == 1
     financial = client.get(PATH + "?view=executive").json()["financial"]
     assert financial["inventory_book_value"] == "60" and financial["realized_savings"] is None
 
@@ -281,6 +296,13 @@ def approve(client, proposal):
     }
     response = client.post(f"/api/v1/sanitization/{proposal.id}/decide", json=body, headers=write_headers(client))
     assert response.status_code == 200, response.text
+    if response.json()["status"] == "PENDING":
+        login(client, "AUDITOR_FISCAL")
+        fiscal = {**body, "expected_version": response.json()["version"], "review_area": "FISCAL"}
+        fiscal.pop("primary_material_code")
+        response = client.post(f"/api/v1/sanitization/{proposal.id}/decide", json=fiscal, headers=write_headers(client))
+        assert response.status_code == 200 and response.json()["status"] == "APPLIED", response.text
+        login(client)
 
 
 @pytest.fixture
@@ -292,7 +314,10 @@ def storage(tmp_path, monkeypatch):
 
 def test_snapshot_refuses_changes_without_an_applied_proposal(dashboard_case, storage):
     """No caso semeado, a master difere do original e a unificação ainda está pendente."""
-    client, *_ = dashboard_case
+    client, db, _, materials, *_ = dashboard_case
+    materials[0].unit = "KG"
+    materials[1].status = "BLOQUEADO"
+    db.commit()
     login(client)
     response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
     assert response.status_code == 409, response.text
@@ -311,12 +336,12 @@ def test_snapshot_after_approval_compares_before_and_after(dashboard_case, stora
     assert response.status_code == 201, response.text
     snapshot = response.json()
     assert snapshot["dataset_id"] == str(dataset.id)
-    assert snapshot["applied_proposals"] == 1 and snapshot["materials_changed"] == 1
+    assert snapshot["applied_proposals"] == 1 and snapshot["materials_changed"] == 2
     assert snapshot["inventory_value_conserved"] is True
     data = client.get(PATH).json()
     assert data["comparison_status"] == "AVAILABLE"
     assert data["after_snapshot"] == snapshot
-    # 100 ganhou NCM e unidade canônica; 200, bloqueado no original, continua bloqueado.
+    # 100 ganhou NCM e unidade canônica; 200 passou de ativo a bloqueado na unificação.
     assert data["after"] == {
         "materials_total": 2,
         "active": 1,
@@ -338,7 +363,7 @@ def test_every_change_in_the_export_traces_to_applied_proposals(dashboard_case, 
     snapshot = client.post(SNAPSHOTS, json={}, headers=write_headers(client)).json()
     export = json.loads((storage / snapshot["export_key"]).read_text())
     assert export["applied_proposal_ids"] == [str(proposal.id)]
-    assert [change["material_code"] for change in export["changes"]] == ["100"]
+    assert {change["material_code"] for change in export["changes"]} == {"100", "200"}
     for change in export["changes"]:
         assert change["proposal_ids"] == [str(proposal.id)]
         assert set(change["before"]) == set(change["after"]) == set(change["fields"])
@@ -456,9 +481,14 @@ def fiscal_correction(client, db, material, original_proposal, ncm):
 
 def test_ncm_application_does_not_authorize_an_extra_unit_change(dashboard_case, storage):
     client, db, dataset, materials, snapshots, proposal, _ = dashboard_case
+    materials[0].unit = "PC"
     # O NCM é a única diferença original legítima; a unidade ganha uma diferença posterior sem revisão.
     for snapshot in snapshots:
-        snapshot.raw_record = {"STATUS": "ATIVO", "NCM": materials[0].ncm, "UNIDADE_MEDIDA": "PC"}
+        snapshot.raw_record = {
+            "STATUS": "ATIVO",
+            "NCM": next(m.ncm for m in materials if m.id == snapshot.material_id),
+            "UNIDADE_MEDIDA": "PC",
+        }
     db.commit()
     fiscal_correction(client, db, materials[0], proposal, "84212300")
     db.refresh(materials[0])
@@ -486,8 +516,10 @@ def test_snapshot_keeps_field_provenance_for_sequential_applications(dashboard_c
 
 
 def test_snapshot_requires_application_event_not_only_applied_status(dashboard_case, storage):
-    client, db, _, _, _, proposal, _ = dashboard_case
+    client, db, _, materials, _, proposal, _ = dashboard_case
     proposal.status = "APPLIED"
+    materials[0].ncm, materials[0].unit = proposal.changeset["after"]["ncm"], "PC"
+    materials[1].status = "BLOQUEADO"
     db.commit()
     login(client)
     response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
@@ -525,6 +557,36 @@ def test_missing_initial_application_cannot_be_hidden_by_later_approval(dashboar
     db.execute(delete(AuditLog).where(AuditLog.entity_id == str(first.id)))
     db.commit()
     fiscal_correction(client, db, materials[0], first, "84212300")
+    response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
+    assert not list(storage.rglob("quality_snapshot.json"))
+    assert client.get(PATH).json()["after_snapshot"] is None
+
+
+def test_unapproved_initial_change_is_not_hidden_by_a_noop_application(dashboard_case, storage):
+    from vx_materials_api.schemas.proposals import proposal_hash
+
+    client, db, _, materials, snapshots, proposal, _ = dashboard_case
+    primary = materials[0]
+    primary.unit = "PÇ"
+    for snapshot in snapshots:
+        snapshot.raw_record = {
+            **snapshot.raw_record,
+            "NCM": primary.ncm,
+            "UNIDADE_MEDIDA": "PÇ" if snapshot.material_id == primary.id else "PC",
+        }
+    db.commit()
+    primary.unit = "PC"
+    primary.version += 1
+    proposal.members = [
+        {**member, "expected_version": next(m.version for m in materials if str(m.id) == member["material_id"])}
+        for member in proposal.members
+    ]
+    proposal.changeset_hash = proposal_hash(proposal.members, proposal.changeset)
+    db.commit()
+    login(client)
+    approve(client, proposal)
     response = client.post(SNAPSHOTS, json={}, headers=write_headers(client))
     assert response.status_code == 409, response.text
     assert response.json()["error"]["code"] == "UNTRACEABLE_CHANGES"
