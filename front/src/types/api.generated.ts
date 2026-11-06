@@ -1268,6 +1268,7 @@ export interface components {
       material_card: components["schemas"]["MaterialCardData"] | null;
       /** Format: uuid */
       order_id: string | null;
+      submission: components["schemas"]["ChatSubmitResponse"] | null;
     };
   };
   responses: never;

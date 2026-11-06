@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { ChatAction, ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
 import { MaterialCard } from "./MaterialCard";
+import { ChatHistory } from "./ChatHistory";
 import { ToolCallsPanel } from "./ToolCallsPanel";
 
 const SUGGESTIONS = [
@@ -17,7 +18,7 @@ const SUGGESTIONS = [
 
 function errorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 409)
-    return "Esta conversa mudou em outra aba ou ainda está processando. Comece uma nova conversa.";
+    return "Esta conversa mudou em outra aba ou ainda está processando. Atualize a conversa para continuar.";
   if (error instanceof ApiError && error.status === 503)
     return "O assistente não respondeu a tempo. Tente enviar de novo.";
   if (error instanceof ApiError) return error.message;
@@ -25,6 +26,11 @@ function errorMessage(error: unknown) {
 }
 
 export function ChatPage() {
+  const { me } = useAuth();
+  return me ? <Conversation key={me.user.id} /> : null;
+}
+
+function Conversation() {
   const { me, api } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [session, setSession] = useState<{ id: string; version: number } | null>(null);
@@ -33,6 +39,10 @@ export function ChatPage() {
   const [calls, setCalls] = useState<{ turn: number; call: ToolCall }[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const historyRequest = useRef<AbortController | null>(null);
   const [center, setCenter] = useState("1200");
   const [panel, setPanel] = useState<"ficha" | "mcp">("ficha");
   const [submitted, setSubmitted] = useState<{
@@ -47,6 +57,8 @@ export function ChatPage() {
   const pendingTurn = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
+      historyRequest.current?.abort();
+      historyRequest.current = null;
       pendingTurn.current?.abort();
       pendingTurn.current = null;
     },
@@ -62,7 +74,15 @@ export function ChatPage() {
 
   const send = async (msg: string, action?: ChatAction) => {
     const content = msg.trim();
-    if (!content || operationBusy.current || submitted) return;
+    if (
+      !content ||
+      operationBusy.current ||
+      submitted ||
+      loading ||
+      processing ||
+      (selected && !session)
+    )
+      return;
     operationBusy.current = true;
     const turn = new AbortController();
     pendingTurn.current = turn;
@@ -87,6 +107,7 @@ export function ChatPage() {
         },
       });
       if (pendingTurn.current !== turn) return;
+      setSelected(res.session_id);
       setSession({ id: res.session_id, version: res.session_version });
       setLast(res);
       setCalls((c) => [
@@ -118,7 +139,15 @@ export function ChatPage() {
   };
 
   const submit = async () => {
-    if (!session || operationBusy.current || submitted || !last?.material_card.can_submit) return;
+    if (
+      !session ||
+      operationBusy.current ||
+      submitted ||
+      loading ||
+      processing ||
+      !last?.material_card.can_submit
+    )
+      return;
     operationBusy.current = true;
     setBusy(true);
     setError(null);
@@ -154,6 +183,11 @@ export function ChatPage() {
 
   const reset = () => {
     // Abortar poupa a conexão; a identidade do turno também barra respostas já recebidas.
+    historyRequest.current?.abort();
+    historyRequest.current = null;
+    setSelected("");
+    setLoading(false);
+    setProcessing(false);
     pendingTurn.current?.abort();
     pendingTurn.current = null;
     operationBusy.current = false;
@@ -167,6 +201,52 @@ export function ChatPage() {
     setSubmitted(null);
     submissionAttempt.current = null;
     setPanel("ficha");
+  };
+
+  const restore = async (id: string) => {
+    if (operationBusy.current && !pendingTurn.current) return;
+    reset();
+    if (!id) return;
+    const request = new AbortController();
+    historyRequest.current = request;
+    setSelected(id);
+    setLoading(true);
+    try {
+      const saved = await api.request("get", "/api/v1/chat/sessions/{session_id}", {
+        params: { session_id: id },
+        signal: request.signal,
+      });
+      if (historyRequest.current !== request) return;
+      setSession({ id: saved.session_id, version: saved.session_version });
+      setMessages(saved.messages);
+      setCalls(saved.calls);
+      setProcessing(saved.processing);
+      if (saved.center_code) setCenter(saved.center_code);
+      if (saved.submission)
+        setSubmitted({ id: saved.submission.order_id, status: saved.submission.status });
+      if (saved.material_card)
+        setLast({
+          request_id: "Histórico",
+          session_id: saved.session_id,
+          session_version: saved.session_version,
+          order_id: saved.order_id,
+          status: saved.order_id
+            ? "SUBMITTED"
+            : saved.material_card.can_submit
+              ? "READY_TO_SUBMIT"
+              : "NEEDS_INPUT",
+          assistant_message: "",
+          tool_calls: [],
+          material_card: saved.material_card,
+        });
+    } catch (error) {
+      if (historyRequest.current === request) setError(errorMessage(error));
+    } finally {
+      if (historyRequest.current === request) {
+        historyRequest.current = null;
+        setLoading(false);
+      }
+    }
   };
 
   return (
@@ -196,6 +276,17 @@ export function ChatPage() {
                 <option key={c}>{c}</option>
               ))}
             </Select>
+            {selected && (
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label="Atualizar conversa"
+                disabled={loading || busy}
+                onClick={() => restore(selected)}
+              >
+                Atualizar conversa
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -207,6 +298,14 @@ export function ChatPage() {
           </div>
         </div>
 
+        <ChatHistory selected={selected} onSelect={restore} revision={session?.version ?? 0} />
+        {(loading || processing) && (
+          <p role="status" className="px-6 py-3 text-sm text-muted">
+            {loading
+              ? "Carregando conversa…"
+              : "Esta conversa está processando um turno. Atualize para acompanhar."}
+          </p>
+        )}
         <div data-chat-scroll className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {messages.length === 0 ? (
             <div className="mx-auto flex max-w-xl flex-col items-start gap-5 pt-8">
@@ -276,7 +375,9 @@ export function ChatPage() {
           )}
           <div className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde">
             <textarea
-              disabled={busy || submitted !== null}
+              disabled={
+                busy || loading || processing || submitted !== null || (!!selected && !session)
+              }
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
@@ -297,7 +398,14 @@ export function ChatPage() {
             <Button
               type="submit"
               size="sm"
-              disabled={!text.trim() || busy || submitted !== null}
+              disabled={
+                !text.trim() ||
+                busy ||
+                loading ||
+                processing ||
+                submitted !== null ||
+                (!!selected && !session)
+              }
               aria-label="Enviar"
             >
               <ArrowUp className="size-4" />
@@ -327,7 +435,7 @@ export function ChatPage() {
               submitted={submitted ?? undefined}
               onSubmit={submit}
               onReply={send}
-              busy={busy || submitted !== null}
+              busy={busy || loading || processing || submitted !== null || (!!selected && !session)}
             />
           ) : (
             <div className="rounded-md bg-surface p-6 text-sm leading-6 text-muted">

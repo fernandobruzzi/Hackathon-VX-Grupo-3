@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from domain.identity import identity_signature
 from domain.pdm_loader import DEFAULT_PDM_VERSION
-from vx_materials_api.db.models import ChatMessage, ChatSession
+from vx_materials_api.db.models import ChatMessage, ChatSession, OperationRequest
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
@@ -370,6 +370,19 @@ def read_session(db: Session, identity: Identity, session_id: uuid.UUID) -> dict
     messages = db.scalars(
         select(ChatMessage).where(ChatMessage.session_id == session.id).order_by(ChatMessage.sequence)
     ).all()
+    submission = (
+        db.scalar(
+            select(OperationRequest)
+            .where(
+                OperationRequest.user_id == identity.user_id,
+                OperationRequest.operation == "chat.submit",
+                OperationRequest.resource_id == str(session.registration_order_id),
+            )
+            .limit(1)
+        )
+        if session.registration_order_id
+        else None
+    )
     calls = []
     turn = 0
     for message in messages:
@@ -386,4 +399,5 @@ def read_session(db: Session, identity: Identity, session_id: uuid.UUID) -> dict
         "calls": calls,
         "material_card": context.get("material_card"),
         "order_id": session.registration_order_id,
+        "submission": submission.response["body"] if submission else None,
     }

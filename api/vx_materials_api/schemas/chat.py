@@ -146,3 +146,4 @@ class ChatSessionDetail(_Contract):
     calls: list[SavedToolCall]
     material_card: MaterialCard | None
     order_id: UUID | None
+    submission: ChatSubmitResponse | None
