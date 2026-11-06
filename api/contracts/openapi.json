@@ -19,7 +19,20 @@
           "auth"
         ],
         "security": [],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "prompt",
+            "in": "query",
+            "required": false,
+            "description": "Com DEMO_MODE, `login` pede nova autenticação para entrar com outra conta demo no mesmo navegador.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "login"
+              ]
+            }
+          }
+        ],
         "responses": {
           "302": {
             "description": "Resultado da operação.",

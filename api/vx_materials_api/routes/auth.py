@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from vx_materials_api import settings
 from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_api.db.models import AuthSession, LoginTransaction, UserSso
 from vx_materials_api.dependencies import current_identity, db_session
@@ -29,7 +30,9 @@ from vx_materials_api.security.sessions import (
     LOGIN_COOKIE,
     SESSION_COOKIE,
     create_session,
+    demo_persona,
     digest,
+    identity_from_session,
     me_response,
     seal,
     secure_cookie,
@@ -53,6 +56,11 @@ class EmptyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class DemoSwitchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    session_handle: str = Field(min_length=1, max_length=64)
+
+
 class LocalRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     persona: Literal["SOLICITANTE_OPERACAO", "GESTOR_CADASTRO", "AUDITOR_FISCAL"]
@@ -69,7 +77,7 @@ def config(request: Request):
 
 
 @router.get("/sso-start")
-def sso_start(request: Request, db: Db):
+def sso_start(request: Request, db: Db, prompt: Literal["login"] | None = None):
     config = request.app.state.cognito_config
     if config is None:
         raise ApiProblem(503, "IDENTITY_UNAVAILABLE", "Cognito ainda não configurado.")
@@ -94,6 +102,8 @@ def sso_start(request: Request, db: Db):
             "nonce": nonce,
             "code_challenge": challenge,
             "code_challenge_method": "S256",
+            # No modo demo, permite entrar com outra conta sem sair da atual no Cognito.
+            **({"prompt": "login"} if prompt and settings.demo_mode_enabled() else {}),
         }
     )
     response = RedirectResponse(config.domain + "/oauth2/authorize?" + query, status_code=302)
@@ -136,6 +146,52 @@ def callback(payload: CallbackRequest, request: Request, response: Response, db:
 @router.get("/me")
 def me(caller: Caller):
     return me_response(caller)
+
+
+@router.post("/demo/switch")
+def demo_switch(payload: DemoSwitchRequest, request: Request, response: Response, caller: Caller, db: Db):
+    """Troca para outra sessão demo já autenticada neste navegador. A persona não concede papel."""
+    client = request.app.state.cognito_client
+    if not settings.demo_mode_enabled() or client is None or caller.authentication_method != "cookie":
+        raise ApiProblem(403, "DEMO_DISABLED", "Troca de persona indisponível neste ambiente.")
+    verify_write(request, caller)
+    if caller.persona is None:
+        raise ApiProblem(403, "FORBIDDEN", "A sessão atual não é de uma conta de demonstração.")
+    # O handle é a persona; só vale uma sessão desta mesma conta de navegador, ainda válida.
+    row = db.execute(
+        select(AuthSession, UserSso)
+        .join(UserSso, AuthSession.user_id == UserSso.id)
+        .where(
+            AuthSession.demo_label == payload.session_handle,
+            AuthSession.browser_context_hash == digest(request.cookies.get(CONTEXT_COOKIE, "")),
+            AuthSession.revoked_at.is_(None),
+            AuthSession.expires_at > datetime.now(UTC),
+            UserSso.disabled_at.is_(None),
+            UserSso.tenant_id == TENANT_ID,
+            UserSso.issuer == client.config.issuer,
+        )
+        .order_by(AuthSession.expires_at.desc())
+        .limit(1)
+        .with_for_update()
+    ).first()
+    if row is None:
+        raise ApiProblem(
+            404,
+            "DEMO_SESSION_NOT_FOUND",
+            "Entre antes com a conta desta persona neste navegador.",
+            persona=payload.session_handle,
+        )
+    identity = identity_from_session(client, row.AuthSession, row.UserSso)
+    # A lista de contas pode ter mudado desde o login: confere de novo com os papéis atuais do token.
+    if demo_persona(row.UserSso, identity.roles) != payload.session_handle:
+        raise ApiProblem(403, "FORBIDDEN", "A conta não pertence à lista de demonstração.")
+    # Um segredo novo para a sessão escolhida: o cookie antigo dela deixa de valer.
+    token = secrets.token_urlsafe(32)
+    row.AuthSession.session_token_hash = digest(token)
+    db.commit()
+    seconds = max(0, int((row.AuthSession.expires_at - datetime.now(UTC)).total_seconds()))
+    secure_cookie(response, SESSION_COOKIE, token, seconds)
+    return me_response(identity)
 
 
 @router.post("/logout")
