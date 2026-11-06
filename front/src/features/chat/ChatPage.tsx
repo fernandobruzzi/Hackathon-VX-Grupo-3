@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowUp, RotateCcw } from "lucide-react";
 import { Button, Eyebrow, Select, Tabs, Seta } from "@/components/ui";
 import { cn } from "@/lib/format";
@@ -37,8 +37,12 @@ export function ChatPage() {
   const [panel, setPanel] = useState<"ficha" | "mcp">("ficha");
   const [submitted, setSubmitted] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const height = useViewportHeight();
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    // Rola só a área de mensagens: scrollIntoView rolaria a página e esconderia o campo de texto.
+    const end = endRef.current;
+    const list = end?.closest("[data-chat-scroll]");
+    if (list) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
   const send = async (msg: string, action?: ChatAction) => {
@@ -99,14 +103,18 @@ export function ChatPage() {
   };
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div
+      ref={height.ref}
+      style={height.value ? { height: height.value } : undefined}
+      className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"
+    >
       {/* Conversa */}
-      <section className="flex min-h-[calc(100dvh-10rem)] flex-col rounded-lg bg-surface">
+      <section className="flex min-h-[calc(100dvh-10rem)] flex-col rounded-lg bg-surface xl:min-h-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-2 px-6 py-4">
           <Eyebrow n="01" rule={false}>
             Novo pedido de material
           </Eyebrow>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="text-xs font-semibold text-muted" htmlFor="center">
               Centro
             </label>
@@ -126,7 +134,7 @@ export function ChatPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div data-chat-scroll className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {messages.length === 0 ? (
             <div className="mx-auto flex max-w-xl flex-col items-start gap-5 pt-8">
               <Seta className="h-12 w-11" />
@@ -224,7 +232,7 @@ export function ChatPage() {
       </section>
 
       {/* Painel lateral */}
-      <aside className="flex flex-col gap-4">
+      <aside className="flex flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1">
         <Tabs
           value={panel}
           onChange={setPanel}
@@ -260,4 +268,35 @@ export function ChatPage() {
       </aside>
     </div>
   );
+}
+
+const WIDE = "(min-width: 1280px)";
+const BOTTOM_GAP = 32;
+
+/**
+ * No desktop, conversa e ficha ocupam exatamente a altura que sobra da janela: o campo de
+ * mensagem fica sempre visível e cada coluna rola sozinha. Mede o topo real, porque os avisos
+ * acima do chat variam por ambiente e persona. Em telas estreitas as colunas se empilham e a
+ * página rola normalmente.
+ */
+function useViewportHeight() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [value, setValue] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const wide = window.matchMedia(WIDE);
+    const measure = () => {
+      const element = ref.current;
+      if (!element || !wide.matches) return setValue(null);
+      const top = element.getBoundingClientRect().top + window.scrollY;
+      setValue(Math.max(480, window.innerHeight - top - BOTTOM_GAP));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    wide.addEventListener("change", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      wide.removeEventListener("change", measure);
+    };
+  }, []);
+  return { ref, value };
 }
