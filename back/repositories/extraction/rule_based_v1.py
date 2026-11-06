@@ -419,8 +419,8 @@ class RuleBasedV1ExtractionRepository:
                         if is_valid_value(length, value):
                             work.set("COMPRIMENTO", value, match[0], "measure.compact_notation")
                 elif thread in attribute.allowed_values:
-                    # Three terms explicitly include a pitch. Never reinterpret an
-                    # unsupported pitch as length or infer coarse thread from it.
+                    # Três termos incluem passo explícito. Não tratar um passo não
+                    # suportado como comprimento nem inferir rosca grossa dele.
                     if match[3]:
                         continue
                     work.set(name, thread, match[0], "measure.metric_thread")
