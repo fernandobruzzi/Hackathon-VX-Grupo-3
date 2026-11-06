@@ -6,9 +6,12 @@ import json
 import sys
 from collections import Counter
 
+from clients.storage import get_object_store
 from domain.contracts import NormalizedField
+from domain.pdm_loader import load_pdm
 from domain.runtime import check_simulated_clients
 from pipelines.classify import classification_evaluation, classification_report
+from pipelines.enrich_real_products import run_enrichment
 from pipelines.evaluate_sanitization import sanitization_evaluation
 from pipelines.full_run import run_sanitize
 from pipelines.review_handoff import review_handoff
@@ -86,6 +89,21 @@ def main(argv: list[str] | None = None) -> int:
     sanitize.add_argument("--job-id")
     sanitize.add_argument("--manifest-key", help="Manifesto gravado pela API para o job, no armazenamento")
     sanitize.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
+    enrich = commands.add_parser(
+        "enrich-real-products", help="Registra evidências e propostas imutáveis dos 15 produtos reais"
+    )
+    enrich.add_argument("--manifest-key", required=True, help="Chave do manifesto original criado por vx-bootstrap")
+    enrich.add_argument("--pdm-workbook", required=True)
+    enrich.add_argument(
+        "--material-code", action="append", help="Restringe aos códigos informados, sempre dentro do manifesto"
+    )
+    enrich.add_argument("--repository", help="Padrão: ENRICHMENT_REPOSITORY ou catalog_labels_v1")
+    enrich.add_argument("--evidence-manifest-key", help="Chave de relatório anterior para repetir sem rede")
+    publish = commands.add_parser(
+        "publish-enrichment", help="Persiste evidencias e propostas de um relatorio, sem editar o mestre"
+    )
+    publish.add_argument("--report-key", required=True)
+    publish.add_argument("--pdm-workbook", required=True)
     args = parser.parse_args(argv)
 
     if args.command == "sanitization-evaluate":
@@ -98,6 +116,21 @@ def main(argv: list[str] | None = None) -> int:
             size=args.size,
             seed=args.seed,
             historical_paths=args.historical_source,
+        )
+    elif args.command == "publish-enrichment":
+        from repositories.enrichment_repository import publish_enrichment
+
+        result = publish_enrichment(get_object_store(), args.report_key, load_pdm(args.pdm_workbook))
+    elif args.command == "enrich-real-products":
+        from repositories.enrichment import get_enrichment_repository
+
+        result = run_enrichment(
+            get_object_store(),
+            args.manifest_key,
+            load_pdm(args.pdm_workbook),
+            material_codes=args.material_code,
+            repository=get_enrichment_repository(args.repository),
+            evidence_manifest_key=args.evidence_manifest_key,
         )
     elif args.command == "index":
         result = run_index(args.pdm_workbook, if_stale=args.if_stale)
