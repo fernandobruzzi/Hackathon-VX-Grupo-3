@@ -26,9 +26,35 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
 - **Avaliação:** zero pares e precisão/recall indisponíveis até existir uma
   avaliação independente publicada. Aprovação humana de propostas operacionais
   não é uma amostra rotulada de precisão. A avaliação independente segue na #85.
-- **Depois:** `after=null` e `AFTER_SNAPSHOT_NOT_AVAILABLE`. Aplicações registradas
-  atualizam o funil, mas não criam um snapshot aprovado. A comparação posterior
-  segue na #33.
+- **Depois:** vem do snapshot posterior mais recente do dataset. Sem snapshot,
+  `after=null` e `AFTER_SNAPSHOT_NOT_AVAILABLE`; aplicações atualizam o funil, mas
+  não o depois. Com snapshot, `comparison_status=AVAILABLE`, `after` traz as mesmas
+  contagens do antes e `after_snapshot` identifica o snapshot. Mudanças na master
+  feitas depois do snapshot só aparecem no próximo.
+- **Duplicados:** `duplicate_codes` conta os ativos que unificações pendentes ou
+  aplicadas apontam como duplicados, ou seja, os membros além do principal. No
+  depois, só os que continuam ativos no snapshot. Unificações rejeitadas ou
+  desatualizadas não contam.
+
+## Snapshot posterior
+
+`POST /api/v1/dashboard/snapshots` exige `batch:run` (Governança), CSRF e
+`Idempotency-Key`. Repetir a mesma chave devolve o mesmo snapshot.
+
+1. Lê o estado atual de cada material do dataset (status, NCM e unidade) e o
+   compara com o registro importado.
+2. Toda diferença precisa vir de uma proposta `APPLIED` do mesmo dataset que
+   inclua o material. Se houver diferença sem proposta aplicada, a API responde
+   409 `UNTRACEABLE_CHANGES` com os códigos, e nada é gravado.
+3. Recalcula o valor do estoque pelas consolidações (quantidade × fator, preço ÷
+   fator) e confere que é igual ao original. Saldo sem valor impede a conferência.
+4. Grava `exports/{snapshot_id}/quality_snapshot.json` com as propostas aplicadas e,
+   para cada material alterado, campos antes e depois e as propostas que explicam
+   a mudança. As tabelas `quality_snapshots` e `quality_snapshot_items` guardam o
+   mesmo estado, sem permissão de UPDATE ou DELETE para a API.
+5. Registra `QUALITY_SNAPSHOT_CREATED` na auditoria.
+
+Na tela, a Governança gera o snapshot pelo botão "Gerar snapshot posterior".
 
 ## Valores financeiros
 
