@@ -141,6 +141,8 @@ def headers(index):
         "iss": "vx-api",
         "aud": "vx-agent",
         "sub": f"load-{index}",
+        # O probe mede o kit local carregado pelo bootstrap, não um catálogo global.
+        "tenant_id": "763836b7-5673-5109-854b-c5ecabcf0012",
         "iat": now,
         "exp": now + 60,
         "permissions": ["chat:use", "inventory:read"],
