@@ -82,6 +82,12 @@ mesmo commit. Se houver duas revisões, a primeira registra a decisão sem alter
 materiais. A segunda só aplica se o conteúdo aprovado e as versões continuarem
 iguais. Propostas desatualizadas recebem `STALE` e resposta 409 persistida.
 
+Uma nova execução do batch com conteúdo diferente para o mesmo dataset, tipo e
+membros substitui a proposta `PENDING` anterior (#115): na mesma transação que
+grava a nova, a anterior vira `STALE`, com evento de sistema `PROPOSAL_SUPERSEDED`
+que aponta a substituta. Assim a fila mostra um único conjunto pendente por material
+e tipo. Propostas `APPLIED` e `REJECTED` nunca mudam.
+
 `Idempotency-Key` é um UUID com escopo por usuário e operação. Repetir chave e
 payload retorna a resposta original; mudar o payload retorna 409. A autorização
 do recurso é conferida também na repetição. Erros no banco desfazem a aplicação
