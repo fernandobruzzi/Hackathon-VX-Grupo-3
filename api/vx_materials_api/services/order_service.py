@@ -33,7 +33,7 @@ from vx_materials_api.db.models import (
     UserSso,
 )
 from vx_materials_api.errors import ApiProblem
-from vx_materials_api.security.rbac import has_permission, require_permission
+from vx_materials_api.security.rbac import has_permission, require_permission, require_resource_scope
 
 GOVERNANCE = "orders:decide"
 FISCAL = "ncm:decide"
@@ -203,14 +203,16 @@ def _remember(db, identity, operation, key, payload_hash, order_id, body):
     )
 
 
-def _locked_order(db, identity, order_id) -> RegistrationOrder:
+def _locked_order(db, identity, order_id, *, replay=False) -> RegistrationOrder:
     order = db.scalar(
         select(RegistrationOrder)
         .where(RegistrationOrder.id == order_id, RegistrationOrder.tenant_id == identity.tenant_id)
         .with_for_update()
     )
-    if order is None or not _visible(identity, order):
+    if order is None or (not replay and not _visible(identity, order)):
         raise ApiProblem(404, "NOT_FOUND", "Pedido não encontrado.")
+    if replay:
+        require_resource_scope(identity, order.tenant_id, [order.center_code] if order.center_code else ())
     return order
 
 
@@ -262,11 +264,11 @@ def submit_order(db, identity, catalog, order_id, expected_version, key, request
     previous, payload_hash = _idempotent(
         db, identity, operation, key, {"order_id": str(order_id), "expected_version": expected_version}
     )
-    if previous is not None:
-        return previous.response["body"]
-    order = _locked_order(db, identity, order_id)
+    order = _locked_order(db, identity, order_id, replay=previous is not None)
     if order.requester_user_id != identity.user_id:
         raise ApiProblem(403, "FORBIDDEN", "Só quem abriu o pedido pode encaminhá-lo.")
+    if previous is not None:
+        return previous.response["body"]
     _check_version(order, expected_version)
     if order.status not in _SUBMITTABLE:
         raise ApiProblem(409, "INVALID_TRANSITION", "O pedido já foi avaliado.", order_status=order.status)
@@ -369,9 +371,23 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
     previous, payload_hash = _idempotent(
         db, identity, operation, key, {"order_id": str(order_id), **decision.model_dump(mode="json")}
     )
+    order = _locked_order(db, identity, order_id, replay=previous is not None)
     if previous is not None:
+        # A auditoria imutável identifica a etapa original, mesmo após publicação/rejeição.
+        original = db.scalar(
+            select(AuditLog).where(
+                AuditLog.tenant_id == identity.tenant_id,
+                AuditLog.actor_user_id == identity.user_id,
+                AuditLog.entity_type == "registration_order",
+                AuditLog.entity_id == str(order.id),
+                AuditLog.after_json["version"].as_integer() == previous.response["body"]["version"],
+            )
+        )
+        permission = _REVIEWABLE.get((original.before_json or {}).get("status")) if original else None
+        if permission is None:
+            raise ApiProblem(403, "FORBIDDEN", "Não foi possível autorizar a decisão original.")
+        require_permission(identity, permission)
         return previous.response["body"]
-    order = _locked_order(db, identity, order_id)
     permission = _REVIEWABLE.get(order.status)
     if permission is None:
         raise ApiProblem(409, "INVALID_TRANSITION", "Este pedido não aguarda decisão.", order_status=order.status)
