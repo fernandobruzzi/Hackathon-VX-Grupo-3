@@ -88,6 +88,11 @@ def _baseline(db, tenant_id, dataset_id) -> dict[uuid.UUID, dict]:
 def _approved_fields(db, tenant_id, applied):
     """Valores e cadeia por campo, a partir do evento que efetivamente aplicou cada proposta."""
     proposals = {str(proposal.id): proposal for proposal in applied}
+    expected = defaultdict(set)
+    for proposal in applied:
+        for member in proposal.members or []:
+            expected[member["material_id"]].add(str(proposal.id))
+    observed = defaultdict(set)
     events = db.scalars(
         select(AuditLog).where(
             AuditLog.tenant_id == tenant_id,
@@ -108,6 +113,13 @@ def _approved_fields(db, tenant_id, applied):
         previous = {row["id"]: row for row in before.get("materials", [])}
         for row in after.get("materials", []):
             if row.get("id") in members and row["id"] in previous:
+                member = next(member for member in proposal.members if member["material_id"] == row["id"])
+                if (
+                    previous[row["id"]].get("version") != member["expected_version"]
+                    or row.get("version") != member["expected_version"] + 1
+                ):
+                    continue
+                observed[row["id"]].add(str(proposal.id))
                 applications[row["id"]].append((row.get("version", 0), proposal, previous[row["id"]], row, after))
     approved = {}
     for material_id, rows in applications.items():
@@ -137,6 +149,10 @@ def _approved_fields(db, tenant_id, applied):
                     "valid": valid,
                     "proposal_ids": [*(chain["proposal_ids"] if chain else []), str(proposal.id)],
                 }
+        # Uma aplicação posterior não pode servir de novo início se faltar uma das aplicações esperadas.
+        if observed[material_id] != expected[material_id]:
+            for chain in fields.values():
+                chain["valid"] = False
         approved[material_id] = fields
     return approved
 
