@@ -86,6 +86,12 @@ TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0
 MIGRATION_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_materiais uv run vx-db upgrade
 ```
 
+For MVP acceptance (#26), run the API and MCP suites with `TEST_DATABASE_URL` set.
+The MCP suite includes `tests/test_mvp_acceptance.py`, connecting local API sessions,
+the real Agent/MCP stdio server, batch proposals, approvals and audit. Read
+[`docs/aceitacao-mvp.md`](docs/aceitacao-mvp.md) for the criteria matrix and remaining
+AWS checks; skipped database tests do not establish acceptance.
+
 Load the data kit, from `api/`, with `DATABASE_URL` set to the `api_user` connection. Repeating it duplicates nothing, and `docker compose up` already runs it:
 
 ```bash
