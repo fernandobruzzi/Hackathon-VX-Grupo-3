@@ -7,6 +7,7 @@ from sqlalchemy import select
 from vx_materials_api.db.models import AuditLog, SanitizationProposal, UserSso
 from vx_materials_api.errors import ApiError
 from vx_materials_api.security.approval_identity import require_reviewer
+from vx_materials_api.security.rbac import has_permission, require_any_permission
 from vx_materials_api.services.approval_service import (
     consolidated_inventory,
     exact_sum,
@@ -18,8 +19,8 @@ from vx_materials_api.services.approval_service import (
 def allowed_actions(proposal, principal):
     if proposal.status != "PENDING":
         return []
-    technical = "ROLE_GOVERNANCA_PDM" in principal.roles and proposal.technical_review_status == "PENDING"
-    fiscal = principal.financial and proposal.fiscal_review_status == "PENDING"
+    technical = has_permission(principal, "merge:decide") and proposal.technical_review_status == "PENDING"
+    fiscal = has_permission(principal, "ncm:decide") and proposal.fiscal_review_status == "PENDING"
     return ["APPROVE", "REJECT"] if technical or fiscal else []
 
 
@@ -223,6 +224,7 @@ def redact_financial(value):
 
 
 def audit_events(db, principal, *, cursor=None, limit=20):
+    require_any_permission(principal, "audit:own", "audit:technical", "audit:fiscal")
     query = (
         select(AuditLog, UserSso.display_name)
         .outerjoin(UserSso, AuditLog.actor_user_id == UserSso.id)
@@ -231,10 +233,10 @@ def audit_events(db, principal, *, cursor=None, limit=20):
             AuditLog.entity_type == "sanitization_proposal",
         )
     )
-    if "ROLE_GOVERNANCA_PDM" in principal.roles:
-        query = query.where(AuditLog.effective_role == "ROLE_GOVERNANCA_PDM")
-    elif principal.financial:
+    if has_permission(principal, "audit:fiscal"):
         query = query.where(AuditLog.effective_role.in_(["ROLE_GOVERNANCA_PDM", "ROLE_AUDITOR_FISCAL"]))
+    elif has_permission(principal, "audit:technical"):
+        query = query.where(AuditLog.effective_role == "ROLE_GOVERNANCA_PDM")
     else:
         query = query.where(AuditLog.actor_user_id == principal.user_id)
     if cursor:

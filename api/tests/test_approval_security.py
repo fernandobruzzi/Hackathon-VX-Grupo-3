@@ -55,6 +55,18 @@ def test_role_header_does_not_grant_identity(approval_case):
     assert decide(case).status_code == 401
 
 
+def test_read_only_permission_does_not_grant_decisions_or_audit(approval_case):
+    from dataclasses import replace
+
+    case = approval_case
+    case["app"].state.test_principal = replace(case["principals"][0], permissions=frozenset({"queue:read"}))
+    detail = case["client"].get(f"/api/v1/sanitization/{case['proposal'].id}")
+    assert detail.status_code == 200
+    assert detail.json()["allowed_actions"] == []
+    assert decide(case).status_code == 403
+    assert case["client"].get("/api/v1/audit").status_code == 403
+
+
 def test_forged_bearer_header_cannot_bypass_cookie_csrf(approval_case):
     case = approval_case
     case["headers"]["Authorization"] = "Bearer forged"
