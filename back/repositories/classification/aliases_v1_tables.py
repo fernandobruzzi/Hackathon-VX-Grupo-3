@@ -12,6 +12,9 @@ Exemplos negativos revisados, que nenhum alias deve tocar:
 - ROL RIG ESF / ROLAMENTO RIGIDO ESF: ESF fora de válvula não é expandido.
 - ELEMENTO sozinho (ELEMENTO DE FIXACAO, ELEMENTO AQUECEDOR): só ELEMENTO FILTRANTE vira FILTRO.
 - VALVULA SEGURANCA: VALVULA já é a palavra completa e SEGURANCA não é classe do PDM.
+- VALV RET e VALVULA RET: RET depois de válvula é retenção, não retentor.
+- CONT fora do começo do campo: aparece cortado em descrições curtas (... TRANSPORTADORA CONT).
+- VERGALHAO TENSORA: é sinônimo, não abreviação, e VERGALHAO ROSCADO é outra peça; fica sem alias.
 """
 
 from dataclasses import dataclass
@@ -22,6 +25,10 @@ class Alias:
     id: str
     pattern: tuple[str, ...]
     replacement: tuple[str, ...]
+    # Só no começo do campo: RET abre a descrição de retentores, mas VALV RET é válvula de retenção.
+    at_start: bool = False
+    # Não aplica logo depois destas palavras: ANEL O RING já é o nome completo.
+    not_after: tuple[str, ...] = ()
 
 
 # Padrões mais longos primeiro: VALV ESF precisa vencer VALV.
@@ -34,4 +41,19 @@ ALIASES: tuple[Alias, ...] = (
     # ELEMENTO FILTRANTE AR vira FILTRO AR. Sem o tipo, FILTRO sozinho não é nome completo e a
     # classificação fica sem classe, com os filtros como candidatos.
     Alias("elemento_filtrante", ("ELEMENTO", "FILTRANTE"), ("FILTRO",)),
+    # Na base, as 57 descrições que começam com RET são retentores (BASL, diâmetros de eixo e
+    # alojamento); as 33 com RET depois de VALV ou VALVULA são válvulas de retenção.
+    Alias("retentor", ("RET",), ("RETENTOR",), at_start=True),
+    # CONT abre as 28 descrições de contatores (ELE01). No meio do texto é corte de outra palavra.
+    Alias("contator", ("CONT",), ("CONTATOR",), at_start=True),
+    # LAMP LED: todas as 28 ocorrências são lâmpadas LED.
+    Alias("lampada_led", ("LAMP", "LED"), ("LAMPADA", "LED")),
+    # FILT abre os 95 filtros abreviados. Sem o tipo completo (FILT OLEO LUBR), FILTRO sozinho não é
+    # nome do PDM e o item fica com os filtros como candidatos.
+    Alias("filtro", ("FILT",), ("FILTRO",)),
+    # O-RING sozinho (89 descrições de vedação): o nome do PDM é ANEL O-RING.
+    Alias("anel_o_ring", ("O", "RING"), ("ANEL", "O", "RING"), not_after=("ANEL",)),
+    # Ball valve em linhas de catálogo em inglês, como nos anexos dos pedidos SC-202600016 e
+    # SC-202600463.
+    Alias("valvula_esfera", ("BALL", "VALVE"), ("VALVULA", "ESFERA")),
 )
