@@ -139,6 +139,7 @@ VALUE_ALIASES: dict[str, tuple[str, ...]] = {
     "INOX 304": ("ACO INOX 304",),
     # Não mapeia para F316 ou CF8M: forjado ou fundido não dá para saber só por "INOX 316".
     "INOX 316": ("ACO INOX 316",),
+    # Só com ZZ ou 2Z no texto: "blindado" sozinho não diz se a blindagem é dos dois lados.
     "BLINDADO": ("METALICA AMBOS LADOS",),
     "BUTT WELD": ("SOLDA TOPO BW",),
     "CARBONO": ("ACO CARBONO",),
@@ -150,7 +151,6 @@ VALUE_ALIASES: dict[str, tuple[str, ...]] = {
     "CF8M": ("ACO INOX FUNDIDO A351 CF8M",),
     "COMPOSITO": ("COMPOSITE",),
     "CX MOLDADA": ("CAIXA MOLDADA",),
-    "EPI BOTINA": ("BOTINA CADARCO",),
     "F316": ("ACO INOX FORJADO A182 F316",),
     "FKM": ("FKM (VITON)",),
     "FLG FF": ("FLANGE FF",),
@@ -171,6 +171,7 @@ VALUE_ALIASES: dict[str, tuple[str, ...]] = {
     "PRETA": ("PRETO",),
     "PRETO": ("PRETA",),
     "REDUCED BORE": ("REDUZIDA",),
+    # Só com bitola métrica quando a classe também aceita UNC/UNF: rosca fina ou grossa pode ser em polegada.
     "ROSCA FINA": ("METRICA FINA",),
     "ROSCA GROSSA": ("METRICA GROSSA",),
     "RSC BSP": ("ROSCA BSP",),
