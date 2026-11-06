@@ -508,3 +508,28 @@ def test_supported_explicit_metric_pitch_keeps_real_length(catalog):
     assert found["BITOLA"] == "M12X1,5"
     assert found["COMPRIMENTO"] == "50MM"
     assert found["ROSCA"] == "METRICA FINA"
+
+
+@pytest.mark.parametrize("label", ["BITOLA:", "BITOLA", "DIAMETRO:"])
+@pytest.mark.parametrize("notation", ["M12 X 1,75 X 50", "M12 X 1.75 X 50", "M12X1,75X50"])
+def test_labeled_unknown_metric_pitch_cannot_be_shortened_to_coarse_thread(catalog, label, notation):
+    result = RuleBasedV1ExtractionRepository().extract(
+        catalog.classes["PDM001"],
+        f"PARAFUSO SEXTAVADO; {label} {notation}; COMPRIMENTO: 50MM; CLASSE: 8.8; "
+        "MATERIAL: ACO CARBONO; ACABAMENTO: ZINCADO BRANCO; NORMA: DIN 933",
+    )
+    found = {name: attribute.value for name, attribute in result.attributes.items()}
+    assert "BITOLA" not in found
+    assert "ROSCA" not in found
+    assert found["COMPRIMENTO"] == "50MM"
+    assert any(notation in part for part in result.unresolved)
+    assert validate_pdm(catalog, "PDM001", found).identity_key is None
+
+
+@pytest.mark.parametrize("label", ["BITOLA:", "BITOLA", "DIAMETRO:"])
+@pytest.mark.parametrize("notation,thread", [("M12 X 1,5 X 50", "M12X1,5"), ("M12 X 50", "M12")])
+def test_labeled_metric_notation_preserves_fine_pitch_and_coarse_length(catalog, label, notation, thread):
+    found = values(catalog, "PDM001", f"PARAFUSO SEXTAVADO; {label} {notation}; COMPRIMENTO: 50 MM")
+    assert found["BITOLA"] == thread
+    assert found["COMPRIMENTO"] == "50MM"
+    assert found["ROSCA"] == ("METRICA FINA" if "," in thread else "METRICA GROSSA")
