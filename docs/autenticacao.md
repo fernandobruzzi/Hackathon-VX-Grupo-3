@@ -14,7 +14,8 @@ scripts/smoke_test.sh http://localhost:8000 --mode local
 
 O Compose habilita `APP_ENV=local` e `LOCAL_TEST_SESSION=true`. A flag equivalente
 `ENABLE_LOCAL_TEST_SESSIONS=true` também é reconhecida. Fora do Compose, as flags
-ficam desligadas por padrão. A API recusa ativá-las fora do ambiente local, com
+ficam desligadas por padrão. A origem local acompanha `API_BIND_PORT`, salvo se
+`APP_ORIGIN` for informada explicitamente. A API recusa as flags fora do ambiente local, com
 marcadores de runtime AWS ou origem que não seja loopback. Não há mais sessão
 anônima automática no chat: primeiro é necessário entrar na tela de login.
 
