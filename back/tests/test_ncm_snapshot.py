@@ -52,6 +52,8 @@ def test_registers_original_bytes_version_date_and_readonly_records():
         ("0101.21.00", True, False, "NCM_NOT_EFFECTIVE_IN_SNAPSHOT"),
         ("9999.99.99", False, False, "NCM_NOT_IN_SNAPSHOT"),
         ("73", False, False, "NCM_INVALID_FORMAT"),
+        ("٧٣١٨١٥٠٠", False, False, "NCM_INVALID_FORMAT"),
+        ("７３１８１５００", False, False, "NCM_INVALID_FORMAT"),
         (None, False, False, "NCM_INVALID_FORMAT"),
         ("", False, False, "NCM_INVALID_FORMAT"),
     ],
@@ -61,6 +63,7 @@ def test_existence_and_inclusive_validity_at_recorded_date(code, exists, valid, 
     snapshot = load(source_kind=NcmSourceKind.OFFICIAL_DOWNLOAD)
     result = check_snapshot_ncm(snapshot, code)
     assert result.input_ncm == code
+    assert result.syntax_valid is (reason != "NCM_INVALID_FORMAT")
     assert result.exists_in_snapshot is exists
     assert result.valid_in_snapshot is valid
     assert result.reasons == ((reason,) if reason else ())
