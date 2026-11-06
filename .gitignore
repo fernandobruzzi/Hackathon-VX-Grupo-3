@@ -8,3 +8,5 @@ build/
 .DS_Store
 .claude/worktrees/
 .storage/
+deployment/generated/
+deployment/aws.local.json

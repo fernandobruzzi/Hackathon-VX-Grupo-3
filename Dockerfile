@@ -44,6 +44,9 @@ ENV PATH=/app/.venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     DATA_DIR=/app/data/desafio01 PDM_WORKBOOK_PATH=/app/data/desafio01/03_padrao_cadastro_PDM.xlsx
 RUN useradd --create-home app && mkdir /storage && chown app /storage
 COPY data/desafio01/ /app/data/desafio01/
+ADD --chmod=0444 --checksum=sha256:90a6f1a7978a1b1b096dca6c57511ca48d3b8cf052f8e704baf358f34ea2f21b \
+    https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /app/certs/rds-global-bundle.pem
+RUN chmod 0755 /app/certs
 USER app
 
 FROM runtime AS api

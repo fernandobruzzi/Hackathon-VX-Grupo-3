@@ -1,0 +1,42 @@
+{
+  "account_id": "123456789012",
+  "region": "us-east-1",
+  "name": "vx-grupo3",
+  "cluster": "vx-grupo3",
+  "architecture": "X86_64",
+  "subnets": ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"],
+  "security_groups": ["sg-0123456789abcdef0"],
+  "rds_instance": "vx-grupo3",
+  "bucket": "vx-grupo3-123456789012-us-east-1",
+  "log_group": "/vx/grupo3",
+  "auth_backend": "disabled",
+  "public_origin": "",
+  "cognito_domain": "",
+  "authorized_center_codes": ["1100", "1200", "1300", "2100", "2200", "9000"],
+  "embedding_repository": "",
+  "roles": {
+    "execution": "arn:aws:iam::123456789012:role/WorkshopTaskExecutionRole",
+    "web": "arn:aws:iam::123456789012:role/WorkshopWebTaskRole",
+    "batch": "arn:aws:iam::123456789012:role/WorkshopBatchTaskRole",
+    "infrastructure": "arn:aws:iam::123456789012:role/WorkshopExpressInfrastructureRole"
+  },
+  "images": {
+    "api": "123456789012.dkr.ecr.us-east-1.amazonaws.com/vx-grupo3-api@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "agent": "123456789012.dkr.ecr.us-east-1.amazonaws.com/vx-grupo3-agent@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "batch": "123456789012.dkr.ecr.us-east-1.amazonaws.com/vx-grupo3-batch@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "secrets": {
+    "api_database": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/api-database-ABC123",
+    "agent_database": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/agent-database-ABC123",
+    "batch_database": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/batch-database-ABC123",
+    "migration_database": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/migration-database-ABC123",
+    "database_passwords": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/database-passwords-ABC123",
+    "internal_token": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/internal-token-ABC123",
+    "session_encryption": "arn:aws:secretsmanager:us-east-1:123456789012:secret:vx/session-encryption-ABC123",
+    "cognito_client_secret": ""
+  },
+  "bedrock_embedding_model": "amazon.titan-embed-text-v2:0",
+  "bedrock_chat_model": "",
+  "cognito_user_pool_id": "",
+  "cognito_app_client_id": ""
+}

@@ -7,6 +7,7 @@ import sys
 from collections import Counter
 
 from domain.contracts import NormalizedField
+from domain.runtime import check_simulated_clients
 from pipelines.classify import classification_evaluation, classification_report
 from pipelines.full_run import run_sanitize
 from pipelines.sanitize import sanitize_report
@@ -38,6 +39,7 @@ def normalization_report(path: str, repository_name: str | None) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    check_simulated_clients()
     parser = argparse.ArgumentParser(prog="vx-back")
     commands = parser.add_subparsers(dest="command", required=True)
     report = commands.add_parser("normalization-report", help="Resume a normalizacao da base de materiais")
