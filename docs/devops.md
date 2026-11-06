@@ -93,8 +93,14 @@ uv run --package vx-materials-back python scripts/ci_queue_report.py --limit 20
 ```
 
 O job `images` constrói as três imagens e inicia um projeto Compose isolado:
-migração, bootstrap, Agent e API. Depois reconstrói o índice e verifica HTML,
-assets e um turno real API → Agent → MCP stdio → PDM → banco. A saúde da imagem
+migração, bootstrap, índice, Agent e API. Executa `--mode local` para verificar HTML,
+assets e um turno real API → Agent → MCP stdio → PDM → banco. Em seguida carrega a
+demo com `DEMO_MODE=true` e executa `--mode flow`: chat, batch pela API, pedidos,
+aprovações técnica e fiscal, auditoria e snapshot posterior. Qualquer falha retorna
+status diferente de zero e falha o job. O reset usa a imagem API já construída, sem
+rebuild. Cada execução recebe projeto Compose próprio com run ID e tentativa;
+rede, banco e volumes ficam no runner isolado. Logs são exibidos em falhas e
+cancelamentos, e a limpeza dos volumes roda com `always()`. A saúde da imagem
 é liveness; não prova disponibilidade de todas as dependências.
 
 As imagens incluem uma cópia imutável do kit original, sem modificar seus valores.
@@ -146,12 +152,6 @@ Para Docker e integração entre serviços, construa e teste a stack local:
 ```bash
 docker compose up --build -d --wait api
 scripts/smoke_test.sh http://localhost:8000 --mode local
-```
-
-O modo `flow` é uma verificação local adicional de batch, aprovações e auditoria,
-com reset da demo; não é executado pelo CI atual:
-
-```bash
 DEMO_MODE=true scripts/load_demo_data.sh
 scripts/smoke_test.sh http://localhost:8000 --mode flow
 ```
