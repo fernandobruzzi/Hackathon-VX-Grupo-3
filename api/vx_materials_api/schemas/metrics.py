@@ -1,5 +1,6 @@
 """Métricas operacionais e financeiras do contrato público do dashboard."""
 
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -17,6 +18,8 @@ class QualityCounts(_Contract):
     obsolete: int
     missing_ncm: int
     noncanonical_unit: int
+    # Ativos apontados como duplicados por propostas de unificação pendentes ou aplicadas.
+    duplicate_codes: int
 
 
 class ProposalCounts(_Contract):
@@ -43,11 +46,27 @@ class FinancialMetrics(_Contract):
     assumptions: list[str] = Field(default_factory=list)
 
 
+class QualitySnapshotRequest(_Contract):
+    # Sem dataset, vale o importado mais recentemente.
+    dataset_id: UUID | None = None
+
+
+class QualitySnapshotOut(_Contract):
+    id: UUID
+    dataset_id: UUID
+    created_at: datetime
+    applied_proposals: int
+    materials_changed: int
+    inventory_value_conserved: bool
+    export_key: str
+
+
 class DashboardMetrics(_Contract):
     dataset_id: UUID
-    comparison_status: Literal["AFTER_SNAPSHOT_NOT_AVAILABLE"] = "AFTER_SNAPSHOT_NOT_AVAILABLE"
+    comparison_status: Literal["AFTER_SNAPSHOT_NOT_AVAILABLE", "AVAILABLE"] = "AFTER_SNAPSHOT_NOT_AVAILABLE"
     before: QualityCounts
     after: QualityCounts | None = None
+    after_snapshot: QualitySnapshotOut | None = None
     pipeline: ProposalCounts
     evaluation: Evaluation = Field(default_factory=Evaluation)
     financial: FinancialMetrics | None = None

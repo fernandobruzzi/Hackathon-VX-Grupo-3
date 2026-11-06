@@ -429,8 +429,18 @@
       "status": "PENDING",
       "title": "Filtro de óleo Fleetguard LF9009 — 2 códigos",
       "consolidated_inventory": [
-        {"center_code": "1200", "quantity": "4", "unit": "PC", "total_value": "1352.00"},
-        {"center_code": "2200", "quantity": "7", "unit": "PC", "total_value": "2366.00"}
+        {
+          "center_code": "1200",
+          "quantity": "4",
+          "unit": "PC",
+          "total_value": "1352.00"
+        },
+        {
+          "center_code": "2200",
+          "quantity": "7",
+          "unit": "PC",
+          "total_value": "2366.00"
+        }
       ],
       "consolidated_value_brl": "3718.00",
       "material_codes": [
@@ -569,9 +579,11 @@
         "blocked": 2331,
         "obsolete": 1209,
         "missing_ncm": 1173,
-        "noncanonical_unit": 2030
+        "noncanonical_unit": 2030,
+        "duplicate_codes": 0
       },
       "after": null,
+      "after_snapshot": null,
       "evaluation": {
         "reviewed_pairs": 0,
         "merge_precision": null,
@@ -612,9 +624,11 @@
         "blocked": 2331,
         "obsolete": 1209,
         "missing_ncm": 1173,
-        "noncanonical_unit": 2030
+        "noncanonical_unit": 2030,
+        "duplicate_codes": 0
       },
       "after": null,
+      "after_snapshot": null,
       "evaluation": {
         "reviewed_pairs": 0,
         "merge_precision": null,
@@ -631,6 +645,77 @@
     },
     "query": {
       "view": "quality"
+    }
+  },
+  {
+    "name": "dashboard-quality-after-snapshot",
+    "path": "/api/v1/dashboard/metrics",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "dataset_id": "88888888-8888-4888-8888-888888888888",
+      "comparison_status": "AVAILABLE",
+      "before": {
+        "materials_total": 23554,
+        "active": 20014,
+        "blocked": 2331,
+        "obsolete": 1209,
+        "missing_ncm": 1173,
+        "noncanonical_unit": 2030,
+        "duplicate_codes": 4
+      },
+      "after": {
+        "materials_total": 23554,
+        "active": 20011,
+        "blocked": 2334,
+        "obsolete": 1209,
+        "missing_ncm": 1172,
+        "noncanonical_unit": 2029,
+        "duplicate_codes": 1
+      },
+      "after_snapshot": {
+        "id": "99999999-9999-4999-8999-999999999999",
+        "dataset_id": "88888888-8888-4888-8888-888888888888",
+        "created_at": "2026-11-07T19:30:00Z",
+        "applied_proposals": 3,
+        "materials_changed": 5,
+        "inventory_value_conserved": true,
+        "export_key": "exports/99999999-9999-4999-8999-999999999999/quality_snapshot.json"
+      },
+      "evaluation": {
+        "reviewed_pairs": 0,
+        "merge_precision": null,
+        "duplicate_recall": null,
+        "validated_class_ids": []
+      },
+      "pipeline": {
+        "proposals_total": 5,
+        "pending": 2,
+        "applied": 3,
+        "rejected": 0,
+        "stale": 0
+      }
+    },
+    "query": {
+      "view": "quality"
+    }
+  },
+  {
+    "name": "quality-snapshot-create",
+    "path": "/api/v1/dashboard/snapshots",
+    "method": "post",
+    "status": 201,
+    "response": {
+      "id": "99999999-9999-4999-8999-999999999999",
+      "dataset_id": "88888888-8888-4888-8888-888888888888",
+      "created_at": "2026-11-07T19:30:00Z",
+      "applied_proposals": 3,
+      "materials_changed": 5,
+      "inventory_value_conserved": true,
+      "export_key": "exports/99999999-9999-4999-8999-999999999999/quality_snapshot.json"
+    },
+    "request": {
+      "dataset_id": "88888888-8888-4888-8888-888888888888"
     }
   },
   {
@@ -1066,8 +1151,15 @@
           "action": "NCM_REVIEW_APPROVE",
           "entity": "proposta p-porca-ncm",
           "reason": "Classificação conferida com a referência aplicável.",
-          "before": {"ncm": "7318.16.00", "version": 1},
-          "after": {"ncm": "7318.16.00", "fiscal_review_status": "APPROVED", "version": 2},
+          "before": {
+            "ncm": "7318.16.00",
+            "version": 1
+          },
+          "after": {
+            "ncm": "7318.16.00",
+            "fiscal_review_status": "APPROVED",
+            "version": 2
+          },
           "request_id": "req-approval-019",
           "created_at": "2026-11-07T15:31:00Z"
         }

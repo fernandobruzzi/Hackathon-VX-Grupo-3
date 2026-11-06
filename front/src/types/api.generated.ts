@@ -203,6 +203,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/dashboard/snapshots": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Gerar snapshot posterior com as propostas aplicadas; exige batch:run. */
+    post: operations["createQualitySnapshot"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/batch/jobs": {
     parameters: {
       query?: never;
@@ -683,6 +700,8 @@ export interface components {
         obsolete: number;
         missing_ncm: number;
         noncanonical_unit: number;
+        /** @description Ativos apontados como duplicados por unificações pendentes ou aplicadas. */
+        duplicate_codes: number;
       };
       after: {
         materials_total: number;
@@ -691,7 +710,10 @@ export interface components {
         obsolete: number;
         missing_ncm: number;
         noncanonical_unit: number;
+        /** @description Ativos apontados como duplicados por unificações pendentes ou aplicadas. */
+        duplicate_codes: number;
       } | null;
+      after_snapshot: components["schemas"]["QualitySnapshot"] | null;
       pipeline: {
         proposals_total: number;
         pending: number;
@@ -947,6 +969,23 @@ export interface components {
       status: "PENDING" | "NO_MATCH" | "MATCH_FOUND";
       existing?: components["schemas"]["ExistingMatch"];
       similar_candidates?: components["schemas"]["SimilarCandidate"][];
+    };
+    /** @description Snapshot posterior gerado só com propostas aplicadas; imutável. */
+    QualitySnapshot: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      dataset_id: string;
+      /** Format: date-time */
+      created_at: string;
+      applied_proposals: number;
+      materials_changed: number;
+      inventory_value_conserved: boolean;
+      export_key: string;
+    };
+    /** @description Sem dataset_id, usa o dataset importado mais recentemente. */
+    QualitySnapshotRequest: {
+      dataset_id?: string | null;
     };
   };
   responses: never;
@@ -1760,6 +1799,98 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["DashboardMetrics"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  createQualitySnapshot: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["QualitySnapshotRequest"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["QualitySnapshot"];
         };
       };
       /** @description Sessão inválida ou expirada. */
