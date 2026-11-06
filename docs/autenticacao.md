@@ -100,3 +100,27 @@ Conforme o escopo local acordado para #7/#9/#20, a homologação Cognito/HTTPS s
 feita após a #6, com as três contas e grupos reais. A aplicação não apresenta
 sessões de teste como autenticação Cognito.
 Essa homologação está registrada na [#91](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/91).
+
+
+## Transições de sessão no navegador
+
+Login, troca de persona e logout são serializados: enquanto uma operação está em
+andamento, os controles de autenticação ficam desabilitados e a área privada
+mostra “Atualizando sessão”. O bloqueio vale também antes de o próximo render
+ocorrer, impedindo dois cliques de dispararem duas trocas.
+
+Cada transição invalida respostas de requisições iniciadas na sessão anterior.
+Isso inclui o carregamento inicial, refresh e erros 401 atrasados: um erro antigo
+não encerra uma nova sessão válida. Um 401 da sessão atual continua levando ao
+login. Ao confirmar a sessão, a aplicação remonta a área privada para descartar
+estado e cursores, inclusive quando o login é da mesma conta.
+
+Se uma resposta de autenticação se perder, o navegador pode já ter recebido o
+cookie novo. Por isso a aplicação consulta `/auth/me` antes de liberar os controles
+outra vez. Se nem essa consulta confirmar a identidade, os dados privados são
+retirados da tela e o login fica disponível para nova tentativa. Cookies, tokens,
+papéis e permissões continuam sujeitos à validação do backend.
+
+No Cognito, o bloqueio permanece até o redirecionamento ou recarregamento; a nova
+página confirma a sessão no servidor. A inicialização da página de callback não
+invalida a troca de código nem a consulta de perfil que ela está concluindo.

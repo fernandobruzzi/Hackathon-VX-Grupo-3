@@ -85,7 +85,18 @@ const NAV: { section: string; items: NavItem[] }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { me, ready, signOut, theme, toggleTheme, authMode, error, backend } = useAuth();
+  const {
+    me,
+    ready,
+    signOut,
+    theme,
+    toggleTheme,
+    authMode,
+    error,
+    backend,
+    sessionBusy,
+    sessionRevision,
+  } = useAuth();
   const router = useRouter();
   const path = usePathname();
 
@@ -158,6 +169,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <button
+          disabled={sessionBusy}
           onClick={async () => {
             try {
               await signOut();
@@ -186,7 +198,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <PersonaSwitcher />
           </div>
         </header>
-        <main key={me.user.id} className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8 lg:px-10">
+        <main
+          key={`${me.user.id}:${sessionRevision}`}
+          aria-busy={sessionBusy}
+          className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8 lg:px-10"
+        >
           {backend && (
             <p className="mb-4 text-xs text-muted">
               Chat, saneamento, batch, dashboard e auditoria usam dados persistidos. Demais telas em
@@ -203,7 +219,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {error}
             </p>
           )}
-          {children}
+          {sessionBusy ? <p role="status">Atualizando sessão…</p> : children}
         </main>
       </div>
     </div>
@@ -212,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 /** Fast-Switch Demo Persona (Arquitetura, seção 2). Integração: POST /api/v1/auth/demo/switch e refetch de /auth/me. */
 export function PersonaSwitcher() {
-  const { me, switchPersona, authMode, backend } = useAuth();
+  const { me, switchPersona, authMode, backend, sessionBusy } = useAuth();
   const [open, setOpen] = useState(false);
   if (!me) return null;
   const current = PERSONAS.find((p) => p.label === me.demo.active_persona);
@@ -223,8 +239,10 @@ export function PersonaSwitcher() {
   return (
     <div className="relative">
       <button
+        disabled={sessionBusy}
         onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
+        aria-busy={sessionBusy}
+        aria-expanded={open && !sessionBusy}
         className="flex items-center gap-3 rounded-md bg-surface py-1.5 pr-3 pl-1.5 ring-1 ring-surface-2 ring-inset"
       >
         <span className="grid size-8 place-items-center rounded-full bg-profundo text-xs font-extrabold text-esmeralda">
@@ -238,7 +256,12 @@ export function PersonaSwitcher() {
         </span>
         <ChevronDown className="size-4 text-muted" />
       </button>
-      {open && (
+      {sessionBusy && (
+        <span role="status" className="text-xs text-muted">
+          Atualizando sessão…
+        </span>
+      )}
+      {open && !sessionBusy && (
         <div className="absolute top-14 right-0 w-80 rounded-lg bg-surface p-2 shadow-[0_0_0_1px_var(--surface-2)]">
           <p className="px-3 pt-1 pb-2 text-[11px] font-extrabold tracking-[0.08em] text-muted uppercase">
             Trocar persona · modo demo
