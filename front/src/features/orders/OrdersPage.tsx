@@ -13,6 +13,7 @@ import type { RegistrationOrder } from "@/types/api";
 import { orders as sample } from "@/mocks/data";
 
 import { OrderComplementForm } from "./OrderComplementForm";
+import { OrderReviewPanel } from "./OrderReviewPanel";
 
 type Tab = "mine" | "review" | "all";
 
@@ -35,7 +36,7 @@ export function OrdersPage() {
     if (!reviewer) setTab("mine");
   }, [reviewer]);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<string | null>(null);
   const [editing, setEditing] = useState<RegistrationOrder | null>(null);
   const [saved, setSaved] = useState<RegistrationOrder | null>(null);
   const [retry, setRetry] = useState(0);
@@ -74,6 +75,7 @@ export function OrdersPage() {
     setRemote(null);
     setEditing(null);
     setSaved(null);
+    setReviewing(null);
     setNextCursor(null);
     void loadPage(null, false, request.signal);
     return () => request.abort();
@@ -87,27 +89,6 @@ export function OrdersPage() {
       : tab === "review"
         ? all.filter((o) => o.status === awaiting)
         : all;
-
-  const decide = (order: RegistrationOrder, decision: "APPROVE" | "REJECT") => {
-    const reason =
-      decision === "REJECT"
-        ? "Rejeitado na tela de pedidos."
-        : governance
-          ? "Parte técnica aprovada na tela de pedidos: classe e atributos do PDM conferidos."
-          : "NCM aprovado e cadastro publicado na tela de pedidos.";
-    setBusy(order.id);
-    setError(null);
-    api
-      .request("post", "/api/v1/registration-orders/{id}/decide", {
-        params: { id: order.id },
-        body: { expected_version: order.version, decision, reason },
-      })
-      .then(() => setRetry((value) => value + 1))
-      .catch((err: unknown) =>
-        setError(err instanceof ApiError ? err.message : "Não foi possível registrar a decisão."),
-      )
-      .finally(() => setBusy(null));
-  };
 
   const tabs = [
     ...(reviewer
@@ -183,6 +164,17 @@ export function OrdersPage() {
             : ". Sem pendências de atributos."}
         </p>
       )}
+      {reviewing && (
+        <OrderReviewPanel
+          key={reviewing}
+          id={reviewing}
+          onClose={() => setReviewing(null)}
+          onDecided={() => {
+            setReviewing(null);
+            setRetry((value) => value + 1);
+          }}
+        />
+      )}
       <Table>
         <thead>
           <tr>
@@ -242,20 +234,10 @@ export function OrdersPage() {
                     <Code className="text-verde">{o.material_code}</Code>
                   </span>
                 )}
-                {backend && o.status === awaiting && reviewer && (
-                  <span className="mt-1 flex flex-wrap gap-2">
-                    <Button size="sm" disabled={busy === o.id} onClick={() => decide(o, "APPROVE")}>
-                      {governance ? "Aprovar parte técnica" : "Publicar cadastro"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={busy === o.id}
-                      onClick={() => decide(o, "REJECT")}
-                    >
-                      Rejeitar
-                    </Button>
-                  </span>
+                {backend && (
+                  <Button size="sm" onClick={() => setReviewing(o.id)}>
+                    Revisar pedido
+                  </Button>
                 )}
               </Td>
               <Td>

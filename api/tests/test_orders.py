@@ -637,3 +637,123 @@ def test_complement_replay_rechecks_current_access(imported, revoked):
     db.refresh(order)
     assert order.version == 2 and len(order.supplements) == 1
     assert db.scalar(select(func.count()).select_from(AuditLog)) == count
+def test_review_exposes_technical_card_and_unknown_official_ncm_status(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600010"]
+    login(client, "GESTOR_CADASTRO")
+    result = client.get(f"{PATH}/{order.id}")
+    assert result.status_code == 200, result.text
+    body = result.json()
+    assert body["order"]["original_text"] == order.original_text
+    assert body["attachment_text"] == order.attachment_text
+    assert body["attributes"] and body["formatted_description"]
+    assert body["pdm_version"] and body["pdm_source_sha256"] and body["index_version"]
+    assert body["ncm_references"] and body["ncm_proposed"] is None
+    assert body["ncm_assessment"]["exists_in_snapshot"] is None
+    assert body["ncm_assessment"]["valid_in_snapshot"] is None
+    from test_contracts import validator
+
+    validator({"$ref": "#/components/schemas/OrderReview"}).validate(body)
+    login(client, "SOLICITANTE_OPERACAO")
+    assert client.get(f"{PATH}/{order.id}").status_code == 404
+    login(client, "GESTOR_CADASTRO")
+    order.center_code = "9999"
+    db.commit()
+    assert client.get(f"{PATH}/{order.id}").status_code == 404
+
+
+def test_explicit_fiscal_choice_publishes_exact_persisted_ncm_once(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600010"]
+    assert decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1).status_code == 200
+    me = login(client, "AUDITOR_FISCAL")
+    review = client.get(f"{PATH}/{order.id}").json()
+    code = review["ncm_assessment"]["suggested_ncm_codes"][0]
+    payload = {
+        "expected_version": 2,
+        "decision": "APPROVE",
+        "reason": "Condição do filtro conferida na ficha técnica",
+        "ncm_code": code.replace(".", ""),
+        "ncm_source": "Ficha técnica do fabricante",
+        "ncm_evaluation_hash": review["ncm_assessment"]["evaluation_hash"],
+    }
+    key = str(uuid.uuid4())
+    response = client.post(f"{PATH}/{order.id}/decide", json=payload, headers=headers(me, key))
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "REGISTERED"
+    assert client.post(f"{PATH}/{order.id}/decide", json=payload, headers=headers(me, key)).json() == response.json()
+    db.refresh(order)
+    created = db.get(MaterialMaster, order.material_id)
+    assert created.ncm == order.review_data["fiscal"]["ncm_code"] == code
+    assert order.review_data["fiscal"]["source"] == payload["ncm_source"]
+    audit = db.scalar(
+        select(AuditLog).where(AuditLog.entity_id == str(order.id), AuditLog.action == "ORDER_REGISTERED")
+    )
+    assert audit.after_json["review_data"]["fiscal"]["assessment"]["exists_in_snapshot"] is None
+    assert db.scalar(select(func.count()).select_from(AuditLog).where(AuditLog.entity_id == str(order.id))) == 2
+
+
+@pytest.mark.parametrize("invalid", ["condition", "source", "hash", "version", "role"])
+def test_fiscal_choice_refuses_incompatible_or_stale_decisions(imported, invalid):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600010"]
+    governance = login(client, "GESTOR_CADASTRO")
+    if invalid != "role":
+        assert decide(client, governance, order.id, 1).status_code == 200
+        me = login(client, "AUDITOR_FISCAL")
+    else:
+        me = governance
+    review = client.get(f"{PATH}/{order.id}").json()
+    code = review["ncm_assessment"]["suggested_ncm_codes"][0]
+    payload = {
+        "expected_version": 1 if invalid == "role" else 2,
+        "decision": "APPROVE",
+        "reason": "Conferido",
+        "ncm_code": code,
+        "ncm_source": "Fabricante",
+        "ncm_evaluation_hash": review["ncm_assessment"]["evaluation_hash"],
+    }
+    if invalid == "condition":
+        # Código da mesma classe, mas de outro tipo de filtro: a união de referências não basta.
+        payload["ncm_code"] = next(
+            code for ref in review["ncm_references"] for code in ref["codes"] if code != payload["ncm_code"]
+        )
+    elif invalid == "source":
+        payload["ncm_source"] = None
+    elif invalid == "hash":
+        payload["ncm_evaluation_hash"] = "0" * 64
+    elif invalid == "version":
+        payload["expected_version"] = 1
+    response = client.post(f"{PATH}/{order.id}/decide", json=payload, headers=headers(me))
+    assert response.status_code == ({"role": 403, "hash": 409, "version": 409}.get(invalid, 422)), response.text
+    db.refresh(order)
+    assert order.material_id is None and "fiscal" not in order.review_data
+
+
+def test_changed_structured_card_invalidates_the_technical_approval(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600010"]
+    governance = login(client, "GESTOR_CADASTRO")
+    owner = db.scalar(select(UserSso).where(UserSso.subject == "GESTOR_CADASTRO"))
+    review = client.get(f"{PATH}/{order.id}").json()
+    order.origin, order.requester_user_id, order.item_name = "CHAT", owner.id, review["item_name"]
+    db.commit()
+    assert decide(client, governance, order.id, 1).status_code == 200
+    db.refresh(order)
+    order.attributes = {**order.attributes, "REFERENCIA FABRICANTE": "OUTRA-REFERENCIA"}
+    db.commit()
+    me = login(client, "AUDITOR_FISCAL")
+    response = client.post(
+        f"{PATH}/{order.id}/decide",
+        json={
+            "expected_version": 2,
+            "decision": "APPROVE",
+            "reason": "Conferido",
+            "ncm_code": review["ncm_assessment"]["suggested_ncm_codes"][0],
+            "ncm_source": "Fabricante",
+        },
+        headers=headers(me),
+    )
+    assert response.status_code == 422 and response.json()["error"]["code"] == "TECHNICAL_REVIEW_CHANGED"
+    db.refresh(order)
+    assert order.material_id is None

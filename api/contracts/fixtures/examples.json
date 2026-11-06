@@ -2105,5 +2105,79 @@
     "params": {
       "id": "66666666-6666-4666-8666-666666666666"
     }
+  },
+  {
+    "name": "order-review",
+    "path": "/api/v1/registration-orders/{id}",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "id": "66666666-6666-4666-8666-666666666666"
+    },
+    "response": {
+      "order": {
+        "id": "66666666-6666-4666-8666-666666666666",
+        "version": 2,
+        "origin": "CHAT",
+        "requester": "Operação Demo",
+        "original_text": "Preciso cadastrar filtro combustivel perfuratriz fram g2021 para reposição de estoque",
+        "center_code": "1300",
+        "pdm_class_id": "PDM100",
+        "status": "PENDING_FISCAL",
+        "missing_attributes": [],
+        "material_code": null,
+        "updated_at": "2026-11-07T13:10:00Z"
+      },
+      "attachment_text": null,
+      "item_name": "FILTRO COMBUSTIVEL",
+      "attributes": {
+        "APLICACAO": "PERFURATRIZ",
+        "FABRICANTE": "FRAM",
+        "REFERENCIA FABRICANTE": "G2021"
+      },
+      "formatted_description": "FILTRO COMBUSTIVEL; APLICACAO: PERFURATRIZ; FABRICANTE: FRAM; REFERENCIA FABRICANTE: G2021",
+      "candidate_material_ids": [],
+      "pdm_version": "pdm-kit-v1",
+      "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+      "index_version": "search-index-v1|pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v1@1|extractor:rule_based_v1@2|identity-v1",
+      "ncm_assessment": {
+        "input_ncm": null,
+        "normalized_ncm": null,
+        "syntax_valid": false,
+        "exists_in_snapshot": null,
+        "valid_in_snapshot": null,
+        "technical_consistency": "UNDETERMINED",
+        "suggested_ncm_codes": [
+          "8421.23.00"
+        ],
+        "missing_attributes": [],
+        "rule_id": "PDM100_NCM",
+        "requires_fiscal_review": true,
+        "fiscal_approval_status": "PENDING",
+        "pdm_version": "pdm-kit-v1",
+        "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+        "reference_source": "03_padrao_cadastro_PDM.xlsx#NCM_REFERENCIA",
+        "rules_version": "pdm-ncm-v1",
+        "evaluation_hash": "1c6b726204d808be360dacc26d19c0566f548b180a1a12a22c65f82974c1a9a6",
+        "pending_checks": [
+          "OFFICIAL_SNAPSHOT_UNAVAILABLE"
+        ]
+      },
+      "ncm_proposed": null,
+      "ncm_references": [
+        {
+          "codes": [
+            "8421.23.00",
+            "8421.29.90",
+            "8421.31.00",
+            "8421.39.90"
+          ],
+          "condition": "óleo e combustível = 8421.23.00; ar = 8421.31.00; hidráulico = 8421.29.90; separador ar/óleo = 8421.39.90"
+        }
+      ],
+      "review_data": {},
+      "fiscal_decision": null,
+      "technical_review_current": true
+    }
   }
 ]

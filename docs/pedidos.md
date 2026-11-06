@@ -106,3 +106,24 @@ não significa cadastro aprovado nem decisão fiscal.
 
 A migração `0014_order_supplements` sucede `0013_manual_reviews` e deve ser aplicada antes
 de servir esta versão da API. Migrações já aplicadas permanecem intactas.
+## Revisão da ficha e escolha fiscal
+
+**Revisar pedido** consulta `GET /api/v1/registration-orders/{id}` antes da decisão: originais,
+anexo, item, atributos, descrição proposta, identidades existentes e versões de PDM/índice.
+A Governança registra a aprovação técnica vinculada à classe, item, atributos e regras atuais.
+O Fiscal confere condições e alternativas NCM; quando o código não é único pelo fluxo anterior,
+informa uma escolha explícita com fonte e justificativa. O servidor usa o avaliador compartilhado
+de NCM: pertencer à mesma classe não basta se a condição do código for incompatível.
+
+O pedido `SC-202600010` aceita a escolha fiscal consistente com seu tipo de filtro, sem adivinhar
+entre todos os códigos da classe. A aprovação persiste código normalizado, fonte, ator, motivo,
+versão e avaliação na mesma transação da publicação; o material usa exatamente essa decisão.
+A repetição explícita mantém chave e payload, inclusive após perda da resposta.
+
+A escolha fica vinculada ao hash da avaliação apresentada e à ficha aprovada tecnicamente.
+Alterar atributos, item, PDM ou regras após a aprovação técnica impede publicar
+(`TECHNICAL_REVIEW_CHANGED`); uma avaliação fiscal diferente exige nova consulta
+(`NCM_ASSESSMENT_CHANGED`). Pedidos legados já no Fiscal, sem a ficha técnica registrada pela
+nova versão, também permanecem pendentes para revisão; a migração não inventa aprovação anterior.
+A Governança não define NCM. Sem o snapshot oficial da #30, existência e vigência continuam
+`null`: a concordância com o PDM e a aprovação humana não confirmam vigência oficial.
