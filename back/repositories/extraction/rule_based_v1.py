@@ -54,7 +54,7 @@ _POOL_METRIC = re.compile(r"\bM[\s\-]?(\d+)(?:\s*X\s*(\d+(?:[.,]\d+)?))?(?:\s*X\
 _POOL_INCH_PAIR = re.compile(r"(\d+(?:\.\d+)?(?:/\d+)?)POLX(\d+(?:\.\d+)?(?:/\d+)?)POL")
 _POOL_SEAL = re.compile(r"(?<![\w,.])(\d+(?:[.,]\d+)?)X(\d+(?:[.,]\d+)?)X(\d+(?:[.,]\d+)?)\b")
 _POOL_INCH = re.compile(
-    r"(?<![\d/.])(?:(?:\d+[ .\-]\d+/\d+|\d+/\d+|\d+(?:,(?:5|25|75))?)\s*(?:POL\b|\"|IN\b)|DN\s?\d+\b)"
+    r"(?<![\d/.,])(?:(?:\d+[ .\-]\d+/\d+|\d+/\d+|\d+(?:,(?:5|25|75))?)\s*(?:POL\b|\"|IN\b)|DN\s?\d+\b)"
 )
 _POOL_MEASURE = re.compile(rf"(?<![\w,.])({_NUMBER})\s*(MM2|MM|BAR|PSI|AMP|A|W)\b")
 _POOL_RING = re.compile(r"(?<![\w,.])(\d+(?:[.,]\d+)?)X(\d+(?:[.,]\d+)?)\b")
@@ -155,7 +155,8 @@ def _measure_candidates(raw: str) -> list[tuple[str, str]]:
     if match := _INCH_WHOLE.match(raw):
         candidates.append((f"{match[1]}POL", "measure.inches"))
     if match := _INCH_DECIMAL.match(raw):
-        candidates.append((f"{match[1]}.{_FRACTION_FROM_DECIMAL[match[2]]}POL", "measure.inches"))
+        whole = f"{match[1]}." if int(match[1]) else ""
+        candidates.append((f"{whole}{_FRACTION_FROM_DECIMAL[match[2]]}POL", "measure.inches"))
     if (match := _DN.match(raw)) and match[1] in DN_TO_INCHES:
         candidates.append((f"{DN_TO_INCHES[match[1]]}POL", "measure.dn_to_inches"))
     if match := _METRIC.match(raw):
@@ -254,7 +255,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "6-label-boundaries-159"
+    revision = "7"
 
     def extract(
         self,
