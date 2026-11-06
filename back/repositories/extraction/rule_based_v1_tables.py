@@ -183,6 +183,7 @@ VALUE_ALIASES: dict[str, tuple[str, ...]] = {
     "SW": ("SOLDA ENCAIXE SW",),
     "TEFLON": ("PTFE",),
     "TEFLON REFORCADO": ("RPTFE",),
+    "PTFE REFORCADO": ("RPTFE",),
     "TERMOMAGNETICO DIN": ("MINIDISJUNTOR DIN",),
     "VERMELHA": ("VERMELHO",),
     "VERMELHO": ("VERMELHA",),

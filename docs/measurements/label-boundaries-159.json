@@ -1,0 +1,6054 @@
+{
+  "baseline_commit": "03ff9a61a5b5013282e3915d75457586f24c4040",
+  "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+  "independent": false,
+  "limits": "Revisão de desenvolvimento do próprio autor lendo todos os valores e textos alterados; sem especialista externo. As colunas do kit são verificação interna, não precisão independente. Nenhuma proposta persistida foi alterada. Coortes anteriores preservadas.",
+  "base_before": {
+    "repository": "rule_based_v1",
+    "rows": 23554,
+    "statuses": {
+      "VALID": 10877,
+      "INCOMPLETE": 7080,
+      "SEM_CLASSE": 5597
+    },
+    "valid_percent": 46.2,
+    "invalid_values": 0,
+    "by_group": {
+      "ELE01": {
+        "VALID": 579,
+        "INCOMPLETE": 459,
+        "SEM_CLASSE": 445
+      },
+      "EPI01": {
+        "INCOMPLETE": 242,
+        "SEM_CLASSE": 236,
+        "VALID": 131
+      },
+      "FER01": {
+        "VALID": 97,
+        "INCOMPLETE": 77,
+        "SEM_CLASSE": 76
+      },
+      "FIL01": {
+        "VALID": 682,
+        "SEM_CLASSE": 172,
+        "INCOMPLETE": 83
+      },
+      "FIX01": {
+        "SEM_CLASSE": 2093,
+        "INCOMPLETE": 1318,
+        "VALID": 1105
+      },
+      "INS01": {
+        "INCOMPLETE": 151,
+        "VALID": 111,
+        "SEM_CLASSE": 69
+      },
+      "LUB01": {
+        "VALID": 69,
+        "SEM_CLASSE": 56,
+        "INCOMPLETE": 40
+      },
+      "MAN01": {
+        "SEM_CLASSE": 714,
+        "INCOMPLETE": 509,
+        "VALID": 322
+      },
+      "ROL01": {
+        "SEM_CLASSE": 264,
+        "VALID": 181,
+        "INCOMPLETE": 39
+      },
+      "SOB01": {
+        "VALID": 5842,
+        "INCOMPLETE": 1698,
+        "SEM_CLASSE": 133
+      },
+      "SOL01": {
+        "VALID": 72,
+        "SEM_CLASSE": 69,
+        "INCOMPLETE": 54
+      },
+      "TRA01": {
+        "SEM_CLASSE": 177,
+        "VALID": 151,
+        "INCOMPLETE": 128
+      },
+      "TUB01": {
+        "INCOMPLETE": 908,
+        "VALID": 575,
+        "SEM_CLASSE": 234
+      },
+      "VAL01": {
+        "INCOMPLETE": 791,
+        "SEM_CLASSE": 299,
+        "VALID": 252
+      },
+      "VED01": {
+        "VALID": 708,
+        "INCOMPLETE": 583,
+        "SEM_CLASSE": 560
+      }
+    },
+    "top_missing": {
+      "PDM110/APLICACAO": 921,
+      "PDM110/MODELO EQUIPAMENTO": 916,
+      "PDM050/MATERIAL": 637,
+      "PDM001/ACABAMENTO": 463,
+      "PDM001/MATERIAL": 318,
+      "PDM110/FABRICANTE": 234,
+      "PDM040/ACIONAMENTO": 215,
+      "PDM050/CONEXAO": 201,
+      "PDM110/REFERENCIA FABRICANTE": 199,
+      "PDM040/CONEXAO": 189,
+      "PDM011/TERMINAL B": 183,
+      "PDM040/MATERIAL CORPO": 181,
+      "PDM011/TERMINAL A": 176,
+      "PDM001/NORMA": 167,
+      "PDM050/FACE": 153,
+      "PDM003/ACABAMENTO": 150,
+      "PDM033/ANEL INTERNO": 148,
+      "PDM001/COMPRIMENTO": 144,
+      "PDM003/CLASSE RESISTENCIA": 137,
+      "PDM010/REFORCO": 135
+    },
+    "rules": {
+      "value.exact": 29131,
+      "value.unlabeled": 14420,
+      "field.manufacturer": 5756,
+      "field.manufacturer_reference": 4876,
+      "measure.mm": 3804,
+      "measure.inches": 2911,
+      "value.as_written": 2339,
+      "value.alias": 2281,
+      "measure.metric_thread": 975,
+      "measure.integer": 871,
+      "measure.inches.unlabeled": 787,
+      "measure.mm.unlabeled": 774,
+      "pdm.thread_from_gauge": 678,
+      "reference.unlabeled": 516,
+      "value.contained": 433,
+      "measure.dn_to_inches": 421,
+      "value.unique_words": 420,
+      "measure.bar": 361,
+      "bearing.reference": 353,
+      "value.spelling": 350,
+      "measure.amps.unlabeled": 254,
+      "measure.seal_notation": 237,
+      "measure.compact_notation": 227,
+      "measure.mm2": 226,
+      "measure.amps": 205,
+      "measure.ring_notation": 156,
+      "measure.mm2.unlabeled": 114,
+      "measure.psi_to_bar": 107,
+      "measure.psi_to_bar.unlabeled": 84,
+      "measure.bar.unlabeled": 76,
+      "measure.dn_to_inches.unlabeled": 76,
+      "pdm.bearing_suffix": 71,
+      "measure.watts": 66,
+      "measure.dash_size": 42,
+      "measure.range": 36,
+      "bearing.reference.unlabeled": 35,
+      "measure.watts.unlabeled": 30,
+      "value.as_written.unlabeled": 8,
+      "measure.meters": 6,
+      "value.exact.unlabeled": 1
+    },
+    "against_columns": {
+      "FABRICANTE": {
+        "rows": 5552,
+        "filled": 5259,
+        "correct": 5259,
+        "coverage_percent": 94.7,
+        "precision_percent": 100.0
+      },
+      "REFERENCIA FABRICANTE": {
+        "rows": 4721,
+        "filled": 4512,
+        "correct": 4406,
+        "coverage_percent": 95.6,
+        "precision_percent": 97.7
+      }
+    },
+    "known_pairs": {
+      "pairs": 202,
+      "same_identity": 53,
+      "different_identity": 1,
+      "undecided": 148
+    }
+  },
+  "base_after": {
+    "repository": "rule_based_v1",
+    "rows": 23554,
+    "statuses": {
+      "VALID": 10989,
+      "INCOMPLETE": 6968,
+      "SEM_CLASSE": 5597
+    },
+    "valid_percent": 46.7,
+    "invalid_values": 0,
+    "by_group": {
+      "ELE01": {
+        "VALID": 593,
+        "SEM_CLASSE": 445,
+        "INCOMPLETE": 445
+      },
+      "EPI01": {
+        "INCOMPLETE": 242,
+        "SEM_CLASSE": 236,
+        "VALID": 131
+      },
+      "FER01": {
+        "VALID": 98,
+        "INCOMPLETE": 76,
+        "SEM_CLASSE": 76
+      },
+      "FIL01": {
+        "VALID": 684,
+        "SEM_CLASSE": 172,
+        "INCOMPLETE": 81
+      },
+      "FIX01": {
+        "SEM_CLASSE": 2093,
+        "INCOMPLETE": 1309,
+        "VALID": 1114
+      },
+      "INS01": {
+        "INCOMPLETE": 150,
+        "VALID": 112,
+        "SEM_CLASSE": 69
+      },
+      "LUB01": {
+        "VALID": 72,
+        "SEM_CLASSE": 56,
+        "INCOMPLETE": 37
+      },
+      "MAN01": {
+        "SEM_CLASSE": 714,
+        "INCOMPLETE": 503,
+        "VALID": 328
+      },
+      "ROL01": {
+        "SEM_CLASSE": 264,
+        "VALID": 181,
+        "INCOMPLETE": 39
+      },
+      "SOB01": {
+        "VALID": 5898,
+        "INCOMPLETE": 1642,
+        "SEM_CLASSE": 133
+      },
+      "SOL01": {
+        "VALID": 75,
+        "SEM_CLASSE": 69,
+        "INCOMPLETE": 51
+      },
+      "TRA01": {
+        "SEM_CLASSE": 177,
+        "VALID": 152,
+        "INCOMPLETE": 127
+      },
+      "TUB01": {
+        "INCOMPLETE": 904,
+        "VALID": 579,
+        "SEM_CLASSE": 234
+      },
+      "VAL01": {
+        "INCOMPLETE": 784,
+        "SEM_CLASSE": 299,
+        "VALID": 259
+      },
+      "VED01": {
+        "VALID": 713,
+        "INCOMPLETE": 578,
+        "SEM_CLASSE": 560
+      }
+    },
+    "top_missing": {
+      "PDM110/APLICACAO": 921,
+      "PDM110/MODELO EQUIPAMENTO": 870,
+      "PDM050/MATERIAL": 631,
+      "PDM001/ACABAMENTO": 457,
+      "PDM001/MATERIAL": 314,
+      "PDM110/FABRICANTE": 217,
+      "PDM110/REFERENCIA FABRICANTE": 199,
+      "PDM050/CONEXAO": 197,
+      "PDM040/ACIONAMENTO": 197,
+      "PDM040/CONEXAO": 189,
+      "PDM011/TERMINAL B": 185,
+      "PDM040/MATERIAL CORPO": 181,
+      "PDM011/TERMINAL A": 177,
+      "PDM001/NORMA": 164,
+      "PDM050/FACE": 153,
+      "PDM033/ANEL INTERNO": 148,
+      "PDM003/ACABAMENTO": 144,
+      "PDM001/COMPRIMENTO": 139,
+      "PDM010/REFORCO": 135,
+      "PDM003/CLASSE RESISTENCIA": 134
+    },
+    "rules": {
+      "value.exact": 29400,
+      "value.unlabeled": 14648,
+      "field.manufacturer": 5756,
+      "field.manufacturer_reference": 4876,
+      "measure.mm": 3804,
+      "measure.inches": 2911,
+      "value.as_written": 2339,
+      "value.alias": 2304,
+      "measure.metric_thread": 993,
+      "measure.integer": 871,
+      "measure.inches.unlabeled": 793,
+      "measure.mm.unlabeled": 784,
+      "pdm.thread_from_gauge": 670,
+      "reference.unlabeled": 516,
+      "measure.dn_to_inches": 421,
+      "value.unique_words": 417,
+      "measure.bar": 361,
+      "bearing.reference": 353,
+      "value.spelling": 350,
+      "measure.amps.unlabeled": 266,
+      "measure.seal_notation": 237,
+      "measure.compact_notation": 227,
+      "measure.mm2": 226,
+      "measure.amps": 205,
+      "measure.ring_notation": 156,
+      "measure.mm2.unlabeled": 121,
+      "value.contained": 117,
+      "measure.psi_to_bar": 107,
+      "measure.psi_to_bar.unlabeled": 85,
+      "measure.dn_to_inches.unlabeled": 77,
+      "measure.bar.unlabeled": 76,
+      "pdm.bearing_suffix": 71,
+      "measure.watts": 66,
+      "measure.dash_size": 42,
+      "measure.range": 36,
+      "bearing.reference.unlabeled": 35,
+      "measure.watts.unlabeled": 32,
+      "value.as_written.unlabeled": 8,
+      "measure.meters": 6,
+      "value.exact.unlabeled": 1
+    },
+    "against_columns": {
+      "FABRICANTE": {
+        "rows": 5552,
+        "filled": 5291,
+        "correct": 5291,
+        "coverage_percent": 95.3,
+        "precision_percent": 100.0
+      },
+      "REFERENCIA FABRICANTE": {
+        "rows": 4721,
+        "filled": 4512,
+        "correct": 4406,
+        "coverage_percent": 95.6,
+        "precision_percent": 97.7
+      }
+    },
+    "known_pairs": {
+      "pairs": 202,
+      "same_identity": 54,
+      "different_identity": 1,
+      "undecided": 147
+    }
+  },
+  "orders_before": {
+    "rows": 520,
+    "statuses": {
+      "READY_FOR_REVIEW": 256,
+      "INCOMPLETE": 178,
+      "OUT_OF_SCOPE": 86
+    },
+    "identities": 256
+  },
+  "orders_after": {
+    "rows": 520,
+    "statuses": {
+      "READY_FOR_REVIEW": 256,
+      "INCOMPLETE": 178,
+      "OUT_OF_SCOPE": 86
+    },
+    "identities": 256
+  },
+  "changed_materials": 247,
+  "changed_values": 310,
+  "identity_changes": 111,
+  "delta_review": [
+    {
+      "material_code": "20804270",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA METRICA GROSSA M10 120,0MM COM GRAU 8.8 MAT DE ACO CARBONO NATURAL COM PADRAO DIN 931",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "NATURAL",
+      "evidence": {
+        "value": "NATURAL",
+        "original": "NATURAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20804270",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA METRICA GROSSA M10 120,0MM COM GRAU 8.8 MAT DE ACO CARBONO NATURAL COM PADRAO DIN 931",
+      "attribute": "BITOLA",
+      "before": null,
+      "after": "M10",
+      "evidence": {
+        "value": "M10",
+        "original": "M10",
+        "rule": "measure.metric_thread"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20804270",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA METRICA GROSSA M10 120,0MM COM GRAU 8.8 MAT DE ACO CARBONO NATURAL COM PADRAO DIN 931",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "8.8",
+      "evidence": {
+        "value": "8.8",
+        "original": "8.8",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20804270",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA METRICA GROSSA M10 120,0MM COM GRAU 8.8 MAT DE ACO CARBONO NATURAL COM PADRAO DIN 931",
+      "attribute": "COMPRIMENTO",
+      "before": null,
+      "after": "120MM",
+      "evidence": {
+        "value": "120MM",
+        "original": "120,0MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20571479",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM NOMINAL:2 POL, 800#, MATERIAL:ACO INOX FORJADO A182 F316, EXTREMIDADES:ROSCA NPT, PASSAGEM:PASSAGEM REDUZIDA, VEDACAO SEDE:PTFE REFORCADO - CONF AMOSTRA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "10272132",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR COM TIPO MINI DISJUNTOR COM POLOS 3P IN 25A CURVA C",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "25A",
+      "evidence": {
+        "value": "25A",
+        "original": "25A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25614536",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO UNC 7/16 INX1 1/2POL SAE GRAU 5 ACO ZB ASME B18.2.1",
+      "attribute": "BITOLA",
+      "before": "1/2POL",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "Fração dentro de comprimento misto não comprova a bitola; permanece pendente.",
+      "unresolved": [
+        "PARAFUSO SEXTAVADO  7/16 INX1 1/2POL  ACO"
+      ]
+    },
+    {
+      "material_code": "21457702",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1.1/2\" 800# INOX 316 ROSCADA NPT PASSAGEM REDUZIDA METAL-METAL ATUADOR PNEUMATICO",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ATUADOR PNEUMATICO",
+      "evidence": {
+        "value": "ATUADOR PNEUMATICO",
+        "original": "ATUADOR PNEUMATICO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21457702",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1.1/2\" 800# INOX 316 ROSCADA NPT PASSAGEM REDUZIDA METAL-METAL ATUADOR PNEUMATICO",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "METAL-METAL",
+      "evidence": {
+        "value": "METAL-METAL",
+        "original": "METAL-METAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27548311",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 853 1SN DI DE 1\" PRESSAO TRABALHO DE 88BAR COM COMP 1200MM TERMINAL 1 FEM CURVA 90 JIC COM TERMINAL 2 FEMEA RETA JIC 37 GRAUS TERMINAIS DE ACO CARBONO ZINCADO",
+      "attribute": "DIAMETRO INTERNO",
+      "before": null,
+      "after": "1POL",
+      "evidence": {
+        "value": "1POL",
+        "original": "1\"",
+        "rule": "measure.inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17112096",
+      "class_id": "PDM032",
+      "description": "RETENTOR COM FURO 22MM DIAM EXT DE 47 MM LARG DE 13MM MODELO BAB BUNA-N",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "NBR",
+      "evidence": {
+        "value": "NBR",
+        "original": "BUNA-N",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23901394",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 4 IN 600# ACO CARBONO FLANGES STD PTFE REFORCADO ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12762844",
+      "class_id": "PDM110",
+      "description": "PLACA SUCCAO COM APLIC BOMBA POLPA MM300 METSO PART NUMBER N49023704",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "MM300",
+      "evidence": {
+        "value": "MM300",
+        "original": "MM300",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19935396",
+      "class_id": "PDM110",
+      "description": "NAO UTILIZAR - USAR COD 11478873 - ANEL LABIRINTO COM APLICACAO TURBINA HIDRAULICA MOD DE FRANCIS 6MW WEG COD FABRICANTE 51610048-00 VER DESENHO",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "WEG",
+      "evidence": {
+        "value": "WEG",
+        "original": "WEG",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24185112",
+      "class_id": "PDM110",
+      "description": "VEDACAO EIXO APLIC TURBINA HIDRAULICA FRANCIS 12MW MARCA VOITH REF FABRICANTE 313.083.646",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "FRANCIS 12MW",
+      "evidence": {
+        "value": "FRANCIS 12MW",
+        "original": "FRANCIS 12MW",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21496573",
+      "class_id": "PDM110",
+      "description": "LAMINA RASPADOR APLICACAO DE CORREIA TRANSPORTADORA TC-04 COM FABR FLEXCO PN 90373-00, COMPRA LOCAL",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-04",
+      "evidence": {
+        "value": "TC-04",
+        "original": "TC-04",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26175074",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 1POL 800# SOLDA ENCAIXE SW PLENA PTFE REFORCADO PNEUMATICO",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12290203",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DN:DN 40, CL:PN 25, MATERIAL:LATAO, EXTREMIDADE:ROSCA, PASSAGEM:PASSAGEM REDUZIDA, PTFE REFORCADO, ACIONAMENTO:ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "28047583",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA GROSSA M24 A2-70 NATURAL DIN 934",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "NATURAL",
+      "evidence": {
+        "value": "NATURAL",
+        "original": "NATURAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28047583",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA GROSSA M24 A2-70 NATURAL DIN 934",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "A2-70",
+      "evidence": {
+        "value": "A2-70",
+        "original": "A2-70",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28047583",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA GROSSA M24 A2-70 NATURAL DIN 934",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 934",
+      "evidence": {
+        "value": "DIN 934",
+        "original": "DIN 934",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16766537",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1.1/4POL 600# A216 WCB PTFE REFORCADO MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "29935817",
+      "class_id": "PDM051",
+      "description": "TUBO ACO DIAMETRO NOMINAL 1\" SCHEDULE SCH 40 ACO CARBONO API 5L GR B COM COSTURA SEM COSTURA EXTREMIDADES CHANFRADAS",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO API 5L GR B",
+      "evidence": {
+        "value": "ACO CARBONO API 5L GR B",
+        "original": "ACO CARBONO API 5L GR B",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21366416",
+      "class_id": "PDM067",
+      "description": "MANOMETRO MOSTRADOR DE 150MM COM FAIXA 0-35PSI CONEXAO DE 1/4POL NPT INFERIOR SS304 GLICERINA",
+      "attribute": "ENCHIMENTO",
+      "before": null,
+      "after": "GLICERINA",
+      "evidence": {
+        "value": "GLICERINA",
+        "original": "GLICERINA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21366416",
+      "class_id": "PDM067",
+      "description": "MANOMETRO MOSTRADOR DE 150MM COM FAIXA 0-35PSI CONEXAO DE 1/4POL NPT INFERIOR SS304 GLICERINA",
+      "attribute": "MATERIAL CAIXA",
+      "before": null,
+      "after": "ACO INOX 304",
+      "evidence": {
+        "value": "ACO INOX 304",
+        "original": "SS304",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22592862",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA MA DIAMETRO M20 C DE 55MM RESISTENCIA DE A2-70 SS304 NATURAL COM NORMA DIN 931",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "NATURAL",
+      "evidence": {
+        "value": "NATURAL",
+        "original": "NATURAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22592862",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA MA DIAMETRO M20 C DE 55MM RESISTENCIA DE A2-70 SS304 NATURAL COM NORMA DIN 931",
+      "attribute": "COMPRIMENTO",
+      "before": null,
+      "after": "55MM",
+      "evidence": {
+        "value": "55MM",
+        "original": "55MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22592862",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA MA DIAMETRO M20 C DE 55MM RESISTENCIA DE A2-70 SS304 NATURAL COM NORMA DIN 931",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX 304",
+      "evidence": {
+        "value": "ACO INOX 304",
+        "original": "SS304",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10161763",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA FINA M10X1,25 A2-70 SS304 NATURAL",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "NATURAL",
+      "evidence": {
+        "value": "NATURAL",
+        "original": "NATURAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10161763",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA FINA M10X1,25 A2-70 SS304 NATURAL",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "A2-70",
+      "evidence": {
+        "value": "A2-70",
+        "original": "A2-70",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10161763",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA FINA M10X1,25 A2-70 SS304 NATURAL",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX 304",
+      "evidence": {
+        "value": "ACO INOX 304",
+        "original": "SS304",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20500202",
+      "class_id": "PDM050",
+      "description": "LUVA  COM DIAMETRO NOMINAL DN 32 PRESSAO NOMINAL 3000# A105 NORMA ASME B16.11",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO FORJADO A105",
+      "evidence": {
+        "value": "ACO CARBONO FORJADO A105",
+        "original": "A105",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23661101",
+      "class_id": "PDM110",
+      "description": "ROLETE ESTEIRA USO ESCAVADEIRA HIDRAULICA PC3000 COM MARCA KOMATSU P/N 229-33-97105",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "PC3000",
+      "evidence": {
+        "value": "PC3000",
+        "original": "PC3000",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28943684",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM NOMINAL:1,25POL, CLASSE:PN 25, MAT CORPO:LATAO, PASSAGEM:PASSAGEM PLENA, VEDACAO SEDE:PTFE REFORCADO, MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "27120782",
+      "class_id": "PDM066",
+      "description": "SENSOR INDUTIVO COM DISTANCIA SENSORA 4MM MONTAGEM NAO FACEADO COM SAIDA PNP NA 10-30VCC CONEXAO CABO 5M",
+      "attribute": "TENSAO",
+      "before": null,
+      "after": "10-30VCC",
+      "evidence": {
+        "value": "10-30VCC",
+        "original": "10-30VCC",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28382124",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 4POL CF8M FLG RF STD PTFE REFORCADO ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "13609026",
+      "class_id": "PDM065",
+      "description": "LAMPADA LED TIPO DE BULBO 40WATTS V DE BIVOLT BASE DE E40 TEMPERATURA COR DE 6500K",
+      "attribute": "TENSAO",
+      "before": null,
+      "after": "BIVOLT",
+      "evidence": {
+        "value": "BIVOLT",
+        "original": "BIVOLT",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10756768",
+      "class_id": "PDM002",
+      "description": "PARAFUSO SEXTAVADO INTERNO COM TIPO CABECA ESCAREADA BITOLA M10 COMPR DE 60MM CL DE 12.9 ACO LIGA OXID",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO LIGA",
+      "evidence": {
+        "value": "ACO LIGA",
+        "original": "ACO LIGA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17196395",
+      "class_id": "PDM003",
+      "description": "PORCA AUTOTRAVANTE ROSCA FINA M20X1,5 A4-70 SS316 NATURAL DIN 985",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "NATURAL",
+      "evidence": {
+        "value": "NATURAL",
+        "original": "NATURAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17196395",
+      "class_id": "PDM003",
+      "description": "PORCA AUTOTRAVANTE ROSCA FINA M20X1,5 A4-70 SS316 NATURAL DIN 985",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "A4-70",
+      "evidence": {
+        "value": "A4-70",
+        "original": "A4-70",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17196395",
+      "class_id": "PDM003",
+      "description": "PORCA AUTOTRAVANTE ROSCA FINA M20X1,5 A4-70 SS316 NATURAL DIN 985",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX 316",
+      "evidence": {
+        "value": "ACO INOX 316",
+        "original": "SS316",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17196395",
+      "class_id": "PDM003",
+      "description": "PORCA AUTOTRAVANTE ROSCA FINA M20X1,5 A4-70 SS316 NATURAL DIN 985",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 985",
+      "evidence": {
+        "value": "DIN 985",
+        "original": "DIN 985",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26986004",
+      "class_id": "PDM061",
+      "description": "TERMINAL ELETRICO MODELO DE PRE-ISOLADO FORQUILHA COM CABO 4MM2 FURO DE M 6 COBRE ESTANHADO",
+      "attribute": "SECAO CABO",
+      "before": null,
+      "after": "4MM2",
+      "evidence": {
+        "value": "4MM2",
+        "original": "4MM2",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10634695",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA DE UNC ROSCA 1/2 POL 3-1/2\" SAE GRAU 5 ACO CARBONO TRATAMENTO DE GALVANIZADO A FOGO ASME B18.2.1",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "ASME B18.2.1",
+      "evidence": {
+        "value": "ASME B18.2.1",
+        "original": "ASME B18.2.1",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17697965",
+      "class_id": "PDM003",
+      "description": "PORCA COM TIPO SEXTAVADA FLANGEADA M10 CL 8 COM MATERIAL ACO CARB TRATAMENTO DE S/ACAB COM CONF DIN 6923",
+      "attribute": "BITOLA",
+      "before": null,
+      "after": "M10",
+      "evidence": {
+        "value": "M10",
+        "original": "M10",
+        "rule": "measure.metric_thread"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17697965",
+      "class_id": "PDM003",
+      "description": "PORCA COM TIPO SEXTAVADA FLANGEADA M10 CL 8 COM MATERIAL ACO CARB TRATAMENTO DE S/ACAB COM CONF DIN 6923",
+      "attribute": "ROSCA",
+      "before": null,
+      "after": "METRICA GROSSA",
+      "evidence": {
+        "value": "METRICA GROSSA",
+        "original": "M10",
+        "rule": "pdm.thread_from_gauge"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23100525",
+      "class_id": "PDM064",
+      "description": "FUSIVEL TIPO ULTRARRAPIDO NH TAMANHO DE NH00 125A CLASSE DE AR",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "125A",
+      "evidence": {
+        "value": "125A",
+        "original": "125A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29837388",
+      "class_id": "PDM004",
+      "description": "ARRUELA LISA COM PARA PARAFUSO M 22 D.I. DE 23MM DE DE 39 MM ESP DE 3MM TRATAMENTO NATURAL DIN 125",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 125",
+      "evidence": {
+        "value": "DIN 125",
+        "original": "DIN 125",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16443689",
+      "class_id": "PDM014",
+      "description": "MANGOTE APLIC DE SUCCAO E DESCARGA MATERIAL DE PVC COM ESPIRAL PVC RIGIDO 2POL 85PSI",
+      "attribute": "DIAMETRO INTERNO",
+      "before": null,
+      "after": "2POL",
+      "evidence": {
+        "value": "2POL",
+        "original": "2POL",
+        "rule": "measure.inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16443689",
+      "class_id": "PDM014",
+      "description": "MANGOTE APLIC DE SUCCAO E DESCARGA MATERIAL DE PVC COM ESPIRAL PVC RIGIDO 2POL 85PSI",
+      "attribute": "PRESSAO TRABALHO",
+      "before": null,
+      "after": "6BAR",
+      "evidence": {
+        "value": "6BAR",
+        "original": "85PSI",
+        "rule": "measure.psi_to_bar.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17048908",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA DE UNF 1POL 2 1/4POL CL SAE GRAU 5 COM MAT ACO CARB ACAB DE ZINCADO BRANCO ASME B18.2.1",
+      "attribute": "BITOLA",
+      "before": null,
+      "after": "1POL",
+      "evidence": {
+        "value": "1POL",
+        "original": "1POL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17048908",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA DE UNF 1POL 2 1/4POL CL SAE GRAU 5 COM MAT ACO CARB ACAB DE ZINCADO BRANCO ASME B18.2.1",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "ASME B18.2.1",
+      "evidence": {
+        "value": "ASME B18.2.1",
+        "original": "ASME B18.2.1",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18914234",
+      "class_id": "PDM013",
+      "description": "MANGUEIRA  PNEUMATICA MATERIAL DE PVC 12MM DIAMETRO 8MM PRESSAO TRABLAHO 175LBS PRETA",
+      "attribute": "DIAMETRO EXTERNO",
+      "before": null,
+      "after": "12MM",
+      "evidence": {
+        "value": "12MM",
+        "original": "12MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25623029",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR MODELO DE MINI DISJUNTOR NR POLOS DE 3P 63AMP CURVA DE C 4,5KA",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "63A",
+      "evidence": {
+        "value": "63A",
+        "original": "63AMP",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28442101",
+      "class_id": "PDM040",
+      "description": "VALV ESF 1/4POL 800# ACO CARBONO FORJADO A105 RSC NPT PASSAGEM PLENA PTFE REFORCADO",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "21525661",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA DN25 PN 25 LATAO ROSCA BSP PASSAGEM PLENA PTFE MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23156768",
+      "class_id": "PDM110",
+      "description": "BUCHA GUIA COM USO PERFURATRIZ DI550 COM FABRICANTE SANDVIK REF 324.9120-67",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "DI550",
+      "evidence": {
+        "value": "DI550",
+        "original": "DI550",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14914358",
+      "class_id": "PDM065",
+      "description": "LAMPADA LED TIPO BULBO 12W COM TENSAO BIVOLT BASE DE E27 COM TEMPERATURA COR 5000K",
+      "attribute": "POTENCIA",
+      "before": null,
+      "after": "12W",
+      "evidence": {
+        "value": "12W",
+        "original": "12W",
+        "rule": "measure.watts.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15476148",
+      "class_id": "PDM110",
+      "description": "MANTO COM USO BRITADOR CONICO CH440 SANDVIK P/N 527.7456-27 COM MATERIAL ACO LIGA",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "CH440",
+      "evidence": {
+        "value": "CH440",
+        "original": "CH440",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27396379",
+      "class_id": "PDM043",
+      "description": "VALV. RETENCAO COM DIAM NOMINAL 6POL CLASSE DE 600# ACO CARBONO FUNDIDO A216 WCB EXTREMIDADES PONTAS CHANFRADAS PORTINHOLA",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "SOLDA TOPO BW",
+      "evidence": {
+        "value": "SOLDA TOPO BW",
+        "original": "PONTAS CHANFRADAS",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27396379",
+      "class_id": "PDM043",
+      "description": "VALV. RETENCAO COM DIAM NOMINAL 6POL CLASSE DE 600# ACO CARBONO FUNDIDO A216 WCB EXTREMIDADES PONTAS CHANFRADAS PORTINHOLA",
+      "attribute": "MATERIAL CORPO",
+      "before": null,
+      "after": "ACO CARBONO FUNDIDO A216 WCB",
+      "evidence": {
+        "value": "ACO CARBONO FUNDIDO A216 WCB",
+        "original": "ACO CARBONO FUNDIDO A216 WCB",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27396379",
+      "class_id": "PDM043",
+      "description": "VALV. RETENCAO COM DIAM NOMINAL 6POL CLASSE DE 600# ACO CARBONO FUNDIDO A216 WCB EXTREMIDADES PONTAS CHANFRADAS PORTINHOLA",
+      "attribute": "TIPO",
+      "before": null,
+      "after": "PORTINHOLA",
+      "evidence": {
+        "value": "PORTINHOLA",
+        "original": "PORTINHOLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14830807",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO MODELO FLEXIVEL SECAO 1.5MM2 VIAS DE 1 CLASSE TENSAO 0,6/1KV ISOLACAO PVC CINZA",
+      "attribute": "COR",
+      "before": null,
+      "after": "CINZA",
+      "evidence": {
+        "value": "CINZA",
+        "original": "CINZA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12458041",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR MINIDISJUNTOR DIN COM POLOS 1P 50A CURVA D CAPACIDADE INTERRUPCAO 6KA",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "50A",
+      "evidence": {
+        "value": "50A",
+        "original": "50A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "13444921",
+      "class_id": "PDM110",
+      "description": "ROLETE ESTEIRA USO DE ESCAVADEIRA HIDRAULICA 6030 CATERPILLAR P/N 756-5496 REV A - REF ANTIGA",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "6030",
+      "evidence": {
+        "value": "6030",
+        "original": "6030",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14547444",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM NOMINAL DN32, CLASSE 150#, EXTREMIDADE FLANGEADA RF, A216 WCB, PLENA, VEDACAO SEDE PTFE REFORCADO, MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "26338869",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR MINIDISJUNTOR DIN POLOS DE 2P 16A CURVA DE C 3KA",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "16A",
+      "evidence": {
+        "value": "16A",
+        "original": "16A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24391414",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA COM NORMA CONSTRUCAO EN 856 4SP, 3/8 POL, COMPRIMENTO DE 800MM, FEMEA RETA BSP, LADO B DE BSP FEMEA GIRATORIA",
+      "attribute": "TERMINAL A",
+      "before": "FEMEA RETA BSP",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "BSP FEMEA GIRATORIA não informa RETA; terminal sem fronteira segura permanece pendente.",
+      "unresolved": [
+        "MANGUEIRA HIDRAULICA MONTADA COM",
+        "FEMEA RETA BSP",
+        "LADO B BSP FEMEA GIRATORIA"
+      ]
+    },
+    {
+      "material_code": "24391414",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA COM NORMA CONSTRUCAO EN 856 4SP, 3/8 POL, COMPRIMENTO DE 800MM, FEMEA RETA BSP, LADO B DE BSP FEMEA GIRATORIA",
+      "attribute": "TERMINAL B",
+      "before": "FEMEA RETA BSP",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "BSP FEMEA GIRATORIA não informa RETA; terminal sem fronteira segura permanece pendente.",
+      "unresolved": [
+        "MANGUEIRA HIDRAULICA MONTADA COM",
+        "FEMEA RETA BSP",
+        "LADO B BSP FEMEA GIRATORIA"
+      ]
+    },
+    {
+      "material_code": "26675437",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA GROSSA M12 5.8 ACO CARB DACROMET DIN 933",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "5.8",
+      "evidence": {
+        "value": "5.8",
+        "original": "5.8",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26675437",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA GROSSA M12 5.8 ACO CARB DACROMET DIN 933",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO",
+      "evidence": {
+        "value": "ACO CARBONO",
+        "original": "ACO CARB",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26675437",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA GROSSA M12 5.8 ACO CARB DACROMET DIN 933",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 933",
+      "evidence": {
+        "value": "DIN 933",
+        "original": "DIN 933",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16435424",
+      "class_id": "PDM110",
+      "description": "BRACO SUSPENSAO COM APLICACAO CAMINHAO FORA DE ESTRADA 785D CATERPILLAR P/N 604-2952 REV A",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "785D",
+      "evidence": {
+        "value": "785D",
+        "original": "785D",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11529081",
+      "class_id": "PDM003",
+      "description": "PORCA COM TIPO AUTOTRAVANTE ROSCA MA M22 GRAU DE 10 ACO CARBONO PRETO COM CONF DIN 985",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO",
+      "evidence": {
+        "value": "ACO CARBONO",
+        "original": "ACO CARBONO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27510697",
+      "class_id": "PDM110",
+      "description": "LUVA EIXO PARA BOMBA POLPA WARMAN 6/4 D AH FABR WEIR COD FABRICANTE G6165B91",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "WARMAN 6/4 D AH",
+      "evidence": {
+        "value": "WARMAN 6/4 D AH",
+        "original": "WARMAN 6/4 D AH",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11290995",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 6POL 150# A351 CF8M PONTAS CHANFRADAS PASSAGEM PLENA TEFLON MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11290995",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 6POL 150# A351 CF8M PONTAS CHANFRADAS PASSAGEM PLENA TEFLON MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "TEFLON",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16828230",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO UNC 1POLX1 1/4POL SAE GRAU 2 CARBONO",
+      "attribute": "BITOLA",
+      "before": "1/4POL",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "Fração dentro de comprimento misto não comprova a bitola; permanece pendente.",
+      "unresolved": [
+        "PARAFUSO SEXTAVADO  1POLX1 1/4POL"
+      ]
+    },
+    {
+      "material_code": "26990332",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA 1/2\" LATAO BSP PASSAGEM REDUZIDA TEFLON REFORCADO MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "TEFLON REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "19629445",
+      "class_id": "PDM110",
+      "description": "DENTE CACAMBA COM APLIC ESCAVADEIRA HIDRAULICA 6015B CATERPILLAR REFERENCIA FABRICANTE 403-7446 REV A",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "6015B",
+      "evidence": {
+        "value": "6015B",
+        "original": "6015B",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14629138",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 1/4POL 800# A105 ENCAIXE SOLDA PASSAGEM REDUZIDA PTFE ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14629138",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 1/4POL 800# A105 ENCAIXE SOLDA PASSAGEM REDUZIDA PTFE ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24486260",
+      "class_id": "PDM110",
+      "description": "EIXO ENTRADA COM APLICACAO REDUTOR B3SH 11 MARCA DE FLENDER REFERENCIA FABRICANTE J5177-251361",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "B3SH 11",
+      "evidence": {
+        "value": "B3SH 11",
+        "original": "B3SH 11",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18918277",
+      "class_id": "PDM110",
+      "description": "CILINDRO  APLIC DE PERFURATRIZ SMARTROC D65 COM FABR EPIROC REFERENCIA FABRICANTE 0796 8016 81",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "SMARTROC D65",
+      "evidence": {
+        "value": "SMARTROC D65",
+        "original": "SMARTROC D65",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16539075",
+      "class_id": "PDM110",
+      "description": "BUCHA MANCAL GUIA MODELO EQUIPAMENTO FRANCIS 6MW WEG PN 62370665",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "WEG",
+      "evidence": {
+        "value": "WEG",
+        "original": "WEG",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18566128",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA, DIAMETRO:6POL, PRESSAO NOMINAL:PN 16, FERRO FUNDIDO NODULAR, ACIONAMENTO:MANOPLA, PASSAGEM:STD, VEDACAO SEDE:PTFE REFORCADO, EXTREMIDADES:FLANGEADA FF",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12524911",
+      "class_id": "PDM002",
+      "description": "PARAFUSO SEXTAVADO INTERNO TIPO CABECA DE ESCAREADA DIAMETRO DE M8 16MM GRAU 12.9 COM MAT ACO LIGA TRATAMENTO OXIDADO",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "12.9",
+      "evidence": {
+        "value": "12.9",
+        "original": "12.9",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12524911",
+      "class_id": "PDM002",
+      "description": "PARAFUSO SEXTAVADO INTERNO TIPO CABECA DE ESCAREADA DIAMETRO DE M8 16MM GRAU 12.9 COM MAT ACO LIGA TRATAMENTO OXIDADO",
+      "attribute": "COMPRIMENTO",
+      "before": null,
+      "after": "16MM",
+      "evidence": {
+        "value": "16MM",
+        "original": "16MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11733242",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA;DIAM:12 POL;PRESSAO NOMINAL:150#;MATERIAL:ACO CARBONO;TIPO CONEXAO:FLANGEADA RF;PASSAGEM:REDUZIDA;VEDACAO SEDE:PTFE REFORCADO;ACIONAMENTO:MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "23190248",
+      "class_id": "PDM040",
+      "description": "VALV. ESF FLG RF PASSAGEM REDUZIDA TEFLON ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23190248",
+      "class_id": "PDM040",
+      "description": "VALV. ESF FLG RF PASSAGEM REDUZIDA TEFLON ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "TEFLON",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15509061",
+      "class_id": "PDM110",
+      "description": "ROTOR APLICACAO BOMBA CENTRIFUGA AHLSTAR A2280 COM MARCA SULZER REF FABRICANTE 791325-695 MATERIAL DE CF8M",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "AHLSTAR A22-80",
+      "evidence": {
+        "value": "AHLSTAR A22-80",
+        "original": "AHLSTAR A22-80",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21988768",
+      "class_id": "PDM071",
+      "description": "CALCADO SEGURANCA BOTINA CADARCO COM TAM. 37 BICO DE COMPOSITO SOLADO NITRILICA COR DE PRETA CA NR 49799",
+      "attribute": "BIQUEIRA",
+      "before": null,
+      "after": "COMPOSITE",
+      "evidence": {
+        "value": "COMPOSITE",
+        "original": "COMPOSITO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25128948",
+      "class_id": "PDM064",
+      "description": "FUSIVEL MODELO NH COM TAMANHO NH3 COM IN 400 A CLASSE DE GL/GG",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "400A",
+      "evidence": {
+        "value": "400A",
+        "original": "400 A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25038731",
+      "class_id": "PDM064",
+      "description": "FUSIVEL TIPO NH NH2 CORR NOM 355AMP GL/GG",
+      "attribute": "CLASSE",
+      "before": null,
+      "after": "GL/GG",
+      "evidence": {
+        "value": "GL/GG",
+        "original": "GL/GG",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25038731",
+      "class_id": "PDM064",
+      "description": "FUSIVEL TIPO NH NH2 CORR NOM 355AMP GL/GG",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "355A",
+      "evidence": {
+        "value": "355A",
+        "original": "355AMP",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25038731",
+      "class_id": "PDM064",
+      "description": "FUSIVEL TIPO NH NH2 CORR NOM 355AMP GL/GG",
+      "attribute": "TAMANHO",
+      "before": null,
+      "after": "NH2",
+      "evidence": {
+        "value": "NH2",
+        "original": "NH2",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23498386",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 1/4\" PN 25 LATAO ROSCA PASSAGEM PLENA TEFLON MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23498386",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 1/4\" PN 25 LATAO ROSCA PASSAGEM PLENA TEFLON MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "TEFLON",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10455598",
+      "class_id": "PDM110",
+      "description": "RODA GUIA COM PARA ESCAVADEIRA HIDRAULICA 6030 MARCA CATERPILLAR PN 934-6950",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "6030",
+      "evidence": {
+        "value": "6030",
+        "original": "6030",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11142155",
+      "class_id": "PDM110",
+      "description": "TAMBOR ACIONAMENTO APLIC DE CORREIA TRANSPORTADORA TC 01 COM FABRICANTE CONTINENTAL PN CT5441727",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-01",
+      "evidence": {
+        "value": "TC-01",
+        "original": "TC-01",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14564692",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA DE UNC BITOLA 1/4POL COMPRIMENTO 4-1/2\" CLASSE RESISTENCIA DE SAE GRAU 8 AC CARBONO TRATAMENTO DE ZINC AMARELO PADRAO ASME B18.2.1",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO",
+      "evidence": {
+        "value": "ACO CARBONO",
+        "original": "AC CARBONO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21053047",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR COM TIPO MINI DISJUNTOR POLOS DE 3P 50 A CURVA C 10KA",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "50A",
+      "evidence": {
+        "value": "50A",
+        "original": "50 A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14583673",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO FLEXIVEL BITOLA 25MM2 1 CLASSE TENSAO DE 0,6/1KV COM ISOLACAO PVC BRANCO - VER DESENHO",
+      "attribute": "COR",
+      "before": null,
+      "after": "BRANCO",
+      "evidence": {
+        "value": "BRANCO",
+        "original": "BRANCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18803820",
+      "class_id": "PDM044",
+      "description": "VALV  BORBOLETA DN DN 100 WAFER CORPO DE ACO CARBONO FUNDIDO A216 WCB MATERIAL DISCO BRONZE ALUMINIO VEDACAO SEDE EPDM ATUADOR ELETRICO",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ATUADOR ELETRICO",
+      "evidence": {
+        "value": "ATUADOR ELETRICO",
+        "original": "ATUADOR ELETRICO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25560684",
+      "class_id": "PDM003",
+      "description": "NAO UTILIZAR - USAR COD 11097599 - PORCA SEXTAVADA ROSCA GROSSA M16 8 ACO CARB ZB DIN 934",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "ZINCADO BRANCO",
+      "evidence": {
+        "value": "ZINCADO BRANCO",
+        "original": "ZB",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25560684",
+      "class_id": "PDM003",
+      "description": "NAO UTILIZAR - USAR COD 11097599 - PORCA SEXTAVADA ROSCA GROSSA M16 8 ACO CARB ZB DIN 934",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO",
+      "evidence": {
+        "value": "ACO CARBONO",
+        "original": "ACO CARB",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25560684",
+      "class_id": "PDM003",
+      "description": "NAO UTILIZAR - USAR COD 11097599 - PORCA SEXTAVADA ROSCA GROSSA M16 8 ACO CARB ZB DIN 934",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 934",
+      "evidence": {
+        "value": "DIN 934",
+        "original": "DIN 934",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12796177",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1/2\" PRESSAO NOMINAL DE 800# CORPO A182 F316 CONEXAO DE SOLDA ENCAIXE PASSAGEM DE REDUZIDA VEDACAO SEDE METAL-METAL ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25723783",
+      "class_id": "PDM110",
+      "description": "PISTAO PERFURATRIZ MOD DE SMARTROC D65 EPIROC PART NUMBER 2013 4963 02",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "EPIROC",
+      "evidence": {
+        "value": "EPIROC",
+        "original": "EPIROC",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15177923",
+      "class_id": "PDM070",
+      "description": "LUVA SEGURANCA COM MAT MALHA PU TAM DE 10 CA NR DE 26237",
+      "attribute": "MATERIAL",
+      "before": "MALHA REVESTIDA PU",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "MALHA PU não informa REVESTIDA; uma correspondência parcial não consome a cauda TAM DE10.",
+      "unresolved": [
+        "LUVA SEGURANCA COM",
+        "MAT MALHA PU TAM DE 10",
+        "CA NR DE 26237"
+      ]
+    },
+    {
+      "material_code": "10410096",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 1 IN PASSAGEM REDUZIDA RPTFE MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "RPTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "16095602",
+      "class_id": "PDM110",
+      "description": "ROTOR USO DE BOMBA POLPA MM400 COM FABRICANTE METSO",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "MM400",
+      "evidence": {
+        "value": "MM400",
+        "original": "MM400",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15698637",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO COM TIPO RIGIDO 25MM NR CONDUTORES DE 1 COM CLASSE TENSAO 0,6/1KV ISOLACAO PVC COR DE PRETO",
+      "attribute": "SECAO",
+      "before": null,
+      "after": "25MM2",
+      "evidence": {
+        "value": "25MM2",
+        "original": "25MM",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "13033163",
+      "class_id": "PDM051",
+      "description": "TUBO ACO DIAMETRO 2 IN COM SCHEDULE SCH 40 ACO CARBONO A106 GR B COSTURA SEM COSTURA COM EXTREMIDADES ROSCADAS",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO A106 GR B",
+      "evidence": {
+        "value": "ACO CARBONO A106 GR B",
+        "original": "ACO CARBONO A106 GR B",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10253348",
+      "class_id": "PDM050",
+      "description": "BUCHA REDUCAO 1\" DIAMETRO REDUZIDO DE 3/8POL CL 3000# SOLDA ENCAIXE SW CONF DE ASME B16.11",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "SOLDA ENCAIXE SW",
+      "evidence": {
+        "value": "SOLDA ENCAIXE SW",
+        "original": "SOLDA ENCAIXE SW",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10202341",
+      "class_id": "PDM110",
+      "description": "CHAPA LATERAL PARA DE PENEIRA VIBRATORIA TCLASS 3.0X7.3 COM FABR HAVER COD FABRICANTE HB-204638",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "T-CLASS 3.0X7.3",
+      "evidence": {
+        "value": "T-CLASS 3.0X7.3",
+        "original": "T-CLASS 3.0X7.3",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22271842",
+      "class_id": "PDM100",
+      "description": "FILTRO AR COM APLICACAO GERADOR DIESEL MANN REF FABRICANTE C 53 683",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "MANN",
+      "evidence": {
+        "value": "MANN",
+        "original": "MANN",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12666977",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 2\" 800# INOX ROSCADA NPT FULL BORE PTFE REFORCADO MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "19219278",
+      "class_id": "PDM065",
+      "description": "LAMPADA LED TIPO BULBO 40W V DE BIVOLT BASE DE E40 COM TEMPERATURA COR 3000K",
+      "attribute": "POTENCIA",
+      "before": null,
+      "after": "40W",
+      "evidence": {
+        "value": "40W",
+        "original": "40W",
+        "rule": "measure.watts.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19219278",
+      "class_id": "PDM065",
+      "description": "LAMPADA LED TIPO BULBO 40W V DE BIVOLT BASE DE E40 COM TEMPERATURA COR 3000K",
+      "attribute": "TENSAO",
+      "before": null,
+      "after": "BIVOLT",
+      "evidence": {
+        "value": "BIVOLT",
+        "original": "BIVOLT",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25248807",
+      "class_id": "PDM050",
+      "description": "NIPLE DIAMETRO NOMINAL DE 1.1/2POL PRESSAO NOMINAL 3000# MATERIAL DE ACO INOX FORJADO A182 F316 SOCKET WELD PADRAO DE ASME B16.11",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "SOLDA ENCAIXE SW",
+      "evidence": {
+        "value": "SOLDA ENCAIXE SW",
+        "original": "SOCKET WELD",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27525634",
+      "class_id": "PDM110",
+      "description": "SAPATA ESTEIRA USO ESCAVADEIRA HIDRAULICA MODELO PC3000 KOMATSU PART NUMBER 5641108996",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "KOMATSU",
+      "evidence": {
+        "value": "KOMATSU",
+        "original": "KOMATSU",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20063257",
+      "class_id": "PDM071",
+      "description": "CALCADO SEGURANCA MODELO BOTINA ELASTICO 35 ACO SOLADO BUNA-N COR MARROM C.A. DE 22983",
+      "attribute": "BIQUEIRA",
+      "before": null,
+      "after": "ACO",
+      "evidence": {
+        "value": "ACO",
+        "original": "ACO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16651343",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA PONTAS CHANFRADAS PASSAGEM PLENA PTFE MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14489284",
+      "class_id": "PDM003",
+      "description": "PORCA TIPO DE SEXTAVADA MA M22 8 MATERIAL DE ACO BICROMATIZADO NORMA DIN 934",
+      "attribute": "BITOLA",
+      "before": null,
+      "after": "M22",
+      "evidence": {
+        "value": "M22",
+        "original": "M22",
+        "rule": "measure.metric_thread"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14489284",
+      "class_id": "PDM003",
+      "description": "PORCA TIPO DE SEXTAVADA MA M22 8 MATERIAL DE ACO BICROMATIZADO NORMA DIN 934",
+      "attribute": "ROSCA",
+      "before": null,
+      "after": "METRICA GROSSA",
+      "evidence": {
+        "value": "METRICA GROSSA",
+        "original": "M22",
+        "rule": "pdm.thread_from_gauge"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11845116",
+      "class_id": "PDM034",
+      "description": "JUNTA PLANA DIAMETRO NOMINAL DE DN 40 CL DE 300# PTFE EXPANDIDO E 3.2MM RF",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "PTFE EXPANDIDO",
+      "evidence": {
+        "value": "PTFE EXPANDIDO",
+        "original": "PTFE EXPANDIDO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21876022",
+      "class_id": "PDM067",
+      "description": "MANOMETRO 100 MM 0 A 16KGF/CM2 CONEXAO DE 1/2POL NPT INFERIOR INOX 304",
+      "attribute": "MATERIAL CAIXA",
+      "before": null,
+      "after": "ACO INOX 304",
+      "evidence": {
+        "value": "ACO INOX 304",
+        "original": "INOX 304",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21108121",
+      "class_id": "PDM031",
+      "description": "ANEL O-RING 6MM 2MM MATERIAL SILICONE 70 SHORE A",
+      "attribute": "DUREZA",
+      "before": null,
+      "after": "70 SHORE A",
+      "evidence": {
+        "value": "70 SHORE A",
+        "original": "70 SHORE A",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15840352",
+      "class_id": "PDM031",
+      "description": "ANEL O-RING DIAM INT DE 300MM SECAO TRANSV 5,7MM MATERIAL EPDM 70 SHORE A",
+      "attribute": "DUREZA",
+      "before": null,
+      "after": "70 SHORE A",
+      "evidence": {
+        "value": "70 SHORE A",
+        "original": "70 SHORE A",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11265697",
+      "class_id": "PDM050",
+      "description": "CAP SCHEDULE SCH 10S BUTT WELD CONF ASME B16.9",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "SOLDA TOPO BW",
+      "evidence": {
+        "value": "SOLDA TOPO BW",
+        "original": "BUTT WELD",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17248294",
+      "class_id": "PDM003",
+      "description": "PORCA  AUTOTRAVANTE ROSCA GROSSA M16 5 CARBONO ZB DIN 985",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "ZINCADO BRANCO",
+      "evidence": {
+        "value": "ZINCADO BRANCO",
+        "original": "ZB",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17248294",
+      "class_id": "PDM003",
+      "description": "PORCA  AUTOTRAVANTE ROSCA GROSSA M16 5 CARBONO ZB DIN 985",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO",
+      "evidence": {
+        "value": "ACO CARBONO",
+        "original": "CARBONO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17248294",
+      "class_id": "PDM003",
+      "description": "PORCA  AUTOTRAVANTE ROSCA GROSSA M16 5 CARBONO ZB DIN 985",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 985",
+      "evidence": {
+        "value": "DIN 985",
+        "original": "DIN 985",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19214520",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR MODELO TERMOMAGNETICO DIN COM NR POLOS 2P 32 A CURVA DE C 4,5KA",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "32A",
+      "evidence": {
+        "value": "32A",
+        "original": "32 A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27421423",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA;DIAM NOMINAL:3/4 POL;CLASSE:150#;MATERIAL:WCB;EXTREMIDADES:FLANGEADA;PASSAGEM:PASSAGEM REDUZIDA;VEDACAO SEDE:PTFE REFORCADO;ACIONAMENTO:MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "28682627",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA DIAM DE 2POL, RATING PN 25, MATERIAL CORPO LATAO, COM EXTREMIDADE ROSCADA BSP, PLENA, PTFE REFORCADO",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "24642609",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM:4POL, 300#, A216 WCB, TIPO CONEXAO:FLANGEADA RF, PASSAGEM:STD, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "23535886",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE SAE 100R1AT 1/4POL (-4) FEMEA RETA JIC COM TERMINAL B FEMEA RETA DKO MATERIAL TERMINAIS ACO ZINCADO",
+      "attribute": "DIAMETRO INTERNO",
+      "before": null,
+      "after": "1/4POL",
+      "evidence": {
+        "value": "1/4POL",
+        "original": "1/4POL",
+        "rule": "measure.inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23535886",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE SAE 100R1AT 1/4POL (-4) FEMEA RETA JIC COM TERMINAL B FEMEA RETA DKO MATERIAL TERMINAIS ACO ZINCADO",
+      "attribute": "TERMINAL A",
+      "before": null,
+      "after": "FEMEA RETA JIC",
+      "evidence": {
+        "value": "FEMEA RETA JIC",
+        "original": "FEMEA RETA JIC",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29095577",
+      "class_id": "PDM110",
+      "description": "LAMINA RASPADOR APLICACAO CORREIA TRANSPORTADORA TC-04 COM FAB CONTINENTAL COD FABRICANTE CT8091626",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-04",
+      "evidence": {
+        "value": "TC-04",
+        "original": "TC-04",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14648546",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA MA DIAMETRO M30 160MM CLASSE 8.8 COM ACAB GALV A FOGO NORMA CONSTRUCAO DE DIN 933",
+      "attribute": "COMPRIMENTO",
+      "before": null,
+      "after": "160MM",
+      "evidence": {
+        "value": "160MM",
+        "original": "160MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28702276",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1,5POL 150# PONTAS CHANFRADAS PASSAGEM REDUZIDA PTFE PNEUMATICO",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26109737",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA DN DE 10POL CLASSE PRESSAO DE PN 16 FERRO NODULAR FLANGEADA PASSAGEM PASSAGEM REDUZIDA COM VEDACAO SEDE PTFE REFORCADO COM ACIONAMENTO MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "11938152",
+      "class_id": "PDM110",
+      "description": "PISTAO APLIC PERFURATRIZ DP1500 FABRICANTE DE SANDVIK REF FABRICANTE 119.7188-38",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "DP1500",
+      "evidence": {
+        "value": "DP1500",
+        "original": "DP1500",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26801114",
+      "class_id": "PDM110",
+      "description": "AMORTECEDOR COM USO PENEIRA VIBRATORIA LUDOWICI 3.6X8.5 MARCA FLSMIDTH REF FABRICANTE 7798317580",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "LUDOWICI 3.6X8.5",
+      "evidence": {
+        "value": "LUDOWICI 3.6X8.5",
+        "original": "LUDOWICI 3.6X8.5",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14126054",
+      "class_id": "PDM051",
+      "description": "TUBO ACO 6\" SCHEDULE DE SCH 40 ACO CARBONO A106 GR B COSTURA DE SEM COSTURA EXTREMIDADES CHANFRADAS",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO A106 GR B",
+      "evidence": {
+        "value": "ACO CARBONO A106 GR B",
+        "original": "ACO CARBONO A106 GR B",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18696690",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA;PASSAGEM:FULL BORE;CL:PN 16;CORPO:FOFO NODULAR;CONEXAO:FLANGEADA FF;DIAMETRO NOMINAL:8POL;VEDACAO SEDE:PTFE REFORCADO",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "15258275",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA GROSSA M24 10 ACO GEOMET DIN 934",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "DIN 934",
+      "evidence": {
+        "value": "DIN 934",
+        "original": "DIN 934",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11383373",
+      "class_id": "PDM090",
+      "description": "OLEO LUBRIFICANTE VISCOSIDADE DE SAE 5W40 BALDE 20L",
+      "attribute": "EMBALAGEM",
+      "before": null,
+      "after": "BALDE 20L",
+      "evidence": {
+        "value": "BALDE 20L",
+        "original": "BALDE 20L",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25304098",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, PASSAGEM:REDUZIDA, MATERIAL:A351 CF8M, LIGACAO:FLANGES, 150#, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:ATUADOR PNEUM",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12936395",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 1\" 300# ACO FUNDIDO PONTAS CHANFRADAS PASSAGEM REDUZIDA TEFLON REFORCADO",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "TEFLON REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "13931254",
+      "class_id": "PDM051",
+      "description": "TUBO ACO COM DIAMETRO 1/2POL SCHEDULE SCH 40 ACO CARBONO A106 GR B COSTURA SEM COSTURA LISAS",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO A106 GR B",
+      "evidence": {
+        "value": "ACO CARBONO A106 GR B",
+        "original": "ACO CARBONO A106 GR B",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11443059",
+      "class_id": "PDM110",
+      "description": "TAMPA DESCARGA APLIC COMPRESSOR MODELO EQUIPAMENTO GA90 ATLAS COPCO COD FABRICANTE 0783 7600 26",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "ATLAS COPCO",
+      "evidence": {
+        "value": "ATLAS COPCO",
+        "original": "ATLAS COPCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19894927",
+      "class_id": "PDM110",
+      "description": "MANTO COM APLIC BRITADOR CONICO HP400 FAB METSO PART NUMBER MM8881739",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "HP400",
+      "evidence": {
+        "value": "HP400",
+        "original": "HP400",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10256740",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA, DIAM NOMINAL:1/2 POL, MAT CORPO:ACO CARBONO, PRESSAO NOMINAL:800#, EXTREMIDADE:ROSCA, PASSAGEM:PASSAGEM REDUZIDA, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:MANOPLA, COMPRA LOCAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "25383082",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA, MAT CORPO:F316, CL:800#, BITOLA:1POL, EXTREMIDADE:ROSCA NPT, PASSAGEM:REDUZIDA, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "24924104",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA 10\" 150# A351 CF8M FLANGEADA RF PASSAGEM PLENA TEFLON REDUTOR",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "REDUTOR",
+      "evidence": {
+        "value": "REDUTOR",
+        "original": "REDUTOR",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24924104",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA 10\" 150# A351 CF8M FLANGEADA RF PASSAGEM PLENA TEFLON REDUTOR",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "TEFLON",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22615313",
+      "class_id": "PDM090",
+      "description": "OLEO LUBRIFICANTE COM PARA MOTOR DIESEL ISO VG DE SAE 10W30 EMB DE CONTAINER 1000L",
+      "attribute": "EMBALAGEM",
+      "before": null,
+      "after": "CONTAINER 1000L",
+      "evidence": {
+        "value": "CONTAINER 1000L",
+        "original": "CONTAINER 1000L",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22615313",
+      "class_id": "PDM090",
+      "description": "OLEO LUBRIFICANTE COM PARA MOTOR DIESEL ISO VG DE SAE 10W30 EMB DE CONTAINER 1000L",
+      "attribute": "VISCOSIDADE",
+      "before": null,
+      "after": "SAE 10W30",
+      "evidence": {
+        "value": "SAE 10W30",
+        "original": "SAE 10W30",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21259206",
+      "class_id": "PDM010",
+      "description": "MANGUEIRA HIDRAULICA MONT COM PADRAO EN 853 2SN 1/4POL PRESSAO TRABALHO DE 400BAR COM COMP 500MM LADO A DE FEMEA 90G JIC FEMEA RETA JIC MAT TERMINAIS DE ACO CARBONO",
+      "attribute": "DIAMETRO INTERNO",
+      "before": null,
+      "after": "1/4POL",
+      "evidence": {
+        "value": "1/4POL",
+        "original": "1/4POL",
+        "rule": "measure.inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16397966",
+      "class_id": "PDM110",
+      "description": "CONCAVO APLIC BRITADOR CONICO HP400 REF N11161E22",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "HP400",
+      "evidence": {
+        "value": "HP400",
+        "original": "HP400",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16485399",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO TIPO DE FLEXIVEL 2.5MM2 N VIAS DE 1 COM ISOL 0,6/1KV ISOLACAO DE PVC VERMELHO",
+      "attribute": "COR",
+      "before": null,
+      "after": "VERMELHO",
+      "evidence": {
+        "value": "VERMELHO",
+        "original": "VERMELHO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16485399",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO TIPO DE FLEXIVEL 2.5MM2 N VIAS DE 1 COM ISOL 0,6/1KV ISOLACAO DE PVC VERMELHO",
+      "attribute": "SECAO",
+      "before": null,
+      "after": "2,5MM2",
+      "evidence": {
+        "value": "2,5MM2",
+        "original": "2.5MM2",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24752660",
+      "class_id": "PDM110",
+      "description": "TAMBOR RETORNO APLICACAO DE CORREIA TRANSPORTADORA TC-04 FABR CONTINENTAL PN CT4766978 CONF AMOSTRA",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-04",
+      "evidence": {
+        "value": "TC-04",
+        "original": "TC-04",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23546606",
+      "class_id": "PDM050",
+      "description": "TE 3 POL COM SCHEDULE SCH 10S WP316 PONTAS CHANFRADAS NORMA ASME B16.9",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "SOLDA TOPO BW",
+      "evidence": {
+        "value": "SOLDA TOPO BW",
+        "original": "PONTAS CHANFRADAS",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23546606",
+      "class_id": "PDM050",
+      "description": "TE 3 POL COM SCHEDULE SCH 10S WP316 PONTAS CHANFRADAS NORMA ASME B16.9",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX A403 WP316",
+      "evidence": {
+        "value": "ACO INOX A403 WP316",
+        "original": "WP316",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21368094",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA MA M27 140 MM 8.8 MAT ACO CARBONO ZINCADO BRANCO COM PADRAO DIN 931",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "ZINCADO BRANCO",
+      "evidence": {
+        "value": "ZINCADO BRANCO",
+        "original": "ZINCADO BRANCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21368094",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA MA M27 140 MM 8.8 MAT ACO CARBONO ZINCADO BRANCO COM PADRAO DIN 931",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "8.8",
+      "evidence": {
+        "value": "8.8",
+        "original": "8.8",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21368094",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA MA M27 140 MM 8.8 MAT ACO CARBONO ZINCADO BRANCO COM PADRAO DIN 931",
+      "attribute": "COMPRIMENTO",
+      "before": null,
+      "after": "140MM",
+      "evidence": {
+        "value": "140MM",
+        "original": "140 MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26537608",
+      "class_id": "PDM041",
+      "description": "VALVULA GAVETA COM DN 8\" 300# MATERIAL CORPO ACO CARBONO FUNDIDO A216 WCB PONTAS CHANFRADAS CASTELO DE APARAFUSADO ACIONAMENTO DE MANUAL APLICACAO GERAL",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "SOLDA TOPO BW",
+      "evidence": {
+        "value": "SOLDA TOPO BW",
+        "original": "PONTAS CHANFRADAS",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20837187",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 2 1/2POL 600# INOX 316 FLANGEADA PASSAGEM PLENA RPTFE PNEUMATICO",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "RPTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "20206172",
+      "class_id": "PDM051",
+      "description": "TUBO ACO DN 3POL COM SCHEDULE SCH 40 ACO CARBONO API 5L GR B SEM COSTURA EXTREMIDADES DE LISAS",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO API 5L GR B",
+      "evidence": {
+        "value": "ACO CARBONO API 5L GR B",
+        "original": "ACO CARBONO API 5L GR B",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14321707",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1 1/2 POL 600# ACO CARBONO FUNDIDO A216 WCB PASSAGEM REDUZIDA PTFE ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14321707",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1 1/2 POL 600# ACO CARBONO FUNDIDO A216 WCB PASSAGEM REDUZIDA PTFE ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12786680",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO ROSCA MA DIAMETRO DE M27 COMPR 80 MM CL DE 8.8 MAT DE ACO CARBONO GALV FOGO COM NORMA CONSTRUCAO DIN 933",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "GALVANIZADO A FOGO",
+      "evidence": {
+        "value": "GALVANIZADO A FOGO",
+        "original": "GALV FOGO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23639499",
+      "class_id": "PDM110",
+      "description": "TELA COM APLIC PENEIRA VIBRATORIA F-CLASS 2.4X6.1 FABR DE HAVER REFERENCIA FABRICANTE HB-565927 MATERIAL POLIURETANO",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "F-CLASS 2.4X6.1",
+      "evidence": {
+        "value": "F-CLASS 2.4X6.1",
+        "original": "F-CLASS 2.4X6.1",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19774728",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA, DN:3/4\", CL:150#, MATERIAL:ACO CARBONO, LIGACAO:FLG RF, PASSAGEM:PLENA, PTFE REFORCADO, ACIONAMENTO:ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "22474882",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA; DIAM:1/2\"; CLASSE PRESSAO:800#; MATERIAL CORPO:A182 F316; TIPO CONEXAO:SOLDA ENCAIXE SW; PLENA; PTFE REFORCADO; ACIONAMENTO:MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "24461750",
+      "class_id": "PDM110",
+      "description": "MANDIBULA MOVEL APLIC DE BRITADOR MANDIBULA C140 MARCA METSO REF FABRICANTE N66522F36",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "C140",
+      "evidence": {
+        "value": "C140",
+        "original": "C140",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26579420",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO MODELO PP 50 MM2 4 TENSAO ISOLAMENTO DE 0,6/1KV XLPE",
+      "attribute": "ISOLACAO",
+      "before": null,
+      "after": "XLPE",
+      "evidence": {
+        "value": "XLPE",
+        "original": "XLPE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26579420",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO MODELO PP 50 MM2 4 TENSAO ISOLAMENTO DE 0,6/1KV XLPE",
+      "attribute": "SECAO",
+      "before": null,
+      "after": "50MM2",
+      "evidence": {
+        "value": "50MM2",
+        "original": "50 MM2",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12801789",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO UNC 1/4\"X1 1/4POL SAE GRAU 5 ACO CARB GALVANIZADO ASME B18.2.1 - COMPRA LOCAL",
+      "attribute": "BITOLA",
+      "before": "1/4POL",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "Fração dentro de comprimento misto não comprova a bitola; permanece pendente.",
+      "unresolved": [
+        "PARAFUSO SEXTAVADO  1/4\"X1 1/4POL   GALVANIZADO"
+      ]
+    },
+    {
+      "material_code": "23185829",
+      "class_id": "PDM110",
+      "description": "ROLETE CARGA APLIC DE CORREIA TRANSPORTADORA TC-12 FABRICANTE FLEXCO COD FABRICANTE 83743",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-12",
+      "evidence": {
+        "value": "TC-12",
+        "original": "TC-12",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23703234",
+      "class_id": "PDM110",
+      "description": "PLACA ARTICULACAO APLICACAO BRITADOR MANDIBULA C140 COM FABR METSO REFERENCIA FABRICANTE MM6365510",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "C140",
+      "evidence": {
+        "value": "C140",
+        "original": "C140",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26278030",
+      "class_id": "PDM034",
+      "description": "JUNTA PLANA 6\" CL 150# NITRILICA ESP DE 3,2MM TIPO FACE DE RF",
+      "attribute": "ESPESSURA",
+      "before": null,
+      "after": "3,2MM",
+      "evidence": {
+        "value": "3,2MM",
+        "original": "3,2MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26278030",
+      "class_id": "PDM034",
+      "description": "JUNTA PLANA 6\" CL 150# NITRILICA ESP DE 3,2MM TIPO FACE DE RF",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "NBR",
+      "evidence": {
+        "value": "NBR",
+        "original": "NITRILICA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21873785",
+      "class_id": "PDM061",
+      "description": "TERMINAL ELETRICO MODELO PRE-ISOLADO FORQUILHA COM CABO 2,5MM² FURO M-3 COBRE ESTANHADO",
+      "attribute": "SECAO CABO",
+      "before": null,
+      "after": "2,5MM2",
+      "evidence": {
+        "value": "2,5MM2",
+        "original": "2,5MM2",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23334563",
+      "class_id": "PDM110",
+      "description": "VEDACAO  EIXO USO DE TURBINA HIDRAULICA KAPLAN 8MW MARCA VOITH REFERENCIA FABRICANTE 729.077.453",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "KAPLAN 8MW",
+      "evidence": {
+        "value": "KAPLAN 8MW",
+        "original": "KAPLAN 8MW",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29757645",
+      "class_id": "PDM110",
+      "description": "EIXO ENTRADA COM USO REDUTOR CESTARI M250 MARCA WEG",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "CESTARI M250",
+      "evidence": {
+        "value": "CESTARI M250",
+        "original": "CESTARI M250",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15891329",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA - DN: 8POL - CLASSE: 150# - CORPO: A216 WCB - EXTREMIDADES: FLG RF - PASSAGEM: STD - VEDACAO SEDE: PTFE REFORCADO",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "29671631",
+      "class_id": "PDM090",
+      "description": "OLEO LUBRIFICANTE COM APLIC MOTOR DIESEL SAE 10W30 EMB FRASCO 1L",
+      "attribute": "EMBALAGEM",
+      "before": null,
+      "after": "FRASCO 1L",
+      "evidence": {
+        "value": "FRASCO 1L",
+        "original": "FRASCO 1L",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29671631",
+      "class_id": "PDM090",
+      "description": "OLEO LUBRIFICANTE COM APLIC MOTOR DIESEL SAE 10W30 EMB FRASCO 1L",
+      "attribute": "VISCOSIDADE",
+      "before": null,
+      "after": "SAE 10W30",
+      "evidence": {
+        "value": "SAE 10W30",
+        "original": "SAE 10W30",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16836934",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1/2POL 800# F316 NPT PASSAGEM REDUZIDA METAL-METAL MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "METAL-METAL",
+      "evidence": {
+        "value": "METAL-METAL",
+        "original": "METAL-METAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10827051",
+      "class_id": "PDM100",
+      "description": "FILTRO OLEO LUBRIFICANTE COM APLICACAO GERADOR DIESEL DONALDSON COD FABRICANTE P020774",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "DONALDSON",
+      "evidence": {
+        "value": "DONALDSON",
+        "original": "DONALDSON",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19283177",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 3 IN 150# ACO CARBONO FLANGEADA RF PASSAGEM PLENA PTFE MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19283177",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 3 IN 150# ACO CARBONO FLANGEADA RF PASSAGEM PLENA PTFE MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16876999",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA, CLASSE: 800#, MATERIAL CORPO: ACO FORJADO, EXTREMIDADE: ENCAIXE SOLDA, PLENA, VEDACAO SEDE: PTFE REFORCADO, ACIONAMENTO: ATUADOR PNEUM",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "20663874",
+      "class_id": "PDM012",
+      "description": "MANGUEIRA INDUSTRIAL PARA DE MULTIUSO MAT DE NBR 1/2POL COM PT 365PSI REFORCO DE LONAS TEXTEIS",
+      "attribute": "DIAMETRO INTERNO",
+      "before": null,
+      "after": "1/2POL",
+      "evidence": {
+        "value": "1/2POL",
+        "original": "1/2POL",
+        "rule": "measure.inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17399740",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1 1/2POL A216 WCB FLANGEADA PASSAGEM REDUZIDA TEFLON",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "TEFLON",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16473915",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA 3/4POL 800# INOX ROSCA NPT PTFE REFORCADO MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "23931307",
+      "class_id": "PDM071",
+      "description": "CALCADO SEGURANCA COM TIPO BOTINA ELASTICO COM TAM 43 BICO ACO SOLADO PU MONODENSIDADE PRETA CERT APROVACAO 24346",
+      "attribute": "BIQUEIRA",
+      "before": null,
+      "after": "ACO",
+      "evidence": {
+        "value": "ACO",
+        "original": "ACO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23931307",
+      "class_id": "PDM071",
+      "description": "CALCADO SEGURANCA COM TIPO BOTINA ELASTICO COM TAM 43 BICO ACO SOLADO PU MONODENSIDADE PRETA CERT APROVACAO 24346",
+      "attribute": "COR",
+      "before": null,
+      "after": "PRETA",
+      "evidence": {
+        "value": "PRETA",
+        "original": "PRETA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29866235",
+      "class_id": "PDM032",
+      "description": "ANEL  RETENTOR DIAM EIXO 130MM 160MM ESPESSURA DE 10MM TIPO BAB FKM (VITON)",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "FKM (VITON)",
+      "evidence": {
+        "value": "FKM (VITON)",
+        "original": "FKM (VITON)",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26071932",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO MODELO PP 50 MM2 4 TENSAO ISOLAMENTO DE 0,6/1KV XLPE",
+      "attribute": "ISOLACAO",
+      "before": null,
+      "after": "XLPE",
+      "evidence": {
+        "value": "XLPE",
+        "original": "XLPE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26071932",
+      "class_id": "PDM060",
+      "description": "CABO ELETRICO MODELO PP 50 MM2 4 TENSAO ISOLAMENTO DE 0,6/1KV XLPE",
+      "attribute": "SECAO",
+      "before": null,
+      "after": "50MM2",
+      "evidence": {
+        "value": "50MM2",
+        "original": "50 MM2",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20696340",
+      "class_id": "PDM071",
+      "description": "CALCADO SEGURANCA MODELO DE BOTINA ELASTICO 41 BICO DE ACO PU BID COR MARROM COM CERT APROVACAO 44915",
+      "attribute": "BIQUEIRA",
+      "before": null,
+      "after": "ACO",
+      "evidence": {
+        "value": "ACO",
+        "original": "ACO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25549719",
+      "class_id": "PDM110",
+      "description": "VIGA APLIC PENEIRA VIBRATORIA T-CLASS 3.0X7.3 FABRICANTE DE HAVER COD FABRICANTE HB456169",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "T-CLASS 3.0X7.3",
+      "evidence": {
+        "value": "T-CLASS 3.0X7.3",
+        "original": "T-CLASS 3.0X7.3",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "13478933",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1.1/4POL, CORPO ACO FORJADO, ROSCADA NPT, REDUZIDA, PTFE REFORCADO, ACIONAMENTO DE MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "23198983",
+      "class_id": "PDM064",
+      "description": "FUSIVEL MODELO CARTUCHO NUMERO DE 10X38MM CORR NOM 6AMP CLASSE DE GL/GG",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "6A",
+      "evidence": {
+        "value": "6A",
+        "original": "6AMP",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23198983",
+      "class_id": "PDM064",
+      "description": "FUSIVEL MODELO CARTUCHO NUMERO DE 10X38MM CORR NOM 6AMP CLASSE DE GL/GG",
+      "attribute": "TAMANHO",
+      "before": null,
+      "after": "10X38MM",
+      "evidence": {
+        "value": "10X38MM",
+        "original": "10X38MM",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22086300",
+      "class_id": "PDM110",
+      "description": "EIXO APLICACAO CAMINHAO FORA DE ESTRADA HD785 COM FABRICANTE KOMATSU COD FABRICANTE 3420027752",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "HD785",
+      "evidence": {
+        "value": "HD785",
+        "original": "HD785",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18325817",
+      "class_id": "PDM110",
+      "description": "LAMINA RASPADOR APLIC DE CORREIA TRANSPORTADORA TC-25 COM MARCA MARTIN ENGINEERING COD FABRICANTE 17621-GG",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-25",
+      "evidence": {
+        "value": "TC-25",
+        "original": "TC-25",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19261865",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA DN50 150# ACO INOX FUNDIDO A351 CF8M BUTT WELD FULL BORE PTFE REFORCADO MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "26593043",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO INTERRNO COM TIPO CABECA ABAULADA M 6 COMPR DE 40MM CLASSE DE A4-70 INOX 316 NATURAL P/ MANUTENCAO",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "NATURAL",
+      "evidence": {
+        "value": "NATURAL",
+        "original": "NATURAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26593043",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO INTERRNO COM TIPO CABECA ABAULADA M 6 COMPR DE 40MM CLASSE DE A4-70 INOX 316 NATURAL P/ MANUTENCAO",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX 316",
+      "evidence": {
+        "value": "ACO INOX 316",
+        "original": "INOX 316",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29942742",
+      "class_id": "PDM050",
+      "description": "UNIAO DIAM 2POL PRESSAO NOMINAL DE 3000# ACO INOX FORJADO A182 F316 COM CONEXAO ROSCADA NPT COM NORMA CONSTRUCAO ASME B16.11",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX FORJADO A182 F316",
+      "evidence": {
+        "value": "ACO INOX FORJADO A182 F316",
+        "original": "ACO INOX FORJADO A182 F316",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24082549",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1/4POL PN 25 LATAO BSP PLENA PTFE REFORCADO ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "26213148",
+      "class_id": "PDM050",
+      "description": "UNIAO DIAM 2POL PRESSAO NOMINAL DE 3000# ACO INOX FORJADO A182 F316 COM CONEXAO ROSCADA NPT COM NORMA CONSTRUCAO ASME B16.11",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX FORJADO A182 F316",
+      "evidence": {
+        "value": "ACO INOX FORJADO A182 F316",
+        "original": "ACO INOX FORJADO A182 F316",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20861647",
+      "class_id": "PDM110",
+      "description": "BUCHA COM APLICACAO ESCAVADEIRA HIDRAULICA EX1200 COM FABRICANTE HITACHI PN 3906827 MAT DE BRONZE TM23",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "EX1200",
+      "evidence": {
+        "value": "EX1200",
+        "original": "EX1200",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28761496",
+      "class_id": "PDM031",
+      "description": "ANEL O-RING DIAMETRO 145MM SECAO TRANSV DE 3.5MM COM MAT SILICONE 70 SHORE A",
+      "attribute": "DUREZA",
+      "before": null,
+      "after": "70 SHORE A",
+      "evidence": {
+        "value": "70 SHORE A",
+        "original": "70 SHORE A",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17832669",
+      "class_id": "PDM110",
+      "description": "RASPADOR PRIMARIO COM APLIC CORREIA TRANSPORTADORA TC 12 FLEXCO REF 22511",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "FLEXCO",
+      "evidence": {
+        "value": "FLEXCO",
+        "original": "FLEXCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17832669",
+      "class_id": "PDM110",
+      "description": "RASPADOR PRIMARIO COM APLIC CORREIA TRANSPORTADORA TC 12 FLEXCO REF 22511",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-12",
+      "evidence": {
+        "value": "TC-12",
+        "original": "TC-12",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27179352",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM NOMINAL: DN 15, 800#, MAT CORPO: INOX, EXTREMIDADES: RSC NPT, PASSAGEM REDUZIDA, PTFE REFORCADO, ACIONAMENTO: ATUADOR PNEUM",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12769187",
+      "class_id": "PDM110",
+      "description": "TAMPA REDUTOR EQUIP CESTARI M200 WEG P/N 17120434",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "WEG",
+      "evidence": {
+        "value": "WEG",
+        "original": "WEG",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25810573",
+      "class_id": "PDM071",
+      "description": "CALCADO SEGURANCA COM TIPO BOTINA CADARCO 36 BIQ COMPOSITO SOLADO PU BIDENSIDADE PRETA CA NR DE 32534",
+      "attribute": "COR",
+      "before": null,
+      "after": "PRETA",
+      "evidence": {
+        "value": "PRETA",
+        "original": "PRETA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27856280",
+      "class_id": "PDM040",
+      "description": "VALV ESFERA 1.1/4POL 300# ACO FUNDIDO FLANGEADA PLENA PTFE REFORCADO MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "26156463",
+      "class_id": "PDM110",
+      "description": "SAPATA ESTEIRA COM APLIC ESCAVADEIRA HIDRAULICA COM EQUIP 6015B CATERPILLAR REF 390-7451 REV A",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "CATERPILLAR",
+      "evidence": {
+        "value": "CATERPILLAR",
+        "original": "CATERPILLAR",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "20343916",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA UNC 1/4 IN 2-1/4\" SAE GRAU 5 COM MAT AC CARBONO COM ACAB OXIDADO PRETO CONF ASME B18.2.1",
+      "attribute": "CLASSE RESISTENCIA",
+      "before": null,
+      "after": "SAE GRAU 5",
+      "evidence": {
+        "value": "SAE GRAU 5",
+        "original": "SAE GRAU 5",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18271342",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA, DIAMETRO NOMINAL: 1.1/4POL, 300#, MAT CORPO: ACO CARBONO, EXTREMIDADE: BW, PASSAGEM: PASSAGEM REDUZIDA, VEDACAO SEDE: PTFE REFORCADO, ACIONAMENTO: ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "26330452",
+      "class_id": "PDM066",
+      "description": "SENSOR INDUTIVO M 30 15,0MM MONTAGEM NAO FACEADO PNP NF CONEXAO DE CONECTOR M12",
+      "attribute": "SAIDA",
+      "before": null,
+      "after": "PNP NF",
+      "evidence": {
+        "value": "PNP NF",
+        "original": "PNP NF",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14373829",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR MODELO CAIXA MOLDADA 3P COM IN 400AMP CAPACIDADE INTERRUPCAO 36KA",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "400A",
+      "evidence": {
+        "value": "400A",
+        "original": "400AMP",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11526878",
+      "class_id": "PDM110",
+      "description": "BUCHA APLIC DE CAMINHAO FORA DE ESTRADA COM MODELO 793F CATERPILLAR PART NUMBER 8931032 BRONZE TM23",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "CATERPILLAR",
+      "evidence": {
+        "value": "CATERPILLAR",
+        "original": "CATERPILLAR",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14569482",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 1 1/4POL 800# ACO FORJADO SOCKET WELD PASSAGEM REDUZIDA ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25678123",
+      "class_id": "PDM062",
+      "description": "DISJUNTOR  MODELO CAIXA MOLDADA NR POLOS 3P 36KA",
+      "attribute": "CAPACIDADE INTERRUPCAO",
+      "before": null,
+      "after": "36KA",
+      "evidence": {
+        "value": "36KA",
+        "original": "36KA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18547299",
+      "class_id": "PDM063",
+      "description": "CONTATOR 40AMP COM TENSAO BOBINA 24VCC 1NA+1NF",
+      "attribute": "CONTATOS AUXILIARES",
+      "before": null,
+      "after": "1NA+1NF",
+      "evidence": {
+        "value": "1NA+1NF",
+        "original": "1NA+1NF",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27561244",
+      "class_id": "PDM040",
+      "description": "VALV. ESF DN40 150# CF8M PASSAGEM REDUZIDA TEFLON REFORCADO MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27561244",
+      "class_id": "PDM040",
+      "description": "VALV. ESF DN40 150# CF8M PASSAGEM REDUZIDA TEFLON REFORCADO MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "TEFLON REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "25380278",
+      "class_id": "PDM110",
+      "description": "LEVANTADOR COM APLICACAO MOINHO BOLAS MB 4.2X6.8 FAB FLSMIDTH REF FABRICANTE 6240643888 COM MAT ACO MANGANES",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "MB 4.2X6.8",
+      "evidence": {
+        "value": "MB 4.2X6.8",
+        "original": "MB 4.2X6.8",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27047995",
+      "class_id": "PDM110",
+      "description": "PASTILHA FREIO USO DE CAMINHAO FORA DE ESTRADA 830E KOMATSU P/N 5408631930",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "830E",
+      "evidence": {
+        "value": "830E",
+        "original": "830E",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28869820",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 856 4SP COM DIAMETRO 3/8\" PRESSAO TRABALHO 445 BAR C 450 MM COM TERM A NPT MACHO COM TERMINAL B MACHO RETO BSP ACO CARBONO ZINCADO",
+      "attribute": "MATERIAL TERMINAIS",
+      "before": null,
+      "after": "ACO CARBONO ZINCADO",
+      "evidence": {
+        "value": "ACO CARBONO ZINCADO",
+        "original": "ACO CARBONO ZINCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24248976",
+      "class_id": "PDM110",
+      "description": "VEDACAO  EIXO USO TURBINA HIDRAULICA FRANCIS 6MW FAB DE WEG PART NUMBER 32058079",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "FRANCIS 6MW",
+      "evidence": {
+        "value": "FRANCIS 6MW",
+        "original": "FRANCIS 6MW",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29228915",
+      "class_id": "PDM110",
+      "description": "REVESTIMENTO COM PARA MOINHO BOLAS MB 5.0X7.6 COM FABR METSO PART NUMBER N53103114",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "MB 5.0X7.6",
+      "evidence": {
+        "value": "MB 5.0X7.6",
+        "original": "MB 5.0X7.6",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24154799",
+      "class_id": "PDM061",
+      "description": "TERMINAL ELETRICO COM TIPO TUBULAR ILHOS 0,75MM2 MAT COBRE ESTANHADO",
+      "attribute": "SECAO CABO",
+      "before": null,
+      "after": "0,75MM2",
+      "evidence": {
+        "value": "0,75MM2",
+        "original": "0,75MM2",
+        "rule": "measure.mm2.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "26610799",
+      "class_id": "PDM033",
+      "description": "JUNTA ESPIRALADA DIAM DE DN100 CLASSE DE 150# INOX GRAFITE FLEXIVEL COM ANEL INTERNO SEM ANEL INTERNO NORMA CONSTRUCAO DE ASME B16.20",
+      "attribute": "ENCHIMENTO",
+      "before": null,
+      "after": "GRAFITE FLEXIVEL",
+      "evidence": {
+        "value": "GRAFITE FLEXIVEL",
+        "original": "GRAFITE FLEXIVEL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "15131144",
+      "class_id": "PDM110",
+      "description": "VIGA  PARA PENEIRA VIBRATORIA LUDOWICI 3.6X8.5 FABR DE FLSMIDTH REF FABRICANTE 9168188403",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "LUDOWICI 3.6X8.5",
+      "evidence": {
+        "value": "LUDOWICI 3.6X8.5",
+        "original": "LUDOWICI 3.6X8.5",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24925724",
+      "class_id": "PDM041",
+      "description": "VALV. GAVETA COM BITOLA 10 IN CL DE 300# MATERIAL CORPO DE ACO INOX PONTAS CHANFRADAS CASTELO DE ROSCADO VOLANTE",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "VOLANTE",
+      "evidence": {
+        "value": "VOLANTE",
+        "original": "VOLANTE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16754475",
+      "class_id": "PDM066",
+      "description": "SENSOR INDUTIVO COM ROSCA CORPO M12 4MM MONTAGEM NAO FACEADO SAIDA DE PNP NF 10-30VCC CABO 2M",
+      "attribute": "CONEXAO",
+      "before": null,
+      "after": "CABO 2M",
+      "evidence": {
+        "value": "CABO 2M",
+        "original": "CABO 2M",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16754475",
+      "class_id": "PDM066",
+      "description": "SENSOR INDUTIVO COM ROSCA CORPO M12 4MM MONTAGEM NAO FACEADO SAIDA DE PNP NF 10-30VCC CABO 2M",
+      "attribute": "DISTANCIA SENSORA",
+      "before": null,
+      "after": "4MM",
+      "evidence": {
+        "value": "4MM",
+        "original": "4MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16754475",
+      "class_id": "PDM066",
+      "description": "SENSOR INDUTIVO COM ROSCA CORPO M12 4MM MONTAGEM NAO FACEADO SAIDA DE PNP NF 10-30VCC CABO 2M",
+      "attribute": "TENSAO",
+      "before": null,
+      "after": "10-30VCC",
+      "evidence": {
+        "value": "10-30VCC",
+        "original": "10-30VCC",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12661206",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 3/4 POL PN 16 FERRO NODULAR FLG FF PASSAGEM PLENA PTFE MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28824199",
+      "class_id": "PDM110",
+      "description": "LUVA EIXO COM USO BOMBA CENTRIFUGA MEGANORM 80 250 FABR KSB PN 46817565",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "MEGANORM 80-250",
+      "evidence": {
+        "value": "MEGANORM 80-250",
+        "original": "MEGANORM 80-250",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29420721",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA NORMA DE EN 853 2SN COM DIAMETRO INTERNO 1POL PRESSAO MAX 2395 PSI C DE 450 MM COM TERMINAL A FEMEA 90 DKO COM TERMINAL B JIC MACHO ACO CARBONO",
+      "attribute": "TERMINAL B",
+      "before": "MACHO RETO JIC",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "JIC MACHO não informa RETO; não especializar o prefixo para liberar a cauda.",
+      "unresolved": [
+        "MANGUEIRA HIDRAULICA MONTADA",
+        "C DE",
+        "TERMINAL B JIC MACHO ACO CARBONO"
+      ]
+    },
+    {
+      "material_code": "28896309",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO UNF 7/16\"X1 1/2POL SAE GRAU 5 ACO CARB ASME B18.2.1",
+      "attribute": "BITOLA",
+      "before": "1/2POL",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "Fração dentro de comprimento misto não comprova a bitola; permanece pendente.",
+      "unresolved": [
+        "PARAFUSO SEXTAVADO  7/16\"X1 1/2POL"
+      ]
+    },
+    {
+      "material_code": "13264249",
+      "class_id": "PDM032",
+      "description": "RETENTOR 25 MM DIAM ALOJ 50MM L 15 MM TIPO DE BASL NITRILICA",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "NBR",
+      "evidence": {
+        "value": "NBR",
+        "original": "NITRILICA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22383074",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 800# A105 ROSCA NPT REDUZIDA PTFE REFORCADO ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "27234364",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA NORMA CONSTRUCAO EN 856 4SH DI DE 2POL (-32) PRESSAO DE 250BAR COMPR 5000MM LADO B DE MACHO NPT MATERIAL TERMINAIS DE ACO CARBONO",
+      "attribute": "DIAMETRO INTERNO",
+      "before": null,
+      "after": "2POL",
+      "evidence": {
+        "value": "2POL",
+        "original": "2POL",
+        "rule": "measure.inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "24838360",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA, DIAM: DN200, ACO CARBONO, EXTREMIDADE: FLG RF, PASSAGEM: PLENA, VEDACAO SEDE: PTFE REFORCADO, ACIONAMENTO: MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "24328455",
+      "class_id": "PDM050",
+      "description": "BUCHA REDUCAO 3/4 POL DIAMETRO REDUZIDO 3/8 POL COM CLASSE PRESSAO 3000# A105 PADRAO ASME B16.11",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO CARBONO FORJADO A105",
+      "evidence": {
+        "value": "ACO CARBONO FORJADO A105",
+        "original": "A105",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23969949",
+      "class_id": "PDM011",
+      "description": "MANGUEIRA HIDRAULICA MONTADA EN 856 4SP 1POL PRESSAO TRAB 280 BAR C DE 900MM TERMINAL A DE ORFS FEMEA FEMEA CURVA 90 GRAUS DKO COM MATERIAL TERMINAIS ACO ZINCADO",
+      "attribute": "TERMINAL A",
+      "before": "FEMEA CURVA 90 GRAUS DKO",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "ORFS FEMEA seguido de DKO é contraditório para o terminal; não inventar curva90ORFS.",
+      "unresolved": [
+        "MANGUEIRA HIDRAULICA MONTADA",
+        "C DE",
+        "TERMINAL A ORFS FEMEA FEMEA CURVA 90 GRAUS DKO"
+      ]
+    },
+    {
+      "material_code": "13979937",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM: 2\", PTFE REFORCADO, PASSAGEM: FULL BORE, PRESSAO NOMINAL: PN 16, ACIONAMENTO: MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12134343",
+      "class_id": "PDM110",
+      "description": "PASTILHA FREIO PARA DE CAMINHAO FORA DE ESTRADA 793F FABR CATERPILLAR REFERENCIA FABRICANTE 0298821",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "793F",
+      "evidence": {
+        "value": "793F",
+        "original": "793F",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22389937",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DIAM NOMINAL:3/4POL, RATING:300#, MATERIAL:ACO FUNDIDO, TIPO CONEXAO:FLANGES, PASSAGEM:REDUZIDA, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:MANOPLA, APLICACAO GERAL",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "17869222",
+      "class_id": "PDM050",
+      "description": "FLANGE PESCOCO WN CLASSE DE 600# COM FACE RF INOX ASME B16.5",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "ASME B16.5",
+      "evidence": {
+        "value": "ASME B16.5",
+        "original": "ASME B16.5",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16870007",
+      "class_id": "PDM040",
+      "description": "VALV ESF;DIAMETRO NOMINAL:2POL;PRESSAO NOMINAL:PN 25;MATERIAL:LATAO;TIPO CONEXAO:ROSCA;PASSAGEM:STD;VEDACAO SEDE:PTFE REFORCADO;MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "26344528",
+      "class_id": "PDM050",
+      "description": "TE DIAM 1POL CLASSE PRESSAO 3000# F316 COM EXTREMIDADE ROSCA PADRAO DE ASME B16.11",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "ACO INOX FORJADO A182 F316",
+      "evidence": {
+        "value": "ACO INOX FORJADO A182 F316",
+        "original": "F316",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "13544559",
+      "class_id": "PDM110",
+      "description": "PINO  PARA ESCAVADEIRA HIDRAULICA MOD DE PC3000 KOMATSU PN 864-91-76055-00",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "KOMATSU",
+      "evidence": {
+        "value": "KOMATSU",
+        "original": "KOMATSU",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14935100",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1 IN 150# ACO INOX FUNDIDO A351 CF8M PONTAS CHANFRADAS PASSAGEM REDUZIDA PTFE ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14935100",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 1 IN 150# ACO INOX FUNDIDO A351 CF8M PONTAS CHANFRADAS PASSAGEM REDUZIDA PTFE ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "12261550",
+      "class_id": "PDM110",
+      "description": "CARCACA  COMPRESSOR COM MODELO EQUIPAMENTO GA75 ATLAS COPCO COD FABRICANTE 9126 6290 23",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "ATLAS COPCO",
+      "evidence": {
+        "value": "ATLAS COPCO",
+        "original": "ATLAS COPCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22354736",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA METRICA GROSSA M10 150MM COM CL 5.8 COM MATERIAL ACO CARBONO ZINCADO BRANCO COM NORMA DIN 933",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "ZINCADO BRANCO",
+      "evidence": {
+        "value": "ZINCADO BRANCO",
+        "original": "ZINCADO BRANCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22354736",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA METRICA GROSSA M10 150MM COM CL 5.8 COM MATERIAL ACO CARBONO ZINCADO BRANCO COM NORMA DIN 933",
+      "attribute": "BITOLA",
+      "before": null,
+      "after": "M10",
+      "evidence": {
+        "value": "M10",
+        "original": "M10",
+        "rule": "measure.metric_thread"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "22354736",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO COM ROSCA METRICA GROSSA M10 150MM COM CL 5.8 COM MATERIAL ACO CARBONO ZINCADO BRANCO COM NORMA DIN 933",
+      "attribute": "COMPRIMENTO",
+      "before": null,
+      "after": "150MM",
+      "evidence": {
+        "value": "150MM",
+        "original": "150MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "19717638",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA, DN:1 POL, RATING:150#, MATERIAL CORPO:ACO INOX FUNDIDO A351 CF8M, LIGACAO:FLANGES, PASSAGEM:STD, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:ATUADOR PNEUM",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "12418499",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA COM DN 1 IN CL DE 800# INOX 316 EXTREMIDADES DE SOLDA ENCAIXE PASSAGEM PLENA VEDACAO SEDE DE PTFE MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "13168951",
+      "class_id": "PDM110",
+      "description": "PASTILHA FREIO COM USO CAMINHAO FORA DE ESTRADA COM EQUIP 830E KOMATSU REFERENCIA FABRICANTE 481-29-58771",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "KOMATSU",
+      "evidence": {
+        "value": "KOMATSU",
+        "original": "KOMATSU",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27187505",
+      "class_id": "PDM110",
+      "description": "BUCHA CABECOTE APLIC DE BRITADOR CONICO MODELO EQUIPAMENTO DE HP400 METSO PN MM6051982",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "METSO",
+      "evidence": {
+        "value": "METSO",
+        "original": "METSO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "11338226",
+      "class_id": "PDM040",
+      "description": "VALV. ESF DN 20 800# ACO CARBONO FORJADO A105 NPT PASSAGEM REDUZIDA PTFE MANUAL",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "PTFE",
+      "evidence": {
+        "value": "PTFE",
+        "original": "PTFE",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14868909",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 800# A105 ROSCA NPT PASSAGEM PLENA METAL-METAL ATUADOR PNEUMATICO",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ATUADOR PNEUMATICO",
+      "evidence": {
+        "value": "ATUADOR PNEUMATICO",
+        "original": "ATUADOR PNEUMATICO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "14868909",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA 800# A105 ROSCA NPT PASSAGEM PLENA METAL-METAL ATUADOR PNEUMATICO",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "METAL-METAL",
+      "evidence": {
+        "value": "METAL-METAL",
+        "original": "METAL-METAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "27388526",
+      "class_id": "PDM012",
+      "description": "MANGUEIRA INDUSTRIAL PARA OLEO BORRACHA NITRILICA COM DIAMETRO INTERNO 1.1/2POL COM PRESSAO MAX 20BAR COM REFORCO LONAS TEXTEIS",
+      "attribute": "MATERIAL",
+      "before": null,
+      "after": "NBR",
+      "evidence": {
+        "value": "NBR",
+        "original": "BORRACHA NITRILICA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "18460940",
+      "class_id": "PDM003",
+      "description": "PORCA SEXTAVADA ROSCA GROOSSA M18 8 ACO ZINCADO AMARELO",
+      "attribute": "ACABAMENTO",
+      "before": null,
+      "after": "ZINCADO AMARELO",
+      "evidence": {
+        "value": "ZINCADO AMARELO",
+        "original": "ZINCADO AMARELO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29797524",
+      "class_id": "PDM064",
+      "description": "FUSIVEL TIPO ULTRARRAPIDO NH TAMANHO DE NH0 160A COM CLASSE AR",
+      "attribute": "CORRENTE NOMINAL",
+      "before": null,
+      "after": "160A",
+      "evidence": {
+        "value": "160A",
+        "original": "160A",
+        "rule": "measure.amps.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17764693",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA DN 40 800# F316 NPT PASSAGEM REDUZIDA PTFE REFORCADO MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17764693",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA DN 40 800# F316 NPT PASSAGEM REDUZIDA PTFE REFORCADO MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "PTFE REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "28070974",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA DN20 ACO FORJADO PASSAGEM REDUZIDA TEFLON REFORCADO MANOPLA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "MANOPLA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28070974",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA DN20 ACO FORJADO PASSAGEM REDUZIDA TEFLON REFORCADO MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "TEFLON REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "17074523",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 4POL 300# WCB PONTAS CHANFRADAS PASSAGEM PLENA METAL-METAL ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17074523",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF 4POL 300# WCB PONTAS CHANFRADAS PASSAGEM PLENA METAL-METAL ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "METAL-METAL",
+      "evidence": {
+        "value": "METAL-METAL",
+        "original": "METAL-METAL",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16179708",
+      "class_id": "PDM110",
+      "description": "ANEL DESGASTE COM APLIC BOMBA CENTRIFUGA MOD DE AHLSTAR A22-80 SULZER P/N 829834-368 MATERIAL DE BRONZE",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "SULZER",
+      "evidence": {
+        "value": "SULZER",
+        "original": "SULZER",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "29460613",
+      "class_id": "PDM040",
+      "description": "VALVULA ESF; DIAMETRO NOMINAL: DN80; MAT CORPO: ACO FUNDIDO; ACIONAMENTO: ALAVANCA; VEDACAO SEDE: PTFE REFORCADO; PASSAGEM: STD",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "11701151",
+      "class_id": "PDM110",
+      "description": "RODA GUIA USO DE ESCAVADEIRA HIDRAULICA MODELO DE EX2600 HITACHI P/N 2720107",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "HITACHI",
+      "evidence": {
+        "value": "HITACHI",
+        "original": "HITACHI",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "10446763",
+      "class_id": "PDM110",
+      "description": "CARCACA PARA DE COMPRESSOR GA90 FABR DE ATLAS COPCO PART NUMBER 0317906196",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "GA90",
+      "evidence": {
+        "value": "GA90",
+        "original": "GA90",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25446859",
+      "class_id": "PDM110",
+      "description": "BUCHA GUIA COM APLIC PERFURATRIZ DI550 COM FABRICANTE SANDVIK P/N 464.2972-07 COM MATERIAL ACO LIGA",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "DI550",
+      "evidence": {
+        "value": "DI550",
+        "original": "DI550",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17174114",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 6POL 150# ACO FUNDIDO PONTAS CHANFRADAS PASSAGEM PLENA TEFLON REFORCADO ALAVANCA",
+      "attribute": "ACIONAMENTO",
+      "before": null,
+      "after": "ALAVANCA",
+      "evidence": {
+        "value": "ALAVANCA",
+        "original": "ALAVANCA",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "17174114",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA 6POL 150# ACO FUNDIDO PONTAS CHANFRADAS PASSAGEM PLENA TEFLON REFORCADO ALAVANCA",
+      "attribute": "VEDACAO SEDE",
+      "before": null,
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "TEFLON REFORCADO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "11632865",
+      "class_id": "PDM001",
+      "description": "PARAFUSO SEXTAVADO UNC 3/8 INX2 1/4POL SAE GRAU 5 AC CARBONO ZINCADO ASME B18.2.1",
+      "attribute": "BITOLA",
+      "before": "1/4POL",
+      "after": null,
+      "evidence": null,
+      "decision": "ABSTAIN_INSUFFICIENT_OR_CONTRADICTORY_TEXT",
+      "note": "Fração dentro de comprimento misto não comprova a bitola; permanece pendente.",
+      "unresolved": [
+        "PARAFUSO SEXTAVADO  3/8 INX2 1/4POL   ZINCADO"
+      ]
+    },
+    {
+      "material_code": "23810729",
+      "class_id": "PDM040",
+      "description": "VALV ESF, BITOLA: 4\", 300#, MATERIAL CORPO: ACO INOX FUNDIDO A351 CF8M, CONEXAO: FLANGES, PASSAGEM: PASSAGEM PLENA, VEDACAO SEDE: PTFE REFORCADO, ACIONAMENTO: ATUADOR PNEUM",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "10509144",
+      "class_id": "PDM110",
+      "description": "TAMPA REDUTOR MODELO EQUIPAMENTO X3FS170 SEW COD FABRICANTE 70700607",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "SEW",
+      "evidence": {
+        "value": "SEW",
+        "original": "SEW",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "16303006",
+      "class_id": "PDM050",
+      "description": "FLANGE TIPO SOBREPOSTO SO DN15 COM CLASSE 150# COM FACE RF MAT DE A105 PADRAO DE ASME B16.5",
+      "attribute": "DIAMETRO NOMINAL",
+      "before": null,
+      "after": "1/2POL",
+      "evidence": {
+        "value": "1/2POL",
+        "original": "DN15",
+        "rule": "measure.dn_to_inches.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21776371",
+      "class_id": "PDM110",
+      "description": "CHAPA LATERAL COM APLIC BRITADOR MANDIBULA CJ412 FAB DE SANDVIK REF 7003322-11",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "CJ412",
+      "evidence": {
+        "value": "CJ412",
+        "original": "CJ412",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21720002",
+      "class_id": "PDM040",
+      "description": "VALV. ESFERA, BITOLA:6 IN, 150#, MATERIAL CORPO:ACO INOX, EXTREMIDADE:PONTAS CHANFRADAS, PASSAGEM:PASSAGEM REDUZIDA, VEDACAO SEDE:PTFE REFORCADO, ACIONAMENTO:ATUADOR PNEUMATICO",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "20627779",
+      "class_id": "PDM110",
+      "description": "ANEL VEDACAO APLIC DE BRITADOR CONICO HP300 METSO REF MM5744200 REV A",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "HP300",
+      "evidence": {
+        "value": "HP300",
+        "original": "HP300",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "25728645",
+      "class_id": "PDM110",
+      "description": "ROLETE CARGA APLIC CORREIA TRANSPORTADORA TC01 MARCA DE CONTINENTAL COD FABRICANTE CT1760313",
+      "attribute": "MODELO EQUIPAMENTO",
+      "before": null,
+      "after": "TC-01",
+      "evidence": {
+        "value": "TC-01",
+        "original": "TC-01",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "21320965",
+      "class_id": "PDM050",
+      "description": "FLANGE TIPO DE ENCAIXE SW COM DIAM 1 POL CL 150# FACE RF MAT ACO CARBONO FORJADO A105 ASME B16.5",
+      "attribute": "NORMA",
+      "before": null,
+      "after": "ASME B16.5",
+      "evidence": {
+        "value": "ASME B16.5",
+        "original": "ASME B16.5",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "23559687",
+      "class_id": "PDM013",
+      "description": "MANGUEIRA PNEUMATICA MATERIAL DE PVC DE DE 6MM COM D.I. 4MM PRESSAO TRABALHO 12BAR PRETA",
+      "attribute": "DIAMETRO EXTERNO",
+      "before": null,
+      "after": "6MM",
+      "evidence": {
+        "value": "6MM",
+        "original": "6MM",
+        "rule": "measure.mm.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    },
+    {
+      "material_code": "28917394",
+      "class_id": "PDM040",
+      "description": "VALVULA ESFERA; CLASSE:300#; MAT CORPO:WCB; PONTAS CHANFRADAS; PASSAGEM:FULL BORE; VEDACAO SEDE:PTFE REFORCADO; ACIONAMENTO:MANOPLA",
+      "attribute": "VEDACAO SEDE",
+      "before": "PTFE",
+      "after": "RPTFE",
+      "evidence": {
+        "value": "RPTFE",
+        "original": "VEDACAO SEDE: PTFE REFORCADO",
+        "rule": "value.alias"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": "Texto informa PTFE REFORCADO ou TEFLON REFORCADO: o qualificador está explícito.",
+      "unresolved": []
+    },
+    {
+      "material_code": "27254011",
+      "class_id": "PDM110",
+      "description": "TAMPA DESCARGA APLICACAO DE COMPRESSOR MOD DE GA160 ATLAS COPCO REF 8067 4320 99",
+      "attribute": "FABRICANTE",
+      "before": null,
+      "after": "ATLAS COPCO",
+      "evidence": {
+        "value": "ATLAS COPCO",
+        "original": "ATLAS COPCO",
+        "rule": "value.unlabeled"
+      },
+      "decision": "SUPPORTED_BY_TEXT",
+      "note": null,
+      "unresolved": []
+    }
+  ],
+  "merge_counts": {
+    "before": 1049,
+    "after": 1058,
+    "new_groups": 11,
+    "removed_groups": 2,
+    "changed_existing": 12
+  },
+  "merge_review": [
+    {
+      "kind": "new_groups",
+      "codes": [
+        "10432200",
+        "22271842"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "10432200",
+          "description": "ELEMENTO FILTRANTE AR GERADOR DIESEL MANN C 53 683",
+          "manufacturer_column": "MANN",
+          "reference_column": ""
+        },
+        {
+          "code": "22271842",
+          "description": "FILTRO AR COM APLICACAO GERADOR DIESEL MANN REF FABRICANTE C 53 683",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "10509144",
+        "14970386",
+        "26786954"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "10509144",
+          "description": "TAMPA REDUTOR MODELO EQUIPAMENTO X3FS170 SEW COD FABRICANTE 70700607",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "14970386",
+          "description": "TAMPA, PARA:REDUTOR, MODELO EQUIPAMENTO:X3FS170, SEW, PN:70700607",
+          "manufacturer_column": "",
+          "reference_column": "70700607"
+        },
+        {
+          "code": "26786954",
+          "description": "TAMPA; APLICACAO: REDUTOR; MODELO EQUIPAMENTO: X3FS170; FABRICANTE: SEW; REFERENCIA FABRICANTE: 70700607",
+          "manufacturer_column": "SEW",
+          "reference_column": "70700607"
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "10979718",
+        "27254011"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "NCM_DIVERGENTE: exige revisao fiscal"
+      ],
+      "descriptions": [
+        {
+          "code": "10979718",
+          "description": "TAMPA DESCARGA COMPRESSOR GA160 ATLAS COPCO 8067 4320 99",
+          "manufacturer_column": "",
+          "reference_column": "8067 4320 99-00"
+        },
+        {
+          "code": "27254011",
+          "description": "TAMPA DESCARGA APLICACAO DE COMPRESSOR MOD DE GA160 ATLAS COPCO REF 8067 4320 99",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "12261550",
+        "25178607"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "PDM_INVALIDO: membro 25178607 não atende ao PDM (faltam APLICACAO)"
+      ],
+      "descriptions": [
+        {
+          "code": "12261550",
+          "description": "CARCACA  COMPRESSOR COM MODELO EQUIPAMENTO GA75 ATLAS COPCO COD FABRICANTE 9126 6290 23",
+          "manufacturer_column": "",
+          "reference_column": "9126 6290 23"
+        },
+        {
+          "code": "25178607",
+          "description": "CARCACA GA75 REF 9126 6290 23 ATLAS COPCO",
+          "manufacturer_column": "",
+          "reference_column": "9126 6290 23"
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "13724154",
+        "26213148",
+        "28861094",
+        "29942742"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "UNIDADE_SEM_FATOR: consolidacao de quantidade bloqueada ate definir a conversao"
+      ],
+      "descriptions": [
+        {
+          "code": "13724154",
+          "description": "UNIAO 2POL 3000# ACO INOX FORJADO A182 F316 ROSCA NPT ASME B16.11",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "26213148",
+          "description": "UNIAO DIAM 2POL PRESSAO NOMINAL DE 3000# ACO INOX FORJADO A182 F316 COM CONEXAO ROSCADA NPT COM NORMA CONSTRUCAO ASME B16.11",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "28861094",
+          "description": "UNIAO, DN:2\", 3000#, MATERIAL:F316, NPT, NORMA:ASME B16.11",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "29942742",
+          "description": "UNIAO DIAM 2POL PRESSAO NOMINAL DE 3000# ACO INOX FORJADO A182 F316 COM CONEXAO ROSCADA NPT COM NORMA CONSTRUCAO ASME B16.11",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "16179708",
+        "25758798"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "16179708",
+          "description": "ANEL DESGASTE COM APLIC BOMBA CENTRIFUGA MOD DE AHLSTAR A22-80 SULZER P/N 829834-368 MATERIAL DE BRONZE",
+          "manufacturer_column": "",
+          "reference_column": "829834-368"
+        },
+        {
+          "code": "25758798",
+          "description": "ANEL DESGASTE COM APLIC BOMBA CENTRIFUGA MOD DE AHLSTAR A22-80 SULZER P/N 829834-368 MATERIAL DE BRONZE",
+          "manufacturer_column": "SULZER",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "16443689",
+        "24487748"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "16443689",
+          "description": "MANGOTE APLIC DE SUCCAO E DESCARGA MATERIAL DE PVC COM ESPIRAL PVC RIGIDO 2POL 85PSI",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "24487748",
+          "description": "MANGOTE;APLICACAO:SUCCAO E DESCARGA;DIAMETRO:2POL;MATERIAL:PVC COM ESPIRAL PVC RIGIDO;PRESSAO MAX:85PSI",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "16754475",
+        "21450239"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "UNIDADE_SEM_FATOR: consolidacao de quantidade bloqueada ate definir a conversao"
+      ],
+      "descriptions": [
+        {
+          "code": "16754475",
+          "description": "SENSOR INDUTIVO COM ROSCA CORPO M12 4MM MONTAGEM NAO FACEADO SAIDA DE PNP NF 10-30VCC CABO 2M",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "21450239",
+          "description": "SENSOR INDUTIVO; CORPO: M12; DIST SENSORA: 4MM; MONTAGEM: NAO FACEADO; SAIDA: PNP NF; TENSAO: 10-30VCC; CONEXAO: CABO 2M",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "21386002",
+        "29671631"
+      ],
+      "same_item": null,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Mesma especificação textual de óleo, mas fabricante ausente: manter revisão manual explícita, sem afirmar identidade física independente.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "21386002",
+          "description": "OLEO LUBRIFICANTE MOTOR DIESEL SAE 10W30 FRASCO 1L",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "29671631",
+          "description": "OLEO LUBRIFICANTE COM APLIC MOTOR DIESEL SAE 10W30 EMB FRASCO 1L",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "22615313",
+        "22650792"
+      ],
+      "same_item": null,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Mesma especificação textual de óleo, mas fabricante ausente: manter revisão manual explícita, sem afirmar identidade física independente.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "22615313",
+          "description": "OLEO LUBRIFICANTE COM PARA MOTOR DIESEL ISO VG DE SAE 10W30 EMB DE CONTAINER 1000L",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "22650792",
+          "description": "OLEO LUBRIFICANTE MOTOR DIESEL SAE 10W30 CONTAINER 1000L",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "new_groups",
+      "codes": [
+        "23198983",
+        "23720119"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "23198983",
+          "description": "FUSIVEL MODELO CARTUCHO NUMERO DE 10X38MM CORR NOM 6AMP CLASSE DE GL/GG",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "23720119",
+          "description": "FUSIVEL CARTUCHO 10X38MM 6AMP GL/GG",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "removed_groups",
+      "codes": [
+        "13724154",
+        "28861094"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Grupo anterior ampliado, preservado nesta evidência; não invalidar proposta pendente.",
+      "conflicts": [
+        "UNIDADE_SEM_FATOR: consolidacao de quantidade bloqueada ate definir a conversao"
+      ],
+      "descriptions": [
+        {
+          "code": "13724154",
+          "description": "UNIAO 2POL 3000# ACO INOX FORJADO A182 F316 ROSCA NPT ASME B16.11",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "28861094",
+          "description": "UNIAO, DN:2\", 3000#, MATERIAL:F316, NPT, NORMA:ASME B16.11",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "removed_groups",
+      "codes": [
+        "14970386",
+        "26786954"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Grupo anterior ampliado, preservado nesta evidência; não invalidar proposta pendente.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "14970386",
+          "description": "TAMPA, PARA:REDUTOR, MODELO EQUIPAMENTO:X3FS170, SEW, PN:70700607",
+          "manufacturer_column": "",
+          "reference_column": "70700607"
+        },
+        {
+          "code": "26786954",
+          "description": "TAMPA; APLICACAO: REDUTOR; MODELO EQUIPAMENTO: X3FS170; FABRICANTE: SEW; REFERENCIA FABRICANTE: 70700607",
+          "manufacturer_column": "SEW",
+          "reference_column": "70700607"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "10899613",
+        "24461750"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "10899613",
+          "description": "MANDIBULA MOVEL, USO:BRITADOR MANDIBULA, MOD:C140, MARCA:METSO, REFERENCIA FABRICANTE:N66522F36",
+          "manufacturer_column": "METSO",
+          "reference_column": "N66522F36"
+        },
+        {
+          "code": "24461750",
+          "description": "MANDIBULA MOVEL APLIC DE BRITADOR MANDIBULA C140 MARCA METSO REF FABRICANTE N66522F36",
+          "manufacturer_column": "METSO",
+          "reference_column": "N66522F36"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "10943800",
+        "21320965"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "10943800",
+          "description": "FLANGE, MODELO:ENCAIXE SW, DN:1POL, CLASSE:150#, FACE:RF, MAT:A105, PADRAO:ASME B16.5",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "21320965",
+          "description": "FLANGE TIPO DE ENCAIXE SW COM DIAM 1 POL CL 150# FACE RF MAT ACO CARBONO FORJADO A105 ASME B16.5",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "11497898",
+        "23639499"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "11497898",
+          "description": "TELA APLICACAO DE PENEIRA VIBRATORIA, MODELO F-CLASS 2.4X6.1, COM FABRICANTE HAVER, REFERENCIA FABRICANTE HB-565927",
+          "manufacturer_column": "HAVER",
+          "reference_column": "HB-565927"
+        },
+        {
+          "code": "23639499",
+          "description": "TELA COM APLIC PENEIRA VIBRATORIA F-CLASS 2.4X6.1 FABR DE HAVER REFERENCIA FABRICANTE HB-565927 MATERIAL POLIURETANO",
+          "manufacturer_column": "HAVER",
+          "reference_column": "HB-565927"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "12134343",
+        "14754889",
+        "24352509"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "PDM_INVALIDO: membro 14754889 não atende ao PDM (faltam MODELO EQUIPAMENTO)"
+      ],
+      "descriptions": [
+        {
+          "code": "12134343",
+          "description": "PASTILHA FREIO PARA DE CAMINHAO FORA DE ESTRADA 793F FABR CATERPILLAR REFERENCIA FABRICANTE 0298821",
+          "manufacturer_column": "",
+          "reference_column": "029-8821"
+        },
+        {
+          "code": "14754889",
+          "description": "PASTILHA FREIO CAMINHAO FORA DE ESTRADA 029-8821 CATERPILLAR",
+          "manufacturer_column": "CATERPILLAR",
+          "reference_column": "029-8821"
+        },
+        {
+          "code": "24352509",
+          "description": "PASTILHA FREIO - EQUIP:793F - USO:CAMINHAO FORA DE ESTRADA - CATERPILLAR",
+          "manufacturer_column": "CATERPILLAR",
+          "reference_column": "0298821"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "13627354",
+        "25380278"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "13627354",
+          "description": "LEVANTADOR, USO:MOINHO BOLAS, MATERIAL:ACO MANGANES, EQUIP:MB 4.2X6.8",
+          "manufacturer_column": "FLSMIDTH",
+          "reference_column": "6240643888"
+        },
+        {
+          "code": "25380278",
+          "description": "LEVANTADOR COM APLICACAO MOINHO BOLAS MB 4.2X6.8 FAB FLSMIDTH REF FABRICANTE 6240643888 COM MAT ACO MANGANES",
+          "manufacturer_column": "FLSMIDTH",
+          "reference_column": "6240643888"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "14180869",
+        "18325817",
+        "21120998"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "UNIDADE_SEM_FATOR: consolidacao de quantidade bloqueada ate definir a conversao",
+        "NCM_DIVERGENTE: exige revisao fiscal"
+      ],
+      "descriptions": [
+        {
+          "code": "14180869",
+          "description": "LAMINA RASPADOR CORREIA TRANSPORTADORA TC 25 MARTIN ENGINEERING 17621GG",
+          "manufacturer_column": "MARTIN ENGINEERING",
+          "reference_column": ""
+        },
+        {
+          "code": "18325817",
+          "description": "LAMINA RASPADOR APLIC DE CORREIA TRANSPORTADORA TC-25 COM MARCA MARTIN ENGINEERING COD FABRICANTE 17621-GG",
+          "manufacturer_column": "",
+          "reference_column": "17621-GG"
+        },
+        {
+          "code": "21120998",
+          "description": "LAMINA RASPADOR CORREIA TRANSPORTADORA TC-25 MARTIN ENGINEERING 17621-GG",
+          "manufacturer_column": "MARTIN ENGINEERING",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "14836953",
+        "20794679",
+        "24752660"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "14836953",
+          "description": "TAMBOR RETORNO - PARA:CORREIA TRANSPORTADORA - EQUIP:TC-04 - CONTINENTAL - REF:CT4766978",
+          "manufacturer_column": "CONTINENTAL",
+          "reference_column": "CT4766978"
+        },
+        {
+          "code": "20794679",
+          "description": "TAMBOR RETORNO; APLICACAO: CORREIA TRANSPORTADORA; MODELO EQUIPAMENTO: TC-04; FABRICANTE: CONTINENTAL; REFERENCIA FABRICANTE: CT4766978",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "24752660",
+          "description": "TAMBOR RETORNO APLICACAO DE CORREIA TRANSPORTADORA TC-04 FABR CONTINENTAL PN CT4766978 CONF AMOSTRA",
+          "manufacturer_column": "CONTINENTAL",
+          "reference_column": "CT4766978"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "15007434",
+        "26801114"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [
+        "UNIDADES_DIFERENTES: consolidacao de quantidade bloqueada ate definir a conversao",
+        "NCM_DIVERGENTE: exige revisao fiscal",
+        "PDM_INVALIDO: resultado não atende ao PDM (UNIDADE inválido (UNIT_NOT_CLASS_DEFAULT))"
+      ],
+      "descriptions": [
+        {
+          "code": "15007434",
+          "description": "AMORTECEDOR, PARA: PENEIRA VIBRATORIA, EQUIP: LUDOWICI 3.6X8.5, FABRICANTE: FLSMIDTH, COD FABRICANTE: 7798317580",
+          "manufacturer_column": "FLSMIDTH",
+          "reference_column": ""
+        },
+        {
+          "code": "26801114",
+          "description": "AMORTECEDOR COM USO PENEIRA VIBRATORIA LUDOWICI 3.6X8.5 MARCA FLSMIDTH REF FABRICANTE 7798317580",
+          "manufacturer_column": "",
+          "reference_column": "7798317580"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "15509061",
+        "29333545"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "15509061",
+          "description": "ROTOR APLICACAO BOMBA CENTRIFUGA AHLSTAR A2280 COM MARCA SULZER REF FABRICANTE 791325-695 MATERIAL DE CF8M",
+          "manufacturer_column": "SULZER",
+          "reference_column": "791325-695"
+        },
+        {
+          "code": "29333545",
+          "description": "ROTOR BOMBA CENTRIFUGA AHLSTAR A22-80 PN 791325-695 SULZER",
+          "manufacturer_column": "SULZER",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "15761860",
+        "18428928",
+        "21776371"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "15761860",
+          "description": "CHAPA LATERAL; APLICACAO: BRITADOR MANDIBULA; MODELO EQUIPAMENTO: CJ412; FABRICANTE: SANDVIK; REFERENCIA FABRICANTE: 700.3322-11",
+          "manufacturer_column": "SANDVIK",
+          "reference_column": "700.3322-11"
+        },
+        {
+          "code": "18428928",
+          "description": "CHAPA LATERAL, APLICACAO:BRITADOR MANDIBULA, MODELO EQUIPAMENTO:CJ412, MARCA:SANDVIK, PART NUMBER:700.332211",
+          "manufacturer_column": "SANDVIK",
+          "reference_column": ""
+        },
+        {
+          "code": "21776371",
+          "description": "CHAPA LATERAL COM APLIC BRITADOR MANDIBULA CJ412 FAB DE SANDVIK REF 7003322-11",
+          "manufacturer_column": "SANDVIK",
+          "reference_column": "700.3322-11"
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "19866487",
+        "27047995"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "19866487",
+          "description": "PASTILHA FREIO CAMINHAO FORA DE ESTRADA 830E KOMATSU 540-86-31930",
+          "manufacturer_column": "",
+          "reference_column": ""
+        },
+        {
+          "code": "27047995",
+          "description": "PASTILHA FREIO USO DE CAMINHAO FORA DE ESTRADA 830E KOMATSU P/N 5408631930",
+          "manufacturer_column": "KOMATSU",
+          "reference_column": ""
+        }
+      ]
+    },
+    {
+      "kind": "changed_existing",
+      "codes": [
+        "21782764",
+        "24486260"
+      ],
+      "same_item": true,
+      "review_kind": "DEVELOPMENT_TEXT_REVIEW",
+      "independent": false,
+      "note": "Descrições e atributos/referência/fabricante quando informados sustentam equivalência textual; conflitos de unidade/NCM/PDM continuam para aprovação manual.",
+      "conflicts": [],
+      "descriptions": [
+        {
+          "code": "21782764",
+          "description": "EIXO ENTRADA - APLIC:REDUTOR - MODELO:B3SH 11 - FABR:FLENDER - REFERENCIA FABRICANTE:J5177-251361",
+          "manufacturer_column": "FLENDER",
+          "reference_column": ""
+        },
+        {
+          "code": "24486260",
+          "description": "EIXO ENTRADA COM APLICACAO REDUTOR B3SH 11 MARCA DE FLENDER REFERENCIA FABRICANTE J5177-251361",
+          "manufacturer_column": "",
+          "reference_column": ""
+        }
+      ]
+    }
+  ]
+}

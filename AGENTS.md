@@ -254,7 +254,7 @@ Each piece of work follows the same path:
 2. **Branch:** create a branch for it from an up-to-date `main`.
 3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
 4. **PR:** [update and rebase on `main`](#before-opening-a-pr), then open a pull request, closing the issue.
-5. **Merge:** rebase-merge once checks pass, and delete the branch.
+5. **Merge:** rebase-merge once checks pass, then complete [the branch cleanup](#after-merging).
 
 ## Issues and milestones
 
@@ -374,10 +374,25 @@ The author must:
 Authors may merge their own PRs, and reviews are welcome when a change is risky. Merge with rebase, to keep atomic commits on a linear `main`:
 
 ```bash
-gh pr merge <n> --rebase --delete-branch
+gh pr merge <n> --rebase
 ```
 
 Never force-push `main` or a branch someone else is using.
+
+### After merging
+
+**Required for people and agents. Branch cleanup is part of completing the work.**
+
+1. Confirm the PR is `MERGED` into its intended base. A closed PR alone is not proof of integration.
+2. Run `git fetch origin --prune` and check each remaining issue branch individually. Its current tip must match the merged PR head, with no later work to preserve. Keep `main`, `homologacao`, and branches serving as the head or base of an open PR.
+3. If the remote branch still exists, delete only the verified tip, so a concurrent push cancels the deletion:
+
+   ```bash
+   git push --force-with-lease=refs/heads/<branch>:<verified-sha> origin :refs/heads/<branch>
+   ```
+
+4. Check `git worktree list` before local cleanup. From a clean checkout on another branch, delete the completed local branch with `git branch -d <branch>`. After a rebase or squash merge, Git may not recognize it as merged: use `-D` only after verifying that all changes are integrated and no local work remains. Preserve branches checked out in another worktree and report the pending cleanup.
+5. Run `git fetch origin --prune` again and verify the remote branch and any removable local copy are gone. Report which branches were deleted and why any were kept; cleanup is complete only after this check or an explicit explanation of what remains blocked.
 
 ## Code style and avoiding conflicts
 
@@ -503,6 +518,8 @@ Extraction prefers leaving a field empty to guessing, because a wrong value can 
 Orders and chat messages arrive as sentences and lines. A value followed by sentence punctuation is read without it (`DIN 933.` is `DIN 933`), while a period followed by a letter or digit stays part of the value (`8.8`, `ASME B18.2.1`, and `DIN 931.1` doesn't match `DIN 931`). A line break, with its bullet, separates items, and so does a period before a new `LABEL:`. A period followed by a space alone doesn't, since `REF. 123` is an abbreviation. Base descriptions have no line breaks or trailing periods, so these rules change orders and chat only.
 
 Reordered words may match a PDM value only when all its words are present; an incomplete value is never completed just because only one PDM option contains it. `FERRO FUNDIDO` does not establish `FERRO FUNDIDO NODULAR`, and `FEMEA BSP` does not establish a straight fitting. Explicit aliases and complete values still work. With shared identity-v3 and sentence/line parsing, #133 uses extraction revision `5`: rebuild the search index through `docker compose up --build` or `docker compose run --rm --build batch` after updating. Development counts, coverage held for review and the unchanged historical labels are recorded in [the extraction measurement](docs/extracao-valores-explicitos.md).
+
+For labels without separators, preserve the remaining attributes after a whole matched prefix. Generic `ZINCADO` stays pending; `ZINCADO BRANCO` supplies the complete finish. Boundary rules, all changed-value evidence, merge reviews and index-only rebuild instructions: [label boundaries](docs/label-boundaries.md).
 
 ## Duplicate proposals
 
@@ -688,7 +705,7 @@ The API serves the static build from the same origin, so there's no SSR, route h
 
 - `data/desafio01/` is original input. Never edit it.
 - `vx-bootstrap` loads values exactly as they came, and copies the original files to storage. Corrections only happen later, through approved proposals.
-- Files go through `clients/storage.py`, using a local folder by default and S3 with `STORAGE_BACKEND=s3`. Stored files are immutable.
+- Files go through `clients/storage.py`, using a local folder by default and S3 with `STORAGE_BACKEND=s3`. Stored files are immutable, including concurrent writes: local files are published complete with an atomic hard link; S3 creates with `If-None-Match: *`. Repeating the same content reuses the winner and its version; different content raises a conflict.
 - Data stays in the repo so anyone, judges included, can run the project from a clone. Review this once the database exists.
 - Data is synthetic, except that the last 15 base records are real products. Those are the only ones to enrich from public sources, and each value must record its source.
 

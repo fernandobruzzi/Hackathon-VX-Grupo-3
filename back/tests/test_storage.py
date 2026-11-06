@@ -59,3 +59,132 @@ def test_backend_comes_from_environment(monkeypatch, tmp_path):
     monkeypatch.setenv("STORAGE_BACKEND", "outro")
     with pytest.raises(ValueError, match="local, s3"):
         get_object_store()
+
+
+@pytest.mark.parametrize("same_content", [False, True])
+def test_concurrent_local_writers(tmp_path, monkeypatch, same_content):
+    from concurrent.futures import ThreadPoolExecutor
+    from pathlib import Path
+    from threading import Barrier
+
+    barrier = Barrier(2)
+    original_exists = Path.exists
+    target = tmp_path / "object"
+
+    def exists(path):
+        result = original_exists(path)
+        if path == target and not result:
+            barrier.wait(timeout=5)
+        return result
+
+    monkeypatch.setattr(Path, "exists", exists)
+    store = LocalObjectStore(tmp_path)
+    contents = [b"a" * 100000, (b"a" if same_content else b"b") * 100000]
+
+    def write(content):
+        try:
+            return store.put_if_absent("object", content)
+        except ObjectConflictError:
+            return None
+
+    with ThreadPoolExecutor(2) as pool:
+        results = list(pool.map(write, contents))
+    assert sum(result is not None for result in results) == (2 if same_content else 1)
+    assert store.get("object") in contents
+    assert list(tmp_path.iterdir()) == [target]
+
+
+def test_local_publishes_only_complete_file(tmp_path, monkeypatch):
+    import os
+
+    called = []
+    original_link = os.link
+    content = b"complete" * 10000
+
+    def link(source, destination):
+        assert not destination.exists()
+        assert source.read_bytes() == content
+        called.append(True)
+        original_link(source, destination)
+        assert destination.read_bytes() == content
+
+    monkeypatch.setattr(os, "link", link)
+    LocalObjectStore(tmp_path).put_if_absent("object", content)
+    assert called
+
+
+@pytest.mark.parametrize("same_content", [False, True])
+def test_concurrent_s3_writers(same_content):
+    import hashlib
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier, Lock
+
+    from botocore.exceptions import ClientError
+
+    class Client:
+        def __init__(self):
+            self.barrier = Barrier(2)
+            self.lock = Lock()
+            self.saved = None
+            self.puts = 0
+
+        def head_object(self, **kwargs):
+            if self.saved is None:
+                raise ClientError({"Error": {"Code": "404"}}, "HeadObject")
+            return {"Metadata": self.saved["Metadata"], "VersionId": "winner"}
+
+        def put_object(self, **kwargs):
+            self.barrier.wait(timeout=5)
+            with self.lock:
+                self.puts += 1
+                if self.saved is not None and kwargs.get("IfNoneMatch") == "*":
+                    raise ClientError({"Error": {"Code": "PreconditionFailed"}}, "PutObject")
+                self.saved = kwargs
+                return {"VersionId": "winner"}
+
+    client = Client()
+    store = S3ObjectStore("kit", client)
+    contents = [b"a", b"a" if same_content else b"b"]
+
+    def write(content):
+        try:
+            return store.put_if_absent("object", content)
+        except ObjectConflictError:
+            return None
+
+    with ThreadPoolExecutor(2) as pool:
+        results = list(pool.map(write, contents))
+    assert sum(result is not None for result in results) == (2 if same_content else 1)
+    assert client.saved["Body"] in contents
+    assert client.saved["Metadata"]["sha256"] == hashlib.sha256(client.saved["Body"]).hexdigest()
+    assert all(result.version_id == "winner" for result in results if result is not None)
+
+
+def test_s3_retries_conditional_request_conflict():
+    from unittest.mock import Mock
+
+    from botocore.exceptions import ClientError
+
+    client = Mock()
+    client.head_object.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
+    client.put_object.side_effect = [
+        ClientError({"Error": {"Code": "ConditionalRequestConflict"}}, "PutObject"),
+        {"VersionId": "created"},
+    ]
+    result = S3ObjectStore("kit", client).put_if_absent("object", b"a")
+    assert result.version_id == "created"
+    assert client.put_object.call_count == 2
+    assert all(call.kwargs["IfNoneMatch"] == "*" for call in client.put_object.call_args_list)
+
+
+def test_s3_does_not_retry_unrelated_errors():
+    from unittest.mock import Mock
+
+    from botocore.exceptions import ClientError
+
+    client = Mock()
+    client.head_object.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
+    client.put_object.side_effect = ClientError({"Error": {"Code": "AccessDenied"}}, "PutObject")
+    with pytest.raises(ClientError, match="AccessDenied"):
+        S3ObjectStore("kit", client).put_if_absent("object", b"a")
+    assert client.put_object.call_count == 1

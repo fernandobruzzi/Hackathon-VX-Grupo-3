@@ -6,6 +6,7 @@ chave é um erro.
 
 import hashlib
 import os
+import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -48,7 +49,20 @@ class LocalObjectStore:
                 raise ObjectConflictError(f"Conteudo diferente em {key}")
             return StoredObject(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(content)
+        # O hard link publica o inode completo e nunca substitui uma chave existente.
+        with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as staged:
+            temporary = Path(staged.name)
+            try:
+                staged.write(content)
+                staged.flush()
+                os.fsync(staged.fileno())
+                try:
+                    os.link(temporary, path)
+                except FileExistsError:
+                    if path.read_bytes() != content:
+                        raise ObjectConflictError(f"Conteudo diferente em {key}") from None
+            finally:
+                temporary.unlink()
         return StoredObject(key)
 
     def get(self, key: str) -> bytes:
@@ -81,10 +95,27 @@ class S3ObjectStore:
             if head["Metadata"].get(_SHA256_METADATA) != digest:
                 raise ObjectConflictError(f"Conteudo diferente em {key}")
             return StoredObject(key, head.get("VersionId"))
-        result = self._client.put_object(
-            Bucket=self._bucket, Key=key, Body=content, Metadata={_SHA256_METADATA: digest}
-        )
-        return StoredObject(key, result.get("VersionId"))
+        for attempt in range(3):
+            try:
+                result = self._client.put_object(
+                    Bucket=self._bucket,
+                    Key=key,
+                    Body=content,
+                    Metadata={_SHA256_METADATA: digest},
+                    IfNoneMatch="*",
+                )
+                return StoredObject(key, result.get("VersionId"))
+            except ClientError as error:
+                code = error.response["Error"]["Code"]
+                if code in ("409", "ConditionalRequestConflict") and attempt < 2:
+                    continue
+                if code not in ("412", "PreconditionFailed"):
+                    raise
+                head = self._client.head_object(Bucket=self._bucket, Key=key)
+                if head["Metadata"].get(_SHA256_METADATA) != digest:
+                    raise ObjectConflictError(f"Conteudo diferente em {key}") from None
+                return StoredObject(key, head.get("VersionId"))
+        raise AssertionError("Unreachable conditional write")
 
     def get(self, key: str) -> bytes:
         return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()

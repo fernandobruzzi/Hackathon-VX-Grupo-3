@@ -376,3 +376,93 @@ def test_psi_conversion_keeps_the_original_and_the_rule(catalog):
     pressure = result.attributes["PRESSAO TRABALHO"]
     assert (pressure.value, pressure.rule) == ("10BAR", "measure.psi_to_bar")
     assert "145" in pressure.original
+
+
+@pytest.mark.parametrize("finish", ["ZINCADO BRANCO", "GALVANIZADO A FOGO"])
+def test_unseparated_label_stops_before_other_attributes(catalog, finish):
+    text = f"parafuso sextavado M12 x 50 classe 8.8 aco carbono {finish} DIN 933."
+    result = RuleBasedV1ExtractionRepository().extract(catalog.classes["PDM001"], text)
+    found = {name: attribute.value for name, attribute in result.attributes.items()}
+    assert found["CLASSE RESISTENCIA"] == "8.8"
+    assert found["MATERIAL"] == "ACO CARBONO"
+    assert found["NORMA"] == "DIN 933"
+    assert found["ACABAMENTO"] == finish
+    assert result.attributes["CLASSE RESISTENCIA"].original == "CLASSE: 8.8"
+
+
+@pytest.mark.parametrize("finish", ["ZINCADO", "ZINCADO A FOGO"])
+def test_label_tail_does_not_guess_an_unsupported_finish(catalog, finish):
+    result = RuleBasedV1ExtractionRepository().extract(
+        catalog.classes["PDM001"], f"parafuso sextavado M12 x 50 classe 8.8 aco carbono {finish} DIN 933"
+    )
+    assert "ACABAMENTO" not in result.attributes
+    assert result.attributes["MATERIAL"].value == "ACO CARBONO"
+    assert result.attributes["NORMA"].value == "DIN 933"
+    assert any(finish in text for text in result.unresolved)
+
+
+@pytest.mark.parametrize("strength", ["8.8X", "8.8.1", "8.9"])
+def test_invalid_labeled_value_does_not_consume_other_attributes(catalog, strength):
+    result = RuleBasedV1ExtractionRepository().extract(
+        catalog.classes["PDM001"], f"parafuso sextavado classe {strength} aco carbono zincado branco DIN 933"
+    )
+    assert "CLASSE RESISTENCIA" not in result.attributes
+    assert result.attributes["MATERIAL"].value == "ACO CARBONO"
+    assert result.attributes["ACABAMENTO"].value == "ZINCADO BRANCO"
+    assert any(strength in text for text in result.unresolved)
+
+
+def test_real_order_keeps_values_when_strength_is_labeled(catalog):
+    from pipelines.import_orders import read_orders
+
+    orders = read_orders((KIT.parent / "02_pedidos_cadastro.csv").read_bytes())
+    text = next(order.original_text for order in orders if order.source_order_id == "SC-202600037")
+    original = values(catalog, "PDM001", text)
+    assert values(catalog, "PDM001", text.replace("5.8", "classe 5.8")) == original
+    assert original["MATERIAL"] == "ACO CARBONO"
+    assert original["ACABAMENTO"] == "ZINCADO BRANCO"
+    assert original["NORMA"] == "DIN 933"
+
+
+def test_real_attachment_preserves_multiword_labeled_material(catalog):
+    from pipelines.import_orders import read_orders
+
+    orders = read_orders((KIT.parent / "02_pedidos_cadastro.csv").read_bytes())
+    order = next(order for order in orders if order.source_order_id == "SC-202600351")
+    text = order.attachment_text
+    assert text
+    original = values(catalog, "PDM040", text)
+    unseparated = text.replace(":", " ").replace("\n", " ")
+    assert values(catalog, "PDM040", unseparated) == original
+    assert original["MATERIAL CORPO"] == "ACO CARBONO FORJADO A105"
+
+
+def test_partial_terminal_prefix_does_not_invent_a_more_specific_terminal(catalog):
+    # Linha 23969949: ORFS FEMEA não informa curva90; o texto completo seguinte informa DKO.
+    text = (
+        "MANGUEIRA HIDRAULICA MONTADA EN 856 4SP 1POL PRESSAO TRAB 280 BAR C DE 900MM "
+        "TERMINAL A DE ORFS FEMEA FEMEA CURVA 90 GRAUS DKO COM MATERIAL TERMINAIS ACO ZINCADO"
+    )
+    found = values(catalog, "PDM011", text)
+    assert found.get("TERMINAL A") != "FEMEA CURVA 90 GRAUS ORFS"
+
+
+def test_fraction_inside_length_is_not_the_bolt_gauge(catalog):
+    # Linha 17048908: 1POL é a bitola, 2 1/4POL é a medida seguinte.
+    found = values(
+        catalog,
+        "PDM001",
+        (
+            "PARAFUSO SEXTAVADO ROSCA DE UNF 1POL 2 1/4POL CL SAE GRAU 5 "
+            "COM MAT ACO CARB ACAB DE ZINCADO BRANCO ASME B18.2.1"
+        ),
+    )
+    assert found.get("BITOLA") == "1POL"
+
+
+@pytest.mark.parametrize("code", ["28442101", "17764693"])
+def test_reinforced_ptfe_tail_keeps_its_explicit_qualification(catalog, code):
+    from pipelines.measure_extraction import read_rows
+
+    text = next(row.description for row in read_rows() if row.code == code)
+    assert values(catalog, "PDM040", text)["VEDACAO SEDE"] == "RPTFE"
