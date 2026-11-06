@@ -1805,5 +1805,107 @@
       },
       "audit_event_id": "77777777-7777-4777-8777-777777777777"
     }
+  },
+  {
+    "name": "chat-list",
+    "path": "/api/v1/chat/sessions",
+    "method": "get",
+    "status": 200,
+    "params": {},
+    "response": {
+      "items": [
+        {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "title": "Parafuso M12",
+          "updated_at": "2026-11-06T12:00:00Z"
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "chat-read",
+    "path": "/api/v1/chat/sessions/{session_id}",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "session_id": "33333333-3333-4333-8333-333333333333"
+    },
+    "response": {
+      "session_id": "33333333-3333-4333-8333-333333333333",
+      "session_version": 1,
+      "processing": false,
+      "center_code": "1200",
+      "messages": [],
+      "calls": [
+        {
+          "turn": 1,
+          "call": {
+            "id": "tool-call-001",
+            "name": "get_pdm_template",
+            "transport": "MCP_STDIO",
+            "input": {
+              "pdm_class_id": "PDM001",
+              "pdm_version": "pdm-kit-v1"
+            },
+            "status": "SUCCEEDED",
+            "result": {
+              "required_attributes_count": 7
+            }
+          }
+        },
+        {
+          "turn": 1,
+          "call": {
+            "id": "tool-call-002",
+            "name": "validate_and_format_pdm",
+            "transport": "MCP_STDIO",
+            "input": {
+              "pdm_class_id": "PDM001",
+              "pdm_version": "pdm-kit-v1",
+              "attributes": {
+                "ROSCA": "METRICA GROSSA",
+                "BITOLA": "M12",
+                "COMPRIMENTO": "50MM",
+                "MATERIAL": "ACO CARBONO",
+                "ACABAMENTO": "ZINCADO BRANCO",
+                "NORMA": "DIN 933"
+              }
+            },
+            "status": "SUCCEEDED",
+            "result": {
+              "validation_status": "INCOMPLETE",
+              "missing_attributes": [
+                "CLASSE RESISTENCIA"
+              ]
+            }
+          }
+        }
+      ],
+      "material_card": {
+        "pdm_class_id": "PDM001",
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M12",
+          "COMPRIMENTO": "50MM",
+          "CLASSE RESISTENCIA": null,
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO BRANCO",
+          "NORMA": "DIN 933"
+        },
+        "pdm_description": null,
+        "validation_status": "INCOMPLETE",
+        "missing_attributes": [
+          "CLASSE RESISTENCIA"
+        ],
+        "ncm": {
+          "suggested": "7318.15.00",
+          "status": "PENDING_VALIDATION"
+        },
+        "duplicate_check_status": "PENDING",
+        "can_submit": false
+      },
+      "order_id": "44444444-4444-4444-8444-444444444444"
+    }
   }
 ]

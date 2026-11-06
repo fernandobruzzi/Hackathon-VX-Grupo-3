@@ -95,3 +95,7 @@ build; sessão local e contrato privado do produtor estão descritos em
 Os mocks têm IDs amigáveis para o export estático; as fixtures de integração usam
 UUIDs. A troca do provedor de sessão está em #7 e a ligação das telas ocorre nas
 issues de cada fluxo.
+
+As leituras `GET /api/v1/chat/sessions` e `/api/v1/chat/sessions/{session_id}` retomam apenas
+conversas do dono no mesmo tenant. A lista aceita paginação; a leitura devolve todo o histórico,
+ficha, versão e chamadas persistidas, sem executar o Agent. Veja [retomada do chat](../../docs/chat-history.md).
