@@ -7,12 +7,13 @@ ensaio começar igual ao pitch.
 ## O que o reset faz
 
 1. Apaga o estado operacional: auditoria, idempotência, consolidações de estoque, conversas,
-   pedidos, enriquecimento, propostas, índice de busca, jobs, saldos, materiais e datasets.
+   snapshots de qualidade, pedidos, enriquecimento, propostas, índice de busca, jobs, saldos, materiais e datasets.
 2. Garante as contas das três personas (`SOLICITANTE_OPERACAO`, `GESTOR_CADASTRO` e
    `AUDITOR_FISCAL`), ativas e com o papel fixo do servidor.
 3. Recarrega o kit como veio, com os mesmos identificadores do `vx-bootstrap`.
 4. Refaz o índice de busca e as propostas, com as mesmas regras do batch.
-5. Importa os 520 pedidos do kit em rascunho (`IMPORT`, `DRAFT`, sem solicitante).
+5. Importa os 520 pedidos do kit pela mesma importação de `vx-import-orders` (`IMPORT`, sem
+   solicitante), já analisados contra o PDM e o índice. O resumo traz a contagem por status.
 6. Escolhe as propostas do roteiro e imprime um resumo em JSON.
 
 Ficam como estavam: usuários, sessões de login, versões de referência e arquivos no
@@ -79,8 +80,6 @@ houver:
 
 ## Limites
 
-- Os pedidos entram como vieram, sem análise. Distinguir incompleto, existente e fora de escopo
-  é da #24.
 - O enriquecimento dos produtos reais (#23) é apagado com os materiais. Quando ele tiver um
   comando, o reset deve chamá-lo também.
 - Contas do Cognito não são criadas pelo reset. Conversas e pedidos próprios de cada persona

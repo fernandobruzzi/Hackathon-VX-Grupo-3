@@ -9,14 +9,11 @@ Só roda com DEMO_MODE=true e com o nome do banco confirmado: ele apaga dados.
 """
 
 import argparse
-import csv
 import hashlib
-import io
 import json
 import os
 import sys
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, func, select, text
@@ -27,6 +24,7 @@ from sqlalchemy.orm import Session
 from clients.storage import ObjectStore, get_object_store
 from domain.pdm_loader import load_pdm
 from pipelines.full_run import run_sanitize
+from pipelines.import_orders import read_orders
 from pipelines.search_index import run_index
 from vx_materials_api import settings
 from vx_materials_api.bootstrap import ORDERS_FILE, PDM_FILE, TENANT_ID, bootstrap
@@ -42,12 +40,15 @@ from vx_materials_api.errors import ApiError
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.local_session import CENTERS
 from vx_materials_api.security.permissions import PERSONA_ROLES, permissions_for
+from vx_materials_api.services.order_service import import_orders as import_order_rows
 
 # Estado operacional apagado a cada reset, em ordem compatível com as chaves estrangeiras.
 # Lista explícita, sem CASCADE: uma tabela nova que dependa destas faz o reset falhar em vez de
 # ser apagada sem revisão. Usuários e sessões de login ficam: o reset não desloga as personas.
 OPERATIONAL_TABLES = (
     "audit_logs",
+    "quality_snapshot_items",
+    "quality_snapshots",
     "operation_requests",
     "inventory_consolidations",
     "chat_messages",
@@ -62,7 +63,6 @@ OPERATIONAL_TABLES = (
     "datasets",
 )
 LOCAL_ISSUER = "local-test"
-ORDER_NAMESPACE = uuid.uuid5(TENANT_ID, "registration-orders")
 # Classe do roteiro do pitch (parafuso sextavado): propostas dela vêm primeiro na seleção.
 PITCH_CLASS = "PDM001"
 SELECTION_LIMIT = 300
@@ -118,35 +118,11 @@ def ensure_personas(engine: Engine) -> dict[str, str]:
     return {persona: str(persona_user_id(persona)) for persona in PERSONA_ROLES}
 
 
-def _center(value: str) -> str | None:
-    code = value.split("-", 1)[0].strip()
-    return code or None
-
-
-def import_orders(engine: Engine, data_dir: Path) -> int:
-    """Pedidos do kit como vieram, em rascunho e sem solicitante. A análise de cada um fica com a #24."""
-    content = (data_dir / ORDERS_FILE).read_bytes().decode("utf-8-sig")
-    rows = list(csv.DictReader(io.StringIO(content, newline="")))
-    values = [
-        {
-            "id": uuid.uuid5(ORDER_NAMESPACE, row["ID_PEDIDO"]),
-            "tenant_id": TENANT_ID,
-            "source_order_id": row["ID_PEDIDO"],
-            "origin": "IMPORT",
-            "original_text": row["TEXTO_SOLICITACAO"],
-            "attachment_text": row["CONTEUDO_ANEXO"] or None,
-            "center_code": _center(row["CENTRO"]),
-            "urgency": row["URGENCIA"] or None,
-            "status": "DRAFT",
-            "created_at": datetime.fromisoformat(row["DATA_SOLICITACAO"]).replace(tzinfo=UTC),
-            "updated_at": datetime.fromisoformat(row["DATA_SOLICITACAO"]).replace(tzinfo=UTC),
-        }
-        for row in rows
-    ]
-    with engine.begin() as connection:
-        statement = insert(RegistrationOrder).values(values)
-        connection.execute(statement.on_conflict_do_nothing(index_elements=["tenant_id", "source_order_id"]))
-    return len(values)
+def import_orders(engine: Engine, data_dir: Path, catalog) -> dict:
+    """Pedidos do kit pela mesma importação da #24, já analisados contra o PDM e o índice."""
+    rows = read_orders((data_dir / ORDERS_FILE).read_bytes())
+    with Session(engine) as db:
+        return import_order_rows(db, TENANT_ID, catalog, rows)
 
 
 def _reviewer() -> Identity:
@@ -233,8 +209,9 @@ def fingerprint(engine: Engine) -> dict:
             ).order_by(SanitizationProposal.id)
         ).all()
         orders = db.execute(
-            select(RegistrationOrder.id, RegistrationOrder.status, RegistrationOrder.version).order_by(
-                RegistrationOrder.id
+            # Pelo id do kit: o identificador interno do pedido é gerado pelo banco.
+            select(RegistrationOrder.source_order_id, RegistrationOrder.status, RegistrationOrder.version).order_by(
+                RegistrationOrder.source_order_id
             )
         ).all()
         counts = {
@@ -245,7 +222,13 @@ def fingerprint(engine: Engine) -> dict:
             "audit_events": db.scalar(select(func.count()).select_from(AuditLog)),
             "chat_sessions": db.scalar(select(func.count()).select_from(ChatSession)),
         }
-        for table in ("operation_requests", "inventory_consolidations", "batch_jobs", "material_search_index"):
+        for table in (
+            "operation_requests",
+            "inventory_consolidations",
+            "batch_jobs",
+            "material_search_index",
+            "quality_snapshots",
+        ):
             counts[table] = db.scalar(text(f"SELECT count(*) FROM {table}"))
     state = json.dumps([[list(map(str, row)) for row in rows] for rows in (materials, proposals, orders)])
     digest = hashlib.sha256((state + json.dumps(counts, sort_keys=True)).encode()).hexdigest()
@@ -268,8 +251,9 @@ def reset(
         loaded = bootstrap(directory, engine, store)
         index = run_index(workbook, database_url=database_url)
         sanitize = run_sanitize(workbook, database_url=database_url)
-        orders = import_orders(engine, directory)
-        picks = select_demo_proposals(engine, load_pdm(workbook))
+        catalog = load_pdm(workbook)
+        orders = import_orders(engine, directory, catalog)
+        picks = select_demo_proposals(engine, catalog)
         state = fingerprint(engine)
     finally:
         engine.dispose()
@@ -278,7 +262,8 @@ def reset(
         "personas": personas,
         "index_version": index.get("index_version"),
         "proposals_by_type": sanitize["by_type"],
-        "orders_imported": orders,
+        "orders_imported": orders["inserted"],
+        "orders_by_status": orders["by_status"],
         "demo_proposals": picks,
         "state": state,
     }
