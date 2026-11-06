@@ -16,7 +16,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
-| `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo seed remains separate |
+| `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo reset implemented |
 | `deployment/` | Explicit AWS configuration and deployment runbook | Local preparation; account validation still required |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
 | `design/` | Presentation template and design system, source for brand values | Reference |
@@ -78,6 +78,12 @@ uv run vx-bootstrap --data-dir ../data/desafio01
 ```
 
 Schema changes need a new migration in `api/vx_materials_api/db/migrations/versions/`. Tests fail if models and migrations differ.
+
+Reset the demo state before each rehearsal, from the repo root with the stack up. It wipes approvals, audit, chat and orders, reloads the kit and rebuilds proposals, always to the same state. It refuses to run without `DEMO_MODE=true` ([details](docs/demo.md)):
+
+```bash
+DEMO_MODE=true scripts/load_demo_data.sh
+```
 
 Propose merges and corrections without writing anything, from `back/`:
 
