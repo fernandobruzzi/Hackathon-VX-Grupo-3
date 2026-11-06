@@ -84,6 +84,8 @@ def material_state(material: MaterialMaster) -> dict:
         "unit": material.unit,
         "ncm": material.ncm,
         "ncm_review_status": material.ncm_review_status,
+        "original_merchandise_group": material.original_merchandise_group,
+        "merchandise_group": material.merchandise_group,
         "identity_key": material.identity_key,
         "manufacturer": material.manufacturer,
         "manufacturer_reference": material.manufacturer_reference,
@@ -249,6 +251,32 @@ def _validation(catalog, item, unit=None):
     return validation
 
 
+def merchandise_group(material: MaterialMaster) -> str | None:
+    """Grupo vigente: o revisado, se aprovado, senão o original da carga."""
+    return material.merchandise_group or material.original_merchandise_group
+
+
+def _group_changed_since_proposal(changes: ProposalChangeset, materials) -> bool:
+    proposed = next((change for change in changes.changes if change.field == "merchandise_group"), None)
+    return proposed is not None and any(merchandise_group(m) != proposed.before for m in materials)
+
+
+def _check_group(catalog, proposal, changes, materials):
+    group = changes.after.merchandise_group
+    if group is None:
+        return None
+    if proposal.proposal_type != "PDM_CORRECTION" or len(materials) != 1:
+        raise ApiError(422, "INVALID_PROPOSAL", "Grupo de mercadorias so muda por correcao de PDM de um material.")
+    pdm_class = catalog.classes.get(changes.after.pdm_class_id)
+    if pdm_class is None or pdm_class.group != group:
+        raise ApiError(422, "GROUP_MISMATCH", "O grupo proposto difere do grupo da classe PDM confirmada.")
+    if merchandise_group(materials[0]) != group and not changes.sources.get("merchandise_group", "").strip():
+        raise ApiError(
+            422, "SOURCE_REQUIRED", "Toda alteracao deve registrar sua regra ou fonte.", field="merchandise_group"
+        )
+    return group
+
+
 def _check_review_bindings(db, proposal):
     for area, status in [("TECHNICAL", proposal.technical_review_status), ("FISCAL", proposal.fiscal_review_status)]:
         if status != "APPROVED":
@@ -340,6 +368,7 @@ def decide_proposal(
             m.version != next(i.expected_version for i in interpretations if i.material_id == m.id) for m in materials
         )
         or not _check_review_bindings(db, proposal)
+        or _group_changed_since_proposal(changes, materials)
     )
     if stale:
         proposal.status = "STALE"
@@ -410,6 +439,7 @@ def _decide_current(
         validation = _validation(
             catalog, changes.after, changes.after.unit if proposal.technical_review_status != "NOT_REQUIRED" else None
         )
+        group = _check_group(catalog, proposal, changes, materials)
         fiscal_change = any(m.ncm != changes.after.ncm for m in materials)
         fiscal_basis_changed = any(
             (m.pdm_class_id is not None and m.pdm_class_id != changes.after.pdm_class_id)
@@ -423,6 +453,7 @@ def _decide_current(
             or m.attributes != changes.after.attributes
             or m.unit != changes.after.unit
             or m.pdm_description != validation.formatted_description
+            or (group is not None and merchandise_group(m) != group)
             for m in materials
         )
         if (
@@ -558,6 +589,9 @@ def _decide_current(
                 primary.manufacturer_reference = changes.after.attributes.get(
                     "REFERENCIA FABRICANTE", primary.manufacturer_reference
                 )
+                if group is not None:
+                    # O original continua em original_merchandise_group e no snapshot da carga.
+                    primary.merchandise_group = group
             primary.ncm = changes.after.ncm
             if proposal.fiscal_review_status == "APPROVED":
                 primary.ncm_review_status = "APPROVED" if primary.ncm is not None else "MISSING"

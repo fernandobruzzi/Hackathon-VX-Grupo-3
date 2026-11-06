@@ -37,6 +37,8 @@ class MaterialAfter(StrictModel):
     attributes: dict[str, str | None]
     unit: str
     ncm: str | None
+    # Só em correções de PDM: grupo da classe confirmada, gravado como dado revisado.
+    merchandise_group: str | None = None
 
 
 class UnitConversion(StrictModel):
