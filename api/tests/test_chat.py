@@ -707,8 +707,9 @@ def test_legacy_history_scope_uses_only_unambiguous_assistant_stock(client, fact
     assert len(visible) == (1 if status == 200 else 0)
 
 
+@pytest.mark.parametrize("changed_source", ["material", "inventory"])
 def test_catalog_changed_during_agent_call_does_not_stamp_or_persist_a_stale_proof(
-    client, factory, identity, agent, monkeypatch
+    client, factory, identity, agent, monkeypatch, changed_source
 ):
     from vx_materials_api.db.models import ChatSession
 
@@ -720,13 +721,13 @@ def test_catalog_changed_during_agent_call_does_not_stamp_or_persist_a_stale_pro
         if not changed:
             changed = True
             with factory() as writer:
-                writer.execute(
-                    text(
-                        "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
-                        "VALUES (:t, 'TEST', 'catalog-change', 'ATIVO')"
-                    ),
-                    {"t": identity.tenant_id},
+                statement = (
+                    "INSERT INTO datasets(tenant_id) VALUES(:t)"
+                    if changed_source == "inventory"
+                    else "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
+                    "VALUES (:t, 'TEST', 'catalog-change', 'ATIVO')"
                 )
+                writer.execute(text(statement), {"t": identity.tenant_id})
                 writer.commit()
         return original(db, principal, request, reservation, result, request_id, **kwargs)
 
@@ -846,3 +847,36 @@ def test_agent_cannot_renew_an_old_proof_without_search_after_catalog_change(cli
     with factory() as db:
         saved = db.get(ChatSession, uuid.UUID(first["session_id"])).context.get("duplicate_check")
         assert saved is None
+
+
+def test_inventory_observation_invalidates_cache_without_master_change(client, factory, identity, agent):
+    first = _offer(client, agent)
+    with factory() as writer:
+        writer.execute(text("INSERT INTO datasets(tenant_id) VALUES(:t)"), {"t": identity.tenant_id})
+        writer.commit()
+    agent.result = agent_result(VALID_CARD, search_call(similar("777")), patch={"offered_material_codes": ["777"]})
+    refreshed = send(client, "Verificar estoque", first["session_id"], version=1)
+    assert refreshed.status_code == 200
+    assert agent.payload()["context"]["duplicate_check"] is None
+    agent.result = agent_result(VALID_CARD, patch={"dismissed_material_codes": ["777"]})
+    unchanged = send(client, "Nenhum", first["session_id"], version=2, action={"type": "DISMISS_CANDIDATES"})
+    assert unchanged.status_code == 200 and unchanged.json()["status"] == "READY_TO_SUBMIT"
+    assert agent.payload()["context"]["duplicate_check"] is not None
+
+
+def test_inventory_proof_is_tenant_scoped_and_uses_deterministic_latest_dataset(factory, identity):
+    with factory() as db:
+        before = chat_service._catalog_proof(db, identity.tenant_id, "rules")
+        db.execute(text("INSERT INTO datasets(tenant_id) VALUES(:t)"), {"t": uuid.uuid4()})
+        assert chat_service._catalog_proof(db, identity.tenant_id, "rules") == before
+        for suffix in (2, 1):
+            db.execute(
+                text("INSERT INTO datasets(id,tenant_id,imported_at) VALUES(:id,:t,'2099-01-01')"),
+                {"id": uuid.UUID(int=suffix), "t": identity.tenant_id},
+            )
+        proof = chat_service._catalog_proof(db, identity.tenant_id, "rules")
+        assert proof["inventory_dataset"] == str(uuid.UUID(int=2))
+        db.execute(
+            text("INSERT INTO datasets(tenant_id,imported_at) VALUES(:t,'2098-01-01')"), {"t": identity.tenant_id}
+        )
+        assert chat_service._catalog_proof(db, identity.tenant_id, "rules") == proof

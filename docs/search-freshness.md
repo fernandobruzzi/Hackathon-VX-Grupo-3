@@ -48,7 +48,8 @@ finito, inclusive nas tasks de preparação do deploy.
 ## Verificações salvas no chat
 
 A API guarda uma prova privada por tenant (quantidade e soma das revisões dos
-materiais, mais a versão das regras/PDM). Antes de encaminhar o contexto ao Agent,
+materiais, versão das regras/PDM e dataset de estoque vigente, escolhido por
+`imported_at DESC, id DESC`). Antes de encaminhar o contexto ao Agent,
 compara essa prova com o catálogo atual. Uma publicação ou aprovação invalida a
 verificação antiga e suas escolhas; sessões legadas sem prova são revalidadas uma
 vez. Sem mudança de catálogo ou ficha, escolhas e descartes continuam válidos sem
