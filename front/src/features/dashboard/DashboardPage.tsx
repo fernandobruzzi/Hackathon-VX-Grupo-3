@@ -5,7 +5,7 @@ import { Card, Kpi, PageHeader, Badge, Button, EmptyState } from "@/components/u
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { can } from "@/lib/permissions";
-import { fmtBRL, fmtInt, fmtPct } from "@/lib/format";
+import { fmtBRL, fmtDate, fmtInt, fmtPct } from "@/lib/format";
 import type { DashboardMetrics } from "@/types/api";
 import { dashboard } from "@/mocks/data";
 
@@ -13,6 +13,9 @@ export function DashboardPage() {
   const { me, backend, api } = useAuth();
   const financial = can(me, "metrics:financial");
   const permitted = can(me, "metrics:quality");
+  const canSnapshot = can(me, "batch:run");
+  const [creating, setCreating] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [remote, setRemote] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(backend);
   const [error, setError] = useState<string | null>(null);
@@ -47,18 +50,41 @@ export function DashboardPage() {
     return () => controller.abort();
   }, [api, backend, financial, permitted, retry]);
 
+  const createSnapshot = () => {
+    setCreating(true);
+    setSnapshotError(null);
+    api
+      .request("post", "/api/v1/dashboard/snapshots", {
+        body: { dataset_id: remote?.dataset_id ?? null },
+      })
+      .then(() => setRetry((value) => value + 1))
+      .catch((error: unknown) =>
+        setSnapshotError(
+          error instanceof ApiError ? error.message : "Não foi possível gerar o snapshot.",
+        ),
+      )
+      .finally(() => setCreating(false));
+  };
+
   const d = backend ? remote : dashboard;
   const b = d?.before;
+  const a = d?.after ?? null;
+  const snapshot = d?.after_snapshot ?? null;
   const pipe = d?.pipeline;
   const issues = b
     ? [
-        { label: "Sem NCM", value: b.missing_ncm },
-        { label: "Unidade fora do padrão", value: b.noncanonical_unit },
-        { label: "Bloqueados (legado)", value: b.blocked },
-        { label: "Obsoletos", value: b.obsolete },
+        { label: "Sem NCM", value: b.missing_ncm, after: a?.missing_ncm },
+        {
+          label: "Unidade fora do padrão",
+          value: b.noncanonical_unit,
+          after: a?.noncanonical_unit,
+        },
+        { label: "Códigos duplicados ativos", value: b.duplicate_codes, after: a?.duplicate_codes },
+        { label: "Bloqueados", value: b.blocked, after: a?.blocked },
+        { label: "Obsoletos", value: b.obsolete, after: a?.obsolete },
       ]
     : [];
-  const max = Math.max(1, ...issues.map((i) => i.value));
+  const max = Math.max(1, ...issues.flatMap((i) => [i.value, i.after ?? 0]));
 
   return (
     <>
@@ -66,7 +92,7 @@ export function DashboardPage() {
         n="04"
         eyebrow="Qualidade da base"
         title="Como a base está, e quanto já foi corrigido"
-        description="Situação original dos centros autorizados, propostas e aplicações registradas. A comparação depende de um snapshot posterior aprovado."
+        description="Situação original dos centros autorizados, propostas e aplicações registradas. O depois vem de um snapshot gerado só com propostas aplicadas."
       />
       {!permitted ? (
         <EmptyState title="Acesso restrito">
@@ -128,9 +154,13 @@ export function DashboardPage() {
                 <Card>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-xs font-extrabold tracking-[0.04em] text-verde uppercase">
-                      Problemas na base · antes
+                      {a ? "Problemas na base · antes e depois" : "Problemas na base · antes"}
                     </p>
-                    <Badge tone="neutral">Comparação indisponível</Badge>
+                    {a && snapshot ? (
+                      <Badge tone="success">Snapshot de {fmtDate(snapshot.created_at)}</Badge>
+                    ) : (
+                      <Badge tone="neutral">Comparação indisponível</Badge>
+                    )}
                   </div>
                   <ul className="mt-5 flex flex-col gap-4">
                     {issues.map((i) => (
@@ -139,13 +169,28 @@ export function DashboardPage() {
                         className="grid grid-cols-[1fr_1fr_64px] items-center gap-3 text-sm"
                       >
                         <span className="font-semibold">{i.label}</span>
-                        <span className="h-3 rounded-full bg-surface-2">
-                          <span
-                            className="block h-full rounded-full bg-serie-1"
-                            style={{ width: `${(i.value / max) * 100}%` }}
-                          />
+                        <span className="flex flex-col gap-1">
+                          <span className="h-3 rounded-full bg-surface-2">
+                            <span
+                              className="block h-full rounded-full bg-serie-1"
+                              style={{ width: `${(i.value / max) * 100}%` }}
+                            />
+                          </span>
+                          {i.after !== undefined && (
+                            <span className="h-3 rounded-full bg-surface-2">
+                              <span
+                                className="block h-full rounded-full bg-esmeralda"
+                                style={{ width: `${(i.after / max) * 100}%` }}
+                              />
+                            </span>
+                          )}
                         </span>
-                        <span className="text-right font-mono">{fmtInt(i.value)}</span>
+                        <span className="text-right font-mono">
+                          {fmtInt(i.value)}
+                          {i.after !== undefined && (
+                            <span className="block text-verde">{fmtInt(i.after)}</span>
+                          )}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -153,10 +198,35 @@ export function DashboardPage() {
                     Dataset {d.dataset_id.slice(0, 8)} · contagens dos registros originais, sem
                     alterar saldos.
                   </p>
-                  <p className="mt-2 text-xs text-muted">
-                    Sem snapshot posterior aprovado, a comparação antes e depois não está
-                    disponível.
-                  </p>
+                  {a && snapshot ? (
+                    <p className="mt-2 text-xs text-muted">
+                      Depois: {fmtInt(snapshot.applied_proposals)} propostas aplicadas,{" "}
+                      {fmtInt(snapshot.materials_changed)} materiais alterados, cada um rastreado
+                      até sua proposta em {snapshot.export_key}.{" "}
+                      {snapshot.inventory_value_conserved
+                        ? "Valor total do estoque conservado."
+                        : "Valor do estoque não conferido: há saldo sem valor ou diferença."}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-xs text-muted">
+                      Sem snapshot posterior, a comparação antes e depois não está disponível.
+                    </p>
+                  )}
+                  {backend && canSnapshot && (
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <Button onClick={createSnapshot} disabled={creating}>
+                        {creating ? "Gerando snapshot…" : "Gerar snapshot posterior"}
+                      </Button>
+                      <span className="text-xs text-muted">
+                        Registra só as propostas já aplicadas.
+                      </span>
+                    </div>
+                  )}
+                  {snapshotError && (
+                    <p role="alert" className="mt-2 text-sm text-alerta">
+                      {snapshotError}
+                    </p>
+                  )}
                 </Card>
                 <Card className="flex flex-col gap-4">
                   <p className="text-xs font-extrabold tracking-[0.04em] text-verde uppercase">
