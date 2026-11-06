@@ -301,6 +301,7 @@ def decide_proposal(
         .where(
             SanitizationProposal.id == proposal_id,
             SanitizationProposal.tenant_id == principal.tenant_id,
+            SanitizationProposal.changeset["schema_version"].astext == "proposal-v1",
         )
         .with_for_update()
     )

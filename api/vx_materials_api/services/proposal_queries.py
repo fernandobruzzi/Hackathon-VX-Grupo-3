@@ -66,15 +66,25 @@ def detail(db, proposal, principal, catalog):
         conflicts.append(error.message)
     first_class = catalog.classes.get(after.pdm_class_id)
     primary = next((m for m in materials if m.id == proposal.primary_material_id), None)
-    changes_rows = []
+    labels = {
+        "pdm_class_id": "Classe PDM",
+        "description": "Descrição",
+        "merchandise_group": "Grupo de mercadorias",
+        "unit": "Unidade",
+        "ncm": "NCM",
+    }
+    changes_rows = [
+        change.model_dump() | {"field": labels.get(change.field, change.field)} for change in changes.changes
+    ]
+    recorded = {change.field for change in changes.changes}
     if primary:
         for field in ("pdm_class_id", "unit", "ncm"):
             before_value = getattr(primary, field)
             after_value = getattr(after, field)
-            if before_value != after_value:
+            if before_value != after_value and field not in recorded:
                 changes_rows.append(
                     {
-                        "field": field,
+                        "field": labels[field],
                         "before": before_value,
                         "after": after_value or "",
                         "source": changes.sources.get(field, "Fonte nao informada"),
@@ -140,7 +150,10 @@ def detail(db, proposal, principal, catalog):
 
 def queue(db, principal, catalog, *, area=None, status=None, proposal_type=None, cursor=None, limit=20):
     require_reviewer(principal)
-    query = select(SanitizationProposal).where(SanitizationProposal.tenant_id == principal.tenant_id)
+    query = select(SanitizationProposal).where(
+        SanitizationProposal.tenant_id == principal.tenant_id,
+        SanitizationProposal.changeset["schema_version"].astext == "proposal-v1",
+    )
     if status == "DECIDED":
         query = query.where(SanitizationProposal.status != "PENDING")
     elif status:

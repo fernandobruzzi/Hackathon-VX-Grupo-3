@@ -15,6 +15,17 @@ depends_on = None
 
 
 def upgrade():
+    # Propostas anteriores ao contrato de revisão não podem ser aprovadas por inferência.
+    op.execute("""WITH legacy AS (
+        UPDATE sanitization_proposals SET status = 'STALE', version = version + 1
+        WHERE status = 'PENDING' AND changeset->>'schema_version' IS DISTINCT FROM 'proposal-v1'
+        RETURNING id, tenant_id, version, changeset, members
+    ) INSERT INTO audit_logs (tenant_id, actor_type, action, entity_type, entity_id, before_json, after_json, reason)
+      SELECT tenant_id, 'SYSTEM', 'PROPOSAL_CONTRACT_STALE', 'sanitization_proposal', id::text,
+        jsonb_build_object('status', 'PENDING', 'version', version - 1, 'members', members, 'changeset', changeset),
+        jsonb_build_object('status', 'STALE', 'version', version),
+        'Proposta anterior ao contrato versionado de revisão; executar o batch novamente'
+      FROM legacy""")
     op.create_table(
         "inventory_consolidations",
         sa.Column("source_snapshot_id", postgresql.UUID(as_uuid=True), nullable=False),

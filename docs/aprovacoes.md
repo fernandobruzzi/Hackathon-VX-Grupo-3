@@ -1,9 +1,10 @@
 # Fila, aprovação e auditoria
 
 A #20 implementa a leitura de propostas persistidas, revisão técnica/fiscal e
-aplicação atômica. A produção das propostas usa o batch entregue na #19. O login Cognito e a
-política completa de autorização pertencem às #7 e #9; esta entrega permanece
-em rascunho até a integração dessas duas dependências.
+aplicação atômica. A produção das propostas usa o batch da #19 e o processamento
+com checkpoints da main. Chat e aprovação compartilham a sessão da #7 e a
+política de autorização da #9. A homologação Cognito na AWS permanece na #91,
+conforme o escopo local primeiro acordado.
 
 ## Rodar localmente
 
@@ -21,9 +22,10 @@ APP_ENV=local ENABLE_LOCAL_TEST_SESSIONS=true NEXT_PUBLIC_DATA_SOURCE=api docker
 ```
 
 O batch grava o contrato `proposal-v1`, incluindo versões, referência PDM e hash
-compartilhado com a API. A repetição não duplica propostas. Chat, pedidos,
-enriquecimento e dashboard continuam demonstrativos, como informa a interface.
-Sem `NEXT_PUBLIC_DATA_SOURCE=api` no build, o front usa o protótipo com mocks.
+compartilhado com a API. A repetição não duplica propostas. Chat, saneamento e
+auditoria usam dados persistidos; pedidos, enriquecimento e dashboard continuam
+demonstrativos. O front usa a API por padrão; `NEXT_PUBLIC_DATA_SOURCE=mock`
+seleciona explicitamente o protótipo visual.
 
 O acesso local usa cookie opaco HttpOnly, expira em uma hora e pode ser revogado
 no logout. A criação da sessão exige a origem configurada em `APP_ORIGIN`.
@@ -37,10 +39,17 @@ A publicação local do Compose fica em `127.0.0.1:8000`.
 `api/contracts/fixtures/approval-proposal.json` exemplifica o conteúdo privado
 persistido. `members` registra os UUIDs, versões observadas e interpretações PDM.
 `changeset` usa `schema_version: proposal-v1`, dataset, versão e SHA-256 do PDM,
-estado final, fontes, conflitos, conversões e hashes das evidências.
+estado final, fontes, conflitos, conversões, mudanças de antes/depois e hashes das evidências.
+O identificador persistido inclui o hash desse conteúdo: observações de uma nova
+versão geram outra proposta, enquanto repetir o mesmo conteúdo não duplica nada.
 O MVP exige um único dataset por empresa para persistir as propostas de batch;
 mais de um exige seleção explícita antes de continuar. Propostas incompletas
 continuam visíveis na fila com conflitos e podem ser rejeitadas, mas não aplicadas.
+Correções de grupo sem persistência suportada e correções sem PDM completo
+permanecem bloqueadas. A revisão exibe as alterações e fontes originais; não
+descarta campos silenciosamente nem registra uma aplicação parcial como sucesso.
+Aplicação do grupo está acompanhada na [#94](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/94);
+a resolução de pendências incompletas permanece na #68.
 
 O produtor deve calcular `domain.proposals.proposal_hash(members, changeset,
 evidence_ids)`. A API recalcula o mesmo hash, sem depender da ordem das chaves do
@@ -78,13 +87,16 @@ payload retorna a resposta original; mudar o payload retorna 409. A autorizaçã
 do recurso é conferida também na repetição. Erros no banco desfazem a aplicação
 e a auditoria conjuntamente.
 
-Os saldos originais nunca são atualizados. A migração `0003` cria vínculos entre
+Os saldos originais nunca são atualizados. A migração `0005` cria vínculos entre
 cada snapshot original e o principal, com fator, unidade e fonte da conversão.
 As views MCP passam a consultar esses vínculos. Quantidades só são somadas na
 mesma unidade e centro, com fatores explícitos; o valor original é conservado.
 Consolidações posteriores reaproveitam o fator existente, evitando conversão
 duplicada. Valor desconhecido continua nulo. Dependentes existentes devem estar
 incluídos quando seu principal é consolidado novamente.
+Propostas anteriores ao contrato versionado ficam desatualizadas, com evento
+de sistema preservando o conteúdo anterior. Executar o batch gera propostas
+versionadas novas; propostas sem esse contrato não são expostas à decisão.
 
 ## Consultas e interface
 
@@ -103,9 +115,8 @@ durante a repetição de uma tentativa com o mesmo conteúdo.
 
 A suíte da API cobre transações reais em PostgreSQL, concorrência, repetição,
 rollback, versões, separação de revisões, escopos, evidências e conservação de
-estoque/valor. Use uma instância descartável separada para os testes: os testes
-existentes de credenciais alteram roles globais do cluster, mesmo quando o banco
-tem sufixo `_test` ([#58](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/58)).
+estoque/valor. Os testes de credenciais usam os logins temporários da main;
+uma instância descartável separada também pode ser usada para isolar execuções.
 
 ```bash
 docker run --name vx-approval-tests --rm -d -p 127.0.0.1:55432:5432 -e POSTGRES_USER=migration_user -e POSTGRES_PASSWORD=local_only_migration pgvector/pgvector:pg16
@@ -118,5 +129,7 @@ TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0
 ```
 
 Ao terminar, pare apenas o container descartável com `docker stop vx-approval-tests`.
-Os testes usam um provedor de identidade controlado ou a sessão local; não
-comprovam a integração Cognito/RBAC real exigida para fechar a #20.
+Os testes de integração usam cookies locais reais e verificam os 403 dos três
+papéis, a troca de ator e a aplicação de uma proposta produzida pelo batch.
+A suíte também cobre o adaptador Cognito com assinaturas RSA e OAuth controlado;
+isso não substitui a homologação AWS da #91.

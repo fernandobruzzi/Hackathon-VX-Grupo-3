@@ -4,6 +4,7 @@ O batch não altera a base mestre: só registra propostas, aplicadas depois pelo
 """
 
 import json
+import uuid
 from decimal import Decimal
 
 from sqlalchemy import Connection, Engine, text
@@ -127,7 +128,7 @@ def _proposal_row(
 ) -> dict:
     members, changeset, digest = approval_payload(proposal, ids, dataset_id)
     return {
-        "id": proposal.id,
+        "id": str(uuid.uuid5(uuid.UUID(proposal.id), digest)),
         "tenant_id": tenant_id,
         "job_id": job_id,
         "proposal_type": proposal.proposal_type,

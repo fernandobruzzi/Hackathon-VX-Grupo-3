@@ -55,6 +55,13 @@ class UnitConversion(StrictModel):
         return value
 
 
+class StoredChange(StrictModel):
+    field: str
+    before: str | None
+    after: str
+    source: Reason
+
+
 class ProposalChangeset(StrictModel):
     schema_version: Literal["proposal-v1"]
     dataset_id: UUID
@@ -67,7 +74,7 @@ class ProposalChangeset(StrictModel):
     evidence_hashes: dict[str, str] = Field(default_factory=dict)
     primary_material_code: str | None = None
     ranking_score: float | None = None
-    changes: list[dict] = Field(default_factory=list)
+    changes: list[StoredChange] = Field(default_factory=list)
 
 
 def evidence_hash(source) -> str:

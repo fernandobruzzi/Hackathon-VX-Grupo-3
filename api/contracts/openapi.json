@@ -3059,7 +3059,6 @@
             }
           },
           "ranking_score": {
-            "type": "number",
             "anyOf": [
               {
                 "type": "number"

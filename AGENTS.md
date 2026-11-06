@@ -451,6 +451,9 @@ The local chat also requires login now: no anonymous test identity is injected.
 The standard smoke test in local mode creates and revokes an opaque test session.
 Local HTTP cookies are HttpOnly and SameSite=Lax; Cognito cookies are also Secure.
 Never enable local sessions in a deployed environment; runtime guards refuse AWS markers.
+For the persisted approval queue and producer contract, see [`docs/aprovacoes.md`](docs/aprovacoes.md).
+Local Python copies with numbered suffixes (such as ` 2.py`) are excluded from images so duplicate
+migration revisions cannot enter a build; these untracked files are not project inputs.
 
 Every feature must run and pass its tests locally with `docker compose up`, without an AWS account. AWS deployment proceeds in parallel, to surface its problems early, but doesn't block local work.
 
