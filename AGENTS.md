@@ -16,7 +16,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
-| `scripts/` | AWS preflight/ECS tooling, demo data, policy check and HTTP smoke test | AWS tooling tested offline; EC2/demo scripts remain placeholders |
+| `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo seed remains separate |
 | `deployment/` | Explicit AWS configuration and deployment runbook | Local preparation; account validation still required |
 | `front/pitch/` | Market analysis, ROI assumptions and script | Placeholders |
 | `design/` | Presentation template and design system, source for brand values | Reference |
@@ -180,6 +180,7 @@ AWS preparation runs offline without credentials by default:
 ```bash
 scripts/preflight_aws.sh --config deployment/aws.example.json --offline
 scripts/deploy_ecs.sh --config deployment/aws.example.json
+scripts/deploy_ec2.sh --config deployment/aws.example.json --host 203.0.113.10.nip.io
 ```
 
 Use `--apply` only with a real workshop configuration. Bootstrap reuses approved
@@ -188,6 +189,12 @@ sequence, secret formats, HTTPS/Cognito stages and lock recovery are in
 [`deployment/README.md`](deployment/README.md). ECS batch is selectable through
 `BATCH_RUNNER=ecs_fargate`, with a fixed task-definition ARN and no API credentials
 in task overrides. AWS validation remains part of #6.
+
+The EC2 command renders Compose/Caddy offline by default. Its `--apply` mode runs
+on an existing EC2 with an instance profile, fetches per-service secrets and enables
+public HTTPS. It keeps API/Agent ports private and does not enable the development
+batch subprocess in production. Administrative batch execution and login validation
+limits are documented in [`docs/ec2.md`](docs/ec2.md); live validation remains #29.
 
 ## Workflow
 

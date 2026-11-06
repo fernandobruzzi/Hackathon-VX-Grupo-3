@@ -208,7 +208,7 @@ downgrade automático nem exclusão automática de RDS/bucket.
 - Instalação de vector, grants e logins SQL por TLS no RDS.
 - Quotas/model access e invocações reais do Bedrock.
 - Login Cognito e cookies aceitos pelo navegador em HTTPS (#91).
-- Plano B EC2/Caddy e seus próprios pré-requisitos (#29).
+- Plano B EC2/Caddy preparado em [`docs/ec2.md`](../docs/ec2.md); validar na EC2 (#29).
 - Reset completo de propostas/pedidos/sessões da demo (#34).
 
 Referências: [Express com task definition](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-getting-started.html),
