@@ -10,6 +10,7 @@ import pytest
 
 from domain.contracts import FieldCorrection
 from domain.pdm_loader import load_pdm
+from domain.pdm_validator import validate_pdm
 from domain.review_lanes import assign_lane, lot_key
 from pipelines.corrections import correction_proposals, propose_corrections, summarize_corrections
 from pipelines.sanitize import analyze_material, read_csv_records
@@ -70,6 +71,10 @@ LOST = {
     "21431375": "34MM",
 }
 
+# A #133 retém o original antes de propor a descrição: FEMEA 90 JIC não informa CURVA/GRAUS.
+INCOMPLETE_LOST = {"28611241": "TERMINAL B"}
+COMPLETE_LOST = LOST.keys() - INCOMPLETE_LOST.keys()
+
 # Nada se perde: o texto está na descrição proposta com outra grafia, ou é rótulo, ou ruído documentado.
 KEPT = {
     "12769099": "MA é a rosca métrica grossa, que está na proposta",
@@ -82,7 +87,7 @@ KEPT = {
 }
 
 
-@pytest.mark.parametrize("code", sorted(LOST))
+@pytest.mark.parametrize("code", sorted(COMPLETE_LOST))
 def test_text_loss_sends_description_to_individual_review(proposals, code):
     pdm = proposals(code)["PDM_CORRECTION"]
 
@@ -90,7 +95,7 @@ def test_text_loss_sends_description_to_individual_review(proposals, code):
     assert lane(pdm)["reasons"] == ["TEXT_LOSS"]
 
 
-@pytest.mark.parametrize("code", sorted(LOST))
+@pytest.mark.parametrize("code", sorted(COMPLETE_LOST))
 def test_lost_terms_name_what_disappeared(catalog, records, tools, proposals, code):
     material = analyze_material(records[code], catalog, tools[0], tools[1])
     proposed = next(
@@ -102,6 +107,15 @@ def test_lost_terms_name_what_disappeared(catalog, records, tools, proposals, co
     lost = get_text_loss_repository().lost_terms(material, catalog.classes[material.pdm_class_id], proposed)
 
     assert LOST[code] in lost
+
+
+@pytest.mark.parametrize("code", sorted(INCOMPLETE_LOST))
+def test_incomplete_values_stay_pending_before_description_review(catalog, records, tools, proposals, code):
+    material = analyze_material(records[code], catalog, tools[0], tools[1])
+    validation = validate_pdm(catalog, material.pdm_class_id, material.attributes, item_name=material.item_name)
+
+    assert INCOMPLETE_LOST[code] in {attribute.name for attribute in validation.missing_attributes}
+    assert "PDM_CORRECTION" not in proposals(code)
 
 
 @pytest.mark.parametrize("code", sorted(KEPT))
@@ -193,7 +207,7 @@ def test_summary_counts_tiers_reasons_and_lots(catalog, records, tools):
 def test_registered_repositories_meet_the_reviewed_cases(proposals, name):
     repository = get_text_loss_repository(name)
 
-    assert all(lane(proposals(code, repository)["PDM_CORRECTION"])["tier"] == 3 for code in LOST)
+    assert all(lane(proposals(code, repository)["PDM_CORRECTION"])["tier"] == 3 for code in COMPLETE_LOST)
     assert all("TEXT_LOSS" not in lane(proposals(code, repository)["PDM_CORRECTION"])["reasons"] for code in KEPT)
 
 

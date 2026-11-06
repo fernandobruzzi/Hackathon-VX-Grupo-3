@@ -86,7 +86,14 @@ def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
     assert sample["review_kind"] == "DEVELOPMENT_REGRESSION" and sample["independent"] is False
     assert len(sample["reviewed"]) == 40
     assert all(item["same_item"] is True for item in sample["reviewed"])
-    withdrawn = [item for item in sample["reviewed"] if tuple(sorted(item["codes"])) not in current]
+    # A #133 também retém o TE sem BW explícito, preservando seu rótulo histórico.
+    qualifier_abstention = ("13563770", "29792424")
+    assert qualifier_abstention not in current
+    withdrawn = [
+        item
+        for item in sample["reviewed"]
+        if tuple(sorted(item["codes"])) not in current and tuple(sorted(item["codes"])) != qualifier_abstention
+    ]
     assert withdrawn
     pending = {
         row["evidence"]["material_code"]: row["reasons"] for row in evaluated["identity_review"]["manual_review"]
