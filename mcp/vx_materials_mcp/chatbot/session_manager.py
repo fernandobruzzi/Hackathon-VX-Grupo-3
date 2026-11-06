@@ -25,6 +25,8 @@ class TurnContext:
     pdm_class: PdmClass | None
     item_name: str | None
     attributes: dict[str, str | None]
+    # Nomes do PDM das classes candidatas, para perguntar o tipo quando a classe ficou em dúvida.
+    candidate_names: tuple[str, ...] = ()
 
 
 def user_messages(request: AgentRunRequest) -> list[str]:
@@ -68,7 +70,13 @@ def build_turn_context(
     classification = _classify(messages, classifier)
     pdm_class = catalog_classes.get(classification.pdm_class_id) if classification.pdm_class_id else None
     if pdm_class is None:
-        return TurnContext(classification, None, None, dict(request.context.confirmed_attributes))
+        names = tuple(
+            name
+            for class_id in classification.candidate_class_ids
+            if class_id in catalog_classes
+            for name in catalog_classes[class_id].item_names
+        )
+        return TurnContext(classification, None, None, dict(request.context.confirmed_attributes), names)
 
     known = {attribute.name for attribute in pdm_class.attributes}
     attributes = {name: value for name, value in request.context.confirmed_attributes.items() if name in known}
