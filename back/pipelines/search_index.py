@@ -66,6 +66,8 @@ def search_text(material: AnalyzedMaterial) -> str:
 def analyze_source(source: SearchSource, catalog, classifier, extractor) -> AnalyzedMaterial:
     """Atributos aprovados prevalecem sobre qualquer interpretação extraída do texto original."""
     analyzed = analyze_material(source.record, catalog, classifier, extractor)
+    if source.approved_class_id is None and not source.approved_attributes:
+        return analyzed
     class_id = source.approved_class_id or analyzed.pdm_class_id
     if class_id not in catalog.classes:
         return replace(analyzed, pdm_class_id=None, identity_key=None)
