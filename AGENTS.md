@@ -469,6 +469,17 @@ the approval payload pins the before/after assessments. The API recomputes the
 assessment before each approval, refuses changed fiscal bases and enforces all
 required technical/fiscal reviews. See `docs/ncm.md` for behavior and verification.
 
+## Chat order submission
+
+A ready chat card creates no order until the user explicitly submits it through
+`POST /api/v1/chat/{session_id}/submit`. The API reads the saved card and center,
+checks ownership and version, revalidates the current PDM and duplicate identity,
+and creates one order with audit and idempotency in the same transaction.
+The original user messages stay separate from the confirmed class, item name and
+attributes. Order approvals revalidate that structured card rather than extracting
+superseded values from earlier messages. A submitted conversation accepts no new
+turns; start a new one for another item. See [`docs/pedidos.md`](docs/pedidos.md).
+
 ## Attribute extraction
 
 Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. PSI converts to BAR only when it is a whole bar written the kit's way, rounded to 5 PSI (`145PSI` is `10BAR`). Other PSI values, like `150PSI`, stay empty instead of rounding into another item's pressure. Tests hold real base rows with results checked by hand, so add one with each new rule.

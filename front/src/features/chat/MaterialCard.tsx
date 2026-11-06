@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CheckCircle2, CircleDashed, Copy, Send } from "lucide-react";
 import { Badge, Button, Card, Code } from "@/components/ui";
 import { MaterialStatusBadge, ValidationBadge } from "@/components/ui/status";
@@ -15,7 +16,7 @@ export function MaterialCard({
 }: {
   card: MaterialCardData;
   onSubmit?: () => void;
-  submitted?: boolean;
+  submitted?: { id: string; status: "READY_FOR_REVIEW" | "EXISTING" };
   onReply?: (message: string, action: ChatAction) => void;
   busy?: boolean;
 }) {
@@ -131,12 +132,19 @@ export function MaterialCard({
 
         {!card.existing &&
           (submitted ? (
-            <Badge tone="info" className="self-start">
-              Enviado para revisão · Governança PDM
-            </Badge>
+            <div role="status" className="flex flex-col gap-2">
+              <Badge tone="info" className="self-start">
+                {submitted.status === "EXISTING"
+                  ? "Item existente identificado no envio"
+                  : "Enviado para revisão · Governança PDM"}
+              </Badge>
+              <Link href="/pedidos/" className="text-sm text-verde underline">
+                Ver pedido {submitted.id}
+              </Link>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
-              <Button onClick={onSubmit} disabled={!card.can_submit}>
+              <Button onClick={onSubmit} disabled={!card.can_submit || busy || !onSubmit}>
                 <Send className="size-4" /> Enviar pedido para revisão
               </Button>
               {!card.can_submit && (

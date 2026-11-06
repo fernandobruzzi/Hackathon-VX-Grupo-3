@@ -101,3 +101,14 @@ class ChatTurnResponse(_Contract):
     assistant_message: str
     tool_calls: list[ToolCall]
     material_card: MaterialCard
+
+
+class ChatSubmitRequest(_Contract):
+    expected_session_version: int = Field(ge=1)
+
+
+class ChatSubmitResponse(_Contract):
+    session_id: UUID
+    session_version: int
+    order_id: UUID
+    status: Literal["READY_FOR_REVIEW", "EXISTING"]

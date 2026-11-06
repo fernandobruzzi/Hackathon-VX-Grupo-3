@@ -19,6 +19,7 @@ from sqlalchemy import BigInteger, cast, func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
+from domain.pdm_validator import validate_pdm
 from pipelines.import_orders import STATUS_READY, OrderAnalysis, OrderRow, analyze_order
 from pipelines.search_index import index_version
 from repositories.classification import get_classification_repository
@@ -315,6 +316,21 @@ def ncm_for(pdm_class, attributes: dict, item_name: str | None) -> str | None:
 
 
 def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
+    # A ficha confirmada no chat é estruturada: não reextraímos mensagens antigas que foram corrigidas.
+    if order.origin == "CHAT" and order.item_name is not None:
+        validation = validate_pdm(catalog, order.pdm_class_id, order.attributes, item_name=order.item_name)
+        ready = (
+            validation.can_submit and validation.identity_key is not None and not validation.not_applicable_attributes
+        )
+        return OrderAnalysis(
+            STATUS_READY if ready else "INCOMPLETE",
+            order.pdm_class_id,
+            order.item_name,
+            dict(order.attributes),
+            tuple(attribute.name for attribute in validation.missing_attributes),
+            validation.identity_key,
+            validation.formatted_description,
+        )
     row = OrderRow(order.source_order_id or str(order.id), order.original_text, order.attachment_text, None, None)
     return analyze_order(row, catalog, classifier, extractor)
 

@@ -332,6 +332,7 @@ class RegistrationOrder(Base):
     center_code: Mapped[str | None] = mapped_column(Text)
     urgency: Mapped[str | None] = mapped_column(Text)
     pdm_class_id: Mapped[str | None] = mapped_column(Text)
+    item_name: Mapped[str | None] = mapped_column(Text)
     attributes: Mapped[Any] = _jsonb()
     missing_attributes: Mapped[Any] = _jsonb("[]")
     candidate_material_ids: Mapped[Any] = _jsonb("[]")
