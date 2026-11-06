@@ -200,7 +200,7 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
         session = ChatSession(
             tenant_id=identity.tenant_id,
             owner_user_id=identity.user_id,
-            context={},
+            context={"center_code": request.center_code},
             pdm_version=DEFAULT_PDM_VERSION,
             ncm_version=NCM_VERSION,
             status="ACTIVE",
@@ -333,3 +333,57 @@ def complete_turn(
         tool_calls=result.tool_calls,
         material_card=material_card,
     )
+
+
+def list_sessions(db: Session, identity: Identity, *, limit: int, offset: int) -> dict:
+    title = (
+        select(ChatMessage.content)
+        .where(ChatMessage.session_id == ChatSession.id, ChatMessage.author_type == "USER")
+        .order_by(ChatMessage.sequence)
+        .limit(1)
+        .scalar_subquery()
+    )
+    rows = db.execute(
+        select(ChatSession, title)
+        .where(ChatSession.tenant_id == identity.tenant_id, ChatSession.owner_user_id == identity.user_id)
+        .order_by(ChatSession.updated_at.desc(), ChatSession.id)
+        .offset(offset)
+        .limit(limit + 1)
+    ).all()
+    return {
+        "items": [
+            {
+                "id": session.id,
+                "title": (text or "Conversa sem mensagens")[:120],
+                "updated_at": session.updated_at.isoformat(),
+            }
+            for session, text in rows[:limit]
+        ],
+        "next_cursor": str(offset + limit) if len(rows) > limit else None,
+    }
+
+
+def read_session(db: Session, identity: Identity, session_id: uuid.UUID) -> dict:
+    # Uma leitura usa o mesmo filtro de dono/tenant e snapshot do turno, sem chamar o Agent.
+    session = _locked_session(db, identity, session_id)
+    context = session.context or {}
+    messages = db.scalars(
+        select(ChatMessage).where(ChatMessage.session_id == session.id).order_by(ChatMessage.sequence)
+    ).all()
+    calls = []
+    turn = 0
+    for message in messages:
+        if message.author_type == "ASSISTANT":
+            turn += 1
+            calls.extend({"turn": turn, "call": call} for call in message.tool_calls or [])
+    return {
+        "session_id": session.id,
+        "session_version": session.version,
+        "processing": session.active_turn_id is not None
+        and session.updated_at >= datetime.now(UTC) - ABANDONED_TURN_AFTER,
+        "center_code": context.get("center_code"),
+        "messages": _history(db, session.id),
+        "calls": calls,
+        "material_card": context.get("material_card"),
+        "order_id": session.registration_order_id,
+    }

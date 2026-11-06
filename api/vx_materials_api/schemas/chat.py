@@ -112,3 +112,37 @@ class ChatSubmitResponse(_Contract):
     session_version: int
     order_id: UUID
     status: Literal["READY_FOR_REVIEW", "EXISTING"]
+
+
+class ChatSessionSummary(_Contract):
+    id: UUID
+    title: str
+    updated_at: str
+
+
+class ChatSessionList(_Contract):
+    items: list[ChatSessionSummary]
+    next_cursor: str | None
+
+
+class SavedChatMessage(_Contract):
+    id: UUID
+    author: Literal["user", "assistant"]
+    content: str
+    created_at: str
+
+
+class SavedToolCall(_Contract):
+    turn: int
+    call: ToolCall
+
+
+class ChatSessionDetail(_Contract):
+    session_id: UUID
+    session_version: int
+    processing: bool
+    center_code: str | None
+    messages: list[SavedChatMessage]
+    calls: list[SavedToolCall]
+    material_card: MaterialCard | None
+    order_id: UUID | None

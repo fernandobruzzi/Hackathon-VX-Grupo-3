@@ -239,6 +239,8 @@ def test_without_chat_permission_gets_403(factory, agent, monkeypatch):
     client = TestClient(create_app(session_factory=factory, identity_provider=lambda db: nobody))
 
     assert send(client).status_code == 403
+    assert client.get("/api/v1/chat/sessions").status_code == 403
+    assert client.get(f"/api/v1/chat/sessions/{uuid.uuid4()}").status_code == 403
     assert agent.requests == []
 
 
@@ -422,6 +424,10 @@ def test_dismiss_action_reuses_saved_check_without_search(client, agent):
     assert sent["context"]["duplicate_check"]["similar_candidates"] == []
     assert "candidates" not in sent["context"]["duplicate_check"]
     assert second.json()["status"] == "READY_TO_SUBMIT"
+    restored = client.get(f"/api/v1/chat/sessions/{first['session_id']}").json()
+    assert restored["material_card"] == second.json()["material_card"]
+    assert restored["material_card"]["similar_candidates"] == []
+    assert len(agent.requests) == 2
 
 
 def test_picked_item_is_kept_on_later_turns(client, agent):
@@ -430,6 +436,11 @@ def test_picked_item_is_kept_on_later_turns(client, agent):
     agent.result = agent_result(picked, search_call(similar("777")))
     pick = {"type": "PICK_CANDIDATE", "material_code": "777"}
     assert send(client, "É este", first["session_id"], version=1, action=pick).json()["status"] == "EXISTING"
+
+    restored = client.get(f"/api/v1/chat/sessions/{first['session_id']}").json()
+    assert restored["material_card"]["existing"]["material_code"] == "777"
+    assert restored["session_version"] == 2
+    assert len(agent.requests) == 2
 
     # Turno seguinte sem busca: a escolha salva continua valendo para a mesma ficha.
     agent.result = agent_result(picked)
@@ -494,3 +505,72 @@ def test_test_session_starts_in_local(monkeypatch):
     monkeypatch.setenv("APP_ENV", settings.LOCAL_ENV)
 
     assert create_app().state.request_identity_provider is not None
+
+
+def test_read_saved_conversation_and_resume_without_agent_replay(client, agent):
+    first = send(client).json()
+    listed = client.get("/api/v1/chat/sessions").json()
+    assert listed["items"][0]["id"] == first["session_id"]
+    assert listed["items"][0]["title"] == "parafuso M12"
+    restored = client.get(f"/api/v1/chat/sessions/{first['session_id']}")
+    assert restored.status_code == 200
+    body = restored.json()
+    assert body["session_version"] == 1
+    assert body["material_card"] == first["material_card"]
+    assert body["calls"] == [{"turn": 1, "call": call} for call in first["tool_calls"]]
+    assert [m["content"] for m in body["messages"]] == ["parafuso M12", first["assistant_message"]]
+    assert body["processing"] is False
+    assert body["center_code"] == "1200"
+    assert len(agent.requests) == 1
+    assert send(client, "8.8", body["session_id"], body["session_version"]).status_code == 200
+
+
+@pytest.mark.parametrize("other_tenant", [False, True])
+def test_read_conversation_is_private(client, factory, identity, other_tenant):
+    from dataclasses import replace
+
+    other = _new_identity(factory)
+    if not other_tenant:
+        other = replace(other, tenant_id=identity.tenant_id)
+    with factory() as db:
+        reservation = chat_service.reserve_turn(
+            db,
+            other,
+            ChatMessageRequest(
+                session_id=None,
+                client_message_id=uuid.uuid4(),
+                expected_session_version=0,
+                message="privado",
+                center_code="1200",
+            ),
+        )
+    assert client.get(f"/api/v1/chat/sessions/{reservation.session_id}").status_code == 404
+    assert client.get("/api/v1/chat/sessions").json()["items"] == []
+
+
+def test_list_conversations_paginates_and_processing_is_recoverable(client, factory, identity):
+    for message in ["primeira", "segunda", "terceira"]:
+        send(client, message)
+    first = client.get("/api/v1/chat/sessions?limit=2").json()
+    second = client.get("/api/v1/chat/sessions", params={"limit": 2, "cursor": first["next_cursor"]}).json()
+    assert len(first["items"]) == 2
+    assert len(second["items"]) == 1
+    assert second["next_cursor"] is None
+    assert len({item["id"] for item in first["items"] + second["items"]}) == 3
+    with factory() as db:
+        pending = chat_service.reserve_turn(
+            db,
+            identity,
+            ChatMessageRequest(
+                session_id=None,
+                client_message_id=uuid.uuid4(),
+                expected_session_version=0,
+                message="pendente",
+                center_code="1200",
+            ),
+        )
+    path = f"/api/v1/chat/sessions/{pending.session_id}"
+    assert client.get(path).json()["processing"] is True
+    with factory() as db:
+        chat_service.release_turn(db, pending)
+    assert client.get(path).json()["processing"] is False

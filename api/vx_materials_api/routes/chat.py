@@ -3,14 +3,21 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header, Query, Request
 from sqlalchemy.orm import Session
 
 from vx_materials_api import settings
 from vx_materials_api.dependencies import agent_client, current_identity, db_session
 from vx_materials_api.errors import ApiProblem, request_id
 from vx_materials_api.routes.sanitization import catalog
-from vx_materials_api.schemas.chat import ChatMessageRequest, ChatSubmitRequest, ChatSubmitResponse, ChatTurnResponse
+from vx_materials_api.schemas.chat import (
+    ChatMessageRequest,
+    ChatSessionDetail,
+    ChatSessionList,
+    ChatSubmitRequest,
+    ChatSubmitResponse,
+    ChatTurnResponse,
+)
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.rbac import effective_permissions, require_center, require_permission
 from vx_materials_api.security.service_tokens import issue_agent_token
@@ -66,3 +73,24 @@ def submit_chat(
         idempotency_key,
         request_id(request),
     )
+
+
+@router.get("/sessions")
+def list_sessions(
+    identity: Annotated[Identity, Depends(current_identity)],
+    db: Annotated[Session, Depends(db_session)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    cursor: Annotated[str | None, Query(pattern=r"^\d+$")] = None,
+) -> ChatSessionList:
+    require_permission(identity, "chat:use")
+    return chat_service.list_sessions(db, identity, limit=limit, offset=int(cursor or 0))
+
+
+@router.get("/sessions/{session_id}")
+def read_session(
+    session_id: UUID,
+    identity: Annotated[Identity, Depends(current_identity)],
+    db: Annotated[Session, Depends(db_session)],
+) -> ChatSessionDetail:
+    require_permission(identity, "chat:use")
+    return chat_service.read_session(db, identity, session_id)
