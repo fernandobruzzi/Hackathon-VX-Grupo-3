@@ -944,6 +944,7 @@ export interface components {
       ncm_version: string;
       scope: {
         pdm_class_ids: string[];
+        /** @description O batch atual exige ATIVO, BLOQUEADO e OBSOLETO. Subconjuntos e lista vazia recebem 422 SCOPE_NOT_SUPPORTED antes de criar o job. */
         include_statuses: components["schemas"]["MaterialStatus"][];
       };
     };
