@@ -47,6 +47,7 @@ from vx_materials_api.services.order_service import import_orders as import_orde
 # ser apagada sem revisão. Usuários e sessões de login ficam: o reset não desloga as personas.
 OPERATIONAL_TABLES = (
     "audit_logs",
+    "lot_reviews",
     "quality_snapshot_items",
     "quality_snapshots",
     "operation_requests",

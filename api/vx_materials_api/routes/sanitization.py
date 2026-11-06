@@ -11,8 +11,10 @@ from sqlalchemy.orm import Session
 from vx_materials_api.db.models import SanitizationProposal
 from vx_materials_api.dependencies import get_db
 from vx_materials_api.errors import ApiError
+from vx_materials_api.schemas.lots import LotDecision, LotReviewOpen
 from vx_materials_api.schemas.proposals import ProposalDecision
 from vx_materials_api.security.approval_identity import Principal, get_principal, require_reviewer, verify_write
+from vx_materials_api.services import lot_service
 from vx_materials_api.services.approval_service import decide_proposal
 from vx_materials_api.services.proposal_queries import audit_events, detail, queue
 
@@ -57,6 +59,60 @@ def get_queue(
         limit=limit,
         cursor=str(cursor) if cursor else None,
     )
+
+
+@router.get("/sanitization/lots")
+def get_lots(request: Request, db: Db, caller: Caller):
+    """Lotes elegíveis para aprovação por amostra: só correções de forma de nível 1 e 2."""
+    return lot_service.list_lots(db, caller, catalog(request))
+
+
+@router.post("/sanitization/lots/reviews")
+def open_lot_review(
+    payload: LotReviewOpen,
+    request: Request,
+    db: Db,
+    caller: Caller,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    """Abre a revisão do lote e sorteia a amostra.
+
+    Repetir, com a mesma chave ou outra, devolve a revisão já aberta, sem sortear de novo.
+    """
+    del idempotency_key  # Obrigatória no contrato; a revisão aberta já torna a repetição segura.
+    verify_write(request, caller)
+    code, body = lot_service.open_review(
+        db, caller, payload.lot_key, payload.tier, request.state.request_id, catalog(request)
+    )
+    db.commit()
+    return JSONResponse(body, status_code=code)
+
+
+@router.get("/sanitization/lots/reviews/{review_id}")
+def get_lot_review(review_id: UUID, request: Request, db: Db, caller: Caller):
+    return lot_service.review_detail(db, caller, review_id, catalog(request))
+
+
+@router.post("/sanitization/lots/reviews/{review_id}/decide")
+def decide_lot(
+    review_id: UUID,
+    payload: LotDecision,
+    request: Request,
+    db: Db,
+    caller: Caller,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    """Zero erros na amostra aplica cada proposta pelo fluxo normal; qualquer erro devolve o lote."""
+    verify_write(request, caller)
+    try:
+        code, body = lot_service.decide_review(
+            db, caller, review_id, payload, idempotency_key, request.state.request_id, catalog(request)
+        )
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise ApiError(503, "DATABASE_UNAVAILABLE", "Nao foi possivel registrar a transacao.") from None
+    return JSONResponse(body, status_code=code)
 
 
 @router.get("/sanitization/{proposal_id}")

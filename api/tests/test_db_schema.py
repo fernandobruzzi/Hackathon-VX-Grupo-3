@@ -29,6 +29,7 @@ TABLES = {
     "inventory_consolidations",
     "quality_snapshots",
     "quality_snapshot_items",
+    "lot_reviews",
 }
 VIEWS = {
     "mcp_catalog",
@@ -177,6 +178,12 @@ def test_published_quality_snapshots_are_immutable_for_api(connection, table):
     denied(connection, "api_user", f"UPDATE {table} SET tenant_id = tenant_id")
     denied(connection, "api_user", f"DELETE FROM {table}")
     denied(connection, "batch_user", f"SELECT * FROM {table}")
+
+
+def test_lot_reviews_are_kept_and_only_the_api_writes_them(connection):
+    denied(connection, "api_user", "DELETE FROM lot_reviews")
+    denied(connection, "batch_user", "SELECT * FROM lot_reviews")
+    denied(connection, "mcp_reader", "SELECT * FROM lot_reviews")
 
 
 def test_mcp_reader_reads_views_only(connection, add_material):

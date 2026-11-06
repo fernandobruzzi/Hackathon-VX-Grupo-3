@@ -65,10 +65,10 @@ class StoredChange(StrictModel):
 
 
 class ReviewLane(StrictModel):
-    """Nível de revisão gravado pelo batch (#119): 1 e 2 podem ir em lote após amostra, 3 é item a item."""
+    """Nível de revisão gravado pelo batch (#119). Só os níveis 1 e 2 entram em lote."""
 
     tier: Literal[1, 2, 3]
-    lot_key: str
+    lot_key: str = Field(min_length=1)
     reasons: list[str] = Field(default_factory=list)
 
 

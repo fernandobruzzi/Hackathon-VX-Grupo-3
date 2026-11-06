@@ -44,6 +44,7 @@ ORDER_ORIGINS = ("CHAT", "IMPORT")
 JOB_TYPES = ("SANITIZE", "IMPORT_ORDERS", "ENRICH_REAL_PRODUCTS")
 JOB_STATUSES = ("QUEUED", "RUNNING", "SUCCEEDED", "FAILED")
 REFERENCE_KINDS = ("PDM", "NCM")
+LOT_REVIEW_STATUSES = ("OPEN", "APPROVED", "RETURNED")
 
 
 def _one_of(column: str, values: tuple[str, ...]) -> str:
@@ -459,3 +460,33 @@ class QualitySnapshotItem(Base):
     ncm: Mapped[str | None] = mapped_column(Text)
     unit: Mapped[str | None] = mapped_column(Text)
     proposal_ids: Mapped[Any] = _jsonb("[]")
+
+
+class LotReview(Base):
+    """Revisão por amostra de um lote de correções de forma (#120).
+
+    Guarda as propostas e versões do lote no momento da abertura e a amostra sorteada pelo servidor.
+    Nada é aplicado antes da decisão: aprovar aplica cada proposta pelo fluxo normal de aprovação.
+    """
+
+    __tablename__ = "lot_reviews"
+    __table_args__ = (
+        CheckConstraint(_one_of("status", LOT_REVIEW_STATUSES), name="status"),
+        CheckConstraint("tier IN (1, 2)", name="tier"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    lot_key: Mapped[str] = mapped_column(Text, nullable=False)
+    tier: Mapped[int] = mapped_column(Integer, nullable=False)
+    proposal_type: Mapped[str] = mapped_column(Text, nullable=False)
+    proposal_versions: Mapped[Any] = _jsonb()
+    sample_ids: Mapped[Any] = _jsonb("[]")
+    marks: Mapped[Any] = _jsonb()
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'OPEN'"))
+    result: Mapped[Any] = _jsonb()
+    created_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    decided_by_user_id: Mapped[uuid.UUID | None] = _user_fk()
+    version: Mapped[int] = _version()
+    created_at: Mapped[datetime] = _created_at()
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
