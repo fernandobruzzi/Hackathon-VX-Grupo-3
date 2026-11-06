@@ -136,6 +136,24 @@ def test_corrections_are_saved_with_before_after_and_rule(sanitized):
     assert scalar(admin, query) == 0
 
 
+def test_saved_corrections_carry_their_review_lane_and_merges_do_not(sanitized):
+    first, _, admin, _ = sanitized
+    tiers = (
+        "SELECT p.changeset->'review_lane'->>'tier', count(*) FROM sanitization_proposals p "
+        "WHERE p.proposal_type <> 'MERGE' GROUP BY 1"
+    )
+    with admin.connect() as connection:
+        saved = {row[0]: row[1] for row in connection.execute(text(tiers))}
+    assert saved == first["corrections"]["review_lanes"]["tiers"]
+    assert (
+        scalar(
+            admin,
+            "SELECT count(*) FROM sanitization_proposals WHERE changeset ? 'review_lane' AND proposal_type = 'MERGE'",
+        )
+        == 0
+    )
+
+
 def test_every_saved_batch_proposal_matches_the_review_contract(sanitized):
     _, _, admin, _ = sanitized
     with Session(admin) as db:
