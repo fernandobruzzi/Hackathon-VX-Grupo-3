@@ -80,3 +80,11 @@ originais do kit.
 Depois do envio, a conversa fica disponível como evidência e não aceita novos
 turnos que poderiam mudar a ficha encaminhada; para outro item, use “Nova conversa”.
 A Governança e o Fiscal continuam aprovando pelo fluxo de pedidos existente.
+
+## Listagem paginada
+
+`GET /api/v1/registration-orders?mine=true` limita a consulta aos pedidos cujo dono é o usuário
+autenticado, independentemente do nome de exibição. Centro, propriedade e estado são filtrados
+no servidor antes do limite. A ordenação usa atualização decrescente e UUID para desempate.
+Use `next_cursor` para a página seguinte na mesma consulta; cursor inválido recebe 422.
+A tela oferece **Carregar mais pedidos** e reinicia a coleção ao trocar aba ou identidade.

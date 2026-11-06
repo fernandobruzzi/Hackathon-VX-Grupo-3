@@ -12,10 +12,11 @@ novo: se surgiu um material com a mesma identidade, o pedido vira EXISTING e nad
 
 import hashlib
 import json
+import re
 import uuid
 from collections import Counter
 
-from sqlalchemy import BigInteger, cast, func, select, text
+from sqlalchemy import BigInteger, cast, func, or_, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
@@ -158,21 +159,29 @@ def to_contract(db, order: RegistrationOrder) -> dict:
     }
 
 
-def list_orders(db, identity, *, status=None, limit=20, cursor=None) -> dict:
+def list_orders(db, identity, *, status=None, mine=False, limit=20, cursor=None) -> dict:
     require_permission(identity, "orders:read_own")
-    query = select(RegistrationOrder).where(RegistrationOrder.tenant_id == identity.tenant_id)
+    if cursor is not None and not re.fullmatch(r"[0-9]{1,9}", cursor):
+        raise ApiProblem(422, "INVALID_CURSOR", "Cursor de pedidos inválido.")
+    offset = int(cursor) if cursor is not None else 0
+    own = RegistrationOrder.requester_user_id == identity.user_id
+    query = select(RegistrationOrder).where(
+        RegistrationOrder.tenant_id == identity.tenant_id,
+        or_(RegistrationOrder.center_code.is_(None), RegistrationOrder.center_code.in_(identity.center_codes)),
+    )
+    if mine or not (has_permission(identity, GOVERNANCE) or has_permission(identity, FISCAL)):
+        query = query.where(own)
+    elif not has_permission(identity, GOVERNANCE):
+        query = query.where(or_(own, RegistrationOrder.status.in_(["PENDING_FISCAL", "REGISTERED"])))
     if status:
         query = query.where(RegistrationOrder.status == status)
-    if not (has_permission(identity, GOVERNANCE) or has_permission(identity, FISCAL)):
-        query = query.where(RegistrationOrder.requester_user_id == identity.user_id)
-    offset = int(cursor) if cursor and cursor.isdigit() else 0
     rows = db.scalars(
-        query.order_by(RegistrationOrder.updated_at.desc(), RegistrationOrder.id).offset(offset).limit(limit * 4 + 1)
+        query.order_by(RegistrationOrder.updated_at.desc(), RegistrationOrder.id).offset(offset).limit(limit + 1)
     ).all()
-    visible = [order for order in rows if _visible(identity, order)]
-    items = visible[:limit]
-    more = len(visible) > limit or len(rows) > limit * 4
-    return {"items": [to_contract(db, order) for order in items], "next_cursor": str(offset + limit) if more else None}
+    return {
+        "items": [to_contract(db, order) for order in rows[:limit]],
+        "next_cursor": str(offset + limit) if len(rows) > limit else None,
+    }
 
 
 def _idempotent(db, identity, operation: str, key: uuid.UUID, payload: dict):

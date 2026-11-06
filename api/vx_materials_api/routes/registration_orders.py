@@ -27,10 +27,11 @@ def list_orders(
     caller: Caller,
     db: Db,
     status: Status | None = None,
+    mine: bool = False,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     cursor: str | None = None,
 ):
-    return order_service.list_orders(db, caller, status=status, limit=limit, cursor=cursor)
+    return order_service.list_orders(db, caller, status=status, mine=mine, limit=limit, cursor=cursor)
 
 
 @router.post("/{order_id}/submit")

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button, Code, PageHeader, Table, Tabs, Td, Th } from "@/components/ui";
 import { OrderStatusBadge } from "@/components/ui/status";
@@ -26,38 +26,58 @@ export function OrdersPage() {
   const awaiting = governance ? "READY_FOR_REVIEW" : "PENDING_FISCAL";
   const [tab, setTab] = useState<Tab>(reviewer ? "review" : "mine");
   const [remote, setRemote] = useState<RegistrationOrder[] | null>(null);
-  const [more, setMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => {
+    if (!reviewer) setTab("mine");
+  }, [reviewer]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
 
-  useEffect(() => {
-    if (!backend || !me) return;
-    const controller = new AbortController();
-    setError(null);
-    api
-      .request("get", "/api/v1/registration-orders", {
-        query: { limit: 100, ...(tab === "review" ? { status: awaiting } : {}) },
-        signal: controller.signal,
-      })
-      .then((result) => {
-        if (controller.signal.aborted) return;
-        setRemote(result.items);
-        setMore(result.next_cursor !== null);
-      })
-      .catch((err: unknown) => {
-        if (!controller.signal.aborted)
+  const loadPage = useCallback(
+    async (cursor: string | null, append: boolean, signal: AbortSignal) => {
+      if (!backend || !me) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await api.request("get", "/api/v1/registration-orders", {
+          query: {
+            limit: 100,
+            mine: tab === "mine",
+            ...(tab === "review" ? { status: awaiting } : {}),
+            ...(cursor !== null ? { cursor } : {}),
+          },
+          signal,
+        });
+        if (signal.aborted) return;
+        setRemote((previous) => (append ? [...(previous ?? []), ...result.items] : result.items));
+        setNextCursor(result.next_cursor);
+      } catch (err: unknown) {
+        if (!signal.aborted)
           setError(err instanceof ApiError ? err.message : "Não foi possível carregar os pedidos.");
-      });
-    return () => controller.abort();
-  }, [api, awaiting, backend, me, retry, tab]);
+      } finally {
+        if (!signal.aborted) setLoading(false);
+      }
+    },
+    [api, awaiting, backend, me, tab],
+  );
+
+  useEffect(() => {
+    const request = new AbortController();
+    controller.current = request;
+    setRemote(null);
+    setNextCursor(null);
+    void loadPage(null, false, request.signal);
+    return () => request.abort();
+  }, [loadPage, retry]);
 
   const all = backend ? (remote ?? []) : sample;
-  const rows =
-    tab === "mine"
-      ? all.filter(
-          (o) => o.origin === "CHAT" && (!backend || o.requester === me?.user.display_name),
-        )
+  const rows = backend
+    ? all
+    : tab === "mine"
+      ? all.filter((o) => o.origin === "CHAT")
       : tab === "review"
         ? all.filter((o) => o.status === awaiting)
         : all;
@@ -90,7 +110,7 @@ export function OrdersPage() {
             value: "review" as const,
             label: governance ? "Para aprovar" : "Aguardando NCM",
             // Com mais páginas, a contagem seria só da primeira: fica sem número.
-            count: more ? undefined : all.filter((o) => o.status === awaiting).length,
+            count: tab === "review" && !nextCursor && !loading ? all.length : undefined,
           },
           { value: "all" as const, label: "Todos" },
         ]
@@ -203,7 +223,23 @@ export function OrdersPage() {
           ))}
         </tbody>
       </Table>
-      {backend && remote && rows.length === 0 && (
+      {backend && loading && (
+        <p role="status" className="mt-4 text-sm text-muted">
+          Carregando pedidos…
+        </p>
+      )}
+      {backend && nextCursor !== null && (
+        <Button
+          className="mt-4"
+          disabled={loading}
+          onClick={() => {
+            if (controller.current) void loadPage(nextCursor, true, controller.current.signal);
+          }}
+        >
+          Carregar mais pedidos
+        </Button>
+      )}
+      {backend && !loading && remote && rows.length === 0 && (
         <p className="mt-4 text-sm text-muted">Nenhum pedido nesta lista.</p>
       )}
     </>
