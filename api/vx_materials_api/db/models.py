@@ -490,3 +490,28 @@ class LotReview(Base):
     version: Mapped[int] = _version()
     created_at: Mapped[datetime] = _created_at()
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ManualReview(Base):
+    """Pendência observada pelo batch; encaminhar gera proposta, nunca edição do mestre."""
+
+    __tablename__ = "manual_reviews"
+    __table_args__ = (
+        UniqueConstraint("run_id", "material_id"),
+        Index("ix_manual_reviews_tenant_id_run_id", "tenant_id", "run_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("batch_jobs.id"))
+    dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id"), nullable=False)
+    material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
+    expected_material_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    reasons: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
+    observation: Mapped[Any] = _jsonb()
+    rules_signature: Mapped[str] = mapped_column(Text, nullable=False)
+    pdm_version: Mapped[str] = mapped_column(Text, nullable=False)
+    pdm_source_sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    proposal_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("sanitization_proposals.id"))
+    created_at: Mapped[datetime] = _created_at()

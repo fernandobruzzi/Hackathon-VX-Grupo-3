@@ -49,7 +49,8 @@ Correções de grupo sem persistência suportada e correções sem PDM completo
 permanecem bloqueadas. A revisão exibe as alterações e fontes originais; não
 descarta campos silenciosamente nem registra uma aplicação parcial como sucesso.
 Aplicação do grupo está acompanhada na [#94](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/94);
-a resolução de pendências incompletas permanece na #68.
+a revisão manual de pendências está em [`pendencias.md`](pendencias.md):
+completar os dados gera outra proposta, sem editar diretamente o mestre.
 
 O produtor deve calcular `domain.proposals.proposal_hash(members, changeset,
 evidence_ids)`. A API recalcula o mesmo hash, sem depender da ordem das chaves do

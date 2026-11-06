@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import {
@@ -289,6 +290,11 @@ export function BatchPage() {
                       </Code>
                     </Td>
                     <Td>
+                      {j.status === "SUCCEEDED" && (
+                        <Link href={`/pendencias/?run_id=${j.id}`} className="text-verde underline">
+                          Ver pendências
+                        </Link>
+                      )}
                       {j.status === "FAILED" && (
                         <Button
                           variant="ghost"

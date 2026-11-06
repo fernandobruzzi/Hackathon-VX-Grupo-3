@@ -390,3 +390,25 @@ def test_pdm_correction_accepts_ncm_written_without_dots(review):
     assert result.status_code == 200, result.text
     assert result.json()["status"] == "APPLIED"
     assert master(connection, "10002148").ncm == "87089990"
+
+
+def test_manual_review_counts_match_full_base_report_and_rerun(sanitized):
+    first, second, admin, _ = sanitized
+    assert first["manual_review_run_id"] == second["manual_review_run_id"]
+    with admin.connect() as connection:
+        counts = dict(
+            connection.execute(
+                text("""
+            SELECT reason, count(*) FROM manual_reviews, unnest(reasons) AS reason
+            WHERE run_id = :run GROUP BY reason
+        """),
+                {"run": first["manual_review_run_id"]},
+            ).all()
+        )
+        assert counts == first["corrections"]["pending"]
+        assert connection.execute(
+            text("""
+            SELECT count(*) = count(DISTINCT material_id) FROM manual_reviews WHERE run_id = :run
+        """),
+            {"run": first["manual_review_run_id"]},
+        ).scalar_one()

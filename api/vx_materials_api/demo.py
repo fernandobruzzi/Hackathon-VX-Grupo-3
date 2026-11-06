@@ -56,6 +56,7 @@ OPERATIONAL_TABLES = (
     "chat_sessions",
     "registration_orders",
     "enrichment_sources",
+    "manual_reviews",
     "sanitization_proposals",
     "material_search_index",
     "batch_jobs",
