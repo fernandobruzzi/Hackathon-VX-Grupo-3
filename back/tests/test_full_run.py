@@ -164,3 +164,41 @@ def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, m
         assert assessment["ncm_snapshot_date"] == "2026-11-06"
         assert assessment["ncm_source_kind"] == "SIMULATED"
         assert proposal.fiscal_review_required
+
+
+def test_snapshot_binding_preserves_raw_ncm_for_technical_corrections_and_existing_reviews(catalog, monkeypatch):
+    from datetime import date
+
+    from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
+
+    payload = json.loads((Path(__file__).parent / "fixtures/ncm_simulated.json").read_bytes())
+    payload["Nomenclaturas"].append(
+        {
+            "Codigo": "8421.23.00",
+            "Descricao": "SIMULACAO - filtro",
+            "Data_Inicio": "01/01/2020",
+            "Data_Fim": "31/12/9999",
+        }
+    )
+    # Simula a origem do transporte; não baixa nem publica dado fiscal.
+    snapshot = load_ncm_snapshot(
+        json.dumps(payload).encode(),
+        snapshot_date=date(2026, 11, 6),
+        source_kind=NcmSourceKind.OFFICIAL_DOWNLOAD,
+    )
+    monkeypatch.setattr(full_run, "load_configured_ncm_snapshot", lambda: snapshot)
+    captured = []
+    monkeypatch.setattr(
+        full_run, "save_all", lambda proposals, records, context: captured.extend(proposals) or len(proposals)
+    )
+    records = [replace(RECORDS[0], code=str(i), ncm="84212300", unit="PC") for i in range(1, 3)]
+    full_run.run_full(records, catalog, RunContext(engine=None, tenant_id="t"))
+    technical = [p for p in captured if p.proposal_type == "PDM_CORRECTION"]
+    assert technical
+    for proposal in technical:
+        assert proposal.changeset["after"]["ncm"] == "84212300"
+        assert proposal.changeset["ncm_assessment"]["requires_fiscal_review"]
+        assert not proposal.fiscal_review_required
+    # O merge normaliza o NCM efetivamente, então conserva a revisão já exigida.
+    merges = [p for p in captured if p.proposal_type == "MERGE"]
+    assert merges and all(p.fiscal_review_required for p in merges)
