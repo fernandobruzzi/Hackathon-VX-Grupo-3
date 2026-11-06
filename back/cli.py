@@ -11,6 +11,7 @@ from domain.runtime import check_simulated_clients
 from pipelines.classify import classification_evaluation, classification_report
 from pipelines.evaluate_sanitization import sanitization_evaluation
 from pipelines.full_run import run_sanitize
+from pipelines.review_handoff import review_handoff
 from pipelines.sanitize import sanitize_report
 from pipelines.search_index import run_index
 from repositories.normalization import get_normalization_repository
@@ -68,6 +69,15 @@ def main(argv: list[str] | None = None) -> int:
     sanitation_eval.add_argument(
         "--cohort-manifest", help="Manifesto versionado; padrão: coortes de desenvolvimento v1/v2"
     )
+    handoff = commands.add_parser("review-handoff", help="Prepara coorte e fichas vazias sem homologar resultados")
+    handoff.add_argument("csv_path")
+    handoff.add_argument("--pdm-workbook", required=True)
+    handoff.add_argument("--repository")
+    handoff.add_argument("--size", type=int, default=40)
+    handoff.add_argument("--seed", type=int, default=32)
+    handoff.add_argument(
+        "--historical-source", action="append", default=[], help="JSON histórico rastreável; repetível"
+    )
     index = commands.add_parser("index", help="Reconstroi o indice de busca, com a credencial batch_user")
     index.add_argument("--pdm-workbook")
     index.add_argument("--if-stale", action="store_true", help="Pula se a versao atual ja cobre todos os materiais")
@@ -80,6 +90,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "sanitization-evaluate":
         result = sanitization_evaluation(args.csv_path, args.pdm_workbook, args.repository, args.cohort_manifest)
+    elif args.command == "review-handoff":
+        result = review_handoff(
+            args.csv_path,
+            args.pdm_workbook,
+            args.repository,
+            size=args.size,
+            seed=args.seed,
+            historical_paths=args.historical_source,
+        )
     elif args.command == "index":
         result = run_index(args.pdm_workbook, if_stale=args.if_stale)
     elif args.command == "sanitize-report":
