@@ -504,6 +504,8 @@ Orders and chat messages arrive as sentences and lines. A value followed by sent
 
 Reordered words may match a PDM value only when all its words are present; an incomplete value is never completed just because only one PDM option contains it. `FERRO FUNDIDO` does not establish `FERRO FUNDIDO NODULAR`, and `FEMEA BSP` does not establish a straight fitting. Explicit aliases and complete values still work. With shared identity-v3 and sentence/line parsing, #133 uses extraction revision `5`: rebuild the search index through `docker compose up --build` or `docker compose run --rm --build batch` after updating. Development counts, coverage held for review and the unchanged historical labels are recorded in [the extraction measurement](docs/extracao-valores-explicitos.md).
 
+For labels without separators, preserve the remaining attributes after a whole matched prefix. Generic `ZINCADO` stays pending; `ZINCADO BRANCO` supplies the complete finish. Boundary rules, all changed-value evidence, merge reviews and index-only rebuild instructions: [label boundaries](docs/label-boundaries.md).
+
 ## Duplicate proposals
 
 The batch only proposes merges, and people approve them through the API. Default candidates come from exact identity: same required attributes or, in reference classes, same manufacturer and reference, as PDM rule 10 says. `tokens_v1` stays registered but off, because in reviewed pairs only 7 of 23 of its decided suggestions were the same item.
