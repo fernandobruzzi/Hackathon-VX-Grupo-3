@@ -39,6 +39,9 @@ _INSERT_PROPOSAL = text(
     """
 )
 
+# Função da migração 0008: o batch não grava auditoria direto, só pede a substituição das pendentes.
+_SUPERSEDE = text("SELECT supersede_proposals(CAST(:ids AS uuid[]))")
+
 
 def single_tenant(engine: Engine) -> str:
     """O MVP tem uma empresa. Mais de uma exige decidir o escopo antes de propor."""
@@ -147,9 +150,12 @@ def insert_proposals(
     tenant_id: str,
     job_id: str | None = None,
 ) -> int:
-    """Insere na transação de quem chama. Os ids vêm do conteúdo, então repetir não duplica nada."""
+    """Insere na transação de quem chama. Os ids vêm do conteúdo, então repetir não duplica nada.
+
+    Conteúdo novo para os mesmos tipo e membros gera id novo: a pendente anterior vira STALE, com auditoria,
+    na mesma transação.
+    """
     ids = {record.code: record.database_id for record in records}
-    inserted = 0
     if not proposals:
         return 0
     datasets = (
@@ -159,10 +165,13 @@ def insert_proposals(
     )
     if len(datasets) != 1:
         raise ValueError("A persistência de propostas exige exatamente um dataset por empresa no MVP")
+    new_ids = []
     for proposal in proposals:
         result = connection.execute(_INSERT_PROPOSAL, _proposal_row(proposal, ids, tenant_id, job_id, datasets[0]))
-        inserted += result.rowcount if result.rowcount > 0 else 0
-    return inserted
+        new_ids.extend(result.scalars().all())
+    if new_ids:
+        connection.execute(_SUPERSEDE, {"ids": new_ids})
+    return len(new_ids)
 
 
 # Jobs: a API cria o registro (batch_user não insere); o batch só acompanha e conclui.

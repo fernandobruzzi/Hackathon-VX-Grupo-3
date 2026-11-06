@@ -485,6 +485,8 @@ Governança starts jobs on `/batch` (`POST /api/v1/batch/jobs`); locally, sign i
 
 A finished job stores its metrics in `batch_jobs.counts` and `runs/<job_id>/metrics.json`: the contract counts (`proposals`, `merges`, `ncm`, `enrichment`), counts by type, one outcome per material (`PROPOSTA`, `PENDENTE`, `SEM_ALTERACAO` or `ERRO_ANALISE`, always summing to the base), time per stage and attempt, and model usage. The batch doesn't call models yet, so usage is zero and says so.
 
+A proposal's id comes from its content, so a rerun with the same content inserts nothing. When rules change, the new proposal for the same dataset, type and members replaces the earlier `PENDING` one: in the same transaction, the batch calls `supersede_proposals`, which marks it `STALE` with a `SYSTEM` audit event (`PROPOSAL_SUPERSEDED`, pointing to its replacement). `APPLIED` and `REJECTED` proposals never change. `batch_user` still has no access to `audit_logs`: the function runs with the migration owner's rights and does only this.
+
 Merge precision is measured on a random sample of all merge proposals in `back/tests/fixtures/merge_precision_sample.json`, reviewed by reading descriptions. If proposals change, the test asks for a new sample and review.
 
 ## Local first
