@@ -34,6 +34,28 @@ def test_reference_variants_follow_shared_domain_identity(approval_case, referen
     assert response.json()["status"] == "APPLIED"
 
 
+def test_queue_does_not_offer_a_merge_whose_member_fails_the_pdm(approval_case):
+    # A aprovação valida cada membro pelo PDM. Sem a referência, o membro não fecha a identidade, e
+    # a fila mostra o motivo sem oferecer a aprovação que seria recusada com PDM_INVALID.
+    case = approval_case
+    code = case["materials"][1].material_code
+    case["proposal"].members = [
+        case["proposal"].members[0],
+        case["proposal"].members[1] | {"attributes": {"FABRICANTE": "FLEETGUARD"}},
+    ]
+    persist(case)
+    detail = case["client"].get(f"/api/v1/sanitization/{case['proposal'].id}").json()
+    blockers = [conflict for conflict in detail["conflicts"] if conflict.startswith("PDM_INVALIDO")]
+    assert blockers and code in blockers[0] and "REFERENCIA FABRICANTE" in blockers[0]
+    assert "APPROVE" not in detail["allowed_actions"]
+    queued = case["client"].get("/api/v1/sanitization/queue").json()["items"]
+    item = next(row for row in queued if row["id"] == str(case["proposal"].id))
+    assert "APPROVE" not in item["allowed_actions"]
+    response = decide(case)
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "PDM_INVALID"
+
+
 def test_canonical_identity_collision_rolls_back_every_change(approval_case):
     case = approval_case
     db = case["session"]
