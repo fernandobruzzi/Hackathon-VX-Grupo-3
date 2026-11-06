@@ -80,6 +80,10 @@ def start_job(
 ) -> BatchJob:
     if request.job_type not in SUPPORTED_TYPES:
         raise ApiProblem(422, "JOB_TYPE_NOT_SUPPORTED", f"O tipo {request.job_type} ainda não roda no batch.")
+    if set(request.scope.include_statuses) != {"ATIVO", "BLOQUEADO", "OBSOLETO"}:
+        raise ApiProblem(
+            422, "SCOPE_NOT_SUPPORTED", "O batch exige todos os status; subconjuntos e lista vazia não são suportados."
+        )
     if request.scope.pdm_class_ids:
         raise ApiProblem(422, "SCOPE_NOT_SUPPORTED", "O batch processa a base inteira; filtrar classes ainda não.")
     if request.pdm_version != DEFAULT_PDM_VERSION:

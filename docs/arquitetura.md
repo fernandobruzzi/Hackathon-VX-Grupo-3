@@ -1185,7 +1185,7 @@ Exemplo de início de batch:
 }
 ```
 
-Lista vazia de classes significa analisar todas as classes. A aprovação automática não decorre desse escopo.
+Lista vazia de classes significa analisar todas as classes. O batch atual exige os três status (`ATIVO`, `BLOQUEADO`, `OBSOLETO`); subconjuntos e lista vazia de status recebem `422 SCOPE_NOT_SUPPORTED` antes de criar job, manifesto ou task. A aprovação automática não decorre desse escopo.
 
 A API entrega ao batch somente um manifesto:
 

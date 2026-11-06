@@ -14,7 +14,9 @@ class _Contract(BaseModel):
 
 class BatchScope(_Contract):
     pdm_class_ids: list[str]
-    include_statuses: list[Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]]
+    include_statuses: list[Literal["ATIVO", "BLOQUEADO", "OBSOLETO"]] = Field(
+        description="Exige todos os status; subconjuntos e lista vazia recebem 422 SCOPE_NOT_SUPPORTED."
+    )
 
 
 class BatchJobRequest(_Contract):

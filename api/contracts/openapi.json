@@ -5332,6 +5332,7 @@
                 }
               },
               "include_statuses": {
+                "description": "O batch atual exige ATIVO, BLOQUEADO e OBSOLETO. Subconjuntos e lista vazia recebem 422 SCOPE_NOT_SUPPORTED antes de criar o job.",
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/MaterialStatus"

@@ -310,3 +310,20 @@ def test_local_runner_refuses_outside_local(monkeypatch):
 def test_unknown_runner_fails_fast():
     with pytest.raises(RuntimeError, match="BATCH_RUNNER desconhecido"):
         batch_runner.get_batch_runner("ecs-fake")
+
+
+@pytest.mark.parametrize("statuses", [["ATIVO"], ["ATIVO", "BLOQUEADO"], []])
+def test_status_subsets_are_rejected_without_side_effects(clean_jobs, storage, statuses):
+    runner = RecordingRunner()
+    client = client_for(clean_jobs, runner=runner)
+    response = post(
+        client,
+        "/api/v1/batch/jobs",
+        start_body(clean_jobs[3], scope={"pdm_class_ids": [], "include_statuses": statuses}),
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "SCOPE_NOT_SUPPORTED"
+    assert runner.launched == []
+    assert not list(storage._root.rglob("manifest.json"))
+    with clean_jobs[0].connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM batch_jobs")).scalar_one() == 0
