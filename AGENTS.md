@@ -379,6 +379,9 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - BFF model: tokens stay on the backend, and the browser only holds an opaque, `HttpOnly` session cookie.
 - The API derives identity and roles from the session. Payloads never carry `role`, `actor_id` or `approved_by`, and the front sends no role header.
 - Guards check both action and resource. The front hides controls, but the API is the authority.
+- Use `security/rbac.py` for action, tenant, center and conversation-owner checks.
+  Permissions must belong to both the authenticated identity and its role's matrix.
+  Chat cookie writes require Origin and CSRF before reserving a turn or calling the Agent.
 - Never commit secrets. Tokens, passwords and secrets never appear in logs.
 - Test sessions exist only in local environments.
 - Stock price and value are for `metrics:financial` only. MCP tools get the inventory view from `inventory_view(caller)` and never name it directly. The database can't enforce this per user, because MCP has one credential.

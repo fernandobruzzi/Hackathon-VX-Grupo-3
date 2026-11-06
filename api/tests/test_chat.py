@@ -88,6 +88,7 @@ def _new_identity(factory, permissions=SOLICITANTE) -> Identity:
         roles=("ROLE_SOLICITANTE",),
         permissions=permissions,
         center_codes=frozenset({"1100", "1200"}),
+        csrf_token="test-csrf",
     )
 
 
@@ -120,7 +121,11 @@ def send(client, message="parafuso M12", session_id=None, version=0, client_mess
         "message": message,
         "center_code": "1200",
     }
-    return client.post("/api/v1/chat/message", json=body, headers={"Idempotency-Key": str(uuid.uuid4())})
+    return client.post(
+        "/api/v1/chat/message",
+        json=body,
+        headers={"Idempotency-Key": str(uuid.uuid4()), "Origin": "http://localhost:8000", "X-CSRF-Token": "test-csrf"},
+    )
 
 
 def count(factory, sql, **params):

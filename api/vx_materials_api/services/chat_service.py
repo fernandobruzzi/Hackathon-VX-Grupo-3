@@ -22,6 +22,7 @@ from vx_materials_api.db.models import ChatMessage, ChatSession
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
+from vx_materials_api.security.rbac import require_conversation_owner
 
 NCM_VERSION = "ncm-demo-v1"
 # Reserva sem conclusão por mais que isso é tratada como abandonada (queda da API no meio do turno).
@@ -123,8 +124,7 @@ def _locked_session(db: Session, identity: Identity, session_id: uuid.UUID) -> C
         .with_for_update()
     )
     # Conversa de outra pessoa responde como inexistente.
-    if session is None or session.owner_user_id != identity.user_id:
-        raise ApiProblem(404, "NOT_FOUND", "Conversa não encontrada.")
+    require_conversation_owner(identity, session)
     return session
 
 
