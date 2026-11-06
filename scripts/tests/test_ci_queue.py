@@ -1,4 +1,4 @@
-"""Fila do CI em main (#108): medição e limites do cancelamento."""
+"""CI de promoção (#178): gatilhos, medição e limites do cancelamento."""
 
 import re
 import sys
@@ -38,7 +38,17 @@ class QueueTimingTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
-    def test_superseded_runs_are_cancelled_per_pr_and_on_main(self):
+    def test_validation_only_runs_for_pull_requests_targeting_main(self):
+        for filename in ("ci.yml", "policy.yml"):
+            with self.subTest(workflow=filename):
+                workflow = (ROOT / ".github" / "workflows" / filename).read_text(encoding="utf-8")
+                triggers = re.search(r"(?ms)^on:\n(.*?)(?=^\S)", workflow).group(1)
+                self.assertEqual(re.findall(r"(?m)^  (\w+):", triggers), ["pull_request"])
+                self.assertRegex(triggers, r"(?m)^    branches: \[main\]$")
+                self.assertIn("edited", triggers)  # Retargetar um PR para main também precisa validar.
+                self.assertNotIn("paths", triggers)  # Checks obrigatórios não podem ficar pendentes por filtro.
+
+    def test_superseded_runs_are_cancelled_per_promotion_pr(self):
         self.assertIn("group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}", CI)
         self.assertRegex(CI, r"(?m)^  cancel-in-progress: true$")
 
