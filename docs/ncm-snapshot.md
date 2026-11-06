@@ -93,14 +93,50 @@ snapshot = NcmSnapshotStore(get_object_store()).load(version)
 assessment = check_snapshot_ncm(snapshot, raw_ncm)
 ```
 
-A integração com `check_ncm_consistency`, batch, chatbot, recursos MCP e aprovação
-continua dependente da entrega de #22 (PR #67). Seus arquivos não foram alterados.
-O consumidor deve combinar os motivos de ambas as avaliações, conservar pendências
-técnicas/fiscais já existentes e incluir **versão + hash + data** no assessment e
-no hash do conjunto de alterações aprovado. Uma troca de referência precisa
-invalidar/regenerar a proposta, sem reaproveitar uma aprovação anterior. Snapshot
-ausente ou com falha de integridade não autoriza o cadastro: o erro deve aparecer
-como referência indisponível, sem substituir a referência por dados simulados.
+## Referência compartilhada e aprovação
+
+Após registrar a tabela, configure `NCM_SNAPSHOT_VERSION=<versão registrada>` na
+API, no Agent e no batch, com acesso ao mesmo ObjectStore. A variável fica vazia
+por padrão: preserva o comportamento sem referência, com existência/vigência
+indisponíveis e `OFFICIAL_SNAPSHOT_UNAVAILABLE`. Não há consulta de rede durante
+uma avaliação nem seleção automática da tabela mais recente. Os rótulos legados
+de contexto em sessões/jobs (por exemplo, `ncm-demo-v1`) permanecem nesta entrega;
+a referência fiscal efetiva é a versão/hash/data/origem do assessment e do
+checkpoint, não esse rótulo de contexto.
+
+O helper `clients.ncm_snapshot_store.load_configured_ncm_snapshot(requested_version=None)`
+resolve a versão do servidor e revalida o objeto sem cache. Uma versão solicitada
+pelo cliente precisa coincidir com a configurada. Referência configurada ausente,
+corrompida ou inacessível provoca erro explícito, sem fallback para ausência ou
+simulação. MCP retorna erro de tool; API retorna `NCM_REFERENCE_UNAVAILABLE`.
+
+`check_ncm_consistency` combina a coerência PDM com o snapshot opcional. Ausência,
+intervalo não vigente e procedência não verificada mantêm revisão fiscal, mesmo
+quando o código é tecnicamente consistente com o PDM. Divergências técnicas e
+mudanças na grafia também conservam seus motivos de revisão. A avaliação agora
+inclui `ncm_version`, `ncm_source_sha256`, `ncm_snapshot_date` (ISO) e
+`ncm_source_kind`; todos entram no `evaluation_hash` determinístico.
+
+O batch vincula a referência às propostas fiscais e, quando configurada, também
+às propostas de merge/correção técnica. O checkpoint guarda versão, hash, data e
+origem; retomar um job com outra referência exige novo job. A API recalcula a
+avaliação usando a mesma configuração em cada aprovação e compara o assessment
+inteiro já vinculado ao changeset. Mudanças de versão, hash, data ou origem recusam
+a proposta com `NCM_ASSESSMENT_CHANGED`; propostas antigas sem assessment também
+precisam ser regeneradas quando a referência passa a ser configurada. O guard de
+aprovação exige revisão fiscal para os motivos do snapshot, inclusive quando o
+NCM persistido não está sendo alterado. A autorização humana continua separada do
+resultado do motor. O contrato de avaliação passa a `pdm-ncm-v2`: assessments v1
+já persistidos precisam ser regenerados mesmo sem configurar um snapshot, porque
+não contêm os novos campos vinculados ao hash. A compatibilidade sem configuração
+preserva a checagem PDM, não autorizações ou assessments antigos.
+
+A configuração atravessa as allowlists dos subprocessos de MCP/batch. No Compose,
+Agent lê o volume de referências compartilhado sem escrita; API e batch mantêm
+acesso ao armazenamento existente. Na AWS, configure a mesma versão e bucket nas
+três tasks e permissão de leitura dos objetos para o Agent. Nenhum schema de banco
+ou dependência foi adicionado. A captura real da fonte oficial e a confirmação do
+formato permanecem pendentes; não habilite o fluxo oficial com a fixture simulada.
 
 Validação local:
 

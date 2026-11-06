@@ -551,7 +551,9 @@ def _decide_current(
             or (bool(m.attributes) and not _attributes_match(m.attributes, changes.after.attributes))
             for m in materials
         )
-        if (fiscal_change or fiscal_basis_changed) and proposal.fiscal_review_status == "NOT_REQUIRED":
+        if (fiscal_change or fiscal_basis_changed or ncm_evaluation["requires_fiscal_review"]) and (
+            proposal.fiscal_review_status == "NOT_REQUIRED"
+        ):
             raise ApiError(422, "FISCAL_REVIEW_REQUIRED", "A alteracao de NCM exige revisao fiscal.")
         technical_change = len(materials) > 1 or any(
             m.pdm_class_id != changes.after.pdm_class_id

@@ -187,3 +187,31 @@ def test_server_fails_clearly_without_the_pdm_file():
     assert result.returncode != 0
     assert "/nao/existe.xlsx" in result.stderr
     assert result.stdout == ""
+
+
+def test_ncm_snapshot_reaches_tool_over_stdio_with_provenance(monkeypatch, tmp_path):
+    from datetime import date
+
+    from clients.ncm_snapshot_store import NcmSnapshotStore
+    from clients.storage import LocalObjectStore
+    from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
+
+    raw = (Path(__file__).parents[2] / "back/tests/fixtures/ncm_simulated.json").read_bytes()
+    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 6), source_kind=NcmSourceKind.SIMULATED)
+    NcmSnapshotStore(LocalObjectStore(tmp_path)).register(snapshot, raw)
+    monkeypatch.setenv("STORAGE_BACKEND", "local")
+    monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", snapshot.version)
+    result = call(
+        "check_ncm_consistency", pdm_class_id="PDM003", attributes={}, ncm="7318.16.00", ncm_version=snapshot.version
+    )
+    assert result["exists_in_snapshot"] and result["valid_in_snapshot"]
+    assert result["requires_fiscal_review"]
+    assert result["pending_checks"] == ["NCM_SOURCE_UNVERIFIED"]
+    assert result["ncm_version"] == snapshot.version
+    assert result["ncm_source_sha256"] == snapshot.source_sha256
+    assert result["ncm_snapshot_date"] == "2026-11-06"
+    assert result["ncm_source_kind"] == "SIMULATED"
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", "missing")
+    with pytest.raises(McpToolError, match="indisponível"):
+        call("check_ncm_consistency", pdm_class_id="PDM003", attributes={}, ncm="7318.16.00")

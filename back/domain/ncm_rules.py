@@ -7,9 +7,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from domain.contracts import PdmCatalog, PdmClass
+from domain.ncm_snapshot import NcmSnapshot, check_snapshot_ncm
 from repositories.normalization import get_normalization_repository
 
-RULES_VERSION = "pdm-ncm-v1"
+RULES_VERSION = "pdm-ncm-v2"
 REFERENCE_SOURCE = "03_padrao_cadastro_PDM.xlsx#NCM_REFERENCIA"
 
 # Texto condicional novo exige conferir a implementação, sem interpretar texto livre.
@@ -47,6 +48,10 @@ class NcmConsistencyResult:
     rules_version: str
     evaluation_hash: str
     pending_checks: tuple[str, ...]
+    ncm_version: str | None
+    ncm_source_sha256: str | None
+    ncm_snapshot_date: str | None
+    ncm_source_kind: str | None
 
 
 def check_ncm_consistency(
@@ -57,14 +62,22 @@ def check_ncm_consistency(
     *,
     item_name: str | None = None,
     ncm_version: str | None = None,
+    snapshot: NcmSnapshot | None = None,
 ) -> NcmConsistencyResult:
     """O consumidor deve reavaliar dados alterados e vincular a aprovação ao changeset.
 
-    Existência e vigência ficam desconhecidas sem o snapshot oficial da #30.
-    A aplicação com duas revisões pertence à integração com a #20.
+    Sem snapshot, existência/vigência ficam desconhecidas. A origem não verificada
+    mantém revisão fiscal, mesmo quando o conteúdo confere com o PDM.
     """
-    if ncm_version is not None:
+    if ncm_version is not None and (snapshot is None or ncm_version != snapshot.version):
         raise ValueError(f"Snapshot oficial NCM indisponível: {ncm_version}")
+    snapshot_check = check_snapshot_ncm(snapshot, ncm) if snapshot is not None else None
+    reference = {
+        "ncm_version": snapshot.version if snapshot else None,
+        "ncm_source_sha256": snapshot.source_sha256 if snapshot else None,
+        "ncm_snapshot_date": snapshot.snapshot_date.isoformat() if snapshot else None,
+        "ncm_source_kind": snapshot.source_kind.value if snapshot else None,
+    }
     normalizer = get_normalization_repository()
     normalized = normalizer.normalize_ncm(ncm).value
     if normalized is not None and not re.fullmatch(r"[0-9]{4}\.[0-9]{2}\.[0-9]{2}", normalized):
@@ -78,11 +91,12 @@ def check_ncm_consistency(
         "pdm_sha256": catalog.source_sha256,
         "rules": RULES_VERSION,
         "normalization": normalizer.name,
+        "ncm_reference": reference,
     }
     evaluation_hash = hashlib.sha256(
         json.dumps(payload, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()
     ).hexdigest()
-    pending = ["OFFICIAL_SNAPSHOT_UNAVAILABLE"]
+    pending = list(snapshot_check.reasons) if snapshot_check else ["OFFICIAL_SNAPSHOT_UNAVAILABLE"]
     pdm_class = catalog.classes.get(pdm_class_id)
     codes, missing, resolved = (), (), False
     if pdm_class is None:
@@ -95,13 +109,17 @@ def check_ncm_consistency(
             consistency = "CONSISTENT" if normalized in codes else "INCONSISTENT"
         if not resolved:
             pending.append("PDM_CONDITION_UNRESOLVED")
-    requires_review = consistency != "CONSISTENT" or normalized != ncm
+    requires_review = (
+        consistency != "CONSISTENT"
+        or normalized != ncm
+        or bool(snapshot_check and snapshot_check.requires_fiscal_review)
+    )
     return NcmConsistencyResult(
         input_ncm=ncm,
         normalized_ncm=normalized,
         syntax_valid=normalized is not None,
-        exists_in_snapshot=None,
-        valid_in_snapshot=None,
+        exists_in_snapshot=snapshot_check.exists_in_snapshot if snapshot_check else None,
+        valid_in_snapshot=snapshot_check.valid_in_snapshot if snapshot_check else None,
         technical_consistency=consistency,
         suggested_ncm_codes=codes,
         missing_attributes=missing,
@@ -114,6 +132,7 @@ def check_ncm_consistency(
         rules_version=RULES_VERSION,
         evaluation_hash=evaluation_hash,
         pending_checks=tuple(pending),
+        **reference,
     )
 
 

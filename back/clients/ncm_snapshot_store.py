@@ -2,10 +2,11 @@
 
 import hashlib
 import json
+import os
 import re
 from datetime import date
 
-from clients.storage import ObjectStore
+from clients.storage import ObjectStore, get_object_store
 from domain.ncm_snapshot import (
     OFFICIAL_NCM_URL,
     NcmSnapshot,
@@ -77,3 +78,17 @@ class NcmSnapshotStore:
         ):
             raise NcmSnapshotError("Manifesto NCM diverge do arquivo armazenado")
         return snapshot
+
+
+def load_configured_ncm_snapshot(requested_version: str | None = None) -> NcmSnapshot | None:
+    """Uma referência do servidor para batch, MCP e API; não escolhe versão pelo cliente."""
+    version = os.environ.get("NCM_SNAPSHOT_VERSION") or None
+    if requested_version is not None and requested_version != version:
+        raise NcmSnapshotError(f"Snapshot oficial NCM indisponível: {requested_version}")
+    if version is None:
+        return None
+    try:
+        return NcmSnapshotStore(get_object_store()).load(version)
+    except Exception as error:
+        # Falha de rede, integridade ou configuração nunca vira ausência silenciosa.
+        raise NcmSnapshotError(f"Snapshot NCM configurado indisponível: {version}") from error

@@ -189,3 +189,81 @@ def test_offline_cli_import_and_check_are_honest(monkeypatch, tmp_path, capsys):
     assert result["normalized_ncm"] == "7318.15.00"
     assert result["requires_fiscal_review"]
     assert result["reasons"] == ["NCM_SOURCE_UNVERIFIED"]
+
+
+@pytest.fixture
+def catalog():
+    from domain.pdm_loader import load_pdm
+
+    return load_pdm(Path(__file__).parents[2] / "data/desafio01/03_padrao_cadastro_PDM.xlsx")
+
+
+@pytest.mark.parametrize("kind", list(NcmSourceKind))
+def test_consistency_combines_snapshot_and_pdm_without_promoting_imports(catalog, kind):
+    from domain.ncm_rules import check_ncm_consistency
+
+    snapshot = load(source_kind=kind)
+    result = check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=snapshot)
+    assert result.technical_consistency == "CONSISTENT"
+    assert result.exists_in_snapshot and result.valid_in_snapshot
+    assert result.requires_fiscal_review is (kind is not NcmSourceKind.OFFICIAL_DOWNLOAD)
+    assert result.ncm_source_sha256 == snapshot.source_sha256
+    assert result.ncm_snapshot_date == "2026-11-06"
+    assert result.ncm_source_kind == kind.value
+    if kind is not NcmSourceKind.OFFICIAL_DOWNLOAD:
+        assert "NCM_SOURCE_UNVERIFIED" in result.pending_checks
+    # Existência/vigência não removem a inconsistência técnica.
+    assert check_ncm_consistency(catalog, "PDM003", {}, "7318.15.00", snapshot=snapshot).requires_fiscal_review
+
+
+@pytest.mark.parametrize("absent", [False, True])
+def test_consistent_pdm_code_still_requires_review_if_absent_or_expired(catalog, absent):
+    from domain.ncm_rules import check_ncm_consistency
+
+    payload = json.loads(RAW)
+    row = next(r for r in payload["Nomenclaturas"] if r["Codigo"] == "7318.16.00")
+    row.update({"Codigo": "9999.99.99"} if absent else {"Data_Fim": "05/11/2026"})
+    snapshot = load(json.dumps(payload).encode(), source_kind=NcmSourceKind.OFFICIAL_DOWNLOAD)
+    result = check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=snapshot)
+    assert result.technical_consistency == "CONSISTENT"
+    assert result.exists_in_snapshot is not absent
+    assert not result.valid_in_snapshot
+    assert result.requires_fiscal_review
+    assert result.fiscal_approval_status == "PENDING"
+
+
+def test_every_snapshot_identity_field_is_bound_to_evaluation_hash(catalog):
+    from domain.ncm_rules import check_ncm_consistency
+
+    snapshot = load()
+    first = check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=snapshot)
+    for changed in (
+        replace(snapshot, version="new-version"),
+        replace(snapshot, source_sha256="0" * 64),
+        replace(snapshot, snapshot_date=date(2026, 11, 7)),
+        replace(snapshot, source_kind=NcmSourceKind.SIMULATED),
+    ):
+        result = check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=changed)
+        assert result.evaluation_hash != first.evaluation_hash
+    with pytest.raises(ValueError, match="indisponível"):
+        check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=snapshot, ncm_version="different")
+
+
+def test_server_configuration_pins_one_version_and_fails_closed(monkeypatch, tmp_path):
+    from clients.ncm_snapshot_store import load_configured_ncm_snapshot
+
+    monkeypatch.delenv("NCM_SNAPSHOT_VERSION", raising=False)
+    monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
+    monkeypatch.setenv("STORAGE_BACKEND", "local")
+    assert load_configured_ncm_snapshot() is None
+    with pytest.raises(NcmSnapshotError):
+        load_configured_ncm_snapshot("client-picked-version")
+    snapshot = load(version="configured")
+    NcmSnapshotStore(LocalObjectStore(tmp_path)).register(snapshot, RAW)
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", snapshot.version)
+    assert load_configured_ncm_snapshot(snapshot.version) == snapshot
+    with pytest.raises(NcmSnapshotError):
+        load_configured_ncm_snapshot("other")
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", "missing")
+    with pytest.raises(NcmSnapshotError, match="configurado indisponível"):
+        load_configured_ncm_snapshot()

@@ -105,6 +105,7 @@ services:
       BATCH_RUNNER: ${BATCH_RUNNER:-local_process}
       BATCH_DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      NCM_SNAPSHOT_VERSION: ${NCM_SNAPSHOT_VERSION:-}
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       STORAGE_LOCAL_DIR: /storage
     volumes:
@@ -178,9 +179,14 @@ services:
       AGENT_MAX_CONCURRENT_TURNS: ${AGENT_MAX_CONCURRENT_TURNS:-2}
       DATABASE_URL: postgresql+psycopg://mcp_reader:${MCP_DB_PASSWORD:-local_only_mcp}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      NCM_SNAPSHOT_VERSION: ${NCM_SNAPSHOT_VERSION:-}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_LOCAL_DIR: /storage
+      S3_BUCKET: ${S3_BUCKET:-}
       AGENT_INTERNAL_TOKEN_SECRET: ${AGENT_INTERNAL_TOKEN_SECRET:-local_only_agent_internal_token_secret}
     volumes:
       - ./data:/data:ro
+      - storage-data:/storage:ro
     depends_on:
       index:
         condition: service_healthy
@@ -197,6 +203,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      NCM_SNAPSHOT_VERSION: ${NCM_SNAPSHOT_VERSION:-}
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       STORAGE_LOCAL_DIR: /storage
       S3_BUCKET: ${S3_BUCKET:-}

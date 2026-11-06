@@ -26,11 +26,12 @@ from datetime import UTC, datetime
 
 from sqlalchemy import Engine, create_engine
 
+from clients.ncm_snapshot_store import load_configured_ncm_snapshot
 from clients.storage import ObjectStore, get_object_store
 from domain.contracts import AnalyzedMaterial, MaterialRecord, MergeProposal, PdmCatalog
 from pipelines.corrections import propose_corrections, summarize_corrections
 from pipelines.identity_review import identity_review_report, store_identity_review
-from pipelines.ncm_corrections import propose_ncm_corrections
+from pipelines.ncm_corrections import bind_snapshot_assessment, propose_ncm_corrections
 from pipelines.sanitize import _catalog, analysis_signature, analyze_material, merge_proposals, summarize
 from repositories.batch_repository import (
     DEFAULT_STALE_SECONDS,
@@ -257,6 +258,20 @@ def run_full(
     repository_name: str | None = None,
     correction_repository: str | None = None,
 ) -> dict:
+    snapshot = load_configured_ncm_snapshot()
+    reference = (
+        {
+            "version": snapshot.version,
+            "sha256": snapshot.source_sha256,
+            "date": snapshot.snapshot_date.isoformat(),
+            "source_kind": snapshot.source_kind.value,
+        }
+        if snapshot
+        else None
+    )
+    if context.checkpoint.get("ncm_reference") != reference and context.checkpoint.get("analysis_signature"):
+        raise AnalysisRulesChanged("A referencia NCM mudou. Inicie um novo job.")
+    context.checkpoint["ncm_reference"] = reference
     started = time.perf_counter()
     attempts = context.checkpoint.setdefault("attempts", [])
     attempts.append({"started_at": _now()})
@@ -271,9 +286,12 @@ def run_full(
     corrections, pending = propose_corrections(
         analyzed, catalog, normalizer, get_correction_repository(correction_repository), pending_by_code
     )
-    corrections += propose_ncm_corrections(analyzed, catalog)
     review = identity_review_report(analyzed, catalog)
     review_key = store_identity_review(review, context.store or get_object_store(), context.tenant_id)
+    corrections += propose_ncm_corrections(analyzed, catalog, snapshot=snapshot)
+    if snapshot is not None:
+        merges = [bind_snapshot_assessment(p, catalog, snapshot) for p in merges]
+        corrections = [bind_snapshot_assessment(p, catalog, snapshot) for p in corrections]
     proposals = merges + corrections
     propose_seconds = time.perf_counter() - started - analysis_seconds
 

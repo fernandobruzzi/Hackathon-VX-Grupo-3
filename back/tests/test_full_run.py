@@ -105,3 +105,62 @@ def _default_repositories(catalog):
     from repositories.classification import get_classification_repository
 
     return get_classification_repository(catalog), extraction.get_extraction_repository()
+
+
+@pytest.fixture
+def ncm_snapshot(tmp_path, monkeypatch):
+    from datetime import date
+
+    from clients.ncm_snapshot_store import NcmSnapshotStore
+    from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
+
+    raw = (Path(__file__).parent / "fixtures/ncm_simulated.json").read_bytes()
+    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 6), source_kind=NcmSourceKind.SIMULATED)
+    NcmSnapshotStore(LocalObjectStore(tmp_path)).register(snapshot, raw)
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", snapshot.version)
+    monkeypatch.setenv("STORAGE_BACKEND", "local")
+    monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
+    return snapshot
+
+
+def test_resume_cannot_mix_ncm_references(job, catalog, ncm_snapshot, monkeypatch):
+    checkpoint = interrupted(job, catalog)
+    # Um job antigo sem snapshot não pode receber a nova referência na retomada.
+    with pytest.raises(AnalysisRulesChanged, match="referencia NCM"):
+        full_run.run_full(RECORDS, catalog, job(checkpoint))
+    checkpoint["ncm_reference"] = {
+        "version": ncm_snapshot.version,
+        "sha256": ncm_snapshot.source_sha256,
+        "date": ncm_snapshot.snapshot_date.isoformat(),
+        "source_kind": ncm_snapshot.source_kind.value,
+    }
+    # Remover a configuração também muda a referência previamente vinculada.
+    monkeypatch.delenv("NCM_SNAPSHOT_VERSION")
+    with pytest.raises(AnalysisRulesChanged, match="referencia NCM"):
+        full_run.run_full(RECORDS, catalog, job(checkpoint))
+
+
+def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, monkeypatch):
+    captured = []
+    monkeypatch.setattr(
+        full_run, "save_all", lambda proposals, records, context: captured.extend(proposals) or len(proposals)
+    )
+    # Itens de identidade por referência geram merge e correções técnicas.
+    records = [replace(RECORDS[0], code=str(i), ncm="8421.23.00", unit="PC") for i in range(1, 3)]
+    context = RunContext(engine=None, tenant_id="t")
+    result = full_run.run_full(records, catalog, context)
+    assert result["merge_summary"]["fiscal_review_required"] == sum(
+        p.fiscal_review_required for p in captured if p.proposal_type == "MERGE"
+    )
+    assert result["merge_summary"]["fiscal_review_required"] == 1
+    assert captured
+    assert context.checkpoint["ncm_reference"]["sha256"] == ncm_snapshot.source_sha256
+    assessed = [p for p in captured if p.proposal_type != "UNIT_CORRECTION"]
+    assert assessed
+    for proposal in assessed:
+        assessment = proposal.changeset["ncm_assessment"]
+        assert assessment["ncm_version"] == ncm_snapshot.version
+        assert assessment["ncm_source_sha256"] == ncm_snapshot.source_sha256
+        assert assessment["ncm_snapshot_date"] == "2026-11-06"
+        assert assessment["ncm_source_kind"] == "SIMULATED"
+        assert proposal.fiscal_review_required
