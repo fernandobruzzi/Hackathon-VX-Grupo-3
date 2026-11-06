@@ -446,3 +446,85 @@ def test_order_lifecycle_is_visible_in_authorized_audit(case, kit_orders):
     assert "ORDER_REGISTERED" not in {event["action"] for event in client.get("/api/v1/audit").json()["items"]}
     login(client, "SOLICITANTE_OPERACAO")
     assert [event["action"] for event in client.get("/api/v1/audit").json()["items"]] == ["ORDER_SUBMITTED"]
+def complement(client, me, order, text="BITOLA: M12", *, version=None, key=None):
+    return client.post(
+        f"{PATH}/{order.id}/complement",
+        json={
+            "expected_version": version or order.version,
+            "text": text,
+            "source": "Ficha técnica do fornecedor",
+            "reason": "Bitola conferida no desenho",
+        },
+        headers=headers(me, key),
+    )
+
+
+def test_governance_complements_imported_order_without_changing_originals(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    original = (order.original_text, order.attachment_text)
+    me = login(client, "GESTOR_CADASTRO")
+    key = str(uuid.uuid4())
+    first = complement(client, me, order, key=key)
+    assert first.status_code == 200, first.text
+    assert first.json()["status"] == "READY_FOR_REVIEW"
+    assert first.json()["missing_attributes"] == []
+    again = complement(client, me, order, version=1, key=key)
+    assert again.status_code == 200 and again.json() == first.json()
+    db.refresh(order)
+    assert (order.original_text, order.attachment_text) == original
+    assert order.requester_user_id is None and order.material_id is None
+    assert order.attributes["BITOLA"] == "M12" and order.version == 2
+    audit = db.scalar(select(AuditLog).where(AuditLog.entity_id == str(order.id)))
+    assert audit.action == "ORDER_COMPLEMENTED" and audit.request_id
+    assert audit.before_json["missing_attributes"] == ["BITOLA"]
+    assert audit.after_json["supplements"][0]["source"] == "Ficha técnica do fornecedor"
+    assert audit.after_json["supplements"][0]["actor_user_id"] == str(audit.actor_user_id)
+    assert complement(client, me, order).status_code == 409
+
+
+@pytest.mark.parametrize("text", ["BITOLA: banana", "Informação ainda insuficiente"])
+def test_insufficient_complement_keeps_order_incomplete(imported, text):
+    client, _, _, _, orders = imported
+    response = complement(client, login(client, "GESTOR_CADASTRO"), orders["SC-202600011"], text)
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "INCOMPLETE"
+    assert "BITOLA" in response.json()["missing_attributes"]
+
+
+def test_complement_permissions_scope_and_versions(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    requester = login(client, "SOLICITANTE_OPERACAO")
+    assert complement(client, requester, order).status_code == 404
+    owner = db.scalar(select(UserSso).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    order.requester_user_id, order.origin = owner.id, "CHAT"
+    db.commit()
+    governance = login(client, "GESTOR_CADASTRO")
+    assert complement(client, governance, order).status_code == 403
+    requester = login(client, "SOLICITANTE_OPERACAO")
+    assert complement(client, requester, order, version=7).status_code == 409
+    order.center_code = "9999"
+    db.commit()
+    assert complement(client, requester, order).status_code == 404
+    order.center_code = "2200"
+    db.commit()
+    result = complement(client, requester, order)
+    assert result.status_code == 200 and result.json()["status"] == "READY_FOR_REVIEW"
+
+
+def test_complement_finds_existing_identity_and_does_not_publish(imported):
+    from vx_materials_api.services.order_service import _analysis, _rules
+
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    order.supplements = [{"text": "BITOLA: M12"}]
+    classifier, extractor, _ = _rules(client.app.state.pdm_catalog)
+    analysis = _analysis(order, client.app.state.pdm_catalog, classifier, extractor)
+    order.supplements = []
+    existing = material(db, "90000003", identity=analysis.identity_key, canonical=True)
+    db.commit()
+    result = complement(client, login(client, "GESTOR_CADASTRO"), order)
+    assert result.status_code == 200 and result.json()["status"] == "EXISTING"
+    db.refresh(order)
+    assert order.candidate_material_ids == [str(existing.id)] and order.material_id is None

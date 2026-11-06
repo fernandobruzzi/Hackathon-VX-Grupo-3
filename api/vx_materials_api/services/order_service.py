@@ -15,6 +15,7 @@ import json
 import re
 import uuid
 from collections import Counter
+from datetime import UTC, datetime
 
 from sqlalchemy import BigInteger, cast, func, or_, select, text
 from sqlalchemy.dialects.postgresql import insert
@@ -156,6 +157,7 @@ def to_contract(db, order: RegistrationOrder) -> dict:
         "material_code": material.material_code if material else None,
         "updated_at": order.updated_at.isoformat().replace("+00:00", "Z"),
         "version": order.version,
+        "supplements": list(order.supplements or []),
     }
 
 
@@ -236,7 +238,7 @@ def _check_version(order, expected_version):
         )
 
 
-def _audit(db, identity, role, order, action, reason, before, request_id):
+def _audit(db, identity, role, order, action, reason, before, request_id, *, after=None):
     db.add(
         AuditLog(
             id=uuid.uuid4(),
@@ -249,7 +251,9 @@ def _audit(db, identity, role, order, action, reason, before, request_id):
             entity_type="registration_order",
             entity_id=str(order.id),
             before_json=before,
-            after_json={
+            after_json=after
+            if after is not None
+            else {
                 "status": order.status,
                 "version": order.version,
                 "material_id": str(order.material_id) if order.material_id else None,
@@ -329,7 +333,11 @@ def ncm_for(pdm_class, attributes: dict, item_name: str | None) -> str | None:
 def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
     # A ficha confirmada no chat é estruturada: não reextraímos mensagens antigas que foram corrigidas.
     if order.origin == "CHAT" and order.item_name is not None:
-        validation = validate_pdm(catalog, order.pdm_class_id, order.attributes, item_name=order.item_name)
+        attributes = dict(order.attributes)
+        if order.supplements:
+            extra = extractor.extract(catalog.classes[order.pdm_class_id], "; ".join(item["text"] for item in order.supplements))
+            attributes.update({name: value.value for name, value in extra.attributes.items() if name not in attributes})
+        validation = validate_pdm(catalog, order.pdm_class_id, attributes, item_name=order.item_name)
         ready = (
             validation.can_submit and validation.identity_key is not None and not validation.not_applicable_attributes
         )
@@ -337,12 +345,19 @@ def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
             STATUS_READY if ready else "INCOMPLETE",
             order.pdm_class_id,
             order.item_name,
-            dict(order.attributes),
+            attributes,
             tuple(attribute.name for attribute in validation.missing_attributes),
             validation.identity_key,
             validation.formatted_description,
         )
-    row = OrderRow(order.source_order_id or str(order.id), order.original_text, order.attachment_text, None, None)
+    supplements = order.supplements or []
+    # Separadores mantêm os rótulos dos complementos independentes do texto original.
+    original = order.original_text + ";" if supplements else order.original_text
+    attachment = (
+        "; ".join(part for part in [order.attachment_text, *(item["text"] for item in supplements)] if part) or None
+    )
+    row = OrderRow(order.source_order_id or str(order.id), original, attachment, None, None)
+
     return analyze_order(row, catalog, classifier, extractor)
 
 
@@ -434,6 +449,65 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
     order.version += 1
     db.flush()
     _audit(db, identity, role, order, action, decision.reason, before, request_id)
+    db.flush()
+    db.refresh(order)
+    body = to_contract(db, order)
+    _remember(db, identity, operation, key, payload_hash, order.id, body)
+    db.commit()
+    return body
+
+
+def complement_order(db, identity, catalog, order_id, payload, key, request_id=None):
+    """Dono ou Governança nos importados acrescenta informação sem alterar os originais."""
+    operation = "registration_order.complement"
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:t, 1))"), {"t": str(identity.tenant_id)})
+    order = _locked_order(db, identity, order_id)
+    require_resource_scope(identity, order.tenant_id, [order.center_code] if order.center_code else ())
+    if order.requester_user_id == identity.user_id:
+        role = require_permission(identity, "orders:update_own")
+    elif order.origin == "IMPORT" and order.requester_user_id is None:
+        role = require_permission(identity, GOVERNANCE)
+    else:
+        raise ApiProblem(403, "FORBIDDEN", "Só o dono ou a Governança nos importados pode complementar.")
+    previous, payload_hash = _idempotent(
+        db, identity, operation, key, {"order_id": str(order_id), **payload.model_dump(mode="json")}
+    )
+    if previous is not None:
+        return previous.response["body"]
+    _check_version(order, payload.expected_version)
+    if order.status not in {"DRAFT", "INCOMPLETE", "OUT_OF_SCOPE"}:
+        raise ApiProblem(409, "INVALID_TRANSITION", "Este pedido não aceita complementos.", order_status=order.status)
+    if not all(value.strip() for value in (payload.text, payload.source, payload.reason)):
+        raise ApiProblem(422, "INVALID_COMPLEMENT", "Informe complemento, origem e motivo.")
+
+    def snapshot():
+        return {
+            **_state(order),
+            "attributes": dict(order.attributes or {}),
+            "missing_attributes": list(order.missing_attributes or []),
+            "supplements": list(order.supplements or []),
+            "candidate_material_ids": list(order.candidate_material_ids or []),
+        }
+
+    before = snapshot()
+    order.supplements = [
+        *(order.supplements or []),
+        {
+            "text": payload.text.strip(),
+            "source": payload.source.strip(),
+            "reason": payload.reason.strip(),
+            "actor_user_id": str(identity.user_id),
+            "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        },
+    ]
+    classifier, extractor, version = _rules(catalog)
+    analysis = _analysis(order, catalog, classifier, extractor)
+    order.status, order.candidate_material_ids = _evaluate(db, identity.tenant_id, analysis, version)
+    order.pdm_class_id, order.attributes = analysis.pdm_class_id, analysis.attributes
+    order.missing_attributes = list(analysis.missing_attributes)
+    order.version += 1
+    db.flush()
+    _audit(db, identity, role, order, "ORDER_COMPLEMENTED", payload.reason, before, request_id, after=snapshot())
     db.flush()
     db.refresh(order)
     body = to_contract(db, order)

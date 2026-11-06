@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from vx_materials_api.dependencies import current_identity, db_session
 from vx_materials_api.errors import request_id
 from vx_materials_api.routes.sanitization import catalog
-from vx_materials_api.schemas.orders import OrderDecisionRequest, OrderSubmitRequest
+from vx_materials_api.schemas.orders import OrderComplementRequest, OrderDecisionRequest, OrderSubmitRequest
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.sessions import verify_write
 from vx_materials_api.services import order_service
@@ -60,5 +60,20 @@ def decide_order(
 ):
     verify_write(request, caller)
     return order_service.decide_order(
+        db, caller, catalog(request), order_id, payload, idempotency_key, request_id(request)
+    )
+
+
+@router.post("/{order_id}/complement")
+def complement_order(
+    order_id: UUID,
+    payload: OrderComplementRequest,
+    request: Request,
+    caller: Caller,
+    db: Db,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    verify_write(request, caller)
+    return order_service.complement_order(
         db, caller, catalog(request), order_id, payload, idempotency_key, request_id(request)
     )
