@@ -87,6 +87,31 @@ payload retorna a resposta original; mudar o payload retorna 409. A autorizaçã
 do recurso é conferida também na repetição. Erros no banco desfazem a aplicação
 e a auditoria conjuntamente.
 
+### Correções de unidade e NCM sem pontos (#111)
+
+Uma `UNIT_CORRECTION` aprovada troca só a unidade de um material ativo, e só quando
+a nova unidade é a grafia normalizada da unidade atual (`PCA`, `UN`, `PÇ` → `PC`).
+Ela não exige classe nem PDM completo, e não altera identidade, descrição, NCM,
+canonicidade nem quantidades. Se a unidade atual não for alias da proposta, a
+resposta é `422 UNIT_NOT_ALIAS`: conversão entre unidades diferentes exige outra
+revisão. Cada proposta do batch leva como conflito só as pendências do próprio tipo.
+
+A checagem `NCM_REFERENCE_MISMATCH` compara o NCM normalizado, porque a base traz
+`84314390` ou `8431.4390` e o PDM traz `8431.43.90`. O NCM gravado não muda.
+
+Na base do kit, aprovando cada correção pela API com rollback ao final (o "depois" já inclui
+a aplicação de grupo da #94):
+
+| Tipo | Aplicadas antes | Aplicadas depois | Recusadas depois |
+|---|---|---|---|
+| `UNIT_CORRECTION` (887) | 237 | 870 | 17 `PROPOSAL_CONFLICT`: unidade diferente da classe, como óleo em `UN` numa classe em `L` |
+| `PDM_CORRECTION` (7.202) | 3.688 | 6.040 | 697 `PDM_INVALID`, 204 `PROPOSAL_CONFLICT` (descrição incompleta), 261 `NCM_REFERENCE_MISMATCH` real |
+
+Antes, 2.440 propostas paravam em `NCM_REFERENCE_MISMATCH` por grafia e 1.443 em
+`PROPOSAL_CONFLICT` por pendência de outro tipo. `PDM_INVALID` subiu de 281 para 697
+porque essas propostas agora chegam à validação do PDM, que as recusa com o motivo
+certo, por exemplo uma embalagem `CT` que a classe não aceita.
+
 Os saldos originais nunca são atualizados. A migração `0005` cria vínculos entre
 cada snapshot original e o principal, com fator, unidade e fonte da conversão.
 As views MCP passam a consultar esses vínculos. Quantidades só são somadas na
