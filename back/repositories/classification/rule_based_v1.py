@@ -35,6 +35,15 @@ class _Match:
     end: int
 
 
+@dataclass(frozen=True)
+class _Note:
+    """Reescrita aplicada ao texto antes da busca de nomes, com o trecho original e a regra."""
+
+    source: str
+    original: str
+    rule: str
+
+
 class RuleBasedV1ClassificationRepository:
     name = "rule_based_v1"
     revision = "1"
@@ -58,14 +67,22 @@ class RuleBasedV1ClassificationRepository:
         )
         self.attribute_labels = re.compile(r"\b(?:" + "|".join(re.escape(label) for label in labels) + r")\s*:")
 
+    def _words(self, field: str, text: str | None, notes: list["_Note"]) -> tuple[str, ...]:
+        """Palavras de um campo. Subclasses podem reescrevê-las, anotando o que mudaram em `notes`."""
+        return _tokens(self.attribute_labels.sub(" ATRIBUTOPDM ", _plain(text)))
+
+    def _note_evidence(self, notes: list["_Note"], class_ids: set[str]) -> list[ClassificationEvidence]:
+        return []
+
     def classify(self, item: ClassificationInput) -> ClassificationResult:
         matches = []
         partial_candidates: set[str] = set()
         has_text = False
+        notes: list[_Note] = []
         for field in _TEXT_FIELDS:
             # EIXO em "DIAMETRO EIXO:" e REVESTIMENTO como rotulo nao sao produtos.
             # O marcador impede unir palavras dos dois lados de um rotulo removido.
-            words = _tokens(self.attribute_labels.sub(" ATRIBUTOPDM ", _plain(getattr(item, field))))
+            words = self._words(field, getattr(item, field), notes)
             has_text |= bool(words)
             for word in words:
                 partial_candidates.update(self.families.get(word, ()))
@@ -105,6 +122,9 @@ class RuleBasedV1ClassificationRepository:
                 candidates.add(match.class_id)
                 rule = "name.exact_with_group" if needs_group else "name.exact"
             evidence.append(ClassificationEvidence(match.class_id, match.source, match.name, f"{self.name}/{rule}"))
+
+        final = candidates if len(candidates) == 1 and not ambiguous_name else candidates | partial_candidates
+        evidence.extend(self._note_evidence(notes, final))
 
         if len(candidates) == 1 and not ambiguous_name:
             class_id = next(iter(candidates))
