@@ -26,7 +26,7 @@ from pipelines.search_index import index_version
 from repositories.classification import get_classification_repository
 from repositories.embeddings import get_embedding_repository
 from repositories.extraction import get_extraction_repository
-from vx_materials_api.db.models import ChatMessage, ChatSession, MaterialMaster, OperationRequest
+from vx_materials_api.db.models import ChatMessage, ChatSession, Dataset, MaterialMaster, OperationRequest
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
@@ -74,7 +74,18 @@ def _catalog_proof(db, tenant_id, rules_version):
             MaterialMaster.tenant_id == tenant_id
         )
     ).one()
-    return {"materials": count, "revisions": int(revisions), "rules": rules_version}
+    dataset = db.scalar(
+        select(Dataset.id)
+        .where(Dataset.tenant_id == tenant_id)
+        .order_by(Dataset.imported_at.desc(), Dataset.id.desc())
+        .limit(1)
+    )
+    return {
+        "materials": count,
+        "revisions": int(revisions),
+        "rules": rules_version,
+        "inventory_dataset": str(dataset) if dataset else None,
+    }
 
 
 def _clear_duplicate_check(context):
