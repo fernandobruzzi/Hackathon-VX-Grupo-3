@@ -2917,6 +2917,415 @@
           }
         }
       }
+    },
+    "/api/v1/sanitization/lots": {
+      "get": {
+        "operationId": "listProposalLots",
+        "summary": "Listar lotes de correções de forma elegíveis para aprovação por amostra (Governança).",
+        "tags": [
+          "sanitization"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sanitization/lots/reviews": {
+      "post": {
+        "operationId": "openLotReview",
+        "summary": "Abrir a revisão de um lote e sortear a amostra; repetir devolve a revisão já aberta.",
+        "tags": [
+          "sanitization"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotReviewOpenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revisão já aberta deste lote.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotReview"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Revisão aberta com a amostra sorteada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotReview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sanitization/lots/reviews/{id}": {
+      "get": {
+        "operationId": "getLotReview",
+        "summary": "Consultar a revisão de um lote e sua amostra.",
+        "tags": [
+          "sanitization"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotReview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sanitization/lots/reviews/{id}/decide": {
+      "post": {
+        "operationId": "decideLotReview",
+        "summary": "Decidir o lote: zero erros na amostra aplica cada proposta com auditoria própria; qualquer erro devolve o lote para a revisão individual.",
+        "tags": [
+          "sanitization"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotDecisionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5614,6 +6023,509 @@
             ]
           }
         }
+      },
+      "LotTier": {
+        "type": "integer",
+        "enum": [
+          1,
+          2
+        ]
+      },
+      "LotSummary": {
+        "type": "object",
+        "description": "Lote elegível: propostas pendentes com o mesmo review_lane.lot_key e nível 1 ou 2.",
+        "properties": {
+          "lot_key": {
+            "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LotTier"
+          },
+          "proposal_type": {
+            "type": "string",
+            "enum": [
+              "UNIT_CORRECTION",
+              "PDM_CORRECTION"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "pdm_class_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pdm_class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sample_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "open_review_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "lot_key",
+          "tier",
+          "proposal_type",
+          "rule",
+          "pdm_class_id",
+          "pdm_class_name",
+          "size",
+          "sample_size",
+          "open_review_id"
+        ],
+        "additionalProperties": false
+      },
+      "LotList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotSummary"
+            }
+          },
+          "min_lot_size": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "items",
+          "min_lot_size"
+        ],
+        "additionalProperties": false
+      },
+      "LotReviewOpenRequest": {
+        "type": "object",
+        "properties": {
+          "lot_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LotTier"
+          }
+        },
+        "required": [
+          "lot_key",
+          "tier"
+        ],
+        "additionalProperties": false
+      },
+      "LotSampleItem": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proposal_type": {
+            "type": "string",
+            "enum": [
+              "UNIT_CORRECTION",
+              "PDM_CORRECTION"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "material_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposed_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "before": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "after": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "before",
+                "after",
+                "source"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "proposal_id",
+          "proposal_type",
+          "status",
+          "material_code",
+          "original_description",
+          "current_description",
+          "proposed_description",
+          "changes"
+        ],
+        "additionalProperties": false
+      },
+      "LotItemOutcome": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "STALE",
+              "SKIPPED"
+            ]
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal_id",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "LotResult": {
+        "type": "object",
+        "description": "Aprovado: contagens e resultado de cada item. Devolvido: itens marcados como errados e a regra.",
+        "properties": {
+          "counts": {
+            "type": "object",
+            "properties": {
+              "APPLIED": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "STALE": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "SKIPPED": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "APPLIED",
+              "STALE",
+              "SKIPPED"
+            ],
+            "additionalProperties": false
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotItemOutcome"
+            }
+          },
+          "wrong_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "rule": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LotReview": {
+        "type": "object",
+        "description": "Revisão de um lote: amostra sorteada pelo servidor, igual em toda leitura.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot_key": {
+            "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/LotTier"
+          },
+          "proposal_type": {
+            "type": "string",
+            "enum": [
+              "UNIT_CORRECTION",
+              "PDM_CORRECTION"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "pdm_class_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pdm_class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "RETURNED"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sample": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotSampleItem"
+            }
+          },
+          "marks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "CORRECT",
+                "WRONG"
+              ]
+            }
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LotResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "lot_key",
+          "tier",
+          "proposal_type",
+          "rule",
+          "pdm_class_id",
+          "pdm_class_name",
+          "status",
+          "version",
+          "size",
+          "sample",
+          "marks",
+          "result",
+          "created_at",
+          "decided_at"
+        ],
+        "additionalProperties": false
+      },
+      "LotDecisionRequest": {
+        "type": "object",
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "marks": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "proposal_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "verdict": {
+                  "type": "string",
+                  "enum": [
+                    "CORRECT",
+                    "WRONG"
+                  ]
+                }
+              },
+              "required": [
+                "proposal_id",
+                "verdict"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "expected_version",
+          "marks",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "LotDecisionResponse": {
+        "type": "object",
+        "properties": {
+          "lot_review_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "RETURNED"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "result": {
+            "$ref": "#/components/schemas/LotResult"
+          },
+          "audit_event_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "lot_review_id",
+          "status",
+          "version",
+          "result",
+          "audit_event_id"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {

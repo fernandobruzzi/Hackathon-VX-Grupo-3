@@ -425,6 +425,74 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/sanitization/lots": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar lotes de correções de forma elegíveis para aprovação por amostra (Governança). */
+    get: operations["listProposalLots"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/sanitization/lots/reviews": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Abrir a revisão de um lote e sortear a amostra; repetir devolve a revisão já aberta. */
+    post: operations["openLotReview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/sanitization/lots/reviews/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar a revisão de um lote e sua amostra. */
+    get: operations["getLotReview"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/sanitization/lots/reviews/{id}/decide": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Decidir o lote: zero erros na amostra aplica cada proposta com auditoria própria; qualquer erro devolve o lote para a revisão individual. */
+    post: operations["decideLotReview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1035,6 +1103,107 @@ export interface components {
       order_id: string;
       /** @enum {string} */
       status: "READY_FOR_REVIEW" | "EXISTING";
+    };
+    /** @enum {integer} */
+    LotTier: 1 | 2;
+    /** @description Lote elegível: propostas pendentes com o mesmo review_lane.lot_key e nível 1 ou 2. */
+    LotSummary: {
+      lot_key: string;
+      tier: components["schemas"]["LotTier"];
+      /** @enum {string} */
+      proposal_type: "UNIT_CORRECTION" | "PDM_CORRECTION";
+      rule: string;
+      pdm_class_id: string | null;
+      pdm_class_name: string | null;
+      size: number;
+      sample_size: number;
+      open_review_id: string | null;
+    };
+    LotList: {
+      items: components["schemas"]["LotSummary"][];
+      min_lot_size: number;
+    };
+    LotReviewOpenRequest: {
+      lot_key: string;
+      tier: components["schemas"]["LotTier"];
+    };
+    LotSampleItem: {
+      /** Format: uuid */
+      proposal_id: string;
+      /** @enum {string} */
+      proposal_type: "UNIT_CORRECTION" | "PDM_CORRECTION";
+      status: components["schemas"]["ProposalStatus"];
+      material_code: string | null;
+      original_description: string | null;
+      current_description: string | null;
+      proposed_description: string | null;
+      changes: {
+        field: string;
+        before: string | null;
+        after: string;
+        source: string;
+      }[];
+    };
+    LotItemOutcome: {
+      /** Format: uuid */
+      proposal_id: string;
+      /** @enum {string} */
+      status: "APPLIED" | "STALE" | "SKIPPED";
+      code?: string;
+    };
+    /** @description Aprovado: contagens e resultado de cada item. Devolvido: itens marcados como errados e a regra. */
+    LotResult: {
+      counts?: {
+        APPLIED: number;
+        STALE: number;
+        SKIPPED: number;
+      };
+      items?: components["schemas"]["LotItemOutcome"][];
+      wrong_ids?: string[];
+      rule?: string;
+    };
+    /** @description Revisão de um lote: amostra sorteada pelo servidor, igual em toda leitura. */
+    LotReview: {
+      /** Format: uuid */
+      id: string;
+      lot_key: string;
+      tier: components["schemas"]["LotTier"];
+      /** @enum {string} */
+      proposal_type: "UNIT_CORRECTION" | "PDM_CORRECTION";
+      rule: string;
+      pdm_class_id: string | null;
+      pdm_class_name: string | null;
+      /** @enum {string} */
+      status: "OPEN" | "APPROVED" | "RETURNED";
+      version: number;
+      size: number;
+      sample: components["schemas"]["LotSampleItem"][];
+      marks: {
+        [key: string]: "CORRECT" | "WRONG";
+      };
+      result: components["schemas"]["LotResult"] | null;
+      created_at: string | null;
+      decided_at: string | null;
+    };
+    LotDecisionRequest: {
+      expected_version: number;
+      marks: {
+        /** Format: uuid */
+        proposal_id: string;
+        /** @enum {string} */
+        verdict: "CORRECT" | "WRONG";
+      }[];
+      reason: string;
+    };
+    LotDecisionResponse: {
+      /** Format: uuid */
+      lot_review_id: string;
+      /** @enum {string} */
+      status: "APPROVED" | "RETURNED";
+      version: number;
+      result: components["schemas"]["LotResult"];
+      /** Format: uuid */
+      audit_event_id: string;
     };
   };
   responses: never;
@@ -3093,6 +3262,306 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChatSubmitResponse"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  listProposalLots: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LotList"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  openLotReview: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LotReviewOpenRequest"];
+      };
+    };
+    responses: {
+      /** @description Revisão já aberta deste lote. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LotReview"];
+        };
+      };
+      /** @description Revisão aberta com a amostra sorteada. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LotReview"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getLotReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LotReview"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  decideLotReview: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LotDecisionRequest"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LotDecisionResponse"];
         };
       };
       /** @description Sessão inválida ou expirada. */
