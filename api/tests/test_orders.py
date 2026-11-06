@@ -757,3 +757,59 @@ def test_changed_structured_card_invalidates_the_technical_approval(imported):
     assert response.status_code == 422 and response.json()["error"]["code"] == "TECHNICAL_REVIEW_CHANGED"
     db.refresh(order)
     assert order.material_id is None
+
+
+def test_single_ncm_reference_is_persisted_with_the_fiscal_approval(imported):
+    client, db, _, _, _ = imported
+    row = next(
+        row
+        for row in read_orders((KIT / "02_pedidos_cadastro.csv").read_bytes())
+        if row.source_order_id == "SC-202600004"
+    )
+    import_orders(db, TENANT_ID, client.app.state.pdm_catalog, [row])
+    order = db.scalar(select(RegistrationOrder).where(RegistrationOrder.source_order_id == row.source_order_id))
+    assert order.pdm_class_id == "PDM002"
+    assert decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1).status_code == 200
+    assert decide(client, login(client, "AUDITOR_FISCAL"), order.id, 2).status_code == 200
+    detail = client.get(f"{PATH}/{order.id}").json()
+    db.refresh(order)
+    created = db.get(MaterialMaster, order.material_id)
+    expected = client.app.state.pdm_catalog.classes["PDM002"].ncm_references[0].codes[0]
+    assert created.ncm == detail["fiscal_decision"]["ncm_code"] == expected
+    assert detail["fiscal_decision"]["assessment"]["valid_in_snapshot"] is None
+
+
+def test_governance_can_recover_legacy_pending_fiscal_orders(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600001"]
+    governance = login(client, "GESTOR_CADASTRO")
+    assert decide(client, governance, order.id, 1).status_code == 200
+    db.refresh(order)
+    order.review_data = {}  # Pedido pendente fiscal anterior à nova ficha auditada.
+    db.commit()
+    fiscal = login(client, "AUDITOR_FISCAL")
+    refused = decide(client, fiscal, order.id, 2)
+    assert refused.status_code == 422 and refused.json()["error"]["code"] == "TECHNICAL_REVIEW_CHANGED"
+    path = f"{PATH}/{order.id}/reopen-technical-review"
+    payload = {"expected_version": 2, "reason": "Conferir ficha legada com as regras atuais"}
+    assert client.post(path, json=payload, headers=headers(fiscal)).status_code == 403
+    governance = login(client, "GESTOR_CADASTRO")
+    assert client.post(path, json={**payload, "expected_version": 1}, headers=headers(governance)).status_code == 409
+    key = str(uuid.uuid4())
+    reopened = client.post(path, json=payload, headers=headers(governance, key))
+    assert reopened.status_code == 200, reopened.text
+    assert reopened.json()["status"] == "READY_FOR_REVIEW" and reopened.json()["version"] == 3
+    assert client.post(path, json=payload, headers=headers(governance, key)).json() == reopened.json()
+    audit = db.scalar(
+        select(AuditLog).where(AuditLog.entity_id == str(order.id), AuditLog.action == "ORDER_TECHNICAL_REOPENED")
+    )
+    assert audit.before_json["status"] == "PENDING_FISCAL"
+    assert audit.after_json["pdm_class_id"] == "PDM110" and audit.after_json["review_data"] == {}
+    assert decide(client, governance, order.id, 3).status_code == 200
+    assert decide(client, login(client, "AUDITOR_FISCAL"), order.id, 4).status_code == 200
+    assert (
+        client.post(
+            path, json={**payload, "expected_version": 5}, headers=headers(login(client, "GESTOR_CADASTRO"))
+        ).status_code
+        == 409
+    )

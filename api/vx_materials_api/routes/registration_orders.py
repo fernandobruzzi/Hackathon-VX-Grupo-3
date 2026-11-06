@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from vx_materials_api.dependencies import current_identity, db_session
 from vx_materials_api.errors import request_id
 from vx_materials_api.routes.sanitization import catalog
-from vx_materials_api.schemas.orders import OrderComplementRequest, OrderDecisionRequest, OrderSubmitRequest
+from vx_materials_api.schemas.orders import (OrderComplementRequest, OrderDecisionRequest, OrderReopenReviewRequest, OrderSubmitRequest)
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.sessions import verify_write
 from vx_materials_api.services import order_service
@@ -80,3 +80,18 @@ def complement_order(
 @router.get("/{order_id}")
 def order_review(order_id: UUID, request: Request, caller: Caller, db: Db):
     return order_service.get_order_review(db, caller, catalog(request), order_id)
+
+
+@router.post("/{order_id}/reopen-technical-review")
+def reopen_technical_review(
+    order_id: UUID,
+    payload: OrderReopenReviewRequest,
+    request: Request,
+    caller: Caller,
+    db: Db,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    verify_write(request, caller)
+    return order_service.reopen_technical_review(
+        db, caller, catalog(request), order_id, payload, idempotency_key, request_id(request)
+    )
