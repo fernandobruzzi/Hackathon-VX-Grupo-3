@@ -178,7 +178,9 @@ scripts/smoke_test.sh http://localhost:8000 --mode local
 CI runs the same flow in an isolated Compose project, with cached images that
 include the original data kit. `DB_PORT` and `API_BIND_PORT` choose local ports;
 published ports bind to loopback. CI also checks branch/commit policy and runs the
-installed migration command twice. Operational limits, authenticated smoke usage
+installed migration command twice. A newer push to the same PR or to `main` cancels
+the older CI run, so the CI workflow must never deploy or migrate anything outside the
+runner; real deploys keep their own S3 lock. Operational limits, authenticated smoke usage
 and required GitHub admin settings are in [`docs/devops.md`](docs/devops.md).
 
 AWS preparation runs offline without credentials by default:

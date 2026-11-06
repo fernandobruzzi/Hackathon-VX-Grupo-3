@@ -6,9 +6,49 @@ O CI preserva os testes Python, PostgreSQL 16 com pgvector, divergência entre
 modelos e migrações, contratos OpenAPI, tipos do front, formatação e build estático.
 O comando instalado `vx-db upgrade` roda duas vezes em um banco separado dos testes.
 
-As execuções substituídas de um mesmo PR são canceladas. Execuções de `main` não
-são canceladas. Dependências uv/npm e camadas Docker têm cache; uv é fixado na mesma
-versão do Dockerfile. Cada imagem tem um escopo próprio no cache do BuildKit.
+Uma execução nova do mesmo PR ou de `main` cancela a anterior. Dependências uv/npm e
+camadas Docker têm cache; uv é fixado na mesma versão do Dockerfile. Cada imagem tem um
+escopo próprio no cache do BuildKit.
+
+### Fila em `main` (#108)
+
+Antes, os pushes de `main` eram serializados sem cancelamento. Numa rajada de merges,
+a execução nova esperava a anterior terminar o commit já superado. Medição de 6/11/2026,
+com `scripts/ci_queue_report.py`:
+
+| Execução | Commit | Fila | Duração útil |
+|---|---|---|---|
+| 42202210313 | `4e4148e` | 3 s | 282 s |
+| 42202260418 | `2bfbe5e`, 23 s depois | 265 s | 322 s |
+| 42203511104 | `b4ef3cc` | 2 s | 317 s |
+| 42203604865 | `03b1a14`, 42 s depois | 278 s | ainda na fila |
+
+Fora das rajadas, a fila ficou em 2 a 3 s. O caminho crítico é o job `database`.
+
+Decisão: `main` também cancela a execução em andamento quando chega um push novo. O
+GitHub já mantinha só a mais recente das pendentes; agora a em andamento também cede.
+O estado mais recente de `main` sempre roda inteiro, com os mesmos jobs e nomes de
+checks. Cada commit intermediário já passou pelo CI no próprio PR, depois do rebase
+exigido. O custo é que um commit intermediário de `main` aparece como cancelado, sem
+resultado próprio; para investigá-lo, reexecute o workflow nele. Pushes contínuos com
+intervalo menor que uma execução adiariam o resultado até a rajada acabar.
+
+Caches e diagnósticos: cada build de imagem exporta camadas ao terminar o próprio passo,
+e uv/npm salvam o cache no fim do job, então uma execução cancelada pode não salvar;
+a seguinte salva. `Logs on failure` não roda em cancelamento, porque logs de um estado
+superado não servem para diagnóstico. `Remove isolated stack` roda sempre.
+
+Este workflow é descartável: não publica, não migra banco fora do runner e não usa
+segredos da AWS. Um teste em `scripts/tests/test_ci_queue.py` falha se ele passar a
+chamar deploy, bootstrap AWS ou `--apply`. Deploy e migração reais seguem os scripts
+com lock S3 do [runbook](../deployment/README.md). Se um dia forem automatizados, vão
+em workflow e grupo de concorrência próprios, com `cancel-in-progress: false`.
+
+Para medir de novo:
+
+```bash
+uv run --package vx-materials-back python scripts/ci_queue_report.py --limit 20
+```
 
 O job `images` constrói as três imagens e inicia um projeto Compose isolado:
 migração, bootstrap, Agent e API. Depois reconstrói o índice e verifica HTML,
