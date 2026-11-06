@@ -43,6 +43,8 @@ VIEWS = {
     "mcp_references",
     "mcp_search_index",
     "mcp_evidence",
+    "mcp_callers",
+    "mcp_datasets",
 }
 
 

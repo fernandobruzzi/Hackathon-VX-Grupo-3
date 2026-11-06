@@ -3,16 +3,22 @@
 import os
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
+from sqlalchemy import create_engine
 
 from domain.contracts import PdmCatalog
 from domain.pdm_loader import load_pdm
 from domain.runtime import check_simulated_clients
+from vx_materials_mcp.chatbot.prompts import register_prompts
+from vx_materials_mcp.repositories.resource_repository import ResourceRepository
+from vx_materials_mcp.resources.catalog import register_resources
 from vx_materials_mcp.schemas.tools import NcmConsistency, PdmTemplate, PdmValidation, SimilarMaterials
 from vx_materials_mcp.security import caller_from_environment
 from vx_materials_mcp.tools import check_ncm_consistency as check_ncm_consistency_tool
 from vx_materials_mcp.tools import get_pdm_template as get_pdm_template_tool
 from vx_materials_mcp.tools import validate_and_format_pdm as validate_and_format_pdm_tool
+from vx_materials_mcp.tools.enrich_from_trusted_source import Enrichment, EnrichmentResult
 from vx_materials_mcp.tools.search_similar_materials import SimilarMaterialsSearch
 
 PDM_PATH_VARIABLE = "PDM_WORKBOOK_PATH"
@@ -20,7 +26,9 @@ DEFAULT_PDM_PATH = "data/desafio01/03_padrao_cadastro_PDM.xlsx"
 _READ_ONLY = ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=False)
 
 
-def build_server(catalog: PdmCatalog, search: SimilarMaterialsSearch | None = None) -> MCPServer:
+def build_server(
+    catalog: PdmCatalog, search: SimilarMaterialsSearch | None = None, resources: ResourceRepository | None = None
+) -> MCPServer:
     """Registra as tools. Parâmetros nunca incluem usuário, papel ou tenant: a identidade vem da API."""
     server = MCPServer(name="vx-materials")
 
@@ -78,6 +86,25 @@ def build_server(catalog: PdmCatalog, search: SimilarMaterialsSearch | None = No
             catalog, pdm_class_id, attributes, ncm, pdm_version, item_name, ncm_version
         )
 
+    resources = resources or ResourceRepository(None, None)
+    enrichment = Enrichment(resources)
+
+    @server.tool(annotations=_READ_ONLY)
+    def enrich_from_trusted_source(
+        material_code: str, attributes_requested: list[str], refresh: bool = False
+    ) -> EnrichmentResult:
+        """Consulta evidências em cache dos 15 produtos reais autorizados pelo manifesto do servidor.
+
+        Pesquisa externa indisponível retorna PENDING explicitamente, preservando o cache.
+        Evidência é proposta e não publica atributos nem autoriza aprovação.
+        """
+        try:
+            return enrichment.run(material_code, attributes_requested, refresh)
+        except ValueError as error:
+            raise ToolError(str(error)) from error
+
+    register_resources(server, catalog, resources)
+    register_prompts(server)
     return server
 
 
@@ -85,7 +112,14 @@ def main() -> None:
     check_simulated_clients()
     catalog = load_pdm(os.environ.get(PDM_PATH_VARIABLE, DEFAULT_PDM_PATH))
     search = SimilarMaterialsSearch(catalog, os.environ.get("DATABASE_URL"), caller_from_environment())
-    build_server(catalog, search).run("stdio")
+    database_url = os.environ.get("DATABASE_URL")
+    engine = create_engine(database_url) if database_url else None
+    resources = ResourceRepository(engine, caller_from_environment())
+    try:
+        build_server(catalog, search, resources).run("stdio")
+    finally:
+        if engine is not None:
+            engine.dispose()
 
 
 if __name__ == "__main__":
