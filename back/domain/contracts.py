@@ -339,3 +339,23 @@ class EmbeddingRepository(Protocol):
     def signature(self) -> str: ...
 
     def embed(self, texts: list[str], *, query: bool) -> list[list[float]]: ...
+
+
+@dataclass(frozen=True)
+class EnrichmentClaim:
+    """Valor extraído, com trecho literal e página para conferir a evidência."""
+
+    attribute: str
+    value: str
+    excerpt: str
+    page: int | None = None
+
+
+class EnrichmentRepository(Protocol):
+    """Extração externa substituível; não busca URLs, aprova nem escreve no cadastro."""
+
+    name: str
+
+    def extract(
+        self, pdm_class: PdmClass, manufacturer: str, reference: str, pages: tuple[str, ...]
+    ) -> tuple[EnrichmentClaim, ...]: ...

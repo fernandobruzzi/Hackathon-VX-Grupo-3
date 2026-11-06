@@ -1,8 +1,10 @@
 """Validação PDM que a aprovação aplica, compartilhada pelo batch, pela fila e pela API.
 
-Uma proposta só é aprovável se o resultado (`after`) atende ao PDM, unidade incluída, e se cada
+Por padrão, uma proposta só é aprovável se o resultado (`after`) atende ao PDM, unidade incluída, e se cada
 membro de uma unificação atende ao PDM por si. Se o batch e a fila não usassem a mesma regra, a
 fila ofereceria como aprovável o que a aprovação recusa com `PDM_INVALID`.
+Enriquecimento parcial pode admitir lacunas no resultado de forma explícita, sem
+admitir valores inválidos nem liberar membros incompletos de unificações.
 """
 
 from collections.abc import Iterable, Mapping
@@ -14,9 +16,12 @@ from domain.pdm_validator import validate_pdm
 PDM_INVALID = "PDM_INVALIDO"
 
 
-def is_approvable(validation: PdmValidationResult) -> bool:
-    """Critério da aprovação: válido e sem atributo preenchido que não se aplica à classe."""
-    return validation.status is ValidationStatus.VALID and not validation.not_applicable_attributes
+def is_approvable(validation: PdmValidationResult, *, allow_incomplete: bool = False) -> bool:
+    """PDM completo por padrão; enriquecimento parcial admite lacunas, nunca valores inválidos."""
+    accepted = validation.status is ValidationStatus.VALID or (
+        allow_incomplete and validation.status is ValidationStatus.INCOMPLETE
+    )
+    return accepted and not validation.not_applicable_attributes
 
 
 def _reasons(validation: PdmValidationResult) -> str:
@@ -44,6 +49,7 @@ def approval_blockers(
     members: Iterable[Mapping] = (),
     *,
     check_unit: bool = True,
+    allow_incomplete: bool = False,
 ) -> list[str]:
     """Motivos pelos quais a aprovação recusaria a proposta por PDM, prontos para a lista de conflitos.
 
@@ -52,7 +58,7 @@ def approval_blockers(
     """
     blockers = []
     result = _validate(catalog, after, after.get("unit") if check_unit else None)
-    if not is_approvable(result):
+    if not is_approvable(result, allow_incomplete=allow_incomplete):
         blockers.append(f"{PDM_INVALID}: resultado não atende ao PDM ({_reasons(result)})")
     members = list(members)
     if len(members) > 1:
