@@ -684,6 +684,8 @@ From the repo root, without a database or AWS:
 uv run vx-back sanitization-evaluate data/desafio01/01_base_materiais.csv --pdm-workbook data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
+The blind experiment (#207) measures the same questions with people outside development: `vx-back experiment-packets` writes a blind workbook and a separate key from a fixed commit, data and seed, and `vx-back experiment-result` scores one or two filled workbooks with the same disagreement rule and Wilson intervals. Its results apply to a sample of the synthetic kit, never to production. How to run it and conduct the session is in [`docs/experimento.md`](docs/experimento.md).
+
 The dashboard must not publish development precision as an independent product
 metric. Technical corpus labels cover only the explicitly reviewed fields;
 PDM-valid values are not necessarily correct values for a product.

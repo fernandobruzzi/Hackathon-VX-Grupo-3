@@ -40,3 +40,6 @@ secrets/
 .agents/
 .vscode/
 .idea/
+
+# Pacotes do experimento (#207): a chave não pode ir aos revisores
+experimento/
