@@ -1,0 +1,13 @@
+{
+  "_fixture_notice": "SIMULACAO: codigos e intervalos apenas para testes; nao e tabela fiscal oficial.",
+  "Data_Ultima_Atualizacao_NCM": "Vigente em 06/11/2026",
+  "Nomenclaturas": [
+    {"Codigo": "73", "Descricao": "SIMULACAO - capitulo", "Data_Inicio": "01/01/2020", "Data_Fim": "31/12/9999"},
+    {"Codigo": "7318", "Descricao": "SIMULACAO - posicao", "Data_Inicio": "01/01/2020", "Data_Fim": "31/12/9999"},
+    {"Codigo": "7318.1", "Descricao": "SIMULACAO - subposicao", "Data_Inicio": "01/01/2020", "Data_Fim": "31/12/9999"},
+    {"Codigo": "7318.15.00", "Descricao": "SIMULACAO - parafusos, inicio na data do snapshot", "Data_Inicio": "06/11/2026", "Data_Fim": "31/12/9999"},
+    {"Codigo": "7318.16.00", "Descricao": "SIMULACAO - porcas, fim na data do snapshot", "Data_Inicio": "01/01/2020", "Data_Fim": "06/11/2026"},
+    {"Codigo": "8482.10.10", "Descricao": "SIMULACAO - rolamento expirado", "Data_Inicio": "01/01/2020", "Data_Fim": "05/11/2026"},
+    {"Codigo": "0101.21.00", "Descricao": "SIMULACAO - codigo futuro com zero inicial", "Data_Inicio": "07/11/2026", "Data_Fim": "31/12/9999"}
+  ]
+}
