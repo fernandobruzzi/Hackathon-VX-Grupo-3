@@ -226,7 +226,10 @@ def consolidated_inventory(rows, *, financial=False):
     return result
 
 
-def _audit(db, principal, proposal, request_id, action, reason, before, after, role):
+def _audit(db, principal, proposal, request_id, action, reason, before, after, role, lot=None):
+    if lot is not None:
+        # Aprovação em lote: o evento de cada item aponta para a revisão do lote e sua amostra.
+        after = {**after, "lot_review": lot}
     audit = AuditLog(
         id=uuid4(),
         tenant_id=principal.tenant_id,
@@ -351,6 +354,8 @@ def decide_proposal(
     idempotency_key: UUID,
     request_id: str,
     catalog: PdmCatalog,
+    *,
+    lot: dict | None = None,
 ) -> tuple[int, dict]:
     require_reviewer(principal, decision.review_area)
     # Serializacao por tenant simplifica a concorrencia entre propostas sobre os mesmos materiais.
@@ -429,6 +434,7 @@ def decide_proposal(
             before,
             proposal_state(proposal),
             role,
+            lot,
         )
         status, response = (
             409,
@@ -448,6 +454,7 @@ def decide_proposal(
             request_id,
             before,
             role,
+            lot,
         )
     db.add(
         OperationRequest(
@@ -465,7 +472,19 @@ def decide_proposal(
 
 
 def _decide_current(
-    db, principal, proposal, decision, catalog, interpretations, changes, materials, snapshots, request_id, before, role
+    db,
+    principal,
+    proposal,
+    decision,
+    catalog,
+    interpretations,
+    changes,
+    materials,
+    snapshots,
+    request_id,
+    before,
+    role,
+    lot=None,
 ):
     result = None
     after_inventory = []
@@ -697,6 +716,7 @@ def _decide_current(
             ],
         },
         role,
+        lot,
     )
     return 200, {
         "proposal_id": str(proposal.id),
