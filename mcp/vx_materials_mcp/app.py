@@ -3,7 +3,7 @@
 import asyncio
 import os
 from collections.abc import Callable
-from contextlib import AbstractAsyncContextManager
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import Annotated, Any
 
 import uvicorn
@@ -19,6 +19,7 @@ from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.agent import TURN_TIMEOUT_SECONDS, ToolLimitExceeded, ToolRecorder, run_turn
 from vx_materials_mcp.chatbot.session_manager import build_turn_context
+from vx_materials_mcp.chatbot.turns import AgentBusy, TurnCancelled, TurnManager, configured_limit
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
 from vx_materials_mcp.security import (
     INTERNAL_TOKEN_SECRET_VARIABLE,
@@ -49,14 +50,28 @@ def create_app(
     token_secret: str,
     connect: Connect,
     timeout_seconds: float = TURN_TIMEOUT_SECONDS,
+    max_concurrent_turns: int | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="VX Materiais Agent", docs_url=None, redoc_url=None, openapi_url=None)
+    turns = TurnManager(configured_limit() if max_concurrent_turns is None else max_concurrent_turns)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        try:
+            yield
+        finally:
+            await turns.close()
+
+    app = FastAPI(title="VX Materiais Agent", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    app.state.turns = turns
     classifier = get_classification_repository(catalog)
     extractor = get_extraction_repository()
 
     @app.exception_handler(AgentError)
     async def agent_error(request: Request, error: AgentError) -> JSONResponse:
-        return _error(error.status, error.code, error.message, request.headers.get("X-Request-ID", ""))
+        response = _error(error.status, error.code, error.message, request.headers.get("X-Request-ID", ""))
+        if error.code == "AGENT_BUSY":
+            response.headers["Retry-After"] = "1"
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def invalid_payload(request: Request, error: RequestValidationError) -> JSONResponse:
@@ -70,6 +85,7 @@ def create_app(
     @app.post("/internal/v1/chat/run")
     async def run_chat_turn(
         payload: AgentRunRequest,
+        request: Request,
         x_request_id: Annotated[str, Header()],
         authorization: Annotated[str | None, Header()] = None,
     ) -> AgentRunResponse:
@@ -82,18 +98,41 @@ def create_app(
         except InvalidInternalToken as error:
             raise AgentError(401, "UNAUTHENTICATED", "Token interno inválido.") from error
 
-        context = build_turn_context(payload, catalog.classes, classifier, extractor)
-
         async def execute() -> AgentRunResponse:
+            context = build_turn_context(payload, catalog.classes, classifier, extractor)
             async with connect(caller) as client:
                 return await run_turn(payload, context, ToolRecorder(client))
 
         try:
-            return await asyncio.wait_for(execute(), timeout_seconds)
-        except TimeoutError as error:
-            raise AgentError(503, "AGENT_TIMEOUT", "O agente não respondeu dentro do prazo.") from error
+            turn = turns.start(execute)
+        except AgentBusy as error:
+            raise AgentError(503, "AGENT_BUSY", "O agente está ocupado. Tente novamente em instantes.") from error
+
+        async def disconnected():
+            while True:
+                message = await request.receive()
+                if message["type"] == "http.disconnect":
+                    return
+
+        disconnect = asyncio.create_task(disconnected())
+        try:
+            done, _ = await asyncio.wait(
+                {turn.task, disconnect}, timeout=timeout_seconds, return_when=asyncio.FIRST_COMPLETED
+            )
+            if disconnect in done:
+                raise AgentError(499, "AGENT_CANCELLED", "A conexão do turno foi encerrada.")
+            if turn.task in done:
+                return turn.task.result()
+            raise AgentError(503, "AGENT_TIMEOUT", "O agente não respondeu dentro do prazo.")
+        except TurnCancelled as error:
+            raise AgentError(503, "AGENT_STOPPING", "O agente está encerrando o atendimento.") from error
         except ToolLimitExceeded as error:
             raise AgentError(503, "AGENT_LIMIT", str(error)) from error
+        finally:
+            disconnect.cancel()
+            await asyncio.gather(disconnect, return_exceptions=True)
+            # A vaga só é liberada depois do SDK fechar a sessão e recolher o subprocesso.
+            await turn.finish()
 
     return app
 
@@ -109,4 +148,6 @@ def main() -> None:
         secret,
         lambda caller: mcp_client.connect(pdm_path, caller=caller_to_environment(caller)),
     )
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("AGENT_PORT", "8001")))
+    uvicorn.run(
+        app, host="0.0.0.0", port=int(os.environ.get("AGENT_PORT", "8001")), workers=1, timeout_graceful_shutdown=5
+    )

@@ -506,6 +506,13 @@ Every feature must run and pass its tests locally with `docker compose up`, with
 - Local shortcuts must be impossible to enable in deployed environments: the application refuses to start if they are on there.
 - Simulated results are always labeled as simulated.
 - The local test session is the Solicitante persona, enabled with `LOCAL_TEST_SESSION=true`. The API refuses to start with it unless `APP_ENV=local`, and `docker compose` turns it on. Real login (#7) replaces it.
+- Agent concurrency is bounded by `AGENT_MAX_CONCURRENT_TURNS` (default 2 per worker).
+  Excess turns receive 503 `AGENT_BUSY` before starting MCP. A slot stays reserved
+  through cancellation cleanup. `vx-agent` runs one worker; replicas multiply the
+  total capacity. Compose defaults to 1 CPU, 512 MiB and 64 PIDs, configured through
+  `AGENT_CPUS`, `AGENT_MEMORY_LIMIT` and `AGENT_PIDS_LIMIT`. Keep init enabled and
+  at least 15 seconds of shutdown grace.
+  Measurement command, results and cancellation behavior: [`docs/agent-concurrency.md`](docs/agent-concurrency.md).
 - API and Agent share `AGENT_INTERNAL_TOKEN_SECRET`. The API signs a 60-second token per chat turn, and the Agent rejects anything else.
 - Cognito and Bedrock have no faithful local version, so test them on real AWS before their milestones close.
 

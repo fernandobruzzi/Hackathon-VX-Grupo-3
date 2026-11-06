@@ -94,6 +94,10 @@ services:
   # Sem portas publicadas: acessivel somente pela API.
   agent:
     init: true
+    stop_grace_period: 15s
+    cpus: ${AGENT_CPUS:-1}
+    mem_limit: ${AGENT_MEMORY_LIMIT:-512m}
+    pids_limit: ${AGENT_PIDS_LIMIT:-64}
     build:
       context: .
       target: agent
@@ -101,6 +105,7 @@ services:
       - path: .env
         required: false
     environment:
+      AGENT_MAX_CONCURRENT_TURNS: ${AGENT_MAX_CONCURRENT_TURNS:-2}
       DATABASE_URL: postgresql+psycopg://mcp_reader:${MCP_DB_PASSWORD:-local_only_mcp}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
       AGENT_INTERNAL_TOKEN_SECRET: ${AGENT_INTERNAL_TOKEN_SECRET:-local_only_agent_internal_token_secret}

@@ -1,0 +1,82 @@
+{
+  "environment": {
+    "date": "2026-11-06",
+    "runtime": "Docker Desktop Linux",
+    "cpu_limit": 1,
+    "memory_limit_mib": 512,
+    "pids_limit": 64,
+    "init": true,
+    "agent_workers": 1,
+    "planner": "rule_based_v1",
+    "models_called": false,
+    "note": "Banco local com kit de 23.554 materiais e índice real; outros testes locais podem disputar CPU/IO."
+  },
+  "runs": [
+    {
+      "limit_per_worker": 2,
+      "parallel_requests": 8,
+      "responses": {
+        "200": 2,
+        "503:AGENT_BUSY": 6
+      },
+      "successful_latency_seconds": {
+        "p50": 15.728,
+        "p95": 15.782,
+        "max": 15.782
+      },
+      "cancelled_requests": 8,
+      "before": {
+        "processes": 1,
+        "mcp_processes": 0,
+        "rss_kib": 109360,
+        "container_memory_kib": 117168
+      },
+      "peak": {
+        "processes": 3,
+        "mcp_processes": 2,
+        "rss_kib": 363696,
+        "container_memory_kib": 315800
+      },
+      "after": {
+        "processes": 1,
+        "mcp_processes": 0,
+        "rss_kib": 109360,
+        "container_memory_kib": 118396
+      },
+      "rss_note": "Soma dos RSS do Agent e descendentes; páginas compartilhadas podem contar mais de uma vez."
+    },
+    {
+      "limit_per_worker": 2,
+      "parallel_requests": 8,
+      "responses": {
+        "200": 2,
+        "503:AGENT_BUSY": 6
+      },
+      "successful_latency_seconds": {
+        "p50": 6.447,
+        "p95": 6.451,
+        "max": 6.451
+      },
+      "cancelled_requests": 8,
+      "before": {
+        "processes": 1,
+        "mcp_processes": 0,
+        "rss_kib": 109360,
+        "container_memory_kib": 117772
+      },
+      "peak": {
+        "processes": 3,
+        "mcp_processes": 2,
+        "rss_kib": 364232,
+        "container_memory_kib": 315924
+      },
+      "after": {
+        "processes": 1,
+        "mcp_processes": 0,
+        "rss_kib": 109488,
+        "container_memory_kib": 131748
+      },
+      "rss_note": "Soma dos RSS do Agent e descendentes; páginas compartilhadas podem contar mais de uma vez."
+    }
+  ]
+}
