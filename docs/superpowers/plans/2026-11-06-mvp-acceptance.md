@@ -52,3 +52,5 @@ Entrega por PR em rascunho com evidências e pendências; a #26 permanece aberta
 - Falhas controladas: omitir chamadas do painel falha na comparação com o MCP observado; impedir a gravação de `InventoryConsolidation` falha na conferência dos vínculos. As mutações são temporárias e não fazem parte da entrega.
 - A #47 foi integrada durante a execução; a branch foi atualizada por rebase sobre `f4cae75`.
 - API: 407 testes com PostgreSQL. Após o rebase, repetidos os 81 testes de sessão, chat, aprovação e dashboard; todos aprovados. MCP: 92 testes com banco após o rebase. Back: 351 testes após o rebase. Ruff, formatação Python e Prettier dos documentos novos aprovados.
+- Continuação: a #22 foi integrada na main `b162946`; a branch foi atualizada por rebase para revalidar o cenário com as regras fiscais atuais. A #73 e a homologação AWS continuam pendentes.
+- Após essa atualização, o cenário integrado passou com PostgreSQL e a suíte MCP completa passou com 94 testes, sem skips. Ruff, formatação e Prettier dos documentos novos foram conferidos novamente.

@@ -54,7 +54,7 @@ Os caminhos e nomes abaixo são relativos ao repositório. A integração nova c
 
 ## Pendências para fechar a issue
 
-- Integrar e revalidar a consistência fiscal (#22) e a correção de unificações inseguras (#73). Os testes atuais de referência não comprovam a resolução dos erros de identidade técnica encontrados na base.
+- A consistência fiscal (#22) já foi integrada na main. Revalidar o fluxo após integrar a correção de unificações inseguras (#73); os testes atuais de referência não comprovam a resolução dos erros de identidade técnica encontrados na base.
 - A #47 já foi integrada: executar também o fluxo HTTP do Compose descrito em `docs/demo.md` sobre a versão escolhida para a demo. Este teste ASGI complementa aquela verificação de containers e portas.
 - Executar o fluxo implantado após o deploy (#6) e a homologação Cognito (#91), com HTTPS, três contas reais e trocas de persona no navegador. Usar os procedimentos de `deployment/README.md`, `docs/autenticacao.md` e `docs/demo.md`.
 - Registrar commit, ambiente, horário, comandos/resultados e eventos de auditoria, preservando cookies, tokens e credenciais fora das evidências publicadas.
