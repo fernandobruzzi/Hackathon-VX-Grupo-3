@@ -164,3 +164,13 @@ Os testes de integração usam cookies locais reais e verificam os 403 dos três
 papéis, a troca de ator e a aplicação de uma proposta produzida pelo batch.
 A suíte também cobre o adaptador Cognito com assinaturas RSA e OAuth controlado;
 isso não substitui a homologação AWS da #91.
+
+A auditoria também projeta eventos já persistidos de pedidos (`ORDER_SUBMITTED`,
+`ORDER_APPROVED_TECHNICAL`, `ORDER_REJECTED`, `ORDER_REGISTERED`) e substituições
+(`PROPOSAL_SUPERSEDED`). Solicitantes veem somente suas ações em seus pedidos;
+Governança vê submissões e eventos técnicos; Fiscal vê também os eventos fiscais.
+Cada recurso precisa pertencer ao tenant e aos centros autorizados antes de
+entrar na página. Eventos de sistema aparecem como `actor_type=SYSTEM`, ator
+`Sistema` e `effective_role=null`; a substituta está em `after.superseded_by`.
+Eventos do batch sem requisição HTTP mantêm `request_id` vazio, sem fabricar
+usuário ou requisição. Os estados financeiros continuam redigidos fora do Fiscal.

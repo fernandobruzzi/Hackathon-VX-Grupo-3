@@ -780,7 +780,7 @@ export interface components {
       /** Format: uuid */
       id: string;
       actor: string;
-      effective_role: components["schemas"]["Role"];
+      effective_role: components["schemas"]["Role"] | null;
       action: string;
       entity: string;
       reason: string | null;
@@ -792,6 +792,8 @@ export interface components {
       after?: {
         [key: string]: unknown;
       };
+      /** @enum {string} */
+      actor_type: "USER" | "SYSTEM";
     };
     DashboardMetrics: {
       /** Format: uuid */

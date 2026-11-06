@@ -408,3 +408,41 @@ def test_orders_page_is_empty_when_all_centers_are_outside_scope(case):
     )
     db.commit()
     assert client.get(PATH, params={"limit": 2}).json() == {"items": [], "next_cursor": None}
+
+
+def test_order_lifecycle_is_visible_in_authorized_audit(case, kit_orders):
+    client, db, version = case
+    index(db, version, material(db, "90000001"), "PDM999|OUTRO")
+    requester = login(client, "SOLICITANTE_OPERACAO")
+    owner = db.scalar(select(UserSso).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    draft = RegistrationOrder(
+        tenant_id=TENANT_ID,
+        origin="CHAT",
+        requester_user_id=owner.id,
+        original_text=kit_orders[0].original_text,
+        center_code="1300",
+        status="DRAFT",
+    )
+    db.add(draft)
+    db.commit()
+    assert (
+        client.post(f"{PATH}/{draft.id}/submit", json={"expected_version": 1}, headers=headers(requester)).status_code
+        == 200
+    )
+    own = client.get("/api/v1/audit").json()["items"]
+    assert [event["action"] for event in own] == ["ORDER_SUBMITTED"]
+    assert own[0]["entity"] == f"pedido {draft.id}"
+    assert own[0]["actor_type"] == "USER"
+    assert own[0]["request_id"]
+    assert own[0]["before"]["status"] == "DRAFT"
+    governance = login(client, "GESTOR_CADASTRO")
+    assert decide(client, governance, draft.id, 2).status_code == 200
+    fiscal = login(client, "AUDITOR_FISCAL")
+    assert decide(client, fiscal, draft.id, 3).status_code == 200
+    events = client.get("/api/v1/audit").json()["items"]
+    assert {event["action"] for event in events} == {"ORDER_SUBMITTED", "ORDER_APPROVED_TECHNICAL", "ORDER_REGISTERED"}
+    assert all(event["created_at"] and event["request_id"] for event in events)
+    login(client, "GESTOR_CADASTRO")
+    assert "ORDER_REGISTERED" not in {event["action"] for event in client.get("/api/v1/audit").json()["items"]}
+    login(client, "SOLICITANTE_OPERACAO")
+    assert [event["action"] for event in client.get("/api/v1/audit").json()["items"]] == ["ORDER_SUBMITTED"]

@@ -1188,7 +1188,45 @@
             "version": 2
           },
           "request_id": "req-approval-019",
-          "created_at": "2026-11-07T15:31:00Z"
+          "created_at": "2026-11-07T15:31:00Z",
+          "actor_type": "USER"
+        },
+        {
+          "id": "77777777-7777-4777-8777-777777777777",
+          "actor": "Sistema",
+          "actor_type": "SYSTEM",
+          "effective_role": null,
+          "action": "PROPOSAL_SUPERSEDED",
+          "entity": "proposta 11111111-1111-4111-8111-111111111111",
+          "reason": "Substituída por proposta mais recente do batch para os mesmos tipo e membros",
+          "request_id": "",
+          "created_at": "2026-11-07T15:32:00Z",
+          "before": {
+            "status": "PENDING"
+          },
+          "after": {
+            "status": "STALE",
+            "superseded_by": "22222222-2222-4222-8222-222222222222"
+          }
+        },
+        {
+          "id": "88888888-8888-4888-8888-888888888888",
+          "actor": "Solicitante",
+          "actor_type": "USER",
+          "effective_role": "ROLE_SOLICITANTE",
+          "action": "ORDER_SUBMITTED",
+          "entity": "pedido 33333333-3333-4333-8333-333333333333",
+          "reason": null,
+          "request_id": "req-order-submit",
+          "created_at": "2026-11-07T15:33:00Z",
+          "before": {
+            "status": "DRAFT",
+            "version": 1
+          },
+          "after": {
+            "status": "READY_FOR_REVIEW",
+            "version": 2
+          }
         }
       ],
       "next_cursor": null

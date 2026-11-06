@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { fmtDate } from "@/lib/format";
 import { audit } from "@/mocks/data";
+import { AuditIdentity } from "./AuditIdentity";
 
 /** Escopo por papel: próprias ações (solicitante), técnico (governança), fiscal e financeiro (auditor). */
 export function AuditPage() {
@@ -19,7 +20,12 @@ export function AuditPage() {
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
-    if (!backend) return;
+    setRemote([]);
+    setCursor(null);
+    setNextCursor(null);
+  }, [me]);
+  useEffect(() => {
+    if (!backend || !me) return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -44,7 +50,7 @@ export function AuditPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [api, backend, cursor, retry]);
+  }, [api, backend, cursor, me, retry]);
   const rows = backend
     ? remote
     : audit.filter((a) =>
@@ -94,10 +100,7 @@ export function AuditPage() {
               <Td>
                 <Code className="text-muted">{fmtDate(a.created_at)}</Code>
               </Td>
-              <Td className="font-semibold">{a.actor}</Td>
-              <Td>
-                <Code>{a.effective_role}</Code>
-              </Td>
+              <AuditIdentity event={a} />
               <Td>
                 <Code className="text-verde">{a.action}</Code>
               </Td>

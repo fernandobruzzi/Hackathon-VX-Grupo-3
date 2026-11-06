@@ -2,10 +2,10 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 
 from domain.proposal_validation import approval_blockers
-from vx_materials_api.db.models import AuditLog, SanitizationProposal, UserSso
+from vx_materials_api.db.models import AuditLog, RegistrationOrder, SanitizationProposal, UserSso
 from vx_materials_api.errors import ApiError
 from vx_materials_api.security.approval_identity import require_reviewer
 from vx_materials_api.security.rbac import has_permission, require_any_permission
@@ -249,15 +249,19 @@ def audit_events(db, principal, *, cursor=None, limit=20):
         .outerjoin(UserSso, AuditLog.actor_user_id == UserSso.id)
         .where(
             AuditLog.tenant_id == principal.tenant_id,
-            AuditLog.entity_type == "sanitization_proposal",
+            AuditLog.entity_type.in_(["sanitization_proposal", "registration_order"]),
         )
     )
+    system = and_(AuditLog.actor_type == "SYSTEM", AuditLog.action == "PROPOSAL_SUPERSEDED")
+    submitted = and_(AuditLog.entity_type == "registration_order", AuditLog.action == "ORDER_SUBMITTED")
     if has_permission(principal, "audit:fiscal"):
-        query = query.where(AuditLog.effective_role.in_(["ROLE_GOVERNANCA_PDM", "ROLE_AUDITOR_FISCAL"]))
+        query = query.where(
+            or_(AuditLog.effective_role.in_(["ROLE_GOVERNANCA_PDM", "ROLE_AUDITOR_FISCAL"]), system, submitted)
+        )
     elif has_permission(principal, "audit:technical"):
-        query = query.where(AuditLog.effective_role == "ROLE_GOVERNANCA_PDM")
+        query = query.where(or_(AuditLog.effective_role == "ROLE_GOVERNANCA_PDM", system, submitted))
     else:
-        query = query.where(AuditLog.actor_user_id == principal.user_id)
+        query = query.where(AuditLog.actor_type == "USER", AuditLog.actor_user_id == principal.user_id)
     if cursor:
         query = query.where(AuditLog.id > UUID(cursor))
     items = []
@@ -269,13 +273,27 @@ def audit_events(db, principal, *, cursor=None, limit=20):
             for row in state.get("inventory", [])
         ):
             continue
-        proposal = db.get(SanitizationProposal, UUID(event.entity_id))
-        if proposal is None or proposal.tenant_id != principal.tenant_id:
-            continue
         try:
-            load_members(db, proposal, principal)
-        except ApiError:
+            resource_id = UUID(event.entity_id)
+        except ValueError:
             continue
+        if event.entity_type == "registration_order":
+            order = db.get(RegistrationOrder, resource_id)
+            if order is None or order.tenant_id != principal.tenant_id:
+                continue
+            if order.center_code is not None and order.center_code not in principal.center_codes:
+                continue
+            if not (has_permission(principal, "audit:technical") or has_permission(principal, "audit:fiscal")):
+                if order.requester_user_id != principal.user_id:
+                    continue
+        else:
+            proposal = db.get(SanitizationProposal, resource_id)
+            if proposal is None or proposal.tenant_id != principal.tenant_id:
+                continue
+            try:
+                load_members(db, proposal, principal)
+            except ApiError:
+                continue
         if len(items) == limit:
             return {"items": items, "next_cursor": items[-1]["id"]}
         before, after = event.before_json, event.after_json
@@ -284,10 +302,11 @@ def audit_events(db, principal, *, cursor=None, limit=20):
         items.append(
             {
                 "id": str(event.id),
-                "actor": actor or "Usuario",
+                "actor": "Sistema" if event.actor_type == "SYSTEM" else actor or "Usuario",
+                "actor_type": event.actor_type,
                 "effective_role": event.effective_role,
                 "action": event.action,
-                "entity": f"proposta {event.entity_id}",
+                "entity": f"{'pedido' if event.entity_type == 'registration_order' else 'proposta'} {event.entity_id}",
                 "reason": event.reason,
                 "request_id": event.request_id or "",
                 "created_at": event.created_at.isoformat().replace("+00:00", "Z"),

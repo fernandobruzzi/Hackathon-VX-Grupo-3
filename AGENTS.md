@@ -617,6 +617,8 @@ A finished job stores its metrics in `batch_jobs.counts` and `runs/<job_id>/metr
 
 A proposal's id comes from its content, so a rerun with the same content inserts nothing. When rules change, the new proposal for the same dataset, type and members replaces the earlier `PENDING` one: in the same transaction, the batch calls `supersede_proposals`, which marks it `STALE` with a `SYSTEM` audit event (`PROPOSAL_SUPERSEDED`, pointing to its replacement). `APPLIED` and `REJECTED` proposals never change. `batch_user` still has no access to `audit_logs`: the function runs with the migration owner's rights and does only this.
 
+The audit list includes authorized order submissions/decisions/publications and `SYSTEM` proposal supersessions. It checks the resource tenant and centers before collecting a page. System events have `actor_type=SYSTEM`, actor `Sistema` and no effective human role; the replacement is recorded in `after.superseded_by`. Only Fiscal receives financial snapshot fields. Existing events are projected without inserting duplicate audit records.
+
 Sanitization evaluation uses frozen development cohorts packaged in
 `back/pipelines/evaluation_data/`. Never replace old labels or cohorts when
 candidates change: report changed/withdrawn groups and add a new version with
