@@ -4709,6 +4709,53 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "ncm_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ncm_source_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ncm_snapshot_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ncm_source_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "OFFICIAL_DOWNLOAD",
+                  "IMPORTED_UNVERIFIED",
+                  "SIMULATED"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -4728,7 +4775,11 @@
           "reference_source",
           "rules_version",
           "evaluation_hash",
-          "pending_checks"
+          "pending_checks",
+          "ncm_version",
+          "ncm_source_sha256",
+          "ncm_snapshot_date",
+          "ncm_source_kind"
         ],
         "type": "object"
       },

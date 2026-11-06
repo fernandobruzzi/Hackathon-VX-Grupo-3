@@ -111,3 +111,7 @@ class NcmConsistency(_Contract):
     rules_version: str
     evaluation_hash: str
     pending_checks: list[str]
+    ncm_version: str | None
+    ncm_source_sha256: str | None
+    ncm_snapshot_date: str | None
+    ncm_source_kind: str | None

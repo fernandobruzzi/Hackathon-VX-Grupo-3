@@ -697,6 +697,10 @@ export interface components {
       rules_version: string;
       evaluation_hash: string;
       pending_checks: string[];
+      ncm_version: string | null;
+      ncm_source_sha256: string | null;
+      ncm_snapshot_date: string | null;
+      ncm_source_kind: ("OFFICIAL_DOWNLOAD" | "IMPORTED_UNVERIFIED" | "SIMULATED") | null;
     };
     /** @enum {string} */
     Role: "ROLE_SOLICITANTE" | "ROLE_GOVERNANCA_PDM" | "ROLE_AUDITOR_FISCAL" | "ROLE_DEV_TI";

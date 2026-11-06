@@ -137,3 +137,134 @@ def test_modified_attributes_cannot_reuse_persisted_assessment(approval_case):
     response = decide(case)
     assert response.status_code == 409, response.text
     assert response.json()["error"]["code"] == "NCM_ASSESSMENT_CHANGED"
+
+
+@pytest.fixture
+def configured_snapshot(monkeypatch, tmp_path):
+    from datetime import date
+
+    from clients.ncm_snapshot_store import NcmSnapshotStore
+    from clients.storage import LocalObjectStore
+    from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
+
+    raw = (Path(__file__).parents[2] / "back/tests/fixtures/ncm_simulated.json").read_bytes()
+    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 6), source_kind=NcmSourceKind.SIMULATED)
+    NcmSnapshotStore(LocalObjectStore(tmp_path)).register(snapshot, raw)
+    monkeypatch.setenv("STORAGE_BACKEND", "local")
+    monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", snapshot.version)
+    return snapshot
+
+
+def test_api_assessment_records_configured_snapshot_and_rejects_legacy_proposals(catalog, configured_snapshot):
+    snapshot = configured_snapshot
+    changes = SimpleNamespace(
+        after=SimpleNamespace(pdm_class_id="PDM003", item_name=None, attributes={}, ncm="7318.16.00"),
+        ncm_assessment=None,
+    )
+    with pytest.raises(ApiError) as error:
+        evaluate_proposed_ncm(catalog, changes)
+    assert error.value.code == "NCM_ASSESSMENT_CHANGED"
+    changes.ncm_assessment = asdict(check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=snapshot))
+    result = evaluate_proposed_ncm(catalog, changes)
+    from test_contracts import validator
+
+    validator({"$ref": "#/components/schemas/NcmAssessment"}).validate(json.loads(json.dumps(result)))
+    assert result["ncm_version"] == snapshot.version
+    assert result["ncm_source_sha256"] == snapshot.source_sha256
+    assert result["ncm_snapshot_date"] == "2026-11-06"
+    assert result["ncm_source_kind"] == "SIMULATED"
+    assert result["requires_fiscal_review"]
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("ncm_version", "another"),
+        ("ncm_source_sha256", "0" * 64),
+        ("ncm_snapshot_date", "2026-11-07"),
+        ("ncm_source_kind", "OFFICIAL_DOWNLOAD"),
+    ],
+)
+def test_changed_snapshot_identity_cannot_reuse_assessment(catalog, configured_snapshot, field, value):
+    assessment = asdict(check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00", snapshot=configured_snapshot))
+    assessment[field] = value
+    changes = SimpleNamespace(
+        after=SimpleNamespace(pdm_class_id="PDM003", item_name=None, attributes={}, ncm="7318.16.00"),
+        ncm_assessment=assessment,
+    )
+    with pytest.raises(ApiError) as error:
+        evaluate_proposed_ncm(catalog, changes)
+    assert error.value.code == "NCM_ASSESSMENT_CHANGED"
+
+
+def test_configured_reference_failure_is_explicit(catalog, monkeypatch):
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", "not-loaded")
+    with pytest.raises(ApiError) as error:
+        evaluate_proposed_ncm(catalog, SimpleNamespace(ncm_assessment=None))
+    assert error.value.code == "NCM_REFERENCE_UNAVAILABLE"
+
+
+def test_configured_unverified_snapshot_requires_fiscal_even_without_ncm_change(approval_case, configured_snapshot):
+    case = approval_case
+    material = configure_nut(case)
+    material.ncm = "7318.16.00"
+    case["proposal"].fiscal_review_status = "NOT_REQUIRED"
+    persist(case)
+    response = decide(case)
+    assert response.status_code == 422, response.text
+    assert response.json()["error"]["code"] == "FISCAL_REVIEW_REQUIRED"
+    case["session"].expire_all()
+    assert material.version == 1
+
+
+def test_configured_reference_switch_invalidates_persisted_proposal(approval_case, configured_snapshot, monkeypatch):
+    case = approval_case
+    configure_nut(case)
+    monkeypatch.delenv("NCM_SNAPSHOT_VERSION")
+    response = decide(case)
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "NCM_ASSESSMENT_CHANGED"
+
+
+def test_v1_assessment_requires_regeneration_even_without_snapshot(catalog, monkeypatch):
+    monkeypatch.delenv("NCM_SNAPSHOT_VERSION", raising=False)
+    old = asdict(check_ncm_consistency(catalog, "PDM003", {}, "7318.16.00"))
+    for field in ("ncm_version", "ncm_source_sha256", "ncm_snapshot_date", "ncm_source_kind"):
+        old.pop(field)
+    old["rules_version"] = "pdm-ncm-v1"
+    changes = SimpleNamespace(
+        after=SimpleNamespace(pdm_class_id="PDM003", item_name=None, attributes={}, ncm="7318.16.00"),
+        ncm_assessment=old,
+    )
+    with pytest.raises(ApiError) as error:
+        evaluate_proposed_ncm(catalog, changes)
+    assert error.value.code == "NCM_ASSESSMENT_CHANGED"
+
+
+def test_approved_configured_snapshot_metadata_reaches_transactional_audit(approval_case, configured_snapshot):
+    case = approval_case
+    material = configure_nut(case)
+    for index, area in enumerate(("TECHNICAL", "FISCAL")):
+        case["app"].state.test_principal = case["principals"][index]
+        response = decide(
+            case,
+            payload={
+                "expected_version": index + 1,
+                "review_area": area,
+                "decision": "APPROVE",
+                "reason": "Fixture simulada conferida em teste.",
+            },
+            key=str(uuid.uuid4()),
+        )
+        assert response.status_code == 200, response.text
+    case["session"].expire_all()
+    assert material.ncm == "7318.16.00"
+    events = list(case["session"].scalars(select(AuditLog).where(AuditLog.entity_id == str(case["proposal"].id))))
+    assert len(events) == 2
+    for event in events:
+        assessment = event.after_json["ncm_assessment"]
+        assert assessment["ncm_version"] == configured_snapshot.version
+        assert assessment["ncm_source_sha256"] == configured_snapshot.source_sha256
+        assert assessment["ncm_snapshot_date"] == "2026-11-06"
+        assert assessment["ncm_source_kind"] == "SIMULATED"

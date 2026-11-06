@@ -71,7 +71,7 @@ def build_server(catalog: PdmCatalog, search: SimilarMaterialsSearch | None = No
     ) -> NcmConsistency:
         """Avalia o NCM pelo PDM e indica revisão fiscal; não aprova nem altera materiais.
 
-        Sem snapshot oficial, existência e vigência são desconhecidas. Informe item_name
+        Sem snapshot configurado, existência e vigência são desconhecidas. Informe item_name
         nas classes com vários substantivos. Alterar atributos exige nova avaliação.
         """
         return check_ncm_consistency_tool.run(
