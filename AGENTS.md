@@ -532,6 +532,15 @@ attributes. Order approvals revalidate that structured card rather than extracti
 superseded values from earlier messages. A submitted conversation accepts no new
 turns; start a new one for another item. See [`docs/pedidos.md`](docs/pedidos.md).
 
+## Browser session transitions
+
+The frontend serializes login, persona switching and logout. While a transition
+is pending, authentication controls are disabled and private screen content is
+unmounted. A session revision prevents earlier responses, including stale 401s
+and profile refreshes, from changing a newer session. Ambiguous transport failures
+are reconciled through `/auth/me`; without a confirmed identity the private UI
+stays inaccessible. See [`docs/autenticacao.md`](docs/autenticacao.md).
+
 ## Attribute extraction
 
 Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. PSI converts to BAR only when it is a whole bar written the kit's way, rounded to 5 PSI (`145PSI` is `10BAR`). Other PSI values, like `150PSI`, stay empty instead of rounding into another item's pressure. Tests hold real base rows with results checked by hand, so add one with each new rule.

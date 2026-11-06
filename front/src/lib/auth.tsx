@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { Me, PersonaLabel } from "@/types/api";
-import { ApiError, createApiClient } from "@/lib/api";
+import { ApiError, StaleSessionError, createApiClient } from "@/lib/api";
 import { meFor } from "@/lib/permissions";
 
 type AuthMode = "disabled" | "local" | "cognito";
@@ -13,6 +13,8 @@ interface AuthCtx {
   authMode: AuthMode;
   api: ReturnType<typeof createApiClient>;
   error: string | null;
+  sessionBusy: boolean;
+  sessionRevision: number;
   refresh: () => Promise<Me>;
   signIn: (persona?: PersonaLabel) => Promise<boolean>;
   switchPersona: (persona: PersonaLabel) => void;
@@ -42,9 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const meRef = useRef<Me | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("disabled");
   const [ready, setReady] = useState(false);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [sessionRevision, setSessionRevision] = useState(0);
+  const revision = useRef(0);
+  const refreshing = useRef(0);
+  const transitioning = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const setSession = useCallback((value: Me | null) => {
+    revision.current += 1;
+    setSessionRevision(revision.current);
     meRef.current = value;
     setMe(value);
   }, []);
@@ -52,34 +61,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     createApiClient({
       getCsrfToken: () => meRef.current?.csrf_token ?? null,
       onUnauthorized: () => setSession(null),
+      getSessionRevision: () => revision.current,
     }),
   );
   const refresh = useCallback(async () => {
+    if (transitioning.current) throw new StaleSessionError();
+    const request = ++refreshing.current;
+    const started = revision.current;
     const value = await api.request("get", "/api/v1/auth/me");
+    if (request !== refreshing.current || started !== revision.current)
+      throw new StaleSessionError();
     setSession(value);
     return value;
   }, [api, setSession]);
+
   useEffect(() => {
     let active = true;
+    const started = revision.current;
+    const request = ++refreshing.current;
     if (backend) {
-      Promise.all([
-        api.request("get", "/api/v1/auth/config"),
-        (window.location.pathname.startsWith("/auth/callback")
-          ? Promise.resolve(null)
-          : api.request("get", "/api/v1/auth/me")
-        ).catch((error) => {
+      const config = api
+        .request("get", "/api/v1/auth/config")
+        .then((value) => {
+          if (active) setAuthMode(value.mode);
+        })
+        .catch((error) => {
+          if (active) setError("Não foi possível consultar a configuração de autenticação.");
+          throw error;
+        });
+      const callback = window.location.pathname.startsWith("/auth/callback");
+      const session = (callback ? Promise.resolve(null) : api.request("get", "/api/v1/auth/me"))
+        .catch((error) => {
           if (error instanceof ApiError && error.status === 401) return null;
           throw error;
-        }),
-      ])
-        .then(([config, session]) => {
-          if (active) {
-            setAuthMode(config.mode);
-            if (session || !meRef.current) setSession(session);
-          }
         })
-        .catch(() => {
-          if (active) setError("Não foi possível consultar a sessão da API.");
+        .then((value) => {
+          if (!callback && active && started === revision.current && request === refreshing.current)
+            setSession(value);
+        });
+      Promise.all([config, session])
+        .catch((error) => {
+          if (active && started === revision.current && !(error instanceof StaleSessionError)) {
+            setError("Não foi possível consultar a sessão da API.");
+          }
         })
         .finally(() => {
           if (active) setReady(true);
@@ -96,67 +120,119 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       active = false;
     };
   }, [api, backend, setSession]);
+
+  const beginTransition = useCallback(() => {
+    // O ref impede dois cliques no mesmo ciclo, antes de o React desabilitar os botões.
+    if (transitioning.current) return false;
+    transitioning.current = true;
+    revision.current += 1;
+    refreshing.current += 1;
+    setSessionBusy(true);
+    setError(null);
+    return true;
+  }, []);
+  const endTransition = useCallback(() => {
+    transitioning.current = false;
+    setSessionBusy(false);
+  }, []);
+  const reconcileSession = useCallback(async () => {
+    // Uma falha de transporte pode ocorrer depois de o navegador já receber o novo cookie.
+    try {
+      setSession(await api.request("get", "/api/v1/auth/me"));
+    } catch {
+      setSession(null);
+    }
+  }, [api, setSession]);
+
   const signIn = useCallback(
     async (persona: PersonaLabel = "SOLICITANTE_OPERACAO") => {
-      setError(null);
-      if (!backend) {
-        write(KEY, persona);
-        setSession(meFor(persona));
-        return true;
-      }
-      if (authMode === "cognito") {
-        window.location.assign("/api/v1/auth/sso-start");
-        return false;
-      }
-      if (authMode !== "local") {
-        setError("Autenticação não configurada no servidor.");
-        return false;
-      }
+      if (!beginTransition()) return false;
+      let navigating = false;
       try {
+        if (!backend) {
+          write(KEY, persona);
+          setSession(meFor(persona));
+          return true;
+        }
+        if (authMode === "cognito") {
+          window.location.assign("/api/v1/auth/sso-start");
+          navigating = true;
+          return false;
+        }
+        if (authMode !== "local") {
+          setError("Autenticação não configurada no servidor.");
+          return false;
+        }
         const session = await api.request("post", "/api/v1/auth/local-session", {
           body: { persona },
         });
         setSession(session);
         return true;
       } catch (error) {
-        setError(error instanceof ApiError ? error.message : "Não foi possível entrar.");
+        await reconcileSession();
+        setError(
+          error instanceof ApiError
+            ? error.message
+            : "Não foi possível confirmar a entrada. Confira a sessão e tente novamente.",
+        );
         return false;
+      } finally {
+        if (!navigating) endTransition();
       }
     },
-    [api, authMode, backend, setSession],
+    [api, authMode, backend, beginTransition, endTransition, reconcileSession, setSession],
   );
+
   const switchPersona = useCallback(
     (persona: PersonaLabel) => {
       if (!backend || authMode === "local") {
         void signIn(persona);
         return;
       }
-      if (authMode !== "cognito") return;
-      setError(null);
-      api
-        .request("post", "/api/v1/auth/demo/switch", { body: { session_handle: persona } })
-        .then(() => {
-          // Outra conta: recarregar descarta dados privados em memória e refaz /auth/me.
+      if (authMode !== "cognito" || !beginTransition()) return;
+      void (async () => {
+        let navigating = false;
+        try {
+          await api.request("post", "/api/v1/auth/demo/switch", {
+            body: { session_handle: persona },
+          });
+          // A página nova confere /auth/me e não conserva dados privados do usuário anterior.
           window.location.reload();
-        })
-        .catch((error: unknown) => {
+          navigating = true;
+        } catch (error) {
           if (error instanceof ApiError && error.error.code === "DEMO_SESSION_NOT_FOUND") {
-            // A conta ainda não entrou neste navegador: o Cognito pede o login dela.
             window.location.assign("/api/v1/auth/sso-start?prompt=login");
+            navigating = true;
             return;
           }
+          await reconcileSession();
           setError(
-            error instanceof ApiError ? error.message : "Não foi possível trocar de persona.",
+            error instanceof ApiError
+              ? error.message
+              : "Não foi possível confirmar a troca de persona. Tente novamente.",
           );
-        });
+        } finally {
+          if (!navigating) endTransition();
+        }
+      })();
     },
-    [api, authMode, backend, signIn],
+    [api, authMode, backend, beginTransition, endTransition, reconcileSession, signIn],
   );
+
   const signOut = useCallback(async () => {
-    if (backend) await api.request("post", "/api/v1/auth/logout", { body: {} });
-    write(KEY, null);
-    setSession(null);
-  }, [api, backend, setSession]);
+    if (!beginTransition()) throw new Error("Aguarde a atualização da sessão.");
+    try {
+      if (backend) await api.request("post", "/api/v1/auth/logout", { body: {} });
+      write(KEY, null);
+      setSession(null);
+    } catch (error) {
+      await reconcileSession();
+      setError("Não foi possível confirmar a saída. Confira a sessão e tente novamente.");
+      throw error;
+    } finally {
+      endTransition();
+    }
+  }, [api, backend, beginTransition, endTransition, reconcileSession, setSession]);
   const toggleTheme = useCallback(() => {
     setTheme((current) => {
       const next = current === "light" ? "dark" : "light";
@@ -174,6 +250,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authMode,
         api,
         error,
+        sessionBusy,
+        sessionRevision,
         refresh,
         signIn,
         switchPersona,

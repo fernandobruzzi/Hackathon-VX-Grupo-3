@@ -22,6 +22,13 @@ type Options<O> = {
     ? { params?: never }
     : { params: Parameters<O, "path"> }) & { query?: Parameters<O, "query"> };
 
+export class StaleSessionError extends Error {
+  constructor() {
+    super("A sessão mudou durante a requisição.");
+    this.name = "StaleSessionError";
+  }
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -55,10 +62,12 @@ export function createApiClient({
   getCsrfToken,
   fetch: transport = globalThis.fetch,
   onUnauthorized,
+  getSessionRevision,
 }: {
   getCsrfToken: () => string | null;
   fetch?: typeof globalThis.fetch;
   onUnauthorized?: () => void;
+  getSessionRevision?: () => number;
 }) {
   return {
     async request<
@@ -71,6 +80,7 @@ export function createApiClient({
         ? [options?: Options<Operation<P, M>>]
         : [options: Options<Operation<P, M>>]
     ): Promise<ResponseBody<Operation<P, M>>> {
+      const revision = getSessionRevision?.();
       const options = args[0];
       let url: string = path;
       for (const [name, value] of Object.entries(options?.params ?? {})) {
@@ -108,6 +118,14 @@ export function createApiClient({
         data = text ? JSON.parse(text) : undefined;
       } catch {
         // Respostas de proxy podem não seguir o contrato JSON.
+      }
+      // Uma resposta da sessão anterior não pode alterar dados nem revogar a sessão atual.
+      if (
+        path !== "/api/v1/auth/config" &&
+        getSessionRevision &&
+        revision !== getSessionRevision()
+      ) {
+        throw new StaleSessionError();
       }
       if (!response.ok) {
         if (response.status === 401) onUnauthorized?.();
