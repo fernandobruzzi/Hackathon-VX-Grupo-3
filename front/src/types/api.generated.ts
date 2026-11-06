@@ -412,6 +412,25 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    NcmAssessment: {
+      input_ncm: string | null;
+      normalized_ncm: string | null;
+      syntax_valid: boolean;
+      exists_in_snapshot: boolean | null;
+      valid_in_snapshot: boolean | null;
+      technical_consistency: string;
+      suggested_ncm_codes: string[];
+      missing_attributes: string[];
+      rule_id: string;
+      requires_fiscal_review: boolean;
+      fiscal_approval_status: string;
+      pdm_version: string;
+      pdm_source_sha256: string;
+      reference_source: string;
+      rules_version: string;
+      evaluation_hash: string;
+      pending_checks: string[];
+    };
     /** @enum {string} */
     Role: "ROLE_SOLICITANTE" | "ROLE_GOVERNANCA_PDM" | "ROLE_AUDITOR_FISCAL";
     /** @enum {string} */
@@ -555,6 +574,7 @@ export interface components {
       value_brl?: components["schemas"]["Decimal"];
     };
     Proposal: {
+      ncm_assessment?: components["schemas"]["NcmAssessment"] | null;
       /** Format: uuid */
       id: string;
       version: number;

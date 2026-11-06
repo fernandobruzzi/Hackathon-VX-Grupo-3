@@ -185,6 +185,43 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
         </div>
       )}
 
+      {p.ncm_assessment && (
+        <section aria-label="Avaliação de NCM">
+          <Card>
+            <Eyebrow n="03">Avaliação de NCM</Eyebrow>
+            <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
+              <div>
+                <dt className="text-muted">Formato</dt>
+                <dd>{p.ncm_assessment.syntax_valid ? "Válido" : "Ausente ou inválido"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted">Existência / vigência oficial</dt>
+                <dd>
+                  {p.ncm_assessment.exists_in_snapshot === null
+                    ? "Não verificadas: snapshot oficial indisponível"
+                    : "Referência consultada"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">Coerência com o PDM</dt>
+                <dd>
+                  {p.ncm_assessment.technical_consistency === "CONSISTENT"
+                    ? "Compatível com os atributos propostos"
+                    : "Requer conferência"}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-4 text-sm text-muted">
+              Referência: {p.ncm_assessment.reference_source} · {p.ncm_assessment.pdm_version} ·
+              regras {p.ncm_assessment.rules_version}.
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              Esta avaliação não autoriza a alteração. As revisões técnica e fiscal exigidas
+              continuam separadas.
+            </p>
+          </Card>
+        </section>
+      )}
       {/* Antes */}
       <section>
         <h2 className="mb-3 text-lg font-extrabold">

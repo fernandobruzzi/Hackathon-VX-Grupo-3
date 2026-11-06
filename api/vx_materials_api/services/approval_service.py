@@ -34,6 +34,7 @@ from vx_materials_api.schemas.proposals import (
     proposal_hash,
 )
 from vx_materials_api.security.approval_identity import Principal, require_reviewer
+from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
 
 def decode_proposal(proposal: SanitizationProposal):
@@ -467,6 +468,7 @@ def _decide_current(
     result = None
     after_inventory = []
     verified_sources = []
+    ncm_evaluation = None
     if decision.decision == "REJECT":
         setattr(
             proposal,
@@ -485,6 +487,7 @@ def _decide_current(
             catalog, changes.after, changes.after.unit if proposal.technical_review_status != "NOT_REQUIRED" else None
         )
         group = _check_group(catalog, proposal, changes, materials)
+        ncm_evaluation = evaluate_proposed_ncm(catalog, changes)
         fiscal_change = any(m.ncm != changes.after.ncm for m in materials)
         fiscal_basis_changed = any(
             (m.pdm_class_id is not None and m.pdm_class_id != changes.after.pdm_class_id)
@@ -676,6 +679,7 @@ def _decide_current(
             **proposal_state(proposal),
             "materials": [material_state(m) for m in materials],
             "inventory": after_inventory,
+            "ncm_assessment": ncm_evaluation if decision.decision == "APPROVE" else None,
             "evidence": [
                 {
                     "id": str(source.id),

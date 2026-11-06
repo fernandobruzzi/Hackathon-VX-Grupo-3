@@ -133,7 +133,7 @@ def test_finished_job_stores_counts_time_and_model_usage(resumed):
     assert {key: counts[key] for key in ("proposals", "merges", "ncm", "enrichment")} == {
         "proposals": metrics["proposals"],
         "merges": metrics["by_type"]["MERGE"],
-        "ncm": 0,
+        "ncm": metrics["by_type"].get("NCM_CORRECTION", 0),
         "enrichment": 0,
     }
     assert counts["timing_seconds"]["attempts"] == 3 and counts["timing_seconds"]["total_all_attempts"] > 0

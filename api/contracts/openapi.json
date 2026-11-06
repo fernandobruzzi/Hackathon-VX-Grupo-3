@@ -2790,6 +2790,119 @@
   },
   "components": {
     "schemas": {
+      "NcmAssessment": {
+        "additionalProperties": false,
+        "properties": {
+          "input_ncm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "normalized_ncm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syntax_valid": {
+            "type": "boolean"
+          },
+          "exists_in_snapshot": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "valid_in_snapshot": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "technical_consistency": {
+            "type": "string"
+          },
+          "suggested_ncm_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "missing_attributes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "requires_fiscal_review": {
+            "type": "boolean"
+          },
+          "fiscal_approval_status": {
+            "type": "string"
+          },
+          "pdm_version": {
+            "type": "string"
+          },
+          "pdm_source_sha256": {
+            "type": "string"
+          },
+          "reference_source": {
+            "type": "string"
+          },
+          "rules_version": {
+            "type": "string"
+          },
+          "evaluation_hash": {
+            "type": "string"
+          },
+          "pending_checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "input_ncm",
+          "normalized_ncm",
+          "syntax_valid",
+          "exists_in_snapshot",
+          "valid_in_snapshot",
+          "technical_consistency",
+          "suggested_ncm_codes",
+          "missing_attributes",
+          "rule_id",
+          "requires_fiscal_review",
+          "fiscal_approval_status",
+          "pdm_version",
+          "pdm_source_sha256",
+          "reference_source",
+          "rules_version",
+          "evaluation_hash",
+          "pending_checks"
+        ],
+        "type": "object"
+      },
       "Role": {
         "type": "string",
         "enum": [
@@ -3317,6 +3430,16 @@
       "Proposal": {
         "type": "object",
         "properties": {
+          "ncm_assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NcmAssessment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "type": "string",
             "format": "uuid"

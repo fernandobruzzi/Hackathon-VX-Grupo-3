@@ -14,6 +14,7 @@ from vx_materials_api.services.approval_service import (
     inventory_rows,
     load_members,
 )
+from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
 
 def allowed_actions(proposal, principal):
@@ -58,6 +59,12 @@ def detail(db, proposal, principal, catalog):
     conflicts = list(changes.conflicts)
     # Correcao de unidade aplica so a grafia da unidade, sem identidade: o PDM completo nao se aplica.
     unit_only = proposal.proposal_type == "UNIT_CORRECTION"
+    ncm_evaluation = None
+    if not unit_only and after.pdm_class_id in catalog.classes:
+        try:
+            ncm_evaluation = evaluate_proposed_ncm(catalog, changes)
+        except ApiError as error:
+            conflicts.append(error.message)
     if not unit_only and (validation.status.value != "VALID" or validation.not_applicable_attributes):
         conflicts.append("Os dados propostos nao atendem ao PDM.")
     try:
@@ -132,6 +139,7 @@ def detail(db, proposal, principal, catalog):
         "conflicts": conflicts,
         "ranking_score": changes.ranking_score,
         "created_at": proposal.created_at.isoformat().replace("+00:00", "Z"),
+        "ncm_assessment": ncm_evaluation,
         "allowed_actions": [
             action for action in allowed_actions(proposal, principal) if action != "APPROVE" or not conflicts
         ],

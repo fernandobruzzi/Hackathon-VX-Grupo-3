@@ -33,6 +33,7 @@ from domain.pdm_formatter import format_description
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
 from pipelines.corrections import propose_corrections, summarize_corrections
+from pipelines.ncm_corrections import propose_ncm_corrections
 from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
@@ -253,7 +254,7 @@ def _propose(
     corrections, pending = propose_corrections(
         analyzed, catalog, normalizer, get_correction_repository(correction_repository)
     )
-    return merges, corrections, pending
+    return merges, corrections + propose_ncm_corrections(analyzed, catalog), pending
 
 
 def summarize(proposals: list[MergeProposal]) -> dict:

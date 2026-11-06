@@ -1,6 +1,6 @@
 """Entrada de decisao e contrato persistido entre o produtor batch e a API."""
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
@@ -77,6 +77,8 @@ class ProposalChangeset(StrictModel):
     primary_material_code: str | None = None
     ranking_score: float | None = None
     changes: list[StoredChange] = Field(default_factory=list)
+    ncm_assessment: dict[str, Any] | None = None
+    ncm_before_assessment: dict[str, Any] | None = None
 
 
 def evidence_hash(source) -> str:

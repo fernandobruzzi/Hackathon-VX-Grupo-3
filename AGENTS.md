@@ -13,7 +13,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
-| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat turn over three tools, rest placeholders |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat with search/PDM and a shared NCM consistency tool |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo reset implemented |
@@ -463,8 +463,11 @@ Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATA
 `back/domain/ncm_rules.py` and the MCP tool `check_ncm_consistency` evaluate syntax
 and PDM coherence without writing materials or approving changes. Without the
 official snapshot (#30), existence and validity are unknown, never inferred from
-the PDM. Evaluation hashes bind inputs and reference versions. Approval integration
-with #20 remains pending; see `docs/ncm.md` for behavior and local verification.
+the PDM. Evaluation hashes bind inputs and reference versions. The batch proposes
+`NCM_CORRECTION` only with a confirmed class, complete PDM and one resolved code;
+the approval payload pins the before/after assessments. The API recomputes the
+assessment before each approval, refuses changed fiscal bases and enforces all
+required technical/fiscal reviews. See `docs/ncm.md` for behavior and verification.
 
 ## Attribute extraction
 
