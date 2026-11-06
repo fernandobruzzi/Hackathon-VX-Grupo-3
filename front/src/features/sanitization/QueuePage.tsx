@@ -85,6 +85,16 @@ export function QueuePage() {
             : "Propostas do lote aguardando revisão técnica"
         }
         description="O lote propõe; ninguém altera a base mestre sem aprovação. Unificações e enriquecimento passam pela Governança PDM; qualquer mudança de NCM passa pelo Fiscal."
+        actions={
+          backend && can(me, "merge:decide") ? (
+            <Link
+              href="/saneamento/lotes/"
+              className="inline-flex h-11 items-center rounded-md bg-esmeralda px-5 font-bold text-on-esmeralda"
+            >
+              Aprovar correções em lote
+            </Link>
+          ) : undefined
+        }
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Tabs
