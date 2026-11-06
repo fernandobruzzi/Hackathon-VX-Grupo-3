@@ -121,6 +121,18 @@ def test_reader_keeps_catalog_index_and_stock_inside_authenticated_tenant(databa
         material_id = connection.execute(
             text("SELECT id FROM materials_master WHERE material_code = :code"), {"code": code}
         ).scalar_one()
+        original_dataset = connection.execute(
+            text("SELECT DISTINCT dataset_id FROM material_inventory_snapshots WHERE material_id = :id"),
+            {"id": material_id},
+        ).scalar_one()
+        other_dataset = connection.execute(
+            text("INSERT INTO datasets (tenant_id) VALUES (CAST(:tenant AS uuid)) RETURNING id"),
+            {"tenant": other},
+        ).scalar_one()
+        connection.execute(
+            text("UPDATE material_inventory_snapshots SET dataset_id = :dataset WHERE material_id = :id"),
+            {"dataset": other_dataset, "id": material_id},
+        )
         for table in ("materials_master", "material_search_index", "material_inventory_snapshots"):
             column = "id" if table == "materials_master" else "material_id"
             connection.execute(
@@ -148,6 +160,11 @@ def test_reader_keeps_catalog_index_and_stock_inside_authenticated_tenant(databa
         assert all(c["material_code"] != code for c in result["candidates"])
     finally:
         with database["admin"].begin() as connection:
+            connection.execute(
+                text("UPDATE material_inventory_snapshots SET dataset_id = :dataset WHERE material_id = :id"),
+                {"dataset": original_dataset, "id": material_id},
+            )
+            connection.execute(text("DELETE FROM datasets WHERE id = :id"), {"id": other_dataset})
             for table in ("materials_master", "material_search_index", "material_inventory_snapshots"):
                 column = "id" if table == "materials_master" else "material_id"
                 connection.execute(
