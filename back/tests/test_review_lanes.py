@@ -108,7 +108,9 @@ def test_lost_terms_name_what_disappeared(catalog, records, tools, proposals, co
 def test_description_without_loss_can_go_in_a_lot(proposals, code):
     pdm = proposals(code)["PDM_CORRECTION"]
 
-    assert lane(pdm) == {"tier": 2, "lot_key": lane(pdm)["lot_key"], "reasons": []}, KEPT[code]
+    assert "TEXT_LOSS" not in lane(pdm)["reasons"], KEPT[code]
+    # Sem conflito vai para lote; com conflito, como a unidade KG fora do padrão da classe (#122), não.
+    assert lane(pdm)["tier"] == (3 if pdm.changeset["conflicts"] else 2), KEPT[code]
 
 
 def test_unit_alias_with_trusted_class_is_tier_one(proposals):
@@ -179,8 +181,10 @@ def test_summary_counts_tiers_reasons_and_lots(catalog, records, tools):
 
     lanes = summarize_corrections(built, pending)["review_lanes"]
 
-    assert lanes["tiers"] == {"1": 1, "2": 2, "3": 3}
-    assert lanes["reasons"] == {"UNTRUSTED_CLASS": 1, "TEXT_LOSS": 1, "CONFLICT": 1}
+    # A descrição de 24794045 leva a unidade atual PCA, que a aprovação recusa (#122): nível 3. A correção
+    # da unidade PCA para PC continua no nível 1.
+    assert lanes["tiers"] == {"1": 1, "2": 1, "3": 4}
+    assert lanes["reasons"] == {"UNTRUSTED_CLASS": 1, "TEXT_LOSS": 1, "CONFLICT": 2}
     assert lanes["eligible_lots"] == 0  # nenhum lote chega a 20 itens com cinco materiais
 
 
@@ -190,4 +194,14 @@ def test_registered_repositories_meet_the_reviewed_cases(proposals, name):
     repository = get_text_loss_repository(name)
 
     assert all(lane(proposals(code, repository)["PDM_CORRECTION"])["tier"] == 3 for code in LOST)
-    assert all(lane(proposals(code, repository)["PDM_CORRECTION"])["tier"] == 2 for code in KEPT)
+    assert all("TEXT_LOSS" not in lane(proposals(code, repository)["PDM_CORRECTION"])["reasons"] for code in KEPT)
+
+
+@pytest.mark.parametrize("code", ["24794045", "22976650"])
+def test_description_the_approval_would_refuse_is_individual(proposals, code):
+    # Unidade PCA e JG fora do padrão da classe: a aprovação recusa por PDM (#122), então nada de lote.
+    pdm = proposals(code)["PDM_CORRECTION"]
+
+    assert any(conflict.startswith("PDM_INVALIDO") for conflict in pdm.changeset["conflicts"])
+    assert lane(pdm)["tier"] == 3
+    assert "CONFLICT" in lane(pdm)["reasons"]

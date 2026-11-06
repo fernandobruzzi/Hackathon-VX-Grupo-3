@@ -140,7 +140,7 @@ def test_saved_corrections_carry_their_review_lane_and_merges_do_not(sanitized):
     first, _, admin, _ = sanitized
     tiers = (
         "SELECT p.changeset->'review_lane'->>'tier', count(*) FROM sanitization_proposals p "
-        "WHERE p.proposal_type <> 'MERGE' GROUP BY 1"
+        "WHERE p.proposal_type IN ('PDM_CORRECTION', 'UNIT_CORRECTION') GROUP BY 1"
     )
     with admin.connect() as connection:
         saved = {row[0]: row[1] for row in connection.execute(text(tiers))}
@@ -148,7 +148,9 @@ def test_saved_corrections_carry_their_review_lane_and_merges_do_not(sanitized):
     assert (
         scalar(
             admin,
-            "SELECT count(*) FROM sanitization_proposals WHERE changeset ? 'review_lane' AND proposal_type = 'MERGE'",
+            # Unificação e NCM sempre são revisadas item a item, com o Fiscal no caso do NCM: nunca têm nível.
+            "SELECT count(*) FROM sanitization_proposals WHERE changeset ? 'review_lane' "
+            "AND proposal_type IN ('MERGE', 'NCM_CORRECTION')",
         )
         == 0
     )
