@@ -135,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <ul className="mt-2 flex flex-col gap-0.5">
                   {items.map((i) => {
                     const active = path?.startsWith(i.href);
-                    const n = i.badge?.(role);
+                    const n = backend ? undefined : i.badge?.(role);
                     return (
                       <li key={i.href}>
                         <Link
@@ -151,6 +151,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           <span className="flex-1">{i.label}</span>
                           {!!n && (
                             <span
+                              role="status"
+                              title="Contagem simulada"
+                              aria-label={`${n} pendências simuladas`}
                               className={cn(
                                 "rounded-full px-2 py-0.5 font-mono text-[11px]",
                                 active ? "bg-on-esmeralda text-esmeralda" : "bg-white/12",
