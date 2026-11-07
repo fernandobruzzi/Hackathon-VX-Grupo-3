@@ -584,6 +584,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/registration-orders/{id}/complement": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Complementar pedido próprio ou importado no escopo da Governança, preservando os originais. */
+    post: operations["complementOrder"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -840,6 +857,9 @@ export interface components {
       material_code: string | null;
       updated_at: components["schemas"]["UtcDateTime"];
       version: number;
+      supplements?: components["schemas"]["OrderSupplement"][];
+      /** @description A identidade atual pode complementar este pedido no estado e escopo atuais. */
+      can_complement?: boolean;
     };
     BatchJob: {
       /** Format: uuid */
@@ -1438,6 +1458,21 @@ export interface components {
     ManualReviewCatalog: {
       pdm_version: string;
       classes: components["schemas"]["ManualReviewClass"][];
+    };
+    OrderComplementRequest: {
+      expected_version: number;
+      text: string;
+      source: string;
+      reason: string;
+    };
+    OrderSupplement: {
+      text: string;
+      source: string;
+      reason: string;
+      /** Format: uuid */
+      actor_user_id: string;
+      /** Format: date-time */
+      created_at: string;
     };
   };
   responses: never;
@@ -4236,6 +4271,100 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ManualReviewCatalog"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  complementOrder: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OrderComplementRequest"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RegistrationOrder"];
         };
       };
       /** @description Sessão inválida ou expirada. */
