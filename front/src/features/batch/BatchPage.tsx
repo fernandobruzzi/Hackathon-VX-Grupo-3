@@ -246,7 +246,8 @@ export function BatchPage() {
               </div>
               <Field label="Escopo">
                 <p className="text-sm text-muted">
-                  Base inteira. Correções só em material ATIVO; unificações seguem as regras de
+                  Base inteira, com um único dataset por empresa no MVP. Múltiplas importações não
+                  são suportadas. Correções só em material ATIVO; unificações seguem as regras de
                   identidade.
                 </p>
               </Field>

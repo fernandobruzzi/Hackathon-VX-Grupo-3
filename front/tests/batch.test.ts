@@ -13,8 +13,21 @@ Object.assign(globalThis, {
   document: { documentElement: { dataset: {} } },
 });
 
-for (const action of ["Iniciar job", "Reprocessar"]) {
-  test(`${action}: falha de POST sobrevive ao GET e uma nova tentativa limpa só o erro da ação`, async () => {
+for (const [action, code, message] of [
+  ["Iniciar job", "RUNNER_UNAVAILABLE", "Runner indisponível"],
+  ["Reprocessar", "RUNNER_UNAVAILABLE", "Runner indisponível"],
+  [
+    "Iniciar job",
+    "MULTIPLE_DATASETS_NOT_SUPPORTED",
+    "O batch suporta exatamente um dataset por empresa no MVP. Múltiplas importações não são suportadas.",
+  ],
+  [
+    "Reprocessar",
+    "MULTIPLE_DATASETS_NOT_SUPPORTED",
+    "O batch suporta exatamente um dataset por empresa no MVP. Múltiplas importações não são suportadas.",
+  ],
+]) {
+  test(`${action} (${code}): falha de POST sobrevive ao GET e uma nova tentativa limpa só o erro da ação`, async () => {
     const previousFetch = globalThis.fetch;
     let failPost = true;
     let failGet = false;
@@ -42,11 +55,11 @@ for (const action of ["Iniciar job", "Reprocessar"]) {
               error: {
                 request_id: "test",
                 details: {},
-                code: "RUNNER_UNAVAILABLE",
-                message: "Runner indisponível",
+                code,
+                message,
               },
             },
-            { status: 503 },
+            { status: code === "MULTIPLE_DATASETS_NOT_SUPPORTED" ? 422 : 503 },
           );
         return Response.json({});
       }
@@ -86,15 +99,15 @@ for (const action of ["Iniciar job", "Reprocessar"]) {
         view = create(React.createElement(AuthProvider, null, React.createElement(BatchPage)));
       });
       await click();
-      assert.match(alerts(), /Runner indisponível/);
+      assert.match(alerts(), new RegExp(message));
       assert.match(alerts(), action === "Iniciar job" ? /iniciar/i : /reprocessar/i);
       failGet = true;
       await click();
-      assert.match(alerts(), /Runner indisponível/);
+      assert.match(alerts(), new RegExp(message));
       assert.match(alerts(), /Consulta indisponível/);
       failPost = false;
       await click();
-      assert.doesNotMatch(alerts(), /Runner indisponível/);
+      assert.doesNotMatch(alerts(), new RegExp(message));
       assert.match(alerts(), /Consulta indisponível/);
       failGet = false;
       await click();

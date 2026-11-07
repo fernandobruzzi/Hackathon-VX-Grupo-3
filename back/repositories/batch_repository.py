@@ -19,6 +19,7 @@ _READ_MATERIALS = text(
            s.center_code, s.quantity, s.unit AS stock_unit, s.total_value, s.raw_record->>'GRUPO_MERCADORIA' AS grupo
     FROM materials_master m
     LEFT JOIN material_inventory_snapshots s ON s.material_id = m.id
+      AND (CAST(:dataset_id AS uuid) IS NULL OR s.dataset_id = CAST(:dataset_id AS uuid))
     WHERE m.tenant_id = :tenant_id
     ORDER BY m.material_code
     """
@@ -52,10 +53,11 @@ def single_tenant(engine: Engine) -> str:
     return tenants[0]
 
 
-def read_materials(engine: Engine, tenant_id: str) -> list[MaterialRecord]:
+def read_materials(engine: Engine, tenant_id: str, *, require_single_dataset: bool = False) -> list[MaterialRecord]:
     records: dict[str, dict] = {}
     with engine.connect() as connection:
-        for row in connection.execute(_READ_MATERIALS, {"tenant_id": tenant_id}).mappings():
+        dataset_id = single_dataset(connection, tenant_id) if require_single_dataset else None
+        for row in connection.execute(_READ_MATERIALS, {"tenant_id": tenant_id, "dataset_id": dataset_id}).mappings():
             current = records.setdefault(
                 row["material_code"],
                 {
@@ -160,6 +162,20 @@ def _proposal_row(
     }
 
 
+def single_dataset(connection: Connection, tenant_id: str) -> str:
+    """Recusa escopo ambíguo antes de ler saldos ou gravar propostas."""
+    datasets = (
+        connection.execute(text("SELECT id::text FROM datasets WHERE tenant_id = :tenant"), {"tenant": tenant_id})
+        .scalars()
+        .all()
+    )
+    if len(datasets) != 1:
+        raise ValueError(
+            "O batch exige exatamente um dataset por empresa no MVP; múltiplas importações não são suportadas"
+        )
+    return datasets[0]
+
+
 def insert_proposals(
     connection: Connection,
     proposals: list[MergeProposal],
@@ -175,16 +191,10 @@ def insert_proposals(
     ids = {record.code: record.database_id for record in records}
     if not proposals:
         return 0
-    datasets = (
-        connection.execute(text("SELECT id::text FROM datasets WHERE tenant_id = :tenant"), {"tenant": tenant_id})
-        .scalars()
-        .all()
-    )
-    if len(datasets) != 1:
-        raise ValueError("A persistência de propostas exige exatamente um dataset por empresa no MVP")
+    dataset_id = single_dataset(connection, tenant_id)
     new_ids = []
     for proposal in proposals:
-        result = connection.execute(_INSERT_PROPOSAL, _proposal_row(proposal, ids, tenant_id, job_id, datasets[0]))
+        result = connection.execute(_INSERT_PROPOSAL, _proposal_row(proposal, ids, tenant_id, job_id, dataset_id))
         new_ids.extend(result.scalars().all())
     if new_ids:
         connection.execute(_SUPERSEDE, {"ids": new_ids})

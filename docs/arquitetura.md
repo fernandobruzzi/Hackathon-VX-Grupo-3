@@ -1189,6 +1189,8 @@ Exemplo de início de batch:
 
 Lista vazia de classes significa analisar todas as classes. O batch atual exige os três status (`ATIVO`, `BLOQUEADO`, `OBSOLETO`); subconjuntos e lista vazia de status recebem `422 SCOPE_NOT_SUPPORTED` antes de criar job, manifesto ou task. A aprovação automática não decorre desse escopo.
 
+O saneamento batch suporta exatamente um dataset por empresa no MVP. Início e retomada recusam múltiplas importações com `422 MULTIPLE_DATASETS_NOT_SUPPORTED`, antes de disparar a task ou criar um novo job/manifesto. O worker direto também recusa o escopo antes de ler saldos. Isso não altera a seleção do estoque vigente no chat nem oferece escolha entre datasets.
+
 A API entrega ao batch somente um manifesto:
 
 ```json

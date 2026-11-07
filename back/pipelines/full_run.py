@@ -381,7 +381,13 @@ def run_sanitize(
         tenant_id = single_tenant(engine)
         if not job_id:
             context = RunContext(engine, tenant_id, on_step=on_step or (lambda stage, done: None))
-            return run_full(read_materials(engine, tenant_id), catalog, context, repository_name, correction_repository)
+            return run_full(
+                read_materials(engine, tenant_id, require_single_dataset=True),
+                catalog,
+                context,
+                repository_name,
+                correction_repository,
+            )
 
         store = store or get_object_store()
         if manifest_key:
@@ -409,7 +415,7 @@ def run_sanitize(
                     if recorded != signature:
                         raise AnalysisRulesChanged(_rules_changed(recorded, signature))
                 if metrics is None:
-                    records = read_materials(engine, tenant_id)
+                    records = read_materials(engine, tenant_id, require_single_dataset=True)
                     metrics = run_full(records, catalog, context, repository_name, correction_repository)
                     # Persiste o conteúdo exato antes de publicar o artefato imutável.
                     # A retomada repete só a publicação/conclusão, sem recalcular os tempos.
