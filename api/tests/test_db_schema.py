@@ -2,6 +2,7 @@ import uuid
 
 import pytest
 from alembic import command
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
@@ -271,3 +272,8 @@ def test_set_passwords_enables_login_only_with_the_right_password(migrated_url, 
 
 def test_set_passwords_targets_the_application_roles_by_default():
     assert set(PASSWORD_VARIABLES) == {"api_user", "batch_user", "mcp_reader"}
+
+
+def test_migration_history_has_one_unambiguous_head():
+    scripts = ScriptDirectory.from_config(alembic_config())
+    assert len(scripts.get_heads()) == 1
