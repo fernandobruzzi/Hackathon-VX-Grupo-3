@@ -226,7 +226,9 @@ resume persiste outra tentativa e pode iniciar outra task. A expiração por hea
 existente continua sendo a barreira para tasks que não começam ou deixam de progredir.
 
 Embeddings ficam desligados por padrão. `embedding_repository=bedrock_titan_v1`
-é uma decisão explícita: a indexação da base inteira pode fazer milhares de chamadas.
+é uma decisão explícita. A indexação da base inteira pode fazer milhares de chamadas.
+O Agent usa a busca híbrida com embeddings quando essa opção está ativa.
+Consulte [a avaliação e o procedimento de indexação](../docs/embeddings-titan.md).
 Não usar `simulated_v1`/Ollama no deploy. A configuração recusa esses nomes.
 API, Agent e CLI também recusam iniciar com `simulated_v1` fora de `APP_ENV=local`
 ou quando há marcadores de runtime AWS, mesmo que o ambiente se declare local.

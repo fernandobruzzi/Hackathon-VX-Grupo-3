@@ -6,6 +6,9 @@ parecidas; quem diz se é o mesmo item continua sendo a identidade do PDM.
 
 from collections import defaultdict
 
+from mcp.server.mcpserver.exceptions import ToolError
+
+from repositories.embeddings.bedrock_titan_v1 import TitanEmbeddingError
 from vx_materials_mcp.repositories.search.hybrid_v1 import (
     _TEXT_CANDIDATES,
     _TEXT_SCORE_CEILING,
@@ -24,7 +27,13 @@ class HybridEmbeddingsV1SearchRepository(HybridV1SearchRepository):
             raise ValueError("hybrid_embeddings_v1 precisa de EMBEDDING_REPOSITORY")
         text_rows = super()._similar_rows(query, attributes, class_id)
         text = " ".join([query.query, *attributes.values()])
-        vector = self._embedder.embed([text], query=True)[0]
+        try:
+            vector = self._embedder.embed([text], query=True)[0]
+        except TitanEmbeddingError as error:
+            raise ToolError(
+                "INDEX_UPDATING: embeddings do Titan indisponíveis. "
+                "Tente novamente. Não é possível concluir ausência de duplicados."
+            ) from error
         vector_rows = self._catalog.nearest(vector, self._version, class_id, _TEXT_CANDIDATES)
         fused: dict[str, float] = defaultdict(float)
         by_id = {}

@@ -4,10 +4,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from mcp.server.mcpserver.exceptions import ToolError
 
 from domain.pdm_loader import load_pdm
 from domain.pdm_validator import validate_pdm
 from repositories.classification import get_classification_repository
+from repositories.embeddings.bedrock_titan_v1 import TitanEmbeddingError
 from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot.candidates import verified_existing
 from vx_materials_mcp.repositories.search import get_search_repository
@@ -79,3 +81,21 @@ def test_reusable_identity_survives_the_display_limit(pdm, repository, limit, st
     assert existing.material_code == ("99999" if status == "BLOQUEADO" else "10006")
     if status == "BLOQUEADO":
         assert "10006" in existing.reason and "99999" in existing.reason
+
+
+def test_unavailable_titan_blocks_the_search_without_returning_no_match(pdm):
+    def unavailable(*args, **kwargs):
+        raise TitanEmbeddingError("Indisponível")
+
+    search = get_search_repository(
+        "hybrid_embeddings_v1",
+        catalog=SimpleNamespace(full_text=lambda *args: []),
+        pdm_catalog=pdm,
+        classifier=get_classification_repository(pdm),
+        extractor=get_extraction_repository(),
+        index_version="test",
+        caller=None,
+        embedder=SimpleNamespace(embed=unavailable),
+    )
+    with pytest.raises(ToolError, match="INDEX_UPDATING"):
+        search.search(SearchQuery("XYZ"))

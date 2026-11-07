@@ -2,9 +2,10 @@ import io
 import json
 
 import pytest
+from botocore.exceptions import ClientError
 
 from repositories.embeddings import REPOSITORIES, get_embedding_repository
-from repositories.embeddings.bedrock_titan_v1 import BedrockTitanV1EmbeddingRepository
+from repositories.embeddings.bedrock_titan_v1 import BedrockTitanV1EmbeddingRepository, TitanEmbeddingError
 from repositories.embeddings.ollama_nomic_v1 import OllamaNomicV1EmbeddingRepository
 from repositories.embeddings.simulated_v1 import SimulatedV1EmbeddingRepository
 
@@ -64,14 +65,46 @@ def test_ollama_uses_prefixes_and_cuts_to_512(monkeypatch):
 
 def test_titan_requests_512_normalized_dimensions():
     class Client:
-        def invoke_model(self, modelId, body):
-            self.request = (modelId, json.loads(body))
-            return {"body": io.BytesIO(json.dumps({"embedding": [0.0] * 512}).encode())}
+        def invoke_model(self, **kwargs):
+            self.request = kwargs
+            self.body = io.BytesIO(json.dumps({"embedding": [1.0] * 512, "inputTextTokenCount": 3}).encode())
+            return {"body": self.body}
 
     client = Client()
-    vectors = BedrockTitanV1EmbeddingRepository(client).embed(["FILTRO"], query=True)
-    assert client.request == (
-        "amazon.titan-embed-text-v2:0",
-        {"inputText": "FILTRO", "dimensions": 512, "normalize": True},
-    )
+    repository = BedrockTitanV1EmbeddingRepository(client)
+    vectors = repository.embed(["FILTRO"], query=True)
+    assert client.request["modelId"] == "amazon.titan-embed-text-v2:0"
+    assert client.request["contentType"] == client.request["accept"] == "application/json"
+    assert json.loads(client.request["body"]) == {"inputText": "FILTRO", "dimensions": 512, "normalize": True}
     assert len(vectors[0]) == 512
+    assert repository.input_tokens == 3
+    assert client.body.closed
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"embedding": [1.0] * 256, "inputTextTokenCount": 3},
+        {"embedding": [0.0] * 512, "inputTextTokenCount": 3},
+        {"embedding": [float("nan")] + [1.0] * 511, "inputTextTokenCount": 3},
+        {"embedding": [1.0] * 512, "inputTextTokenCount": "3"},
+    ],
+)
+def test_titan_refuses_incompatible_model_responses(response):
+    class Client:
+        def invoke_model(self, **kwargs):
+            return {"body": io.BytesIO(json.dumps(response).encode())}
+
+    repository = BedrockTitanV1EmbeddingRepository(Client())
+    with pytest.raises(TitanEmbeddingError):
+        repository.embed(["FILTRO"], query=True)
+    assert repository.input_tokens == 0
+
+
+def test_titan_handles_an_unavailable_service():
+    class Client:
+        def invoke_model(self, **kwargs):
+            raise ClientError({"Error": {"Code": "ServiceUnavailableException"}}, "InvokeModel")
+
+    with pytest.raises(TitanEmbeddingError):
+        BedrockTitanV1EmbeddingRepository(Client()).embed(["FILTRO"], query=True)
