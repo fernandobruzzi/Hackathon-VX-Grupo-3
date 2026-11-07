@@ -335,7 +335,7 @@ Finish `P0` issues first. If scope changes or an issue is blocked, comment on it
 
 - Branch from an up-to-date `homologacao`, one branch per issue: `<type>/<issue>-<slug>`.
 - `<type>` is a Conventional Commit type. Example: `feat/13-pdm-validator`.
-- Never commit directly to `main`.
+- Never commit directly to `main` or `homologacao`.
 - Never put an AI agent's name in a branch name. Rename any tool-generated branch, such as `claude/*`, before pushing.
 
 ## Commits
