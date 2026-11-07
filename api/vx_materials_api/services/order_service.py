@@ -691,6 +691,14 @@ def get_order_review(db, identity, catalog, order_id):
     )
     _, candidates, missing = _evaluate(db, identity.tenant_id, catalog, analysis, version)
     current_order = {**to_contract(db, order, identity), "missing_attributes": list(missing)}
+    fiscal_decision = (order.review_data or {}).get("fiscal")
+    if fiscal_decision is not None:
+        # Projeta metadados ausentes sem reescrever a avaliação histórica nem seu hash.
+        fiscal_decision = dict(fiscal_decision)
+        assessment = dict(fiscal_decision["assessment"])
+        for field in ("ncm_version", "ncm_source_sha256", "ncm_snapshot_date", "ncm_source_kind"):
+            assessment.setdefault(field, None)
+        fiscal_decision["assessment"] = assessment
     return {
         "order": current_order,
         "attachment_text": order.attachment_text,
@@ -707,7 +715,7 @@ def get_order_review(db, identity, catalog, order_id):
         if cls
         else [],
         "review_data": dict(order.review_data or {}),
-        "fiscal_decision": (order.review_data or {}).get("fiscal"),
+        "fiscal_decision": fiscal_decision,
         "technical_review_current": (order.review_data or {}).get("technical", {}).get("signature")
         == _review_signature(catalog, analysis, version),
     }
