@@ -142,12 +142,14 @@ def test_resume_cannot_mix_ncm_references(job, catalog, ncm_snapshot, monkeypatc
         full_run.run_full(RECORDS, catalog, job(checkpoint))
 
 
-def _manual_review_context(monkeypatch, records, catalog):
+def _manual_review_context(monkeypatch, records, catalog, tmp_path):
     connection = object()
     context = RunContext(engine=SimpleNamespace(begin=lambda: nullcontext(connection)), tenant_id="t")
     saved = []
 
-    def save(connection_arg, records_arg, analyzed, pending_by_code, context_arg, catalog_arg, corrector_name):
+    def save(
+        connection_arg, records_arg, analyzed, pending_by_code, context_arg, catalog_arg, corrector_name, enrichment
+    ):
         assert connection_arg is connection
         assert records_arg is records
         assert [material.record for material in analyzed] == records
@@ -157,18 +159,25 @@ def _manual_review_context(monkeypatch, records, catalog):
         saved.append(pending_by_code)
         return "test-manual-review-run"
 
+    context.store = LocalObjectStore(tmp_path)
+    context.store.put_if_absent("diagnostic", b'{"results": []}')
+    monkeypatch.setattr(
+        full_run,
+        "run_internal_enrichment",
+        lambda *args: {"report_key": "diagnostic", "proposals": 0, "inserted": 0, "material_codes": []},
+    )
     monkeypatch.setattr(full_run, "save_manual_reviews", save)
     return context, saved
 
 
-def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, monkeypatch):
+def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, monkeypatch, tmp_path):
     captured = []
     monkeypatch.setattr(
         full_run, "save_all", lambda proposals, records, context: captured.extend(proposals) or len(proposals)
     )
     # Itens de identidade por referência geram merge e correções técnicas.
     records = [replace(RECORDS[0], code=str(i), ncm="8421.23.00", unit="PC") for i in range(1, 3)]
-    context, manual_reviews = _manual_review_context(monkeypatch, records, catalog)
+    context, manual_reviews = _manual_review_context(monkeypatch, records, catalog, tmp_path)
     result = full_run.run_full(records, catalog, context)
     assert manual_reviews == [{}]
     assert result["manual_review_run_id"] == "test-manual-review-run"
@@ -189,7 +198,9 @@ def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, m
         assert proposal.fiscal_review_required
 
 
-def test_snapshot_binding_preserves_raw_ncm_for_technical_corrections_and_existing_reviews(catalog, monkeypatch):
+def test_snapshot_binding_preserves_raw_ncm_for_technical_corrections_and_existing_reviews(
+    catalog, monkeypatch, tmp_path
+):
     from datetime import date
 
     from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
@@ -215,7 +226,7 @@ def test_snapshot_binding_preserves_raw_ncm_for_technical_corrections_and_existi
         full_run, "save_all", lambda proposals, records, context: captured.extend(proposals) or len(proposals)
     )
     records = [replace(RECORDS[0], code=str(i), ncm="84212300", unit="PC") for i in range(1, 3)]
-    context, manual_reviews = _manual_review_context(monkeypatch, records, catalog)
+    context, manual_reviews = _manual_review_context(monkeypatch, records, catalog, tmp_path)
     result = full_run.run_full(records, catalog, context)
     assert manual_reviews == [{}]
     assert result["manual_review_run_id"] == "test-manual-review-run"

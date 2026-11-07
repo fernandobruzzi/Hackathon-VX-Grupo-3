@@ -27,6 +27,7 @@ type Review = components["schemas"]["ManualReview"];
 type ReviewList = components["schemas"]["ManualReviewList"];
 type Catalog = components["schemas"]["ManualReviewCatalog"];
 export const REASON_LABELS: Record<string, string> = {
+  ENRICHMENT_REQUIRED: "Dados técnicos a complementar",
   DESCRICAO_FORA_DO_PADRAO: "Descrição incompleta ou fora do padrão",
   SEM_CLASSE_CONFIAVEL: "Sem classe confiável",
   CLASSE_NAO_CONFIRMADA: "Classe não confirmada",
@@ -226,6 +227,28 @@ export function ManualReviewsPage() {
                                 {REASON_LABELS[r] ?? r}
                               </p>
                             ))}
+                            {!!row.observation.completeness?.before.missing_required.length && (
+                              <p className="mt-2 text-sm">
+                                Faltam:{" "}
+                                {row.observation.completeness.before.missing_required.join(", ")}.
+                              </p>
+                            )}
+                            {!!row.observation.completeness?.before.conditional_pending.length && (
+                              <p className="mt-1 text-sm">
+                                Aplicabilidade a confirmar:{" "}
+                                {row.observation.completeness.before.conditional_pending.join(", ")}
+                                .
+                              </p>
+                            )}
+                            {!!Object.keys(row.observation.completeness?.suggestions ?? {})
+                              .length && (
+                              <Link
+                                className="mt-2 inline-block text-verde underline"
+                                href="/enriquecimento/"
+                              >
+                                Revisar sugestões com fontes
+                              </Link>
+                            )}
                           </Td>
                           <Td>
                             {row.proposal_id ? (

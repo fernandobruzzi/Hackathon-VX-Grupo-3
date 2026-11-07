@@ -10,7 +10,9 @@ from domain.proposals import canonical_hash
 NAMESPACE = uuid.UUID("7e93f2e6-123c-4bde-9c66-bd47c01ded98")
 
 
-def save_manual_reviews(connection, records, analyzed, pending_by_code, context, catalog, corrector_name):
+def save_manual_reviews(
+    connection, records, analyzed, pending_by_code, context, catalog, corrector_name, enrichment=None
+):
     datasets = (
         connection.execute(
             text("SELECT id::text FROM datasets WHERE tenant_id = :tenant"), {"tenant": context.tenant_id}
@@ -21,6 +23,8 @@ def save_manual_reviews(connection, records, analyzed, pending_by_code, context,
     if len(datasets) != 1:
         raise ValueError("A revisão manual exige exatamente um dataset por empresa no MVP")
     signature = context.checkpoint["analysis_signature"] + "|corrector:" + corrector_name
+    if enrichment is not None:
+        signature += "|internal:" + context.checkpoint["internal_sources_signature"]
     run_id = context.job_id or str(
         uuid.uuid5(
             NAMESPACE,
@@ -35,6 +39,16 @@ def save_manual_reviews(connection, records, analyzed, pending_by_code, context,
         )
     )
     by_code = {m.record.code: m for m in analyzed}
+    completeness = (
+        {
+            item["material_code"]: {
+                name: item[name] for name in ("before", "after_suggestions", "suggestions", "conflicts")
+            }
+            for item in enrichment["results"]
+        }
+        if enrichment
+        else {}
+    )
     rows = []
     for record in records:
         reasons = pending_by_code.get(record.code)
@@ -64,6 +78,7 @@ def save_manual_reviews(connection, records, analyzed, pending_by_code, context,
                         "pdm_class_id": material.pdm_class_id,
                         "item_name": material.item_name,
                         "attributes": material.attributes,
+                        "completeness": completeness.get(record.code),
                     },
                     ensure_ascii=False,
                 ),

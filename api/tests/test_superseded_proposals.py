@@ -46,9 +46,10 @@ def runs(migrated_url, tmp_path_factory):
     monkeypatch = pytest.MonkeyPatch()
     with temporary_login(migrated_url, "api_user") as api_url, temporary_login(migrated_url, "batch_user") as batch_url:
         api = create_engine(api_url)
-        bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("storage")))
+        store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
+        bootstrap(KIT, api, store)
         api.dispose()
-        first = run_sanitize(PDM, database_url=batch_url)
+        first = run_sanitize(PDM, database_url=batch_url, store=store)
         with admin.begin() as connection:
             # Decisões já tomadas nunca são revertidas por uma execução nova.
             decided = dict(
@@ -69,8 +70,8 @@ def runs(migrated_url, tmp_path_factory):
                 ).all()
             )
         changed_rules(monkeypatch)
-        second = run_sanitize(PDM, database_url=batch_url)
-        third = run_sanitize(PDM, database_url=batch_url)
+        second = run_sanitize(PDM, database_url=batch_url, store=store)
+        third = run_sanitize(PDM, database_url=batch_url, store=store)
         yield first, second, third, decided, admin
     monkeypatch.undo()
     admin.dispose()
@@ -83,7 +84,10 @@ def scalar(engine, query, **params):
 
 def test_second_run_leaves_one_pending_set_per_material_and_type(runs):
     first, second, _, decided, admin = runs
-    assert second["inserted"] == first["proposals"]
+    # A regra alterada pertence ao produtor de saneamento. Enriquecimentos independentes
+    # conservam evidências e revisões; não são recriados nem substituídos por essa mudança.
+    assert second["inserted"] == first["proposals"] - first["enrichment"]
+    assert second["enrichment"] == first["enrichment"]
     assert scalar(admin, PENDING_PER_KEY) == 0
     pending = scalar(admin, "SELECT count(*) FROM sanitization_proposals WHERE status = 'PENDING'")
     assert pending == second["proposals"]
@@ -91,13 +95,14 @@ def test_second_run_leaves_one_pending_set_per_material_and_type(runs):
         scalar(
             admin,
             "SELECT count(*) FROM sanitization_proposals "
-            "WHERE status = 'PENDING' AND NOT changeset->'conflicts' ? :rule",
+            "WHERE status = 'PENDING' AND proposal_type <> 'ENRICHMENT' "
+            "AND NOT changeset->'conflicts' ? :rule",
             rule=CHANGED_RULE,
         )
         == 0
     )
     stale = scalar(admin, "SELECT count(*) FROM sanitization_proposals WHERE status = 'STALE'")
-    assert stale == first["proposals"] - len(decided)
+    assert stale == first["proposals"] - first["enrichment"] - len(decided)
 
 
 def test_every_superseded_proposal_is_audited_as_system(runs):
