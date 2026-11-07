@@ -1955,6 +1955,30 @@
             "item_name": "FILTRO OLEO LUBRIFICANTE",
             "attributes": {
               "FABRICANTE": "FLEETGUARD"
+            },
+            "completeness": {
+              "before": {
+                "status": "INCOMPLETE",
+                "missing_required": [
+                  "REFERENCIA FABRICANTE"
+                ],
+                "invalid": [],
+                "not_applicable": [],
+                "conditional_pending": [],
+                "optional_missing": []
+              },
+              "after_suggestions": {
+                "status": "INCOMPLETE",
+                "missing_required": [
+                  "REFERENCIA FABRICANTE"
+                ],
+                "invalid": [],
+                "not_applicable": [],
+                "conditional_pending": [],
+                "optional_missing": []
+              },
+              "suggestions": {},
+              "conflicts": {}
             }
           },
           "rules_signature": "pdm-kit-v1|corrector:head_noun_v1",

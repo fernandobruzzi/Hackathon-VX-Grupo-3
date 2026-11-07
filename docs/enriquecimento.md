@@ -1,5 +1,8 @@
 # Evidências dos produtos reais
 
+O saneamento também aproveita fontes internas do kit e registra completude; veja
+[Enriquecimento interno](enriquecimento-interno.md).
+
 `vx-back enrich-real-products` consulta fontes revisadas e produz evidências e
 propostas de enriquecimento em armazenamento imutável. Não modifica o cadastro,
 o estoque ou o NCM e não aprova valores. `publish-enrichment` adapta os artefatos

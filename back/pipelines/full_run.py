@@ -48,10 +48,11 @@ from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
+from repositories.internal_enrichment_repository import run_internal_enrichment
 from repositories.manual_reviews import save_manual_reviews
 from repositories.normalization import get_normalization_repository
 
-PIPELINE_VERSION = "batch-v1"
+PIPELINE_VERSION = "batch-v2-internal-enrichment"
 # Intervalo do sinal de vida entre checkpoints. Bem abaixo do prazo em que a API dá o job como parado.
 HEARTBEAT_SECONDS = 15
 ANALYSIS_CHUNK = 1000
@@ -171,8 +172,8 @@ def analyze_all(
 
 def _rules_changed(recorded: str | None, current: str) -> str:
     return (
-        f"Regras de análise mudaram desde o início do job (antes: {recorded or 'sem assinatura'}; "
-        f"agora: {current}). Os blocos gravados ficam como estão: crie um novo job."
+        "Regras de análise mudaram. Crie um novo job; os blocos anteriores foram preservados. "
+        f"Antes: {recorded or 'sem assinatura'}; agora: {current}."
     )
 
 
@@ -226,9 +227,10 @@ def coverage(
     proposals: list[MergeProposal],
     pending_by_code: dict[str, tuple[str, ...]],
     errors: dict[str, str],
+    enriched_codes: tuple[str, ...] = (),
 ) -> dict:
     """Um desfecho por material. A soma dos desfechos é sempre o total da base."""
-    proposed = {code for proposal in proposals for code in proposal.material_codes}
+    proposed = {code for proposal in proposals for code in proposal.material_codes} | set(enriched_codes)
     outcomes: Counter[str] = Counter()
     for record in records:
         if record.code in errors:
@@ -293,6 +295,19 @@ def run_full(
         merges = [bind_snapshot_assessment(p, catalog, snapshot) for p in merges]
         corrections = [bind_snapshot_assessment(p, catalog, snapshot) for p in corrections]
     proposals = merges + corrections
+    internal = run_internal_enrichment(analyzed, catalog, context)
+    enrichment_report = json.loads((context.store or get_object_store()).get(internal["report_key"]))
+    for item in enrichment_report["results"]:
+        gaps = item["before"]
+        if (
+            gaps["missing_required"]
+            or gaps["conditional_pending"]
+            or gaps["invalid"]
+            or gaps["status"] == "OUT_OF_SCOPE"
+        ):
+            previous = pending_by_code.get(item["material_code"], ())
+            pending_by_code[item["material_code"]] = tuple(dict.fromkeys((*previous, "ENRICHMENT_REQUIRED")))
+    pending = Counter(reason for reasons in pending_by_code.values() for reason in reasons)
     propose_seconds = time.perf_counter() - started - analysis_seconds
 
     inserted = save_all(proposals, records, context)
@@ -305,6 +320,7 @@ def run_full(
             context,
             catalog,
             get_correction_repository(correction_repository).name,
+            enrichment_report,
         )
         if context.job_id:
             update_job(connection, context.job_id, context.checkpoint)
@@ -312,6 +328,8 @@ def run_full(
     attempts[-1].update({"finished_at": _now(), "seconds": round(total_seconds, 2)})
 
     by_type = Counter(proposal.proposal_type for proposal in proposals)
+    if internal["proposals"]:
+        by_type["ENRICHMENT"] = internal["proposals"]
     return {
         "manual_review_run_id": review_run_id,
         "pipeline_version": PIPELINE_VERSION,
@@ -319,15 +337,16 @@ def run_full(
         "analysis_signature": context.checkpoint["analysis_signature"],
         "identity_review_key": review_key,
         # Campos do contrato BatchJob.counts; o detalhe fica ao lado.
-        "proposals": len(proposals),
+        "internal_enrichment": internal,
+        "proposals": len(proposals) + internal["proposals"],
         "merges": by_type.get("MERGE", 0),
         "ncm": by_type.get("NCM_CORRECTION", 0),
-        "enrichment": by_type.get("ENRICHMENT", 0),
+        "enrichment": internal["proposals"],
         "by_type": dict(sorted(by_type.items())),
-        "inserted": inserted,
+        "inserted": inserted + internal["inserted"],
         "merge_summary": summarize(merges),
         "corrections": summarize_corrections(corrections, pending),
-        "coverage": coverage(records, proposals, pending_by_code, errors),
+        "coverage": coverage(records, proposals, pending_by_code, errors, tuple(internal["material_codes"])),
         "timing_seconds": {
             "analysis": round(analysis_seconds, 2),
             "propose": round(propose_seconds, 2),
@@ -398,7 +417,7 @@ def run_sanitize(
         catalog = _catalog(pdm_workbook)
         tenant_id = single_tenant(engine)
         if not job_id:
-            context = RunContext(engine, tenant_id, on_step=on_step or (lambda stage, done: None))
+            context = RunContext(engine, tenant_id, store=store, on_step=on_step or (lambda stage, done: None))
             return run_full(
                 read_materials(engine, tenant_id, require_single_dataset=True),
                 catalog,
