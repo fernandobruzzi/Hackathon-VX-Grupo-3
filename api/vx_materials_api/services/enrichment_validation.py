@@ -23,7 +23,11 @@ def validate_enrichment_context(changes, primary, dataset, catalog):
     class_id = changes.after.pdm_class_id if internal else (product.pdm_class_id if product else None)
     if internal:
         classification = get_classification_repository(catalog).classify(
-            ClassificationInput(primary.original_description_long, primary.original_description_short)
+            ClassificationInput(
+                primary.original_description_long,
+                primary.original_description_short,
+                getattr(primary, "original_merchandise_group", None),
+            )
         )
         if classification.pdm_class_id != class_id or context["manifest_sha256"] != canonical_hash(dataset.files):
             raise ApiError(409, "ENRICHMENT_BASIS_CHANGED", "A classe ou os arquivos internos mudaram.")
@@ -109,6 +113,7 @@ def validate_internal_sources(changes, dataset, sources, primary=None, catalog=N
                         primary.status,
                         primary.original_description_long or "",
                         primary.original_description_short or "",
+                        group=getattr(primary, "original_merchandise_group", None) or "",
                         manufacturer=primary.manufacturer or "",
                         reference=primary.manufacturer_reference or "",
                         attributes=primary.attributes or {},

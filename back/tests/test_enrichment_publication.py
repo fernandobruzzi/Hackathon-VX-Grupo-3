@@ -115,6 +115,19 @@ def test_filter_name_is_read_from_original_instead_of_first_option(catalog):
     )
 
 
+@pytest.mark.parametrize("class_id,description,group", [("PDM110", "BUCHA", "SOB01"), ("PDM050", "CAP", "TUB01")])
+def test_original_group_resolves_an_ambiguous_item_without_using_a_revised_group(catalog, class_id, description, group):
+    original = material() | {"original_description_long": description, "original_merchandise_group": group}
+    assert original_item_name(catalog, class_id, original) == description
+    assert original_item_name(catalog, class_id, original | {"original_merchandise_group": None}) is None
+    assert (
+        original_item_name(
+            catalog, class_id, original | {"original_merchandise_group": None, "merchandise_group": group}
+        )
+        is None
+    )
+
+
 @pytest.mark.parametrize(
     "field",
     ["source_excerpt", "source_sha256", "confidence_level", "confidence_basis", "s3_object_key", "proposed_value"],
