@@ -157,3 +157,49 @@ def test_explicitly_terminated_short_reference_is_usable(catalog):
     result = extract_material_fields(catalog.classes["PDM110"], "PLACA TRASEIRA", "METSO PN MM4504436;")
     assert result.attributes["REFERENCIA FABRICANTE"].value == "MM4504436"
     assert result.origins["REFERENCIA FABRICANTE"] == "short_description"
+
+
+@pytest.mark.parametrize("code", ["16824859", "29703767"])
+def test_real_39_character_short_reference_prefix_does_not_conflict(catalog, code):
+    from pipelines.sanitize import read_csv_records
+
+    record = next(
+        r
+        for r in read_csv_records(Path(__file__).parents[2] / "data/desafio01/01_base_materiais.csv")
+        if r.code == code
+    )
+    assert len(record.short_description) == 39
+    classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
+    long_only = analyze_material(replace(record, short_description=""), catalog, classifier, extractor)
+    combined = analyze_material(record, catalog, classifier, extractor)
+    assert combined.attributes == long_only.attributes
+    assert combined.review_reasons == long_only.review_reasons
+    assert combined.identity_key == long_only.identity_key
+    assert combined.attributes["REFERENCIA FABRICANTE"] in {"5476 8771 67", "PSL 194"}
+
+
+@pytest.mark.parametrize("short", ["PN LF7000", "PN LF900;", "PN LF900; MODELO MM400", "PN LF900 MODELO MM400"])
+def test_complete_or_terminated_short_reference_disagreement_is_not_silenced(catalog, short):
+    # Delimitador ou rótulo seguinte encerra explicitamente o campo da referência.
+    result = extract_material_fields(catalog.classes["PDM100"], "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009", short)
+    assert result.conflicts["REFERENCIA FABRICANTE"]
+    assert "REFERENCIA FABRICANTE" not in result.attributes
+
+
+@pytest.mark.parametrize("structured", ["LF9009-00", "LF9009 REV A"])
+def test_short_prefix_never_masks_long_structured_suffix_disagreement(catalog, structured):
+    result = extract_material_fields(
+        catalog.classes["PDM100"], "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009", "PN LF900", reference=structured
+    )
+    assert {"LF9009", structured} <= set(result.conflicts["REFERENCIA FABRICANTE"])
+    assert "REFERENCIA FABRICANTE" not in result.attributes
+
+
+def test_short_prefix_never_becomes_a_completed_attribute(catalog):
+    result = extract_material_fields(
+        catalog.classes["PDM100"], "FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009", "PN LF900"
+    )
+    assert not result.conflicts
+    assert result.attributes["REFERENCIA FABRICANTE"].value == "LF9009"
+    assert result.origins["REFERENCIA FABRICANTE"] == "description"
+    assert result.attributes["REFERENCIA FABRICANTE"].original != "PN: LF900"
