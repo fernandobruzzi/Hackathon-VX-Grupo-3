@@ -86,6 +86,10 @@ KEPT = {
     "15195267": "SCHNEIDER continua no campo de fabricante do cadastro",
 }
 
+# A leitura independente conserva a referência como escrita na descrição longa.
+# O caso revisado continua sem perda; o texto já corresponde ao formato PDM e dispensa proposta.
+ALREADY_STANDARDIZED = {"10837553"}
+
 
 @pytest.mark.parametrize("code", sorted(COMPLETE_LOST))
 def test_text_loss_sends_description_to_individual_review(proposals, code):
@@ -118,13 +122,21 @@ def test_incomplete_values_stay_pending_before_description_review(catalog, recor
     assert "PDM_CORRECTION" not in proposals(code)
 
 
-@pytest.mark.parametrize("code", sorted(KEPT))
+@pytest.mark.parametrize("code", sorted(KEPT.keys() - ALREADY_STANDARDIZED))
 def test_description_without_loss_can_go_in_a_lot(proposals, code):
     pdm = proposals(code)["PDM_CORRECTION"]
 
     assert "TEXT_LOSS" not in lane(pdm)["reasons"], KEPT[code]
     # Sem conflito vai para lote; com conflito, como a unidade KG fora do padrão da classe (#122), não.
     assert lane(pdm)["tier"] == (3 if pdm.changeset["conflicts"] else 2), KEPT[code]
+
+
+def test_spaced_reference_already_matches_pdm_and_needs_no_rewrite(catalog, records, tools, proposals):
+    material = analyze_material(records["10837553"], catalog, tools[0], tools[1])
+    checked = validate_pdm(catalog, material.pdm_class_id, material.attributes, item_name=material.item_name)
+    assert material.attributes["REFERENCIA FABRICANTE"] == "8597 0256 05"
+    assert checked.formatted_description == material.record.description
+    assert "PDM_CORRECTION" not in proposals("10837553")
 
 
 def test_unit_alias_with_trusted_class_is_tier_one(proposals):
@@ -208,7 +220,11 @@ def test_registered_repositories_meet_the_reviewed_cases(proposals, name):
     repository = get_text_loss_repository(name)
 
     assert all(lane(proposals(code, repository)["PDM_CORRECTION"])["tier"] == 3 for code in COMPLETE_LOST)
-    assert all("TEXT_LOSS" not in lane(proposals(code, repository)["PDM_CORRECTION"])["reasons"] for code in KEPT)
+    assert all(
+        "TEXT_LOSS" not in lane(proposals(code, repository)["PDM_CORRECTION"])["reasons"]
+        for code in KEPT.keys() - ALREADY_STANDARDIZED
+    )
+    assert all("PDM_CORRECTION" not in proposals(code, repository) for code in ALREADY_STANDARDIZED)
 
 
 @pytest.mark.parametrize("code", ["24794045", "22976650"])
