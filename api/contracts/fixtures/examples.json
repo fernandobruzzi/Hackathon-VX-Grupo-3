@@ -2162,11 +2162,15 @@
         "pdm_version": "pdm-kit-v1",
         "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
         "reference_source": "03_padrao_cadastro_PDM.xlsx#NCM_REFERENCIA",
-        "rules_version": "pdm-ncm-v1",
-        "evaluation_hash": "1c6b726204d808be360dacc26d19c0566f548b180a1a12a22c65f82974c1a9a6",
+        "rules_version": "pdm-ncm-v2",
+        "evaluation_hash": "04fdc557004284081a809eb7be3547f22d93002b780cd23f1a206c93186fb129",
         "pending_checks": [
           "OFFICIAL_SNAPSHOT_UNAVAILABLE"
-        ]
+        ],
+        "ncm_version": null,
+        "ncm_source_sha256": null,
+        "ncm_snapshot_date": null,
+        "ncm_source_kind": null
       },
       "ncm_proposed": null,
       "ncm_references": [
