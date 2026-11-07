@@ -34,7 +34,7 @@ def assess_record(
     known = (
         known
         and revisions == ("3-pilot-families-263", "11-quantity-reference-199")
-        and MATERIAL_FIELDS_VERSION == "independent-fields-v1"
+        and MATERIAL_FIELDS_VERSION == "independent-fields-v2"
     )
     analyzed = analyze_material(record, catalog, classifier, extractor)
     extracted = (

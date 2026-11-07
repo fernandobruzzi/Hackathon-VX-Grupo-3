@@ -16,7 +16,7 @@ from repositories.extraction.rule_based_v1 import (
 )
 from repositories.extraction.rule_based_v1_tables import KEY_ALIASES
 
-MATERIAL_FIELDS_VERSION = "independent-fields-v1"
+MATERIAL_FIELDS_VERSION = "independent-fields-v2"
 _SHORT_LIMIT = 40
 _FREE_IDENTITY_FIELDS = frozenset({"REFERENCIA FABRICANTE", "REFERENCIA"})
 
@@ -40,6 +40,19 @@ def _spelling(name: str, value: str) -> str:
     if name in {"REFERENCIA FABRICANTE", "REFERENCIA"}:
         return reference_spelling_key(value)
     return manufacturer_key(value) if name == "FABRICANTE" else value
+
+
+def _open_reference_tail(cls: PdmClass, text: str, name: str, spelling: str) -> bool:
+    if not spelling or re.search(r"[;,\n]\s*$", text):
+        return False
+    segment = _SEGMENTS.split(_clean_text(_LINE_BREAK.sub(" ; ", text)))[-1]
+    if not reference_spelling_key(segment).endswith(spelling):
+        return False
+    spans = labeled_spans((a.name for a in cls.attributes), segment)
+    if not spans:
+        return True
+    label = spans[-1][2]
+    return label in _REFERENCE_LABELS or name in {label, *KEY_ALIASES.get(label, ())}
 
 
 def extract_material_fields(
@@ -97,6 +110,22 @@ def extract_material_fields(
                     observations[name].append((attr, origin))
     conflicts, attributes, origins = {}, {}, {}
     for name, values in observations.items():
+        if name in _FREE_IDENTITY_FIELDS:
+            supported = {_spelling(name, attr.value) for attr, origin in values if origin != "short_description"}
+            if len(supported) == 1:
+                full = next(iter(supported))
+                # Algumas curtas do kit têm 39 caracteres e terminam em PN parcial. Um prefixo
+                # estrito na cauda aberta não é outro PN e nunca completa a identidade sozinho.
+                values = [
+                    (attr, origin)
+                    for attr, origin in values
+                    if not (
+                        origin == "short_description"
+                        and full.startswith(_spelling(name, attr.value))
+                        and full != _spelling(name, attr.value)
+                        and _open_reference_tail(cls, short_description or "", name, _spelling(name, attr.value))
+                    )
+                ]
         if len({_spelling(name, attr.value) for attr, _ in values}) > 1:
             conflicts[name] = sorted({attr.value for attr, _ in values})
         else:
