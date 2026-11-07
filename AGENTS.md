@@ -225,6 +225,9 @@ Setting it enables the Bedrock chat interpreter and interview; AWS configuration
 selects `us.anthropic.claude-opus-5-5`. The versioned system prompt lives in
 `mcp/vx_materials_mcp/chatbot/prompts.py`; domain tools still determine readiness
 and identity. See `deployment/README.md` for IAM, timeouts and live validation.
+The API sends the previous persisted card's class and item name to the Agent.
+Bedrock reuses accepted attributes only for that identity and preserves explicit
+null clears; historical extraction must not restore removed values or fill another item.
 Embeddings have `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
 
 Promotion CI is configured to run the local smoke, reset the demo with the cached

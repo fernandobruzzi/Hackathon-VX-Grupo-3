@@ -7186,6 +7186,14 @@
                   ]
                 }
               },
+              "pdm_class_id": {
+                "type": ["string", "null"],
+                "description": "Classe da última ficha persistida pela API; não é a classificação da mensagem atual."
+              },
+              "item_name": {
+                "type": ["string", "null"],
+                "description": "Nome do item da última ficha persistida pela API, para separar materiais da mesma classe."
+              },
               "offered_material_codes": {
                 "type": "array",
                 "items": {

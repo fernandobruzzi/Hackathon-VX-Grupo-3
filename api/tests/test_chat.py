@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from copy import deepcopy
 from pathlib import Path
 
 import httpx
@@ -190,6 +191,38 @@ def test_next_turn_sends_history_and_only_allowed_context(client, agent, factory
     assert context["confirmed_attributes"] == {"BITOLA": "M12"}
     stored = count(factory, "SELECT context FROM chat_sessions WHERE id = :s", s=first["session_id"])
     assert "actor_id" not in stored
+
+
+def test_agent_receives_previous_card_identity_and_explicit_attribute_clear(client, agent):
+    agent.result = deepcopy(AGENT_RESULT)
+    agent.result["context_patch"] |= {
+        "pdm_class_id": "PDM003",
+        "item_name": "PORCA",
+        "confirmed_attributes": {"BITOLA": "M12", "ACABAMENTO": None},
+    }
+    first = send(client).json()
+    response = send(client, "classe 8.8", first["session_id"], version=1)
+    assert response.status_code == 200
+    context = agent.payload()["context"]
+    assert context["pdm_class_id"] == CARD["pdm_class_id"]
+    assert context["item_name"] == CARD["pdm_class_name"]
+    assert "ACABAMENTO" in context["confirmed_attributes"]
+    assert context["confirmed_attributes"]["ACABAMENTO"] is None
+    validator({"$ref": "#/components/schemas/AgentRunRequest"}).validate(agent.payload())
+
+
+def test_agent_failure_preserves_previous_identity_and_explicit_clear(client, agent, factory):
+    agent.result = deepcopy(AGENT_RESULT)
+    agent.result["context_patch"]["confirmed_attributes"]["ACABAMENTO"] = None
+    first = send(client).json()
+    sql = "SELECT context FROM chat_sessions WHERE id = :s"
+    accepted = count(factory, sql, s=first["session_id"])
+    agent.status = 503
+    response = send(client, "Não sei informar mais detalhes.", first["session_id"], version=1)
+    assert response.status_code == 503
+    assert count(factory, sql, s=first["session_id"]) == accepted
+    assert count(factory, "SELECT version FROM chat_sessions WHERE id = :s", s=first["session_id"]) == 1
+    assert count(factory, "SELECT count(*) FROM chat_messages WHERE session_id = :s", s=first["session_id"]) == 2
 
 
 def test_stale_version_gets_409(client):

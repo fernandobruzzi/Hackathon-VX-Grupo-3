@@ -113,7 +113,8 @@ def _summarize_search(result: dict[str, Any]) -> dict[str, Any]:
 async def _search(
     recorder: ToolRecorder, request: AgentRunRequest, context: TurnContext, pdm_class_id: str | None
 ) -> dict[str, Any] | None:
-    arguments: dict[str, Any] = {"query": " ".join(user_messages(request)), "limit": 5}
+    query = context.search_text if context.search_text is not None else " ".join(user_messages(request))
+    arguments: dict[str, Any] = {"query": query, "limit": 5}
     if pdm_class_id:
         arguments["pdm_class_id"] = pdm_class_id
     if context.item_name:
@@ -280,7 +281,8 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
             "planner": PLANNER,
             "pdm_class_id": pdm_class.id,
             "item_name": context.item_name,
-            "confirmed_attributes": {name: value for name, value in context.attributes.items() if value},
+            # Nulo registra uma retirada explícita e precisa sobreviver ao próximo turno.
+            "confirmed_attributes": dict(context.attributes),
             "validation_status": status,
             "missing_attributes": missing,
             **_candidates_patch(decision),

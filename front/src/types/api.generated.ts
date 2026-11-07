@@ -1236,6 +1236,10 @@ export interface components {
         confirmed_attributes: {
           [key: string]: string | null;
         };
+        /** @description Classe da última ficha persistida pela API; não é a classificação da mensagem atual. */
+        pdm_class_id?: string | null;
+        /** @description Nome do item da última ficha persistida pela API, para separar materiais da mesma classe. */
+        item_name?: string | null;
         /** @description Códigos parecidos mostrados no turno anterior, lidos do contexto persistido pela API. */
         offered_material_codes?: string[];
         /** @description Códigos que o solicitante confirmou não serem o item dele, validados pela API. */

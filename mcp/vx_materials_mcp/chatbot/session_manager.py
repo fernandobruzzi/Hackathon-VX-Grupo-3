@@ -28,6 +28,8 @@ class TurnContext:
     attributes: dict[str, str | None]
     # Nomes do PDM das classes candidatas, para perguntar o tipo quando a classe ficou em dúvida.
     candidate_names: tuple[str, ...] = ()
+    # Bedrock busca apenas os fatos aceitos; regras locais mantêm a consulta original.
+    search_text: str | None = None
 
 
 def user_messages(request: AgentRunRequest) -> list[str]:
