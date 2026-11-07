@@ -56,7 +56,7 @@ Os caminhos e nomes abaixo são relativos ao repositório. A integração nova c
 
 ## Cobertura complementar entregue em homologacao
 
-Os testes referenciados nesta matriz existem na base integrada; citar um teste não afirma que sua suíte completa foi executada nesta preparação. O cenário novo usa o classificador `aliases_v1` revisão 2, o extrator `rule_based_v1` revisão 9 e `identity-v3`, sem alterar o kit ou os gabaritos históricos.
+Os testes referenciados nesta matriz existem na base integrada; citar um teste não afirma que sua suíte completa foi executada nesta preparação. O cenário novo usa o classificador `aliases_v1` revisão 2, o extrator `rule_based_v1` revisão 10 e `identity-v3`, sem alterar o kit ou os gabaritos históricos.
 
 | Fluxo entregue                                                  | Evidência específica                                                                                                                                                     | Limite                                                                   |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
