@@ -43,9 +43,11 @@ from repositories.batch_repository import (
 from repositories.candidates.tokens_v1 import tokens
 from repositories.classification import get_classification_repository
 from repositories.embeddings import get_embedding_repository
+from repositories.embeddings.bedrock_titan_v1 import BedrockTitanV1EmbeddingRepository
 from repositories.extraction import get_extraction_repository
 
 INDEX_FORMAT = "search-index-v2"
+_TITAN_CHECKPOINT_SIZE = 128
 
 
 def index_version(
@@ -153,6 +155,7 @@ def run_index(pdm_workbook: str | None = None, database_url: str | None = None, 
     url = database_url or os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError("Defina DATABASE_URL com a credencial batch_user")
+    started = time.perf_counter()
     engine = create_engine(url)
     try:
         catalog = _catalog(pdm_workbook)
@@ -177,22 +180,29 @@ def run_index(pdm_workbook: str | None = None, database_url: str | None = None, 
                         "simulated": bool(embedder and embedder.simulated),
                     }
             sources = read_search_sources(engine, tenant_id, version, only_stale=if_stale)
-            analyzed = [analyze_source(source, catalog, classifier, extractor) for source in sources]
-            vectors = embedder.embed([embedding_text(m) for m in analyzed], query=False) if embedder else None
-            rows = [
-                {
-                    "material_id": material.record.database_id,
-                    "source_version": material.record.version,
-                    "proposed_class_id": material.pdm_class_id,
-                    "extracted_attributes": material.attributes,
-                    "search_text": search_text(material),
-                    "candidate_identity_key": material.identity_key,
-                    "embedding": _vector_literal(vectors[index]) if vectors else None,
-                    "embedding_model": signature,
-                }
-                for index, material in enumerate(analyzed)
-            ]
-            written = write_search_index(engine, tenant_id, version, rows)
+            written = 0
+            # Cada lote Titan concluído pode ser reutilizado por uma retomada com --if-stale.
+            chunk_size = (
+                _TITAN_CHECKPOINT_SIZE if isinstance(embedder, BedrockTitanV1EmbeddingRepository) else len(sources)
+            )
+            for offset in range(0, len(sources), chunk_size or 1):
+                batch = sources[offset : offset + chunk_size]
+                analyzed = [analyze_source(source, catalog, classifier, extractor) for source in batch]
+                vectors = embedder.embed([embedding_text(m) for m in analyzed], query=False) if embedder else None
+                rows = [
+                    {
+                        "material_id": material.record.database_id,
+                        "source_version": material.record.version,
+                        "proposed_class_id": material.pdm_class_id,
+                        "extracted_attributes": material.attributes,
+                        "search_text": search_text(material),
+                        "candidate_identity_key": material.identity_key,
+                        "embedding": _vector_literal(vectors[index]) if vectors else None,
+                        "embedding_model": signature,
+                    }
+                    for index, material in enumerate(analyzed)
+                ]
+                written += write_search_index(engine, tenant_id, version, rows)
             materials, indexed = index_coverage(engine, tenant_id, version)
     finally:
         engine.dispose()
@@ -203,6 +213,10 @@ def run_index(pdm_workbook: str | None = None, database_url: str | None = None, 
         "pending": materials - indexed,
         "embeddings": signature,
         "simulated": bool(embedder and embedder.simulated),
+        "embedding_input_tokens": embedder.input_tokens
+        if isinstance(embedder, BedrockTitanV1EmbeddingRepository)
+        else None,
+        "seconds": round(time.perf_counter() - started, 3),
     }
 
 

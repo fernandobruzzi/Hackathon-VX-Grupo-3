@@ -176,3 +176,65 @@ def test_watch_withdraws_health_when_an_existing_index_becomes_pending(monkeypat
     with pytest.raises(KeyboardInterrupt):
         search_index.watch_index()
     assert states == [True, False, False]
+
+
+def test_titan_checkpoints_resume_without_reembedding_published_batches(monkeypatch, catalog):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    from domain.contracts import MaterialRecord
+    from pipelines import search_index
+    from repositories.batch_repository import SearchSource
+    from repositories.embeddings.bedrock_titan_v1 import BedrockTitanV1EmbeddingRepository, TitanEmbeddingError
+
+    sources = [
+        SearchSource(MaterialRecord(str(i), "ATIVO", f"DESCRICAO {i}", database_id=str(i)), None, {}) for i in range(3)
+    ]
+    attempted = []
+    published = set()
+
+    class Titan(BedrockTitanV1EmbeddingRepository):
+        def embed(self, texts, *, query):
+            attempted.extend(texts)
+            if texts == ["DESCRICAO 1"] and attempted.count(texts[0]) == 1:
+                raise TitanEmbeddingError("Indisponível")
+            return [[1.0] * self.dimensions for _ in texts]
+
+    monkeypatch.setattr(search_index, "_TITAN_CHECKPOINT_SIZE", 1)
+    monkeypatch.setattr(search_index, "create_engine", lambda url: SimpleNamespace(dispose=lambda: None))
+    monkeypatch.setattr(search_index, "_catalog", lambda workbook: catalog)
+    monkeypatch.setattr(search_index, "_index_lock", lambda *args, **kwargs: nullcontext(True))
+    monkeypatch.setattr(search_index, "single_tenant", lambda engine: "tenant")
+    monkeypatch.setattr(search_index, "index_coverage", lambda *args: (len(sources), len(published)))
+    monkeypatch.setattr(search_index, "get_embedding_repository", Titan)
+    monkeypatch.setattr(
+        search_index,
+        "read_search_sources",
+        lambda *args, only_stale: [s for s in sources if not only_stale or s.record.database_id not in published],
+    )
+
+    def write(engine, tenant, version, rows):
+        assert all(row["embedding_model"] == Titan().signature for row in rows)
+        published.update(row["material_id"] for row in rows)
+        return len(rows)
+
+    monkeypatch.setattr(search_index, "write_search_index", write)
+    with pytest.raises(TitanEmbeddingError):
+        search_index.run_index(database_url="db", if_stale=True)
+    assert published == {"0"}
+
+    report = search_index.run_index(database_url="db", if_stale=True)
+    assert report["pending"] == 0
+    assert report["written"] == 2
+    assert attempted == ["DESCRICAO 0", "DESCRICAO 1", "DESCRICAO 1", "DESCRICAO 2"]
+
+
+@pytest.mark.parametrize("report", [{"busy": True, "written": 0}, {"pending": 1, "written": 1}])
+def test_one_shot_index_reports_incomplete_index_as_failure(monkeypatch, capsys, report):
+    import json
+
+    import cli
+
+    monkeypatch.setattr(cli, "run_index", lambda *args, **kwargs: report)
+    assert cli.main(["index", "--if-stale"]) == 1
+    assert json.loads(capsys.readouterr().out) == report

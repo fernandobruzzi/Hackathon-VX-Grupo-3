@@ -214,6 +214,8 @@ def task_definitions(config, batch_definition=None):
         )
     main["dependsOn"] = [{"containerName": "Agent", "condition": "HEALTHY"}]
     agent = container("Agent", "agent", "agent_database")
+    if config["embedding_repository"]:
+        agent["environment"].append({"name": "SEARCH_REPOSITORY", "value": "hybrid_embeddings_v1"})
     for item, port, path in ((main, 8000, "/api/v1/healthz"), (agent, 8001, "/healthz")):
         item["secrets"].append(
             {"name": "AGENT_INTERNAL_TOKEN_SECRET", "valueFrom": config["secrets"]["internal_token"]}
@@ -236,11 +238,14 @@ def task_definitions(config, batch_definition=None):
         migration["secrets"].append(
             {"name": variable, "valueFrom": f"{config['secrets']['database_passwords']}:{variable}::"}
         )
+    index_command = ["vx-back", "index"]
+    if config["embedding_repository"]:
+        index_command.append("--if-stale")
     return {
         "web": task("web", [main, agent], "web"),
         "migrate": task("migrate", [migration], "web"),
         "bootstrap": task("bootstrap", [container("Bootstrap", "api", "api_database", ["vx-bootstrap"])], "web"),
-        "index": task("index", [container("Index", "batch", "batch_database", ["vx-back", "index"])]),
+        "index": task("index", [container("Index", "batch", "batch_database", index_command)]),
         "batch": task("batch", [container("Batch", "batch", "batch_database", ["vx-back", "sanitize"])]),
     }
 

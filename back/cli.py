@@ -218,6 +218,8 @@ def main(argv: list[str] | None = None) -> int:
         result = classification_evaluation(args.sample_path, args.pdm_workbook, args.repository)
     json.dump(result, sys.stdout, ensure_ascii=False, indent=2)
     print()
+    if args.command == "index" and (result.get("busy") or result.get("pending")):
+        return 1
     return 0
 
 

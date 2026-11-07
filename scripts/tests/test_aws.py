@@ -96,6 +96,16 @@ class AwsTests(unittest.TestCase):
             self.assertNotIn("API_DB_PASSWORD", json.dumps(container))
         self.assertEqual(definitions["batch"]["taskRoleArn"], self.config["roles"]["batch"])
 
+    def test_titan_enables_matching_agent_search_and_resumable_index(self):
+        config = {**self.config, "embedding_repository": "bedrock_titan_v1"}
+        definitions = task_definitions(config)
+        agent = definitions["web"]["containerDefinitions"][1]
+        index = definitions["index"]["containerDefinitions"][0]
+        env = {item["name"]: item["value"] for item in agent["environment"]}
+        self.assertEqual(env["EMBEDDING_REPOSITORY"], "bedrock_titan_v1")
+        self.assertEqual(env["SEARCH_REPOSITORY"], "hybrid_embeddings_v1")
+        self.assertEqual(index["command"], ["vx-back", "index", "--if-stale"])
+
     def test_render_and_config_loading_do_not_create_aws_session(self):
         with tempfile.TemporaryDirectory() as directory, patch("boto3.Session", side_effect=AssertionError("network")):
             render(load_config(EXAMPLE), directory)
