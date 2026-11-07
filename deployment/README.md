@@ -230,16 +230,16 @@ Embeddings ficam desligados por padrão. `embedding_repository=bedrock_titan_v1`
 Não usar `simulated_v1`/Ollama no deploy. A configuração recusa esses nomes.
 API, Agent e CLI também recusam iniciar com `simulated_v1` fora de `APP_ENV=local`
 ou quando há marcadores de runtime AWS, mesmo que o ambiente se declare local.
-O chat usa Claude Opus 5.5 quando `BEDROCK_CHAT_MODEL_ID` estiver preenchido.
-O exemplo AWS configura `bedrock_chat_model=us.anthropic.claude-opus-5-5` em
+O chat usa Claude Sonnet 5 quando `BEDROCK_CHAT_MODEL_ID` estiver preenchido.
+O exemplo AWS configura `bedrock_chat_model=us.anthropic.claude-sonnet-5` em
 `us-east-1`; o render existente transmite isso ao Agent. O perfil encaminha a
 inferência entre regiões dos EUA. Para São Paulo, avaliar explicitamente o perfil
 global e seus destinos antes de alterar a configuração. O ID simples não funciona
 como inferência regional em `us-east-1`. Conferir a
-[ficha oficial do Opus 5.5](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-opus-5-5.html).
+[ficha oficial do Sonnet 5](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-sonnet-5.html).
 
 Localmente, preencher `.env` com `AWS_REGION=us-east-1` e
-`BEDROCK_CHAT_MODEL_ID=us.anthropic.claude-opus-5-5` e recriar o Agent:
+`BEDROCK_CHAT_MODEL_ID=us.anthropic.claude-sonnet-5` e recriar o Agent:
 `docker compose up -d --build agent`. Fornecer credenciais AWS válidas ao container
 pelos mecanismos usuais do SDK; um perfil no host não é montado automaticamente.
 No ECS/EC2 usar task role/instance profile, sem chave no frontend. A role do Agent
@@ -248,9 +248,9 @@ permitir os destinos do perfil. A conta também precisa satisfazer os requisitos
 de acesso ao modelo/Anthropic e ter quota. Não é necessário `InvokeModelWithResponseStream`
 para este fluxo síncrono. A chamada do preflight comprova acesso, não a qualidade da entrevista.
 O template `infra.yaml` concede esse acesso na role web compartilhada pelo Agent,
-restrito ao perfil US do Opus 5.5 e aos destinos `us-east-1`, `us-east-2` e `us-west-2`;
+restrito ao perfil US do Sonnet 5 e aos destinos `us-east-1`, `us-east-2` e `us-west-2`;
 os destinos só podem ser invocados por esse perfil. A alteração precisa ser aplicada
-à stack existente antes de ativar o chat. Não acrescenta acesso ao Opus na role do batch.
+à stack existente antes de ativar o chat. Não acrescenta acesso ao Sonnet 5 na role do batch.
 
 O system prompt `material_registration_system_v1` fica em
 `mcp/vx_materials_mcp/chatbot/prompts.py`. Por turno, o Agent interpreta o pedido
@@ -273,7 +273,7 @@ a mensagem do botão fica fora da interpretação e a ação estruturada permane
 autoritativa no ciclo determinístico.
 Falhas AWS e respostas inválidas retornam 503 sanitizado, sem fallback silencioso.
 O SDK usa conexão de 2 s, leitura de 8 s e uma tentativa por chamada; o prazo global
-do Agent continua 20 s. Medir latência real de Opus na #107 antes da demo.
+do Agent continua 20 s. Medir latência real de Sonnet 5 na #107 antes da demo.
 
 Sem `BEDROCK_CHAT_MODEL_ID`, o fluxo local permanece por regras e não faz chamadas
 de modelo. Testes usam transporte simulado; acesso, custo e qualidade precisam ser
