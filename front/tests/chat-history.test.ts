@@ -4,6 +4,7 @@ import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { AuthProvider, useAuth } from "../src/lib/auth";
 import { ChatPage } from "../src/features/chat/ChatPage";
+import { ChatHistory } from "../src/features/chat/ChatHistory";
 
 (globalThis as Record<string, unknown>).React = React;
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
@@ -91,9 +92,7 @@ test("retoma ao voltar/recarregar, usa versão do servidor e Nova conversa prese
   };
   const select = async () => {
     await act(async () =>
-      view.root
-        .findByProps({ "aria-label": "Conversas salvas" })
-        .props.onChange({ target: { value: saved.session_id } }),
+      view.root.findByProps({ "aria-label": "Retomar conversa: Pedido salvo" }).props.onClick(),
     );
   };
   const send = async () => {
@@ -178,8 +177,8 @@ test("processamento exige atualização e leitura tardia não recupera conversa 
   const select = () =>
     act(async () => {
       void view.root
-        .findByProps({ "aria-label": "Conversas salvas" })
-        .props.onChange({ target: { value: saved.session_id } });
+        .findByProps({ "aria-label": "Retomar conversa: Pedido salvo" })
+        .props.onClick();
     });
   try {
     await act(async () => {
@@ -203,7 +202,78 @@ test("processamento exige atualização e leitura tardia não recupera conversa 
     );
     await act(async () => resolveRead(Response.json(saved)));
     assert.doesNotMatch(JSON.stringify(view.toJSON()), /pedido salvo/);
-    assert.equal(view.root.findByProps({ "aria-label": "Conversas salvas" }).props.value, "");
+    assert.equal(view.root.findAllByProps({ "aria-current": "true" }).length, 0);
+  } finally {
+    await act(async () => view.unmount());
+    globalThis.fetch = originalFetch;
+    delete process.env.NEXT_PUBLIC_DATA_SOURCE;
+  }
+});
+
+test("histórico separa títulos e datas, destaca seleção e ordena também páginas adicionais", async () => {
+  process.env.NEXT_PUBLIC_DATA_SOURCE = "mock";
+  const originalFetch = globalThis.fetch;
+  const title = "Pedido de válvula com descrição técnica muito longa ".repeat(6);
+  const older = { id: "older", title: "Pedido antigo", updated_at: "2026-11-05T09:15:00Z" };
+  const newer = { id: "newer", title, updated_at: "2026-11-07T13:30:00Z" };
+  const middle = {
+    id: "middle",
+    title: "Pedido intermediário",
+    updated_at: "2026-11-06T10:00:00Z",
+  };
+  const selected: string[] = [];
+  Object.assign(globalThis, {
+    localStorage: { getItem: () => "SOLICITANTE_OPERACAO" },
+    fetch: async (url: string) =>
+      Response.json(
+        url.includes("cursor=")
+          ? { items: [middle, older], next_cursor: null }
+          : { items: [older, newer], next_cursor: "page-2" },
+      ),
+  });
+  let view!: ReactTestRenderer;
+  function History({ id }: { id: string }) {
+    const { me } = useAuth();
+    return me
+      ? React.createElement(ChatHistory, {
+          selected: id,
+          onSelect: (id) => selected.push(id),
+          revision: 0,
+        })
+      : null;
+  }
+  const mount = (id: string) =>
+    React.createElement(AuthProvider, null, React.createElement(History, { id }));
+  try {
+    await act(async () => {
+      view = create(mount("newer"));
+    });
+    const list = () => view.root.findByProps({ "aria-label": "Conversas salvas" });
+    const buttons = () => list().findAllByType("button");
+    assert.deepEqual(
+      buttons().map((button) => button.props.title),
+      [title, older.title],
+    );
+    assert.equal(buttons()[0].props["aria-current"], "true");
+    assert.equal(buttons()[0].findByType("time").props.dateTime, newer.updated_at);
+    assert.equal(buttons()[0].findAllByType("span")[0].children.join(""), title);
+    assert.equal(view.root.findAllByType("select").length, 0);
+    assert.doesNotMatch(JSON.stringify(view.toJSON()), /Nova conversa/);
+    await act(async () => buttons()[1].props.onClick());
+    assert.deepEqual(selected, ["older"]);
+    await act(async () => view.update(mount("older")));
+    assert.equal(buttons()[1].props["aria-current"], "true");
+    await act(async () =>
+      view.root
+        .findAllByType("button")
+        .find((button) => button.children.includes("Mais conversas"))!
+        .props.onClick(),
+    );
+    assert.deepEqual(
+      buttons().map((button) => button.props.title),
+      [title, middle.title, older.title],
+    );
+    assert.equal(buttons().filter((button) => button.props["aria-current"] === "true").length, 1);
   } finally {
     await act(async () => view.unmount());
     globalThis.fetch = originalFetch;

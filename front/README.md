@@ -29,6 +29,12 @@ se o navegador recusar ou não oferecer a área de transferência, a tela orient
 a selecionar o código e copiá-lo manualmente. Essa ação não chama a API nem cria
 pedido ou material.
 
+O “Histórico de conversas” pode ser expandido acima das mensagens. Cada registro
+mostra o título completo em linhas, com data e horário abaixo, do mais recente
+para o mais antigo; a conversa atual fica destacada. A lista tem rolagem própria
+em telas pequenas e no desktop. “Mais conversas” carrega a próxima página e
+“Nova conversa” permanece como ação separada no cabeçalho do chat.
+
 ## Por que static export
 
 A arquitetura serve o front pela API (FastAPI) na mesma origem HTTPS, com cookie
