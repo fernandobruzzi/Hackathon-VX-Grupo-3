@@ -11,6 +11,8 @@ from vx_materials_api.db.cli import PASSWORD_VARIABLES, alembic_config, set_pass
 from vx_materials_api.db.models import Base
 
 TABLES = {
+    "automatic_correction_runs",
+    "automatic_correction_results",
     "manual_reviews",
     "login_transactions",
     "users_sso",
@@ -34,6 +36,7 @@ TABLES = {
     "lot_reviews",
 }
 VIEWS = {
+    "mcp_automatic_index_pending",
     "mcp_catalog",
     "mcp_inventory",
     "mcp_inventory_financial",
@@ -287,3 +290,13 @@ def test_manual_observations_cannot_be_rewritten_by_application_roles(connection
         denied(connection, role, "UPDATE manual_reviews SET reasons = ARRAY['OUTRO']")
         denied(connection, role, "DELETE FROM manual_reviews")
     denied(connection, "mcp_reader", "SELECT * FROM manual_reviews")
+
+
+def test_batch_cannot_enable_automatic_corrections(connection):
+    denied(
+        connection, "batch_user", "UPDATE batch_jobs SET automatic_corrections = jsonb_build_object('mode', 'APPLY')"
+    )
+    for table in ("automatic_correction_runs", "automatic_correction_results"):
+        denied(connection, "batch_user", f"SELECT * FROM {table}")
+        denied(connection, "mcp_reader", f"SELECT * FROM {table}")
+        denied(connection, "api_user", f"DELETE FROM {table}")

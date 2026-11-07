@@ -100,6 +100,7 @@ services:
       AUTH_BACKEND: ${AUTH_BACKEND:-disabled}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${API_BIND_PORT:-8000}}
       DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
+      AUTOMATIC_CORRECTION_MODE: ${AUTOMATIC_CORRECTION_MODE:-OFF}
       # Batch disparado pela tela /batch: subprocesso local com a credencial propria do batch.
       BATCH_RUNNER: ${BATCH_RUNNER:-local_process}
       BATCH_DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
@@ -115,6 +116,49 @@ services:
       bootstrap:
         condition: service_completed_successfully
       agent:
+        condition: service_healthy
+
+  # Aplicação autorizada pela política do servidor, com ator SYSTEM e credenciais da API.
+  automatic-corrections:
+    init: true
+    stop_grace_period: 30s
+    build:
+      context: .
+      target: api
+      args:
+        NEXT_PUBLIC_DATA_SOURCE: ${NEXT_PUBLIC_DATA_SOURCE:-api}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      AUTHORIZED_CENTER_CODES: ${AUTHORIZED_CENTER_CODES:-1100,1200,1300,2100,2200,9000}
+      AUTOMATIC_CORRECTION_MODE: ${AUTOMATIC_CORRECTION_MODE:-OFF}
+      DATABASE_URL: postgresql+psycopg://api_user:${API_DB_PASSWORD:-local_only_api}@db:5432/${POSTGRES_DB:-vx_materiais}
+      BATCH_DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
+      PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+    command: ["vx-auto-correct"]
+    # Worker sem HTTP: verifica a conexão de aplicação, sem herdar o teste HTTP da imagem.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          from vx_materials_api.db.session import make_engine
+          engine = make_engine()
+          with engine.connect() as connection:
+              connection.exec_driver_sql("SELECT 1")
+          engine.dispose()
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      index:
         condition: service_healthy
 
   # Sem portas publicadas: acessivel somente pela API.

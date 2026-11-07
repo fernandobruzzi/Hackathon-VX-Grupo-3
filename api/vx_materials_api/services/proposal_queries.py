@@ -5,7 +5,14 @@ from uuid import UUID
 from sqlalchemy import and_, or_, select
 
 from domain.proposal_validation import approval_blockers
-from vx_materials_api.db.models import AuditLog, RegistrationOrder, SanitizationProposal, UserSso
+from vx_materials_api.db.models import (
+    AuditLog,
+    AutomaticCorrectionResult,
+    AutomaticCorrectionRun,
+    RegistrationOrder,
+    SanitizationProposal,
+    UserSso,
+)
 from vx_materials_api.errors import ApiError
 from vx_materials_api.security.approval_identity import require_reviewer
 from vx_materials_api.security.rbac import has_permission, require_any_permission
@@ -24,6 +31,30 @@ def allowed_actions(proposal, principal):
     technical = has_permission(principal, "merge:decide") and proposal.technical_review_status == "PENDING"
     fiscal = has_permission(principal, "ncm:decide") and proposal.fiscal_review_status == "PENDING"
     return ["APPROVE", "REJECT"] if technical or fiscal else []
+
+
+def automation_info(db, proposal):
+    row = db.execute(
+        select(AutomaticCorrectionResult, AutomaticCorrectionRun)
+        .join(AutomaticCorrectionRun, AutomaticCorrectionRun.id == AutomaticCorrectionResult.run_id)
+        .where(
+            AutomaticCorrectionResult.proposal_id == proposal.id,
+            AutomaticCorrectionResult.tenant_id == proposal.tenant_id,
+        )
+        .order_by(AutomaticCorrectionRun.created_at.desc(), AutomaticCorrectionRun.id.desc())
+        .limit(1)
+    ).first()
+    if row is None:
+        return None
+    result, run = row
+    return {
+        "mode": run.mode,
+        "status": result.status,
+        "policy_version": run.policy_version,
+        "execution_id": str(run.id),
+        "reasons": result.reasons,
+        "index_status": result.index_status,
+    }
 
 
 def detail(db, proposal, principal, catalog):
@@ -127,6 +158,8 @@ def detail(db, proposal, principal, catalog):
         "version": proposal.version,
         "proposal_type": proposal.proposal_type,
         "status": proposal.status,
+        "application_mode": proposal.application_mode,
+        "automation": automation_info(db, proposal),
         "title": f"{after.item_name or after.pdm_class_id or 'Classe pendente'} · "
         + " / ".join(m.material_code for m in materials),
         "material_codes": [m.material_code for m in materials],
@@ -221,6 +254,8 @@ def queue(db, principal, catalog, *, area=None, status=None, proposal_type=None,
                     "title",
                     "ranking_score",
                     "created_at",
+                    "application_mode",
+                    "automation",
                 )
             }
         )
@@ -258,7 +293,7 @@ def audit_events(db, principal, *, cursor=None, limit=20):
     system = and_(
         AuditLog.entity_type == "sanitization_proposal",
         AuditLog.actor_type == "SYSTEM",
-        AuditLog.action == "PROPOSAL_SUPERSEDED",
+        AuditLog.action.in_(["PROPOSAL_SUPERSEDED", "PROPOSAL_AUTO_APPLY", "PROPOSAL_AUTO_STALE"]),
     )
     submitted = and_(AuditLog.entity_type == "registration_order", AuditLog.action == "ORDER_SUBMITTED")
     if has_permission(principal, "audit:fiscal"):

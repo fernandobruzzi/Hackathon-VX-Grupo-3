@@ -46,6 +46,8 @@ from vx_materials_api.services.order_service import import_orders as import_orde
 # Lista explícita, sem CASCADE: uma tabela nova que dependa destas faz o reset falhar em vez de
 # ser apagada sem revisão. Usuários e sessões de login ficam: o reset não desloga as personas.
 OPERATIONAL_TABLES = (
+    "automatic_correction_results",
+    "automatic_correction_runs",
     "audit_logs",
     "lot_reviews",
     "quality_snapshot_items",

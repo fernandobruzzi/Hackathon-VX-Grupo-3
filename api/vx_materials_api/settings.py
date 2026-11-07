@@ -130,3 +130,11 @@ def demo_accounts() -> dict[str, str]:
     if demo_mode_enabled() and not accounts:
         raise RuntimeError("DEMO_MODE exige DEMO_ACCOUNTS com as contas de demonstração")
     return accounts
+
+
+def automatic_correction_mode() -> str:
+    """Somente configuração confiável do servidor habilita a automação."""
+    mode = os.environ.get("AUTOMATIC_CORRECTION_MODE", "OFF").upper()
+    if mode not in {"OFF", "SIMULATE", "APPLY"}:
+        raise RuntimeError("AUTOMATIC_CORRECTION_MODE deve ser OFF, SIMULATE ou APPLY")
+    return mode

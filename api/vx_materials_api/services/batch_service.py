@@ -172,6 +172,8 @@ def start_job(
     if active is not None:
         raise ApiProblem(409, "JOB_ALREADY_RUNNING", "Já existe um job em andamento.", {"job_id": str(active.id)})
 
+    from vx_materials_api.services.automatic_corrections import capture_context
+
     job = BatchJob(
         tenant_id=identity.tenant_id,
         requested_by_user_id=identity.user_id,
@@ -181,6 +183,7 @@ def start_job(
         ncm_version=request.ncm_version,
         status="QUEUED",
         checkpoint={},
+        automatic_corrections=capture_context(identity),
     )
     db.add(job)
     db.flush()
@@ -341,6 +344,13 @@ def to_contract(db: Session, job: BatchJob) -> BatchJobOut:
         finished = last.get("failed_at") or job.updated_at
     saved = checkpoint.get("save", {})
     requester = db.scalar(select(UserSso.display_name).where(UserSso.id == job.requested_by_user_id))
+    from vx_materials_api.db.models import AutomaticCorrectionRun
+    from vx_materials_api.services.automatic_corrections import summary
+
+    automatic = None
+    if job.automatic_corrections:
+        run = db.scalar(select(AutomaticCorrectionRun).where(AutomaticCorrectionRun.job_id == job.id))
+        automatic = summary(db, job, run)
     return BatchJobOut(
         id=job.id,
         job_type=job.job_type,
@@ -360,4 +370,5 @@ def to_contract(db: Session, job: BatchJob) -> BatchJobOut:
         finished_at=_utc(finished),
         heartbeat_at=_utc(job.heartbeat_at),
         error=_error(job.error_summary) if job.status == "FAILED" else None,
+        automatic_corrections=automatic,
     )

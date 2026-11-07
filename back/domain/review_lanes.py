@@ -1,5 +1,7 @@
 """Nível de revisão de cada correção, conforme a decisão da #36.
 
+Elegibilidade automática é uma política separada (#224).
+
 - Nível 1: grafia da mesma unidade, com classe confiável e sem pendência de unidade.
 - Nível 2: descrição ou grupo no padrão do PDM, com classe confiável, sem pendência e sem perda de texto.
 - Nível 3: todo o resto, revisado item a item, com os motivos.

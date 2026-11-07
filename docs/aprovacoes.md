@@ -190,3 +190,6 @@ página não representa o total, e ausência de total não significa zero.
 Com `NEXT_PUBLIC_DATA_SOURCE=mock`, o menu mantém os exemplos da demonstração;
 o contador tem o rótulo acessível de pendências simuladas e o título “Contagem
 simulada”. A consulta da fila e sua paginação continuam independentes do menu.
+
+
+A #224 acrescenta uma exceção estreita à revisão humana: aliases da mesma unidade e descrições PDM completas sem perda podem ser aplicados como SYSTEM, por política recalculada na API e desligada por padrão. Grupo, fiscal, unificação e casos ambíguos continuam humanos. Ver [correções automáticas](correcoes-automaticas.md).

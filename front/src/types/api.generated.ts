@@ -638,6 +638,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/batch/jobs/{id}/automatic-corrections": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar correções automáticas e motivos por proposta */
+    get: operations["getAutomaticCorrections"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/batch/jobs/{id}/automatic-corrections/retry": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Retomar erros e indexação sem rearmar o job
+     * @description Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa. Novos comandos de processamento suportam exatamente um dataset por empresa no MVP; múltiplas importações recebem 422 MULTIPLE_DATASETS_NOT_SUPPORTED antes de criar job, manifesto ou task. A retomada verifica a mesma condição. Repetir um comando já aceito somente recupera seu job, sem iniciar processamento.
+     */
+    post: operations["retryAutomaticCorrections"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -838,6 +875,9 @@ export interface components {
       consolidated_inventory?: components["schemas"]["ConsolidatedInventoryRow"][];
       /** @description Omitido sem metrics:financial; nulo se o valor nao estiver disponivel. */
       consolidated_value_brl?: components["schemas"]["Decimal"] | null;
+      /** @enum {string} */
+      application_mode?: "HUMAN" | "AUTOMATIC";
+      automation?: components["schemas"]["ProposalAutomation"] | null;
     };
     EvidenceItem: {
       attribute: string;
@@ -925,6 +965,7 @@ export interface components {
         code: string;
         message: string;
       } | null;
+      automatic_corrections?: components["schemas"]["AutomaticCorrectionSummary"] | null;
     };
     BatchJobList: {
       items: components["schemas"]["BatchJob"][];
@@ -933,6 +974,8 @@ export interface components {
       next_cursor: string | null;
       /** @description Job ativo do tenant, mesmo fora da página ou do filtro; null quando não há execução ativa. */
       active_job: components["schemas"]["BatchJob"] | null;
+      /** @enum {string} */
+      automatic_correction_mode?: "OFF" | "SIMULATE" | "APPLY";
     };
     AuditEvent: {
       /** Format: uuid */
@@ -1040,6 +1083,9 @@ export interface components {
       title?: string;
       ranking_score?: number | null;
       created_at?: components["schemas"]["UtcDateTime"];
+      /** @enum {string} */
+      application_mode?: "HUMAN" | "AUTOMATIC";
+      automation?: components["schemas"]["ProposalAutomation"] | null;
     };
     Material: {
       material_code: string;
@@ -1552,6 +1598,68 @@ export interface components {
     OrderReopenReviewRequest: {
       expected_version: number;
       reason: string;
+    };
+    AutomaticCorrectionSummary: {
+      /** @enum {string} */
+      mode: "OFF" | "SIMULATE" | "APPLY";
+      /** @enum {string} */
+      configured_mode: "OFF" | "SIMULATE" | "APPLY";
+      policy_version: string;
+      execution_id: string | null;
+      /** @enum {string} */
+      status: "DISABLED" | "WAITING" | "RUNNING" | "COMPLETED" | "POLICY_CHANGED" | "PAUSED";
+      counts: {
+        [key: string]: number;
+      };
+      reasons: {
+        [key: string]: number;
+      };
+    };
+    AutomaticCorrectionItem: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      proposal_id: string;
+      material_id: string | null;
+      /** @enum {string} */
+      status: "ELIGIBLE" | "APPLIED" | "REVIEW" | "STALE" | "ERROR" | "SKIPPED";
+      eligible: boolean;
+      reasons: string[];
+      attempts: number;
+      /** @enum {string} */
+      index_status: "NOT_REQUIRED" | "PENDING" | "CURRENT" | "FAILED";
+      index_error: string | null;
+    };
+    AutomaticCorrectionReport: {
+      /** @enum {string} */
+      mode: "OFF" | "SIMULATE" | "APPLY";
+      /** @enum {string} */
+      configured_mode: "OFF" | "SIMULATE" | "APPLY";
+      policy_version: string;
+      execution_id: string | null;
+      /** @enum {string} */
+      status: "DISABLED" | "WAITING" | "RUNNING" | "COMPLETED" | "POLICY_CHANGED" | "PAUSED";
+      counts: {
+        [key: string]: number;
+      };
+      reasons: {
+        [key: string]: number;
+      };
+      items: components["schemas"]["AutomaticCorrectionItem"][];
+      next_cursor: string | null;
+    };
+    AutomaticCorrectionRetryRequest: Record<string, never>;
+    ProposalAutomation: {
+      /** @enum {string} */
+      mode: "SIMULATE" | "APPLY";
+      /** @enum {string} */
+      status: "ELIGIBLE" | "APPLIED" | "REVIEW" | "STALE" | "ERROR" | "SKIPPED";
+      policy_version: string;
+      /** Format: uuid */
+      execution_id: string;
+      reasons: string[];
+      /** @enum {string} */
+      index_status: "NOT_REQUIRED" | "PENDING" | "CURRENT" | "FAILED";
     };
   };
   responses: never;
@@ -4626,6 +4734,188 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["RegistrationOrder"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getAutomaticCorrections: {
+    parameters: {
+      query?: {
+        limit?: number;
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AutomaticCorrectionReport"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  retryAutomaticCorrections: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AutomaticCorrectionRetryRequest"];
+      };
+    };
+    responses: {
+      /** @description Job criado ou recuperado pela mesma chave, no estado atual. */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AutomaticCorrectionReport"];
         };
       };
       /** @description Sessão inválida ou expirada. */

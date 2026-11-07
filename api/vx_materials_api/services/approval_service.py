@@ -45,6 +45,7 @@ from vx_materials_api.schemas.proposals import (
     proposal_hash,
 )
 from vx_materials_api.security.approval_identity import Principal, require_reviewer
+from vx_materials_api.security.automatic_actor import AutomaticActor
 from vx_materials_api.services.enrichment_validation import check_source_environment, validate_enrichment_context
 from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
@@ -117,6 +118,7 @@ def proposal_state(proposal: SanitizationProposal) -> dict:
         "changeset_hash": proposal.changeset_hash,
         "primary_material_id": str(proposal.primary_material_id) if proposal.primary_material_id else None,
         "evidence_ids": proposal.evidence_ids,
+        "application_mode": proposal.application_mode,
     }
 
 
@@ -240,6 +242,10 @@ def consolidated_inventory(rows, *, financial=False):
 
 
 def _audit(db, principal, proposal, request_id, action, reason, before, after, role, lot=None):
+    automatic = isinstance(principal, AutomaticActor)
+    if automatic:
+        action = "PROPOSAL_AUTO_APPLY" if action == "PROPOSAL_APPROVE_TECHNICAL" else action
+        after = {**after, "automatic_correction": principal.execution}
     if lot is not None:
         # Aprovação em lote: o evento de cada item aponta para a revisão do lote e sua amostra.
         after = {**after, "lot_review": lot}
@@ -247,9 +253,9 @@ def _audit(db, principal, proposal, request_id, action, reason, before, after, r
         id=uuid4(),
         tenant_id=principal.tenant_id,
         actor_user_id=principal.user_id,
-        actor_type="USER",
-        roles_snapshot=list(principal.roles),
-        effective_role=role,
+        actor_type="SYSTEM" if automatic else "USER",
+        roles_snapshot=[] if automatic else list(principal.roles),
+        effective_role=None if automatic else role,
         action=action,
         entity_type="sanitization_proposal",
         entity_id=str(proposal.id),
@@ -336,6 +342,16 @@ def _apply_unit_correction(principal, proposal, catalog, changes, materials):
     proposal.technical_reviewer_id = principal.user_id
     proposal.status = "APPLIED"
     return {"primary_material_code": material.material_code, "blocked_material_codes": []}
+
+
+def _same_inventory_link(db, row, primary_id) -> bool:
+    """Não grava vínculo redundante numa correção exclusivamente textual."""
+    snapshot = row["snapshot"]
+    link = db.get(InventoryConsolidation, snapshot.id)
+    owner = link.primary_material_id if link else snapshot.material_id
+    unit = link.unit if link else snapshot.unit
+    factor = link.factor if link else Decimal(1)
+    return owner == primary_id and row["unit"] == unit and row["factor"] == factor
 
 
 def _check_review_bindings(db, proposal):
@@ -775,7 +791,14 @@ def _decide_current(
                 source.status = "APPROVED"
                 source.validated_by_user_id = proposal.technical_reviewer_id
                 source.validated_at = datetime.now(UTC)
+            description_only = (
+                proposal.proposal_type == "PDM_CORRECTION"
+                and len(materials) == 1
+                and ([change.field for change in changes.changes] == ["description"])
+            )
             for row in rows:
+                if description_only and _same_inventory_link(db, row, primary.id):
+                    continue
                 if proposal.proposal_type == "ENRICHMENT":
                     continue
                 if proposal.technical_review_status != "APPROVED":

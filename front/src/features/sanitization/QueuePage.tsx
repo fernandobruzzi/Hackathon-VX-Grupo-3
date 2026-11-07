@@ -1,4 +1,5 @@
 "use client";
+import { AutomaticDecision } from "./AutomaticDecision";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -199,6 +200,11 @@ export function QueuePage() {
                 </Td>
                 <Td>
                   <ProposalStatusBadge value={p.status} />
+                  <AutomaticDecision
+                    status={p.status}
+                    mode={"application_mode" in p ? p.application_mode : undefined}
+                    automation={"automation" in p ? p.automation : undefined}
+                  />
                   {p.created_at && (
                     <p className="mt-1 font-mono text-[11px] text-muted">{fmtDate(p.created_at)}</p>
                   )}
