@@ -156,3 +156,26 @@ def test_valid_metric_reference_does_not_authorize_thread_alias(catalog, label, 
 def test_physical_metric_gauge_still_authorizes_thread_alias(catalog, gauge):
     result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {gauge}")
     assert result.attributes["ROSCA"].value == "METRICA GROSSA"
+
+
+@pytest.mark.parametrize("label", ["PN", "REF", "MODELO"])
+@pytest.mark.parametrize("thread", ["", ", ROSCA:ROSCA GROSSA", ", ROSCA:METRICA GROSSA"])
+def test_reference_metric_code_never_becomes_a_physical_gauge(catalog, label, thread):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO{thread}, {label}:M12")
+    assert "BITOLA" not in result.attributes
+    assert f"{label}:M12" in result.unresolved
+    if thread.endswith(":METRICA GROSSA"):
+        assert result.attributes["ROSCA"].value == "METRICA GROSSA"
+    else:
+        assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize("gauge", ["M12", "BITOLA:M12", "REF:M12, M12", "REF:M12 BITOLA M12", "REF:M12X50, M12"])
+def test_physical_metric_gauge_stays_available_with_explicit_thread(catalog, gauge):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:METRICA GROSSA, {gauge}")
+    assert result.attributes["BITOLA"].value == "M12"
+    assert result.attributes["ROSCA"].value == "METRICA GROSSA"
+    assert result.attributes["BITOLA"].original == "M12" or "BITOLA" in result.attributes["BITOLA"].original
+    assert "COMPRIMENTO" not in result.attributes
+    if gauge.startswith("REF:"):
+        assert any("REF" in part and "M12" in part for part in result.unresolved)
