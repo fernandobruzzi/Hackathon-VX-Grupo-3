@@ -8,6 +8,7 @@ from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.corrections.head_noun_v1 import opens_description
 from repositories.extraction import get_extraction_repository
+from repositories.extraction.material_fields import MATERIAL_FIELDS_VERSION, extract_material_fields
 from repositories.normalization import get_normalization_repository
 from repositories.proposal_payload import approval_payload
 from repositories.text_loss import get_text_loss_repository
@@ -30,8 +31,24 @@ def assess_record(
     known = algorithms == ("aliases_v1", "rule_based_v1", "head_noun_v1", "rule_based_v1", "unresolved_terms_v1")
     # Revisões novas exigem medir a política novamente, mesmo com o mesmo nome de algoritmo.
     revisions = (classifier.revision, extractor.revision)
-    known = known and revisions == ("2", "11-quantity-reference-199")
+    known = (
+        known
+        and revisions == ("3-pilot-families-263", "11-quantity-reference-199")
+        and MATERIAL_FIELDS_VERSION == "independent-fields-v1"
+    )
     analyzed = analyze_material(record, catalog, classifier, extractor)
+    extracted = (
+        extract_material_fields(
+            catalog.classes[analyzed.pdm_class_id],
+            record.description,
+            record.short_description,
+            manufacturer=record.manufacturer,
+            reference=record.reference,
+            extractor=extractor,
+        )
+        if analyzed.pdm_class_id
+        else None
+    )
     corrections = corrector.correct(analyzed, catalog, normalizer)
     fresh = next(
         (
@@ -61,6 +78,11 @@ def assess_record(
         if (description and analyzed.pdm_class_id)
         else ()
     )
+    pending = pending_for(proposal_type, corrections.pending)
+    # Recuperar um atributo da curta não amplia a autorização anterior de publicação PDM.
+    # A sugestão continua disponível para aprovação humana com o trecho e a origem registrados.
+    if proposal_type == "PDM_CORRECTION" and extracted and "short_description" in extracted.origins.values():
+        pending += ("SHORT_DESCRIPTION_REQUIRES_REVIEW",)
     verdict = assess_automatic_correction(
         catalog,
         analyzed,
@@ -71,32 +93,29 @@ def assess_record(
         trusted_class=trusted,
         reproducible=reproducible and known,
         lost_terms=lost,
-        pending=pending_for(proposal_type, corrections.pending),
+        pending=pending,
     )
     classification = classifier.classify(
         ClassificationInput(record.description, record.short_description or None, record.group or None)
-    )
-    extracted = (
-        extractor.extract(
-            catalog.classes[analyzed.pdm_class_id],
-            record.description,
-            manufacturer=record.manufacturer or None,
-            manufacturer_reference=record.reference or None,
-        )
-        if analyzed.pdm_class_id
-        else None
     )
     evidence = {
         **verdict.evidence,
         "rules_signature": current_rules(catalog),
         "algorithms": list(algorithms),
         "algorithm_revisions": list(revisions),
+        "field_reader_revision": MATERIAL_FIELDS_VERSION,
+        "original_short_description": record.short_description,
         "trusted_class": trusted,
         "classification_evidence": [
             {"class_id": item.class_id, "matched_name": item.matched_name} for item in classification.evidence
         ],
         "attribute_evidence": {
-            name: {"value": item.value, "original": item.original, "rule": item.rule}
+            name: {
+                "value": item.value,
+                "original": item.original,
+                "rule": item.rule,
+                "source_field": extracted.origins[name],
+            }
             for name, item in extracted.attributes.items()
         }
         if extracted

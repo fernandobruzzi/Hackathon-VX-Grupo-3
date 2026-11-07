@@ -1,5 +1,6 @@
 """Leitura independente dos campos: recuperar evidência sem ocultar contradições."""
 
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -129,3 +130,30 @@ def test_complete_manufacturer_before_truncated_tail_is_supported(catalog):
     )
     assert result.attributes["FABRICANTE"].value == "METSO"
     assert result.origins["FABRICANTE"] == "short_description"
+
+
+@pytest.mark.parametrize("code", ["10296003", "15014130", "15133460"])
+def test_real_normalized_short_tail_does_not_create_conflicts(catalog, code):
+    from pipelines.sanitize import read_csv_records
+
+    record = next(
+        r
+        for r in read_csv_records(Path(__file__).parents[2] / "data/desafio01/01_base_materiais.csv")
+        if r.code == code
+    )
+    classifier = get_classification_repository(catalog)
+    extractor = get_extraction_repository()
+    long_only = analyze_material(replace(record, short_description=""), catalog, classifier, extractor)
+    combined = analyze_material(record, catalog, classifier, extractor)
+    assert combined.attributes == long_only.attributes
+    assert combined.review_reasons == long_only.review_reasons
+    if code == "15133460":
+        assert combined.attributes["BITOLA"] == "M12X1,5"
+        assert combined.attributes["COMPRIMENTO"] == "60MM"
+        assert combined.attributes["ROSCA"] == "METRICA FINA"
+
+
+def test_explicitly_terminated_short_reference_is_usable(catalog):
+    result = extract_material_fields(catalog.classes["PDM110"], "PLACA TRASEIRA", "METSO PN MM4504436;")
+    assert result.attributes["REFERENCIA FABRICANTE"].value == "MM4504436"
+    assert result.origins["REFERENCIA FABRICANTE"] == "short_description"
