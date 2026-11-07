@@ -45,6 +45,14 @@ Parameters:
     Default: ""
     Description: Host do endpoint HTTPS do Express, sem https:// (origem do CloudFront).
 
+  ChatModel:
+    Type: String
+    Default: anthropic.claude-sonnet-5
+    AllowedPattern: "^anthropic\\.claude-[a-z0-9.:-]+$"
+    Description: >-
+      Modelo Claude do chat, sem o prefixo do perfil. O Agent usa o perfil US
+      (bedrock_chat_model=us.<modelo>). O modelo precisa ter assinatura do
+      Marketplace ativa na conta.
   GitHubRepository:
     Type: String
     Default: ""
@@ -208,17 +216,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: bedrock:InvokeModel
-                Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-sonnet-5"
+                Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.${ChatModel}"
               # O perfil US exige os destinos; a condicao impede invocacao direta.
               - Effect: Allow
                 Action: bedrock:InvokeModel
                 Resource:
-                  - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-5
-                  - arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-sonnet-5
-                  - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-5
+                  - !Sub "arn:aws:bedrock:us-east-1::foundation-model/${ChatModel}"
+                  - !Sub "arn:aws:bedrock:us-east-2::foundation-model/${ChatModel}"
+                  - !Sub "arn:aws:bedrock:us-west-2::foundation-model/${ChatModel}"
                 Condition:
                   StringEquals:
-                    bedrock:InferenceProfileArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-sonnet-5"
+                    bedrock:InferenceProfileArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.${ChatModel}"
       Tags:
         - { Key: vx-project, Value: !Ref Name }
 
