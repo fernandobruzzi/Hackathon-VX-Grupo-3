@@ -287,12 +287,18 @@ A primeira correção limitava apenas o alias de `ROSCA`; a integração também
 filtra cada ocorrência no leitor métrico, antes de preencher `BITOLA` ou
 comprimento. Assim, `PN:M12`, `REF:M12` e `MODELO:M12` não fornecem uma bitola
 física, mesmo com `ROSCA:METRICA GROSSA` explícita. O código e seu rótulo ficam
-no texto não resolvido. `M12` físico sem rótulo e `BITOLA:M12` continuam válidos,
+no texto não resolvido. A origem de referência também respeita abreviações com
+ponto, com ou sem espaço: `REF. M12X50`, `PN.M12X50`, `P/N. M12X50`,
+`MODELO.M12X50`, `REFERENCIA. M12X50` e `COD.M12X50`. Essas formas permanecem
+literalmente não resolvidas e não fornecem `BITOLA`, `COMPRIMENTO` ou `ROSCA`.
+`M12` físico sem rótulo e `BITOLA:M12` continuam válidos,
 inclusive em `REF:M12 BITOLA M12`, sem consumir o código da referência. Esse filtro
 físico adicional não acrescenta diferenças nos 23.554 materiais nem nos 520
 pedidos em relação à primeira correção do guarda. `MA` e `MF`
 continuam válidos em `ROSCA:ROSCA GROSSA MA` e `ROSCA:ROSCA FINA MF`, sem
-emprestar evidência de outro rótulo. Uma bitola explícita em polegadas veta o
+emprestar evidência de outro rótulo. O marcador também precisa começar fora de
+uma referência: `REF:ROSCA:ROSCA GROSSA MA`, com ou sem espaços, não confirma o
+alias. Um campo `ROSCA` separado por vírgula depois de `REF` continua válido. Uma bitola explícita em polegadas veta o
 alias mesmo com esses marcadores. O rolamento `BLINDADO` com `MODELO:6004ZZ`
 ou `6004ZZ/C3` mantém a vedação, enquanto `6004` continua sem vedação e não
 recebe `ABERTO` por inferência.
