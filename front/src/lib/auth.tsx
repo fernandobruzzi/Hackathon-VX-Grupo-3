@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { Me, PersonaLabel } from "@/types/api";
 import { ApiError, StaleSessionError, createApiClient } from "@/lib/api";
+import { QueueNavigationProvider } from "@/features/sanitization/QueueNavigation";
 import { meFor } from "@/lib/permissions";
 
 type AuthMode = "disabled" | "local" | "cognito";
@@ -272,7 +273,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toggleTheme,
       }}
     >
-      {children}
+      <QueueNavigationProvider sessionKey={`${sessionRevision}:${sessionBusy}`}>
+        {children}
+      </QueueNavigationProvider>
     </Ctx.Provider>
   );
 }
