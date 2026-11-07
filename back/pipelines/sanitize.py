@@ -50,6 +50,7 @@ from repositories.candidates import get_candidate_repository
 from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
+from repositories.extraction.material_fields import MATERIAL_FIELDS_VERSION, extract_material_fields
 from repositories.normalization import get_normalization_repository
 
 _REDIRECT_PREFIX = re.compile(r"^NAO UTILIZAR - USAR COD \d+\s*-\s*")
@@ -71,6 +72,7 @@ def analysis_signature(
             f"extractor:{extractor.name}@{extractor.revision}",
             IDENTITY_RULES_VERSION,
             "approved-attributes-v1",
+            MATERIAL_FIELDS_VERSION,
         ]
     )
 
@@ -91,11 +93,13 @@ def analyze_material(
     pdm_class = catalog.classes[class_id]
     matched_names = [evidence.matched_name for evidence in classification.evidence if evidence.class_id == pdm_class.id]
     item_name = resolve_item_name(pdm_class, matched_names)
-    extraction = extractor.extract(
+    extraction = extract_material_fields(
         pdm_class,
         description,
-        manufacturer=record.manufacturer or None,
-        manufacturer_reference=record.reference or None,
+        record.short_description,
+        manufacturer=record.manufacturer,
+        reference=record.reference,
+        extractor=extractor,
     )
     attributes = {name: value.value for name, value in extraction.attributes.items()}
     persisted_conflicts = tuple(
@@ -106,7 +110,11 @@ def analyze_material(
     attributes.update({name: value for name, value in record.attributes.items() if value})
     validation = validate_pdm(catalog, class_id, attributes, item_name=item_name)
     identity_key = validation.identity_key or partial_identity_key(pdm_class, attributes)
-    review = item_name_review_reasons(pdm_class, matched_names) + persisted_conflicts
+    review = (
+        item_name_review_reasons(pdm_class, matched_names)
+        + persisted_conflicts
+        + tuple(f"OBSERVATION_CONFLICT:{name}" for name in sorted(extraction.conflicts))
+    )
     material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key, review)
     if review or material_review_reasons(material, pdm_class):
         return AnalyzedMaterial(record, class_id, item_name, attributes, None, review)

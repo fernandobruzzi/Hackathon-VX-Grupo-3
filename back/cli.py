@@ -5,6 +5,7 @@ import csv
 import json
 import sys
 from collections import Counter
+from pathlib import Path
 
 from clients.storage import get_object_store
 from domain.contracts import NormalizedField
@@ -109,6 +110,17 @@ def main(argv: list[str] | None = None) -> int:
         "enrichment-report", help="Diagnostica completude e fontes internas sem banco ou rede"
     )
     internal.add_argument("--data-dir", default="data/desafio01")
+    internal.add_argument("--internal-documents", help="Bundle documental local com dataset_id=kit")
+    register = commands.add_parser("register-internal-sources", help="Valida e arquiva documentos internos imutáveis")
+    register.add_argument("bundle_path")
+    register.add_argument("--dataset-id", required=True)
+    review = commands.add_parser("enrichment-review-packet", help="Congela amostra por atributo para revisão")
+    review.add_argument("report_path")
+    review.add_argument("--seed", type=int, default=263)
+    review.add_argument("--sample-size", type=int, default=100)
+    enrichment_eval = commands.add_parser("enrichment-evaluate", help="Avalia sugestões revisadas por atributo")
+    enrichment_eval.add_argument("packet_path")
+    enrichment_eval.add_argument("reviews_path")
     enrich = commands.add_parser(
         "enrich-real-products", help="Registra evidências e propostas imutáveis dos 15 produtos reais"
     )
@@ -154,7 +166,27 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "enrichment-report":
         from pipelines.internal_enrichment import report_kit
 
-        result = report_kit(args.data_dir)
+        result = report_kit(args.data_dir, supplemental_path=args.internal_documents)
+    elif args.command == "register-internal-sources":
+        from enrichment.internal_documents import bundle_object_key, parse_bundle
+
+        content = Path(args.bundle_path).read_bytes()
+        bundle = parse_bundle(content, args.dataset_id)
+        key = bundle_object_key(content, args.dataset_id)
+        get_object_store().put_if_absent(key, content)
+        result = {"object_key": key, "documents": len(bundle["documents"]), "dataset_id": args.dataset_id}
+    elif args.command == "enrichment-review-packet":
+        from pipelines.evaluate_enrichment import create_review_packet
+
+        result = create_review_packet(
+            json.loads(Path(args.report_path).read_text()), seed=args.seed, sample_size=args.sample_size
+        )
+    elif args.command == "enrichment-evaluate":
+        from pipelines.evaluate_enrichment import evaluate_packet
+
+        result = evaluate_packet(
+            json.loads(Path(args.packet_path).read_text()), json.loads(Path(args.reviews_path).read_text())
+        )
     elif args.command == "publish-enrichment":
         from repositories.enrichment_repository import publish_enrichment
 

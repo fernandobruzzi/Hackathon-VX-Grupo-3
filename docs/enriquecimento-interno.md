@@ -32,6 +32,10 @@ são listados separadamente, sem contá-los como opcionais dispensáveis.
 Observações independentes de cada fonte e do alvo são reextraídas pelos mesmos
 rótulos e aliases do extrator. Dois part numbers, fabricantes ou valores
 contraditórios impedem o preenchimento, inclusive dentro de um único anexo.
+Descrição longa, curta e campos estruturados são lidos separadamente. A curta
+com 40 ou mais caracteres perde a cauda possivelmente cortada e não comprova
+referências livres. Valores discordantes ficam para revisão, sem precedência
+silenciosa de um campo. As novas regras têm revisão própria nas assinaturas.
 
 Cada evidência registra arquivo, identificador, trecho, SHA-256 do original, chave
 no armazenamento, data da primeira observação dos mesmos arquivos e fundamento
@@ -53,6 +57,94 @@ condicionais pendentes, opcionais ausentes, sugestões, fontes rejeitadas e
 comparação antes/depois das sugestões. `VALID` mede atributos PDM, sem certificar
 vigência NCM, unidade de embalagem, estoque, precisão do classificador ou cadastro
 pronto para produção.
+
+O diagnóstico distingue `UNRESOLVED` de `OUT_OF_SCOPE`, candidatos de classe,
+conflitos no próprio registro e entre fontes. Cada lacuna informa uma pergunta
+PDM e sua causa: identidade não confirmada, rótulo não interpretado, evidência
+insuficiente, condição desconhecida ou valor inválido. Evidência insuficiente
+não afirma que o atributo inexiste no mundo real. Fontes sem identidade utilizável
+continuam rastreáveis em `unusable_sources`. As pendências exibem essas questões.
+
+### Acrescentar documentos internos
+
+Use um bundle JSON, fornecido pela equipe responsável pelos dados. Exemplo:
+
+```json
+{
+  "schema_version": "internal-documents-v1",
+  "dataset_id": "UUID_DO_DATASET",
+  "documents": [{
+    "id": "ficha-001",
+    "title": "Ficha técnica conferida",
+    "kind": "INTERNAL_DOCUMENT",
+    "text": "FILTRO OLEO LUBRIFICANTE; FABRICANTE: ...; REFERENCIA FABRICANTE: ...; ALTURA: 100MM"
+  }]
+}
+```
+
+Campos opcionais do documento: `short_description`, `manufacturer` e
+`manufacturer_reference`. Não são aceitos campos desconhecidos, IDs duplicados,
+outro dataset, fonte externa, proposta pendente ou autodeclaração de aprovação.
+Limites: 2 MB, 500 documentos e 20 mil caracteres por texto. Não há busca de URLs.
+
+```bash
+uv run --locked vx-back register-internal-sources fichas.json --dataset-id UUID_DO_DATASET
+```
+
+Configure `ENRICHMENT_INTERNAL_SOURCES_KEY` com a chave retornada, no mesmo
+armazenamento da API e batch. O conteúdo é arquivado em
+`references/internal-sources/<dataset>/<sha256>.json`. O batch recusa troca das
+fontes na retomada; abra um novo job. A API reabre o documento, confere bytes,
+trecho, valor, identidade e dataset antes de aprovar. Propostas pendentes nunca
+são lidas como fontes. Datas da primeira observação dos originais e dos bundles
+são preservadas separadamente; documentos sem relação não duplicam propostas.
+
+Para ensaio sem banco, use `dataset_id: "kit"` no bundle e acrescente
+`--internal-documents fichas.json` ao comando `enrichment-report`.
+
+### Leitura assistida opcional
+
+O batch padrão continua com zero chamadas de modelo. O piloto Bedrock exige
+`ENRICHMENT_LLM_MODEL_ID` e `ENRICHMENT_LLM_MAX_CALLS` positivo (máximo 100 por job).
+O orçamento é reservado no checkpoint antes da chamada e preservado na retomada;
+trocar modelo, prompt ou orçamento exige novo job. Há limites de texto, tokens,
+tempo e nenhuma repetição automática de chamada.
+
+O modelo só lê campos do registro para atributos ausentes da classe conhecida.
+Cada candidato precisa de trecho literal, rótulo explícito e valor sustentado
+pelo extrator e pelo PDM, sem contradições entre os campos. Resultado inválido,
+erro ou orçamento esgotado permanece no relatório. Candidatos aparecem nas
+pendências com confirmação manual obrigatória e não viram evidências publicáveis
+nem propostas automáticas de enriquecimento. O uso registra modelo, prompt,
+chamadas, falhas e tokens; custo permanece desconhecido se houver chamadas.
+Os testes usam cliente injetado; esta entrega não homologa uma execução real AWS.
+
+### Revisão por atributo
+
+Congele o relatório e extraia uma amostra reproduzível:
+
+```bash
+uv run --locked vx-back enrichment-review-packet /tmp/enriquecimento.json --sample-size 100 --seed 263 > /tmp/pacote.json
+```
+
+O pacote contém originais do alvo, atributos conhecidos, valor candidato e
+evidências. Preserve o checksum fora do arquivo. Registre revisões em outro JSON:
+
+```json
+{"packet_sha256":"HASH_DO_PACOTE","reviews":[{"case_id":"ID_DO_CASO","author":"Nome do técnico","label":"SUPPORTED","evidence":["Documento e identidade conferidos no trecho indicado."]}]}
+```
+
+Use `UNSUPPORTED` para erro e `INCONCLUSIVE` quando não puder concluir. Execute:
+
+```bash
+uv run --locked vx-back enrichment-evaluate /tmp/pacote.json revisoes.json
+```
+
+A avaliação confere hashes, seleção e autoria; desacordo permanece inconclusivo.
+Mostra cobertura e precisão entre candidatos decididos, com intervalo Wilson e
+recortes por classe/atributo. Não mede recall da população nem precisão
+independente; aprovação operacional não fornece rótulo de verdade. Não autoriza
+aplicar dados. Os rótulos históricos permanecem intactos.
 
 No batch normal, use o mesmo armazenamento dos originais do bootstrap:
 

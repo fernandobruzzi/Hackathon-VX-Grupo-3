@@ -10,6 +10,7 @@ from domain.proposals import canonical_hash
 from domain.runtime import AWS_RUNTIME_VARIABLES
 from repositories.classification import get_classification_repository
 from repositories.extraction import get_extraction_repository
+from repositories.extraction.material_fields import MATERIAL_FIELDS_VERSION, extract_material_fields
 
 
 def value(record, key, default=None):
@@ -22,6 +23,7 @@ def original_hash(material) -> str:
             "material_id": str(value(material, "id")),
             "material_code": value(material, "material_code"),
             "description": value(material, "original_description_long") or "",
+            "short_description": value(material, "original_description_short") or "",
             "manufacturer": value(material, "manufacturer") or "",
             "reference": value(material, "manufacturer_reference") or "",
         }
@@ -31,7 +33,10 @@ def original_hash(material) -> str:
 def extraction_signature(catalog) -> str:
     extractor = get_extraction_repository()
     classifier = get_classification_repository(catalog)
-    return f"{extractor.name}@{extractor.revision}|{classifier.name}@{classifier.revision}|{IDENTITY_RULES_VERSION}"
+    return (
+        f"{extractor.name}@{extractor.revision}|{classifier.name}@{classifier.revision}|"
+        f"{IDENTITY_RULES_VERSION}|{MATERIAL_FIELDS_VERSION}"
+    )
 
 
 def original_item_name(catalog, class_id: str, material) -> str | None:
@@ -39,7 +44,7 @@ def original_item_name(catalog, class_id: str, material) -> str | None:
     if len(cls.item_names) == 1:
         return cls.item_names[0]
     result = get_classification_repository(catalog).classify(
-        ClassificationInput(value(material, "original_description_long"))
+        ClassificationInput(value(material, "original_description_long"), value(material, "original_description_short"))
     )
     names = [
         item.matched_name
@@ -50,11 +55,12 @@ def original_item_name(catalog, class_id: str, material) -> str | None:
 
 
 def original_attributes(catalog, class_id: str, material) -> dict[str, str]:
-    extracted = get_extraction_repository().extract(
+    extracted = extract_material_fields(
         catalog.classes[class_id],
         value(material, "original_description_long") or "",
+        value(material, "original_description_short") or "",
         manufacturer=value(material, "manufacturer"),
-        manufacturer_reference=value(material, "manufacturer_reference"),
+        reference=value(material, "manufacturer_reference"),
     )
     return {name: item.value for name, item in extracted.attributes.items()} | {
         name: item for name, item in (value(material, "attributes") or {}).items() if item

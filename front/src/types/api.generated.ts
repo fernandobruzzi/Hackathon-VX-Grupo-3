@@ -1705,6 +1705,42 @@ export interface components {
       conflicts: {
         [key: string]: string[];
       };
+      classification?: components["schemas"]["EnrichmentClassification"];
+      gaps?: components["schemas"]["EnrichmentGap"][];
+      record_conflicts?: {
+        [key: string]: string[];
+      };
+      assisted_candidates?: components["schemas"]["AssistedAttributeCandidate"][];
+    };
+    EnrichmentClassification: {
+      /** @enum {string} */
+      status: "CLASSIFIED" | "UNRESOLVED" | "OUT_OF_SCOPE";
+      candidate_class_ids: string[];
+    };
+    EnrichmentGap: {
+      attribute: string | null;
+      /** @enum {string} */
+      reason:
+        | "CLASS_UNRESOLVED"
+        | "CLASS_OUT_OF_SCOPE"
+        | "CONTRADICTORY_OBSERVATIONS"
+        | "CONFLICTING_SOURCES"
+        | "IDENTITY_NOT_CONFIRMED"
+        | "TEXT_NOT_RECOGNIZED"
+        | "NO_SUPPORTED_EVIDENCE"
+        | "CONDITION_UNRESOLVED"
+        | "INVALID_VALUE";
+      question: string;
+    };
+    /** @description Leitura assistida a conferir manualmente. Não preenche o cadastro nem autoriza aprovação. */
+    AssistedAttributeCandidate: {
+      attribute: string;
+      value: string;
+      source_field: string;
+      excerpt: string;
+      extraction_rule?: string;
+      /** @constant */
+      manual_confirmation_required?: true;
     };
   };
   responses: never;

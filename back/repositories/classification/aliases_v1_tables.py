@@ -29,10 +29,44 @@ class Alias:
     at_start: bool = False
     # Não aplica logo depois destas palavras: ANEL O RING já é o nome completo.
     not_after: tuple[str, ...] = ()
+    # Não apaga um indicador de sextavado interno ao expandir a abreviação externa.
+    not_before: tuple[str, ...] = ()
 
 
 # Padrões mais longos primeiro: VALV ESF precisa vencer VALV.
 ALIASES: tuple[Alias, ...] = (
+    # PARAF. SEXT e PARAF SEXTAVADO são as formas abreviadas da peça externa; INTERNO
+    # explícito ganha primeiro. ALLEN e INT incompletos ficam fora da expansão externa.
+    Alias("parafuso_interno", ("PARAFUSO", "SEXT", "INTERNO"), ("PARAFUSO", "SEXTAVADO", "INTERNO"), at_start=True),
+    Alias("parafuso_interno", ("PARAF", "SEXT", "INTERNO"), ("PARAFUSO", "SEXTAVADO", "INTERNO"), at_start=True),
+    Alias("parafuso_interno", ("PARAF", "SEXTAVADO", "INTERNO"), ("PARAFUSO", "SEXTAVADO", "INTERNO"), at_start=True),
+    Alias(
+        "parafuso_sextavado",
+        ("PARAF", "SEXTAVADO"),
+        ("PARAFUSO", "SEXTAVADO"),
+        at_start=True,
+        not_before=("ALLEN", "INT", "INTERNO"),
+    ),
+    Alias(
+        "parafuso_sextavado",
+        ("PARAF", "SEXT"),
+        ("PARAFUSO", "SEXTAVADO"),
+        at_start=True,
+        not_before=("ALLEN", "INT", "INTERNO"),
+    ),
+    Alias(
+        "parafuso_sextavado",
+        ("PARAFUSO", "SEXT"),
+        ("PARAFUSO", "SEXTAVADO"),
+        at_start=True,
+        not_before=("ALLEN", "INT", "INTERNO"),
+    ),
+    # COTOV e FLG iniciam conexões no kit; no meio do texto podem ser aplicação da peça.
+    Alias("cotovelo", ("COTOV",), ("COTOVELO",), at_start=True),
+    Alias("flange", ("FLG",), ("FLANGE",), at_start=True),
+    # Erro ortográfico e ordem dos mesmos termos, sem acrescentar tipo ou aplicação.
+    Alias("placa_traseira", ("PLACA", "TRASERA"), ("PLACA", "TRASEIRA"), at_start=True),
+    Alias("bucha_mancal_guia", ("BUCHA", "GUIA", "MANCAL"), ("BUCHA", "MANCAL", "GUIA"), at_start=True),
     # VALV ESF 2" AISI 316 NPT: válvula esfera. Não diz se o corpo é forjado ou fundido.
     Alias("valvula_esfera", ("VALV", "ESF"), ("VALVULA", "ESFERA")),
     Alias("valvula_esfera", ("VALVULA", "ESF"), ("VALVULA", "ESFERA")),
