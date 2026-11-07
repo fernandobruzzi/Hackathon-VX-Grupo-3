@@ -285,7 +285,11 @@ def test_only_similar_items_ask_the_requester(db_client):
     assert all(item["status"] != "OBSOLETO" for item in card["similar_candidates"])
     offered = body["context_patch"]["offered_material_codes"]
     assert offered == [item["material_code"] for item in card["similar_candidates"]]
-    assert all(code in body["assistant_message"] for code in offered)
+    # Os itens vão estruturados para o front listar; o texto não concatena códigos e descrições.
+    message = body["assistant_message"]
+    assert not any(code in message for code in offered)
+    assert ("1 item parecido" if len(offered) == 1 else f"{len(offered)} itens parecidos") in message
+    assert "É este" in message and "Nenhum desses é o meu item" in message
 
 
 def test_dismissing_the_similar_items_releases_submission(db_client):

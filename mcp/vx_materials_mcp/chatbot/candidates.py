@@ -136,14 +136,12 @@ def _similar(item: dict[str, Any]) -> SimilarCandidate:
 
 
 def _ask(similar: list[SimilarCandidate]) -> str:
-    listed = "; ".join(
-        f"{item.material_code} ({item.pdm_description})"
-        + (f", bloqueado: use {item.active_code_target}" if item.status == "BLOQUEADO" else "")
-        for item in similar
-    )
+    # Os itens vão estruturados em similar_candidates, que o front lista com a ação "É este";
+    # o texto não concatena códigos e descrições, para a conversa continuar legível.
+    found = "1 item parecido" if len(similar) == 1 else f"{len(similar)} itens parecidos"
     return (
-        f"Encontrei itens parecidos na base: {listed}. "
-        "O seu item é um desses? Responda com o código, ou diga que é um item diferente."
+        f"Encontrei {found} na base. Se o seu item estiver na lista, escolha “É este” "
+        "ou responda com o código. Se nenhum corresponder, responda “Nenhum desses é o meu item”."
     )
 
 
