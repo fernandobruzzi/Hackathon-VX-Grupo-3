@@ -73,6 +73,15 @@ export function BatchPage() {
   );
   const allowed = me?.permissions.includes("batch:run") ?? false;
   const [jobs, setJobs] = useState<BatchJob[]>([]);
+  const [historyStatus, setHistoryStatus] = useState<BatchJob["status"] | "">("");
+  const [active, setActive] = useState<BatchJob | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const loadedPages = useRef(1);
+  const historyGeneration = useRef(0);
+  const historyInFlight = useRef(false);
+  const historyScope = useRef("");
+  historyScope.current = `${sessionRevision}:${historyStatus}`;
   const [datasetId, setDatasetId] = useState<string | null>(null);
   const [type, setType] = useState<BatchJob["job_type"]>("SANITIZE");
   const [loaded, setLoaded] = useState(false);
@@ -94,26 +103,74 @@ export function BatchPage() {
     inFlight.current = false;
   }, [sessionRevision]);
 
-  const load = useCallback(async () => {
-    const started = revision.current;
-    try {
-      const list = await api.request("get", "/api/v1/batch/jobs", { query: { limit: 20 } });
-      if (started !== revision.current) return;
-      setJobs(list.items);
-      setDatasetId(list.latest_dataset_id);
-      setQueryError(null);
-    } catch (e) {
-      if (started !== revision.current) return;
-      setQueryError(`Não foi possível atualizar os jobs: ${errorMessage(e)}`);
-    } finally {
-      if (started === revision.current) {
-        setLoaded(true);
-        setNow(Date.now());
-      }
-    }
-  }, [api]);
+  // A página de histórico e o job ativo são leituras independentes no servidor.
+  useEffect(() => {
+    historyGeneration.current += 1;
+    historyInFlight.current = false;
+    loadedPages.current = 1;
+    setJobs([]);
+    setNextCursor(null);
+    setActive(null);
+    setLoaded(false);
+    setHistoryLoading(false);
+    setQueryError(null);
+  }, [sessionRevision, historyStatus, api]);
 
-  const active = jobs.find(isActive);
+  const load = useCallback(
+    async (more = false) => {
+      const scope = `${sessionRevision}:${historyStatus}`;
+      if (scope !== historyScope.current || historyInFlight.current) return;
+      historyInFlight.current = true;
+      const generation = ++historyGeneration.current;
+      const pageCount = loadedPages.current + (more ? 1 : 0);
+      setHistoryLoading(true);
+      try {
+        const pages: components["schemas"]["BatchJobList"][] = [];
+        let cursor: string | null = null;
+        for (let index = 0; index < pageCount; index += 1) {
+          if (scope !== historyScope.current || generation !== historyGeneration.current) return;
+          const page: components["schemas"]["BatchJobList"] = await api.request(
+            "get",
+            "/api/v1/batch/jobs",
+            {
+              query: {
+                limit: 20,
+                ...(cursor ? { cursor } : {}),
+                ...(historyStatus ? { status: historyStatus } : {}),
+              },
+            },
+          );
+          if (scope !== historyScope.current || generation !== historyGeneration.current) return;
+          if (index === 0) {
+            setActive(page.active_job ?? null);
+            setDatasetId(page.latest_dataset_id);
+          }
+          pages.push(page);
+          cursor = page.next_cursor;
+          if (!cursor) break;
+        }
+        if (scope !== historyScope.current || generation !== historyGeneration.current) return;
+        loadedPages.current = pages.length;
+        const items = [
+          ...new Map(pages.flatMap((page) => page.items).map((job) => [job.id, job])).values(),
+        ];
+        setJobs(items);
+        setNextCursor(pages.at(-1)?.next_cursor ?? null);
+        setQueryError(null);
+      } catch (e) {
+        if (scope !== historyScope.current || generation !== historyGeneration.current) return;
+        setQueryError(`Não foi possível atualizar os jobs: ${errorMessage(e)}`);
+      } finally {
+        if (scope === historyScope.current && generation === historyGeneration.current) {
+          historyInFlight.current = false;
+          setHistoryLoading(false);
+          setLoaded(true);
+          setNow(Date.now());
+        }
+      }
+    },
+    [api, historyStatus, sessionRevision],
+  );
 
   useEffect(() => {
     if (!allowed) return;
@@ -135,13 +192,14 @@ export function BatchPage() {
     setBusy(true);
     setActionError(null);
     try {
+      let result: BatchJob;
       if (command.kind === "start") {
-        await api.request("post", "/api/v1/batch/jobs", {
+        result = await api.request("post", "/api/v1/batch/jobs", {
           body: command.body,
           idempotencyKey: command.key,
         });
       } else {
-        await api.request("post", "/api/v1/batch/jobs/{id}/resume", {
+        result = await api.request("post", "/api/v1/batch/jobs/{id}/resume", {
           params: { id: command.jobId },
           body: {},
           idempotencyKey: command.key,
@@ -149,6 +207,7 @@ export function BatchPage() {
       }
       if (started !== revision.current) return;
       setPendingCommand(null);
+      setActive(isActive(result) ? result : null);
     } catch (e) {
       if (started !== revision.current) return;
       if (
@@ -168,6 +227,8 @@ export function BatchPage() {
       if (started === revision.current) {
         inFlight.current = false;
         setBusy(false);
+        historyGeneration.current += 1;
+        historyInFlight.current = false;
         await load();
       }
     }
@@ -332,9 +393,35 @@ export function BatchPage() {
               </Card>
             )}
           </div>
+          <div className="mb-4 flex flex-wrap items-end gap-3">
+            <Field label="Status do histórico">
+              <Select
+                value={historyStatus}
+                disabled={busy || historyLoading}
+                onChange={(event) =>
+                  setHistoryStatus(event.target.value as BatchJob["status"] | "")
+                }
+              >
+                <option value="">Todos os status</option>
+                {Object.entries(statusTone).map(([value, [, label]]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Button variant="ghost" disabled={historyLoading || busy} onClick={() => load()}>
+              Atualizar histórico
+            </Button>
+            {historyLoading && (
+              <p role="status" className="text-sm text-muted">
+                Carregando histórico…
+              </p>
+            )}
+          </div>
           {loaded && jobs.length === 0 ? (
-            <EmptyState title="Nenhum job ainda">
-              Inicie o saneamento para gerar as propostas da base inteira.
+            <EmptyState title="Nenhum job encontrado">
+              Nenhum job corresponde ao status selecionado.
             </EmptyState>
           ) : (
             <Table>
@@ -399,6 +486,16 @@ export function BatchPage() {
                 ))}
               </tbody>
             </Table>
+          )}
+          {nextCursor && (
+            <Button
+              variant="ghost"
+              className="mt-4"
+              disabled={historyLoading || busy}
+              onClick={() => load(true)}
+            >
+              Carregar mais jobs
+            </Button>
           )}
         </>
       )}
