@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { CheckCircle2, CircleDashed, Copy, Send } from "lucide-react";
+import { CheckCircle2, CircleDashed, Send } from "lucide-react";
 import { Badge, Button, Card, Code } from "@/components/ui";
 import { MaterialStatusBadge, ValidationBadge } from "@/components/ui/status";
 import { cn } from "@/lib/format";
 import type { ChatAction, MaterialCardData } from "@/types/api";
 import { SimilarCandidates } from "./SimilarCandidates";
+import { CopyMaterialCode } from "./CopyMaterialCode";
 
 /** Ficha do pedido em construção. Espelha material_card do contrato 6.2. */
 export function MaterialCard({
@@ -48,9 +49,7 @@ export function MaterialCard({
               </p>
             ))}
           </div>
-          <Button variant="primary" size="sm" className="self-start">
-            <Copy className="size-4" /> Copiar código
-          </Button>
+          <CopyMaterialCode key={card.existing.material_code} code={card.existing.material_code} />
         </Card>
       )}
 
