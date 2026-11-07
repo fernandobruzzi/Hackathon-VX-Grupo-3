@@ -513,15 +513,16 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 
 ## Database on AWS
 
-RDS needs setup that local Postgres doesn't, because `vx-db upgrade` creates roles and the `vector` extension. Run this once as the RDS master user, using a password from Secrets Manager:
+RDS needs setup that local Postgres doesn't, because `vx-db upgrade` creates roles and the `vector` extension. `deployment/infra.yaml` creates a private PostgreSQL 16 instance whose master password RDS keeps in Secrets Manager. Run this once as the RDS master user:
 
 ```sql
 CREATE ROLE migration_user LOGIN CREATEROLE PASSWORD '<from-secrets-manager>';
 GRANT rds_superuser TO migration_user;
+GRANT migration_user TO <master>;
 CREATE DATABASE vx_materiais OWNER migration_user;
 ```
 
-Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATABASE_URL`, `API_DB_PASSWORD`, `BATCH_DB_PASSWORD` and `MCP_DB_PASSWORD` set. These steps haven't been run on RDS yet, so [#6](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/6) must confirm them and correct this section if needed.
+The `GRANT migration_user TO <master>` line is required on PostgreSQL 16: without it the master cannot create a database owned by another role. The database is private, so run the SQL inside the VPC with `scripts/aws_database.py init`, which runs it as a Fargate task and checks owner and `vector`. Then run `vx-db upgrade` followed by `vx-db set-passwords`, with `MIGRATION_DATABASE_URL`, `API_DB_PASSWORD`, `BATCH_DB_PASSWORD` and `MCP_DB_PASSWORD` set; `deploy_ecs.sh` does it in the `migrate` task. All of this was validated on the workshop RDS in [#6](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/6), with vector 0.8.2. The steps are in [`deployment/README.md`](deployment/README.md).
 
 ## NCM consistency
 
