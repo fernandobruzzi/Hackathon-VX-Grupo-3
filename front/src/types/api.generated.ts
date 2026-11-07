@@ -230,7 +230,10 @@ export interface paths {
     /** Listar os jobs mais recentes e o dataset que um novo job usaria. */
     get: operations["listBatchJobs"];
     put?: never;
-    /** Iniciar processamento por manifesto sem token do usuário. */
+    /**
+     * Iniciar processamento por manifesto sem token do usuário.
+     * @description Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa.
+     */
     post: operations["startBatchJob"];
     delete?: never;
     options?: never;
@@ -264,7 +267,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Reprocessar um job que falhou, continuando dos checkpoints, sem token do usuário. */
+    /**
+     * Reprocessar um job que falhou, continuando dos checkpoints, sem token do usuário.
+     * @description Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa.
+     */
     post: operations["resumeBatchJob"];
     delete?: never;
     options?: never;
@@ -2510,7 +2516,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Resultado da operação. */
+      /** @description Job criado ou recuperado pela mesma chave, no estado atual. */
       202: {
         headers: {
           [name: string]: unknown;
@@ -2689,7 +2695,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Resultado da operação. */
+      /** @description Job criado ou recuperado pela mesma chave, no estado atual. */
       202: {
         headers: {
           [name: string]: unknown;
