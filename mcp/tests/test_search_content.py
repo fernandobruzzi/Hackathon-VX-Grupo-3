@@ -408,9 +408,8 @@ def real_chat(case, monkeypatch):
 
 def chat_turn(case, message, previous=None, action=None):
     client = case["client"]
-    me = client.post(
-        "/api/v1/auth/local-session", json={"persona": "SOLICITANTE_OPERACAO"}, headers={"Origin": ORIGIN}
-    ).json()
+    # Os testes conferem se a busca rodou pelas chamadas MCP, que só a role Dev/TI recebe (#232).
+    me = client.post("/api/v1/auth/local-session", json={"persona": "DEV_TI"}, headers={"Origin": ORIGIN}).json()
     response = client.post(
         "/api/v1/chat/message",
         json={

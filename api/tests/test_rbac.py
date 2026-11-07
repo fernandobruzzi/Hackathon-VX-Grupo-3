@@ -62,6 +62,15 @@ EXPECTED = {
         "metrics:financial",
         "audit:fiscal",
     },
+    "ROLE_DEV_TI": {
+        "chat:use",
+        "materials:read",
+        "inventory:read",
+        "orders:create",
+        "orders:read_own",
+        "orders:update_own",
+        "chat:diagnostics",
+    },
 }
 
 
@@ -81,6 +90,12 @@ def test_complete_role_matrix(role, permission):
         with pytest.raises(ApiProblem) as error:
             require_permission(identity, permission)
         assert error.value.status == 403
+
+
+def test_dev_ti_only_adds_diagnostics_to_the_requester_basics():
+    # Diagnóstico não concede aprovação, publicação, auditoria, métricas ou execução de batch.
+    assert ROLE_PERMISSIONS["ROLE_DEV_TI"] - ROLE_PERMISSIONS["ROLE_SOLICITANTE"] == {"chat:diagnostics"}
+    assert all("chat:diagnostics" not in perms for role, perms in ROLE_PERMISSIONS.items() if role != "ROLE_DEV_TI")
 
 
 def test_permission_claim_without_authorized_role_is_insufficient():

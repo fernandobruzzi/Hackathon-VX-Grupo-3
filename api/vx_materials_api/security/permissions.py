@@ -17,11 +17,14 @@ ROLE_PERMISSIONS = {
     },
     "ROLE_AUDITOR_FISCAL": COMMON
     | {"queue:read_audit", "ncm:decide", "metrics:quality", "metrics:financial", "audit:fiscal"},
+    # Diagnóstico técnico das chamadas MCP; não aprova, não publica e não administra.
+    "ROLE_DEV_TI": COMMON | {"chat:diagnostics"},
 }
 PERSONA_ROLES = {
     "SOLICITANTE_OPERACAO": "ROLE_SOLICITANTE",
     "GESTOR_CADASTRO": "ROLE_GOVERNANCA_PDM",
     "AUDITOR_FISCAL": "ROLE_AUDITOR_FISCAL",
+    "DEV_TI": "ROLE_DEV_TI",
 }
 
 

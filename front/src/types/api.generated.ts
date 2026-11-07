@@ -699,9 +699,9 @@ export interface components {
       pending_checks: string[];
     };
     /** @enum {string} */
-    Role: "ROLE_SOLICITANTE" | "ROLE_GOVERNANCA_PDM" | "ROLE_AUDITOR_FISCAL";
+    Role: "ROLE_SOLICITANTE" | "ROLE_GOVERNANCA_PDM" | "ROLE_AUDITOR_FISCAL" | "ROLE_DEV_TI";
     /** @enum {string} */
-    PersonaLabel: "SOLICITANTE_OPERACAO" | "GESTOR_CADASTRO" | "AUDITOR_FISCAL";
+    PersonaLabel: "SOLICITANTE_OPERACAO" | "GESTOR_CADASTRO" | "AUDITOR_FISCAL" | "DEV_TI";
     /** @enum {string} */
     Permission:
       | "chat:use"
@@ -721,7 +721,8 @@ export interface components {
       | "metrics:financial"
       | "audit:own"
       | "audit:technical"
-      | "audit:fiscal";
+      | "audit:fiscal"
+      | "chat:diagnostics";
     Me: {
       user: {
         /** Format: uuid */
@@ -815,6 +816,7 @@ export interface components {
       order_id: string | null;
       status: components["schemas"]["ChatStatus"];
       assistant_message: string;
+      /** @description Chamadas MCP do turno. Diagnóstico técnico: vem vazio para quem não tem a permissão chat:diagnostics (role Dev/TI). */
       tool_calls: components["schemas"]["ToolCall"][];
       material_card: components["schemas"]["MaterialCardData"];
     };
@@ -1437,6 +1439,7 @@ export interface components {
       processing: boolean;
       center_code: string | null;
       messages: components["schemas"]["ChatMessage"][];
+      /** @description Chamadas MCP salvas na conversa. Vazio sem a permissão chat:diagnostics (role Dev/TI). */
       calls: components["schemas"]["SavedToolCall"][];
       material_card: components["schemas"]["MaterialCardData"] | null;
       /** Format: uuid */

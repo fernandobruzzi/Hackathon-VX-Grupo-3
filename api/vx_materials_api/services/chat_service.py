@@ -30,7 +30,7 @@ from vx_materials_api.db.models import ChatMessage, ChatSession, Dataset, Materi
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
-from vx_materials_api.security.rbac import require_conversation_owner, require_resource_scope
+from vx_materials_api.security.rbac import has_permission, require_conversation_owner, require_resource_scope
 
 NCM_VERSION = "ncm-demo-v1"
 # Reserva sem conclusão por mais que isso é tratada como abandonada (queda da API no meio do turno).
@@ -221,6 +221,11 @@ class Reservation:
     session_version: int
     agent_payload: dict[str, Any]
     catalog_proof: dict[str, Any]
+
+
+def can_see_diagnostics(identity: Identity) -> bool:
+    """Chamadas MCP são diagnóstico técnico: só a role Dev/TI as recebe, nunca os perfis de negócio."""
+    return has_permission(identity, "chat:diagnostics")
 
 
 def _conflict(code: str, message: str) -> ApiProblem:
@@ -482,7 +487,8 @@ def complete_turn(
         order_id=None,
         status=status,
         assistant_message=result.assistant_message,
-        tool_calls=result.tool_calls,
+        # A API sempre persiste as chamadas; a resposta só as expõe a quem tem diagnóstico.
+        tool_calls=result.tool_calls if can_see_diagnostics(identity) else [],
         material_card=material_card,
     )
 
@@ -544,10 +550,12 @@ def read_session(db: Session, identity: Identity, session_id: uuid.UUID) -> dict
     )
     calls = []
     turn = 0
+    diagnostics = can_see_diagnostics(identity)
     for message in messages:
         if message.author_type == "ASSISTANT":
             turn += 1
-            calls.extend({"turn": turn, "call": call} for call in message.tool_calls or [])
+            if diagnostics:
+                calls.extend({"turn": turn, "call": call} for call in message.tool_calls or [])
     return {
         "session_id": session.id,
         "session_version": session.version,

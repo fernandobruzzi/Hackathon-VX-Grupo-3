@@ -86,7 +86,7 @@ class Smoke:
         self.request("/auth/callback/?code=smoke&state=smoke")
         print("PASS front, assets e rota estática do callback")
 
-    def chat(self, csrf=None):
+    def chat(self, csrf=None, diagnostics=False):
         payload = {
             "session_id": None,
             "client_message_id": str(uuid.uuid4()),
@@ -102,13 +102,19 @@ class Smoke:
         if result.get("status") != "NEEDS_INPUT" or "CLASSE RESISTENCIA" not in card.get("missing_attributes", []):
             raise SmokeFailure("Chat não identificou a pendência CLASSE RESISTENCIA")
         calls = result.get("tool_calls", [])
+        if not diagnostics:
+            # Chamadas MCP são diagnóstico da role Dev/TI; perfis de negócio nunca as recebem.
+            if calls:
+                raise SmokeFailure("Perfil de negócio recebeu chamadas MCP sem chat:diagnostics")
+            print("PASS API → Agent → validação PDM → persistência, sem diagnóstico MCP para o negócio")
+            return
         for name in ("get_pdm_template", "validate_and_format_pdm"):
             if not any(
                 c.get("name") == name and c.get("transport") == "MCP_STDIO" and c.get("status") == "SUCCEEDED"
                 for c in calls
             ):
                 raise SmokeFailure(f"Chamada MCP real ausente ou malsucedida: {name}")
-        print("PASS API → Agent → MCP stdio → validação PDM → persistência")
+        print("PASS Dev/TI: API → Agent → MCP stdio → validação PDM → persistência")
 
     def authenticated(self):
         Smoke(self.base_url).request("/api/v1/auth/me", expected=401)
@@ -157,6 +163,8 @@ class Smoke:
         )
         csrf = me["csrf_token"]
         self.chat(csrf)
+        me = self.json("/api/v1/auth/local-session", payload={"persona": "DEV_TI"}, headers={"Origin": self.base_url})
+        self.chat(me["csrf_token"], diagnostics=True)
         for persona, area in [
             ("SOLICITANTE_OPERACAO", "TECHNICAL"),
             ("GESTOR_CADASTRO", "FISCAL"),
@@ -221,10 +229,10 @@ class Smoke:
             },
             headers=headers,
         )
-        searched = [c for c in turn["tool_calls"] if c["name"] == "search_similar_materials"]
-        if not searched or searched[0]["status"] != "SUCCEEDED":
-            raise SmokeFailure("Chat não buscou similares: confira se o índice de busca está na versão atual")
         card = turn["material_card"]
+        # Sem a busca, a duplicidade fica PENDING sem candidatos; as chamadas MCP são só para Dev/TI.
+        if card["duplicate_check_status"] == "PENDING" and not card.get("similar_candidates"):
+            raise SmokeFailure("Chat não buscou similares: confira se o índice de busca está na versão atual")
         if card.get("missing_attributes"):
             raise SmokeFailure(f"Ficha completa ficou com pendências: {card['missing_attributes']}")
         offered = [c["material_code"] for c in card.get("similar_candidates") or []]

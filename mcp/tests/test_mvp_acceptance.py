@@ -109,13 +109,8 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
     assert turn["status"] == "NEEDS_INPUT" and turn["order_id"] is None
     assert turn["material_card"]["missing_attributes"] == ["CLASSE RESISTENCIA"]
     assert turn["material_card"]["can_submit"] is False
-    assert [(call["name"], call["input"]) for call in turn["tool_calls"]] == flow.executed
-    assert {call["name"] for call in turn["tool_calls"]} == {
-        "get_pdm_template",
-        "validate_and_format_pdm",
-        "search_similar_materials",
-    }
-    assert all(call["status"] == "SUCCEEDED" and call["transport"] == "MCP_STDIO" for call in turn["tool_calls"])
+    # Chamadas MCP são diagnóstico Dev/TI: a Solicitante não as recebe, mas a API as persiste.
+    assert turn["tool_calls"] == []
     with flow.factory() as db:
         saved = db.scalar(
             select(ChatMessage).where(
@@ -123,7 +118,15 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
             )
         )
         assert saved.content == turn["assistant_message"]
-        assert saved.tool_calls == turn["tool_calls"]
+        calls = saved.tool_calls
+    assert [(call["name"], call["input"]) for call in calls] == flow.executed
+    assert {call["name"] for call in calls} == {
+        "get_pdm_template",
+        "validate_and_format_pdm",
+        "search_similar_materials",
+    }
+    assert all(call["status"] == "SUCCEEDED" and call["transport"] == "MCP_STDIO" for call in calls)
+    with flow.factory() as db:
         # Proposta do produtor batch, não uma proposta fabricada pelo teste/chat.
         proposal_id = db.execute(
             text("""
@@ -251,3 +254,29 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
     assert after["financial"]["data_origin"] == "SYNTHETIC_CHALLENGE_DATA"
     assert client.post("/api/v1/auth/logout", json={}, headers=headers(fiscal)).status_code == 200
     assert client.get("/api/v1/auth/me").status_code == 401
+
+
+def test_dev_ti_sees_the_real_mcp_calls_and_business_profiles_do_not(flow):
+    client = flow.client
+    message = "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933"
+    requester = login(client, "SOLICITANTE_OPERACAO")
+    business = chat(client, requester, message).json()
+    assert business["tool_calls"] == []
+    assert client.get(f"/api/v1/chat/sessions/{business['session_id']}").json()["calls"] == []
+
+    dev = login(client, "DEV_TI")
+    assert "chat:diagnostics" in dev["permissions"]
+    assert not {"merge:decide", "ncm:decide", "orders:decide", "batch:run"} & set(dev["permissions"])
+    response = chat(client, dev, message)
+    assert response.status_code == 200, response.text
+    turn = response.json()
+    assert {call["name"] for call in turn["tool_calls"]} == {
+        "get_pdm_template",
+        "validate_and_format_pdm",
+        "search_similar_materials",
+    }
+    assert all(call["status"] == "SUCCEEDED" and call["transport"] == "MCP_STDIO" for call in turn["tool_calls"])
+    saved = client.get(f"/api/v1/chat/sessions/{turn['session_id']}").json()
+    assert [entry["call"] for entry in saved["calls"]] == turn["tool_calls"]
+    # Diagnóstico não abre conversas de outra pessoa.
+    assert client.get(f"/api/v1/chat/sessions/{business['session_id']}").status_code == 404
