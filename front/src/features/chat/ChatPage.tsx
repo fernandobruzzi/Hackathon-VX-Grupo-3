@@ -11,6 +11,7 @@ import type { ChatAction, ChatMessage, ChatTurnResponse, ToolCall } from "@/type
 import { MaterialCard } from "./MaterialCard";
 import { ChatHistory } from "./ChatHistory";
 import { ToolCallsPanel } from "./ToolCallsPanel";
+import { CandidateList } from "./SimilarCandidates";
 
 const SUGGESTIONS = [
   "Preciso de parafuso sextavado M12x50, aço carbono, zincado branco, DIN 933.",
@@ -254,6 +255,11 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     }
   };
 
+  const replyBusy = busy || loading || processing || submitted !== null || (!!selected && !session);
+  // Mesmos itens e regra da ficha: só a última resposta lista a escolha; após o envio, desabilitada.
+  const inlineCandidates =
+    last && !last.material_card.existing ? (last.material_card.similar_candidates ?? []) : [];
+
   return (
     <div
       ref={height.ref}
@@ -333,8 +339,11 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               </div>
             </div>
           ) : (
-            <ol className="mx-auto flex max-w-2xl flex-col gap-4">
-              {messages.map((m) => (
+            <ol
+              aria-label="Mensagens da conversa"
+              className="mx-auto flex max-w-2xl flex-col gap-4"
+            >
+              {messages.map((m, index) => (
                 <li
                   key={m.id}
                   className={cn("flex", m.author === "user" ? "justify-end" : "justify-start")}
@@ -350,7 +359,18 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
                         Assistente de cadastro
                       </p>
                     )}
-                    {m.content}
+                    <p className="break-words whitespace-pre-line">{m.content}</p>
+                    {index === messages.length - 1 &&
+                      m.author === "assistant" &&
+                      inlineCandidates.length > 0 && (
+                        <div className="mt-3">
+                          <CandidateList
+                            candidates={inlineCandidates}
+                            onReply={send}
+                            disabled={replyBusy}
+                          />
+                        </div>
+                      )}
                   </div>
                 </li>
               ))}
@@ -442,7 +462,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               submitted={submitted ?? undefined}
               onSubmit={submit}
               onReply={send}
-              busy={busy || loading || processing || submitted !== null || (!!selected && !session)}
+              busy={replyBusy}
             />
           ) : (
             <div className="rounded-md bg-surface p-6 text-sm leading-6 text-muted">
