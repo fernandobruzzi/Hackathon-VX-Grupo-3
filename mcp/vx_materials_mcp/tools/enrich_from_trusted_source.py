@@ -138,7 +138,8 @@ class TrustedSourceResearch:
         # O extrator técnico pode abreviar um PN ou reconhecê-lo dentro de uma variante.
         # Sem referência atual explícita, só o SKU revisado inteiro confirma a identidade.
         literal = r"[\s./\-]*".join(map(re.escape, expected))
-        return re.search(r"(?<![A-Z0-9/_.\-])" + literal + r"(?![A-Z0-9/_.\-])", description.upper()) is not None
+        spelling = re.sub(r"\s*([./_\-])\s*", r"\1", description.upper())
+        return re.search(r"(?<![A-Z0-9/_.\-])" + literal + r"(?![A-Z0-9/_.\-])", spelling) is not None
 
     def run(self, code: str, requested: list[str]) -> ResearchResult:
         product, pdm_class = self.validate_request(code, requested)
