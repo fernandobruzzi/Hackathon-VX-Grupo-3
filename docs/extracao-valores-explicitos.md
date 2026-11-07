@@ -231,8 +231,8 @@ o próprio grau; `VITON` é FKM). Três completariam o valor:
 
 | Alias | Valor do PDM | Por que depende de evidência | Evidência exigida |
 | ----- | ------------ | ---------------------------- | ----------------- |
-| `ROSCA GROSSA`, `ROSCA FINA` | `METRICA GROSSA`, `METRICA FINA` | O PDM001 também aceita `UNC` e `UNF` | Bitola métrica no texto (`M14`, `M6X25`, `MA`, `MF`), quando a classe aceita rosca em polegada |
-| `BLINDADO` | `METALICA AMBOS LADOS` | Blindagem pode ser de um lado só | `ZZ` ou `2Z` no texto ou na referência |
+| `ROSCA GROSSA`, `ROSCA FINA` | `METRICA GROSSA`, `METRICA FINA` | O PDM001 também aceita `UNC` e `UNF` | `BITOLA` métrica validada (`M14`, `M6X25`) ou `MA`/`MF` no próprio campo `ROSCA`; bitola em polegada veta o alias |
+| `BLINDADO` | `METALICA AMBOS LADOS` | Blindagem pode ser de um lado só | `ZZ` ou `2Z` no texto ou na referência; sufixo `ZZ` também na referência canônica validada (`6004ZZ` → `6004-ZZ`) |
 | `EPI BOTINA` | `BOTINA CADARCO` | O PDM071 também tem `BOTINA ELASTICO` | Alias removido |
 
 Sem evidência, o campo fica vazio e a inferência da referência do rolamento não o
@@ -240,7 +240,8 @@ substitui por `ABERTO`. Mantidos por equivalência de uso: `OXIDADO` (o único
 oxidado do PDM é `OXIDADO PRETO`), `MANOPLA` (`ALAVANCA`), `MINI DISJUNTOR`
 (`MINIDISJUNTOR DIN`) e `CARBONO` (`ACO CARBONO`).
 
-Na base, comparando material a material com a revisão anterior, só cinco
+Na medição histórica original da #158 (classificador revisão `1`), comparando
+material a material com a revisão anterior, só cinco
 parafusos mudam: escrevem `ROSCA GROSSA` ou `ROSCA FINA` sem bitola
 (29878298, 26323422, 22872566, 14943072 e 19083115) e perdem a rosca. Os cinco
 já estavam incompletos por falta de bitola, então nenhuma proposta, unificação
@@ -252,3 +253,46 @@ classificação, com 36/36 decisões corretas.
 Regressões em `back/tests/test_alias_evidence.py`, com as linhas reais acima e os
 casos que precisam continuar reconhecidos.
 
+### Revalidação corrente da integração (#205)
+
+A comparação de desenvolvimento em 2026-11-07 mantém o classificador
+`aliases_v1` revisão **2** nos dois processos e compara o extrator revisão **8**
+com **9**. O [registro corrente](measurements/alias-evidence-158-current.json)
+identifica os hashes dos três arquivos de entrada, das implementações e cada
+alteração semântica. Os relatórios e gabaritos históricos permanecem preservados.
+
+| Medida | Antes (8) | Depois (9) |
+| ------ | --------: | ---------: |
+| Materiais analisados | 23.554 | 23.554 |
+| Atributos preenchidos | 74.306 | 74.301 |
+| Materiais válidos pelo PDM | 10.927 | 10.927 |
+| Materiais incompletos | 7.002 | 7.002 |
+| Materiais fora do PDM | 5.625 | 5.625 |
+| Chaves de identidade disponíveis | 11.813 | 11.813 |
+| Pedidos prontos para revisão | 256 | 256 |
+| Pedidos incompletos | 183 | 183 |
+| Pedidos fora do escopo | 81 | 81 |
+
+Só os cinco parafusos históricos acima perdem `ROSCA`; continuam incompletos,
+sem chave. Nos 520 pedidos não muda atributo, estado nem chave. Os 1.922
+atributos e as 256 chaves dos pedidos permanecem iguais. A contagem histórica de
+10.883 materiais válidos não representa esta integração. Esta rodada mede
+cobertura e diferenças de extração; não mede propostas nem precisão populacional
+e não constitui revisão técnica independente.
+
+O guarda usa a bitola já interpretada e validada, com evidência fora de campos
+de referência: `PN:M12`, `REF:M12`, `MODELO:M12`, `REF:M1234`, `REF:MA`,
+`MODELO:MF` e a referência estruturada não confirmam rosca métrica. A extração
+legada de `BITOLA` nesses metadados permanece; ela não autoriza completar `ROSCA`.
+`M12` físico sem rótulo e `BITOLA:M12` continuam confirmando o alias. `MA` e `MF`
+continuam válidos em `ROSCA:ROSCA GROSSA MA` e `ROSCA:ROSCA FINA MF`, sem
+emprestar evidência de outro rótulo. Uma bitola explícita em polegadas veta o
+alias mesmo com esses marcadores. O rolamento `BLINDADO` com `MODELO:6004ZZ`
+ou `6004ZZ/C3` mantém a vedação, enquanto `6004` continua sem vedação e não
+recebe `ABERTO` por inferência.
+
+Reproduzir sem alterar os dados, usando dois worktrees com as revisões indicadas:
+
+```bash
+.venv/bin/python docs/measurements/alias-evidence-158-current.py --root . --baseline-root /caminho/para/worktree-base --output /tmp/alias-evidence-158-current.json
+```

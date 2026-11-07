@@ -91,3 +91,68 @@ def test_boot_type_needs_the_closure(catalog, records):
     # "BOTINA" sozinha pode ser com cadarço ou elástico; o tipo escrito por inteiro continua valendo.
     assert "TIPO" not in extract(catalog, "PDM071", "CALCADO SEGURANCA, TIPO: EPI BOTINA, NUMERO: 40").attributes
     assert extract(catalog, "PDM071", records["19602505"].description).attributes["TIPO"].value == "BOTINA CADARCO"
+
+
+@pytest.mark.parametrize(
+    ("gauge", "extra", "thread"),
+    [
+        ("BITOLA:1/2POL, ", "REF:M1234", "GROSSA"),
+        ("BITOLA:1/2POL, ", "MODELO:M12", "GROSSA"),
+        ("BITOLA:1/2POL, ", "OBS:MA", "GROSSA"),
+        ("", "REF:M1234", "GROSSA"),
+        ("", "REF:MA", "GROSSA"),
+        ("", "MODELO:MF", "FINA"),
+    ],
+)
+def test_metric_looking_metadata_never_supplies_a_gauge(catalog, gauge, extra, thread):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, {gauge}ROSCA:ROSCA {thread}, {extra}")
+    if gauge:
+        assert result.attributes["BITOLA"].value == "1/2POL"
+    assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize(("tag", "thread"), [("MA", "GROSSA"), ("MF", "FINA")])
+@pytest.mark.parametrize("metadata", ["", ", PN:M12"])
+def test_metric_standard_marker_is_scoped_to_the_thread_field(catalog, tag, thread, metadata):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA {thread} {tag}{metadata}")
+    assert result.attributes["ROSCA"].value == f"METRICA {thread}"
+
+
+@pytest.mark.parametrize("reference", ["6004ZZ", "6004ZZ/C3"])
+def test_compact_valid_bearing_suffix_keeps_explicit_shielding(catalog, reference):
+    text = f"ROLAMENTO RIGIDO ESFERAS, VED:BLINDADO, DI:20MM, L:12MM, MODELO:{reference}"
+    result = extract(catalog, "PDM020", text)
+    assert "-ZZ" in result.attributes["REFERENCIA"].value
+    assert result.attributes["VEDACAO"].value == "METALICA AMBOS LADOS"
+
+
+@pytest.mark.parametrize(("tag", "thread"), [("MA", "GROSSA"), ("MF", "FINA")])
+def test_imperial_gauge_vetoes_metric_marker_even_in_thread_field(catalog, tag, thread):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, BITOLA:1/2POL, ROSCA:ROSCA {thread} {tag}")
+    assert result.attributes["BITOLA"].value == "1/2POL"
+    assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize("metadata", ["REF:MA", "PN:MF", "MODELO:MA"])
+def test_adjacent_metadata_label_does_not_supply_thread_marker(catalog, metadata):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA {metadata}")
+    assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize("reference", ["M1234", "ROSCA:MA", "ROSCA:ROSCA GROSSA MA"])
+def test_structured_reference_does_not_supply_thread_marker(catalog, reference):
+    result = extract(catalog, "PDM001", "PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA", reference)
+    assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize("label", ["PN", "REF", "MODELO"])
+@pytest.mark.parametrize("value", ["M12", "ABC M12"])
+def test_valid_metric_reference_does_not_authorize_thread_alias(catalog, label, value):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {label}:{value}")
+    assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize("gauge", ["M12", "BITOLA:M12", "REF:M12, M12", "REF:M12, BITOLA:M12", "REF:M12 BITOLA M12"])
+def test_physical_metric_gauge_still_authorizes_thread_alias(catalog, gauge):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {gauge}")
+    assert result.attributes["ROSCA"].value == "METRICA GROSSA"

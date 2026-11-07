@@ -1,0 +1,271 @@
+{
+  "kind": "DEVELOPMENT_COMPARISON",
+  "independent_technical_review": false,
+  "limits": "Coverage and semantic deltas only; no population precision or proposal measurement.",
+  "input_sha256": {
+    "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+    "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+  },
+  "before": {
+    "head": "e86e77a878cea1b48ab0c57ae25232c2fdbc83f5",
+    "implementation_state": "working_tree_sources_identified_by_sha256",
+    "source_sha256": {
+      "back/repositories/extraction/rule_based_v1.py": "ef885e035ce67dea28d9aebfb92b23237129709aae3e599d1ee0eb971abf8386",
+      "back/repositories/extraction/rule_based_v1_tables.py": "9fc0b8d6112eb4b6adbac29a92cf88dfbace718a2627e6a5d794f89f38644503",
+      "back/repositories/classification/aliases_v1.py": "9edadb79386d4417b37e7d9794feec50ea9d2ebae17f21aa30bc024af0580c7b"
+    },
+    "classifier": [
+      "aliases_v1",
+      "2"
+    ],
+    "extractor": [
+      "rule_based_v1",
+      "8"
+    ]
+  },
+  "after": {
+    "head": "5fd447e0b3c7525b3e805cb2205ee3c60250bd8b",
+    "implementation_state": "working_tree_sources_identified_by_sha256",
+    "source_sha256": {
+      "back/repositories/extraction/rule_based_v1.py": "648f15f92bef6fa6fe826c1a524a1e24a56e74cd37f28a4b67e74c04897b4c24",
+      "back/repositories/extraction/rule_based_v1_tables.py": "369f8d4701186f5c645f0a0e7af99d0a4eaeb4df32cb32f3827cda9085d25604",
+      "back/repositories/classification/aliases_v1.py": "9edadb79386d4417b37e7d9794feec50ea9d2ebae17f21aa30bc024af0580c7b"
+    },
+    "classifier": [
+      "aliases_v1",
+      "2"
+    ],
+    "extractor": [
+      "rule_based_v1",
+      "9"
+    ]
+  },
+  "materials": {
+    "changes": [
+      {
+        "id": "19083115",
+        "fields": {
+          "ROSCA": {
+            "before": "METRICA FINA",
+            "after": null
+          }
+        },
+        "before": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "ROSCA": "METRICA FINA",
+            "COMPRIMENTO": "30MM",
+            "CLASSE RESISTENCIA": "5.8",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "GALVANIZADO A FOGO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO ROSCA FINA 30MM 5.8 CARBONO GALVANIZADO A FOGO DIN 933"
+        },
+        "after": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "COMPRIMENTO": "30MM",
+            "CLASSE RESISTENCIA": "5.8",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "GALVANIZADO A FOGO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO ROSCA FINA 30MM 5.8 CARBONO GALVANIZADO A FOGO DIN 933"
+        }
+      },
+      {
+        "id": "26323422",
+        "fields": {
+          "ROSCA": {
+            "before": "METRICA GROSSA",
+            "after": null
+          }
+        },
+        "before": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "ROSCA": "METRICA GROSSA",
+            "COMPRIMENTO": "30MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO, ROSCA GROSSA, COMPRIMENTO:30MM, RESISTENCIA:8.8, MAT:CARBONO, ACAB:OXID, DIN 933"
+        },
+        "after": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "COMPRIMENTO": "30MM",
+            "CLASSE RESISTENCIA": "8.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO, ROSCA GROSSA, COMPRIMENTO:30MM, RESISTENCIA:8.8, MAT:CARBONO, ACAB:OXID, DIN 933"
+        }
+      },
+      {
+        "id": "14943072",
+        "fields": {
+          "ROSCA": {
+            "before": "METRICA GROSSA",
+            "after": null
+          }
+        },
+        "before": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "ROSCA": "METRICA GROSSA",
+            "CLASSE RESISTENCIA": "5.8",
+            "ACABAMENTO": "ZINCADO BRANCO",
+            "NORMA": "DIN 931"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO ROSCA GROSSA 5.8 ACO ZINC BRANCO DIN 931"
+        },
+        "after": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "CLASSE RESISTENCIA": "5.8",
+            "ACABAMENTO": "ZINCADO BRANCO",
+            "NORMA": "DIN 931"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO ROSCA GROSSA 5.8 ACO ZINC BRANCO DIN 931"
+        }
+      },
+      {
+        "id": "22872566",
+        "fields": {
+          "ROSCA": {
+            "before": "METRICA GROSSA",
+            "after": null
+          }
+        },
+        "before": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "ROSCA": "METRICA GROSSA",
+            "COMPRIMENTO": "75MM",
+            "CLASSE RESISTENCIA": "5.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO ROSCA GROSSA 75 MM 5.8 CARBONO GF DIN 933"
+        },
+        "after": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "COMPRIMENTO": "75MM",
+            "CLASSE RESISTENCIA": "5.8",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO ROSCA GROSSA 75 MM 5.8 CARBONO GF DIN 933"
+        }
+      },
+      {
+        "id": "29878298",
+        "fields": {
+          "ROSCA": {
+            "before": "METRICA GROSSA",
+            "after": null
+          }
+        },
+        "before": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "ROSCA": "METRICA GROSSA",
+            "COMPRIMENTO": "140MM",
+            "CLASSE RESISTENCIA": "10.9",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, COMP:140MM, GRAU:10.9, CARBONO, ACABAMENTO:GEOMET, CONF:DIN 933"
+        },
+        "after": {
+          "class": "PDM001",
+          "item": "PARAFUSO SEXTAVADO",
+          "attributes": {
+            "COMPRIMENTO": "140MM",
+            "CLASSE RESISTENCIA": "10.9",
+            "MATERIAL": "ACO CARBONO",
+            "NORMA": "DIN 933"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, COMP:140MM, GRAU:10.9, CARBONO, ACABAMENTO:GEOMET, CONF:DIN 933"
+        }
+      }
+    ],
+    "before": {
+      "rows": 23554,
+      "filled_attributes": 74306,
+      "statuses": {
+        "OUT_OF_SCOPE": 5625,
+        "VALID": 10927,
+        "INCOMPLETE": 7002
+      },
+      "identity_keys": 11813
+    },
+    "after": {
+      "rows": 23554,
+      "filled_attributes": 74301,
+      "statuses": {
+        "OUT_OF_SCOPE": 5625,
+        "VALID": 10927,
+        "INCOMPLETE": 7002
+      },
+      "identity_keys": 11813
+    }
+  },
+  "orders": {
+    "changes": [],
+    "before": {
+      "rows": 520,
+      "filled_attributes": 1922,
+      "statuses": {
+        "READY_FOR_REVIEW": 256,
+        "INCOMPLETE": 183,
+        "OUT_OF_SCOPE": 81
+      },
+      "identity_keys": 256
+    },
+    "after": {
+      "rows": 520,
+      "filled_attributes": 1922,
+      "statuses": {
+        "READY_FOR_REVIEW": 256,
+        "INCOMPLETE": 183,
+        "OUT_OF_SCOPE": 81
+      },
+      "identity_keys": 256
+    }
+  }
+}
