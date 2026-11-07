@@ -169,3 +169,11 @@ congeladas do batch: a retomada da finalização não reexecuta a análise nem a
 o payload aprovado. A referência NCM é vinculada à análise e às propostas antes
 desse congelamento. A aprovação continua reavaliando a referência configurada
 e exigindo as autorizações técnica e fiscal aplicáveis.
+
+As propostas novas da resolução manual e da publicação de enriquecimento também
+calculam e vinculam a avaliação fiscal atual antes de gravar seu hash. Motivos do
+snapshot exigem revisão fiscal mesmo quando o NCM original é preservado. Criar
+essa avaliação no produtor é distinto da aprovação: propostas persistidas sem
+a avaliação exigida, ou com versão/hash/data/origem divergentes, continuam
+recusadas e precisam ser regeneradas. A evidência parcial de enriquecimento
+continua sem certificar o NCM existente.

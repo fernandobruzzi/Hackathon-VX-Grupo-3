@@ -43,7 +43,7 @@ class MemoryStore:
 
 
 @pytest.fixture
-def enrichment_case(approval_case, connection, monkeypatch):
+def enrichment_case(approval_case, connection, monkeypatch, request):
     case = approval_case
     db, material, dataset = case["session"], case["materials"][0], case["dataset"]
     content = (KIT / "01_base_materiais.csv").read_bytes()
@@ -52,7 +52,7 @@ def enrichment_case(approval_case, connection, monkeypatch):
     material.material_code = row["CODIGO_MATERIAL"]
     material.original_description_long = row["DESCRICAO_LONGA"]
     material.manufacturer, material.manufacturer_reference = row["FABRICANTE"], row["REFERENCIA_FABRICANTE"]
-    material.unit, material.ncm = row["UNIDADE_MEDIDA"], row["NCM"]
+    material.unit, material.ncm = row["UNIDADE_MEDIDA"], getattr(request, "param", row["NCM"])
     material.pdm_class_id, material.pdm_description, material.attributes = None, None, {}
     files = [
         {"name": "01_base_materiais.csv", "object_key": "raw/base.csv", "sha256": hashlib.sha256(content).hexdigest()},
@@ -174,14 +174,12 @@ def test_simulated_evidence_cannot_be_approved_in_production(enrichment_case, mo
     assert response.json()["error"]["code"] == "SIMULATED_EVIDENCE_FORBIDDEN"
 
 
-@pytest.mark.parametrize("ncm", [None, "", "73181500"])
-def test_partial_enrichment_never_certifies_the_existing_ncm(enrichment_case, ncm):
+@pytest.mark.parametrize("enrichment_case", [None, "", "73181500"], indirect=True)
+def test_partial_enrichment_never_certifies_the_existing_ncm(enrichment_case):
     case = enrichment_case
     material, proposal = case["materials"][0], case["proposal"]
-    material.ncm, material.ncm_review_status = ncm, "PENDING"
-    changes = copy.deepcopy(proposal.changeset)
-    changes["after"]["ncm"] = ncm
-    proposal.changeset = changes
+    ncm = material.ncm
+    material.ncm_review_status = "PENDING"
     proposal.fiscal_review_status = "PENDING"
     persist(case)
     detail = case["client"].get(f"/api/v1/sanitization/{proposal.id}")

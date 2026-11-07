@@ -5,10 +5,12 @@ import json
 import os
 import uuid
 from collections import defaultdict
+from dataclasses import asdict
 from datetime import datetime
 
 from sqlalchemy import create_engine, text
 
+from clients.ncm_snapshot_store import load_configured_ncm_snapshot
 from clients.storage import ObjectStore
 from domain.enrichment_rules import (
     check_simulated_evidence,
@@ -18,6 +20,7 @@ from domain.enrichment_rules import (
     original_hash,
     original_item_name,
 )
+from domain.ncm_rules import check_ncm_consistency, requires_snapshot_fiscal_review
 from domain.pdm_validator import is_valid_value
 from domain.proposals import proposal_hash
 from enrichment.catalog import REAL_PRODUCTS
@@ -214,6 +217,17 @@ def publish_enrichment(store: ObjectStore, report_key: str, catalog, database_ur
                         raise ValueError("Evidencia persistida mudou: exige nova proposta")
                     evidence_ids.append(source["id"])
                     hashes[source["id"]] = evidence_hash(stored)
+                after = changes["after"]
+                changes["ncm_assessment"] = asdict(
+                    check_ncm_consistency(
+                        catalog,
+                        after["pdm_class_id"],
+                        after["attributes"],
+                        after["ncm"],
+                        item_name=after["item_name"],
+                        snapshot=load_configured_ncm_snapshot(),
+                    )
+                )
                 changes["evidence_hashes"] = hashes
                 members = [
                     {
@@ -226,7 +240,9 @@ def publish_enrichment(store: ObjectStore, report_key: str, catalog, database_ur
                 ]
                 digest = proposal_hash(members, changes, evidence_ids)
                 proposal_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ENRICHMENT|{material['id']}|{digest}"))
-                fiscal = bool(material["attributes"] and material["attributes"] != changes["after"]["attributes"])
+                fiscal = requires_snapshot_fiscal_review(changes["ncm_assessment"]) or bool(
+                    material["attributes"] and material["attributes"] != changes["after"]["attributes"]
+                )
                 connection.execute(
                     text("""INSERT INTO sanitization_proposals
                     (id,tenant_id,proposal_type,members,primary_material_id,changeset,changeset_hash,evidence_ids,
