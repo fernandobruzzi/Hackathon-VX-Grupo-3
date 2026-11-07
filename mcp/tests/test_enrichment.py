@@ -6,7 +6,8 @@ from vx_materials_mcp.tools.enrich_from_trusted_source import Enrichment
 
 
 class Repository:
-    def __init__(self, eligible=True, rows=()):
+    def __init__(self, eligible=True, rows=(), current=None):
+        self.current = current
         self.eligible = eligible
         self.rows = list(rows)
         self.reads = 0
@@ -14,6 +15,19 @@ class Repository:
     def require_real_material(self, code):
         if not self.eligible:
             raise ValueError("Codigo fora dos 15 produtos reais")
+
+    def material(self, code):
+        if self.current is not None:
+            return self.current
+        from enrichment.catalog import REAL_PRODUCTS
+
+        product = REAL_PRODUCTS[code]
+        return {
+            "manufacturer": product.manufacturer,
+            "manufacturer_reference": product.reference,
+            "pdm_class_id": product.pdm_class_id,
+            "attributes": {},
+        }
 
     def evidence_for_material(self, code, attributes):
         self.reads += 1
