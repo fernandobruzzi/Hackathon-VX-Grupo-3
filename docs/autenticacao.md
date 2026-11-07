@@ -63,7 +63,10 @@ empresa, os centros autorizados são definidos no backend para todas as contas;
 uma política por usuário pode substituir essa configuração sem confiar no front.
 
 O front passa automaticamente a redirecionar ao Cognito e oculta a seleção de
-contas locais. Não existe troca de papel por payload. A alternância entre sessões
+contas locais. No logout, a API revoga a sessão e devolve `provider_logout_url`.
+O front segue esse endereço para encerrar também a sessão do Hosted UI, que volta
+para `/login/`. Sem isso, o próximo login entraria na mesma conta sem pedir senha.
+O app client precisa listar `<APP_ORIGIN>/login/` em `LogoutURLs`. Não existe troca de papel por payload. A alternância entre sessões
 Cognito previamente autenticadas pertence à #8; até lá, sair e entrar novamente
 é o caminho para trocar de conta no provedor.
 
@@ -97,10 +100,14 @@ e cookies do cliente HTTP. Cobrem claims inválidos, assinatura, state/nonce,
 vínculo com navegador, replay, criptografia, expiração, CSRF, logout e três contas
 locais. Isso não comprova funcionamento no serviço AWS.
 
-Conforme o escopo local acordado para #7/#9/#20, a homologação Cognito/HTTPS será
-feita após a #6, com as três contas e grupos reais. A aplicação não apresenta
-sessões de teste como autenticação Cognito.
-Essa homologação está registrada na [#91](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/91).
+Na conta do workshop ([#91](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/91)),
+o login foi conferido com Cognito real e três contas nos grupos reais, em HTTPS
+pelo domínio próprio:
+- cookie `__Host-vx_session` Secure, HttpOnly, SameSite=Lax, host-only e `Path=/`;
+- `/auth/me` com papéis e permissões corretos e sem tokens;
+- logout recusando a sessão;
+- sessões locais ausentes do runtime.
+A aplicação não apresenta sessões de teste como autenticação Cognito.
 
 
 ## Transições de sessão no navegador
