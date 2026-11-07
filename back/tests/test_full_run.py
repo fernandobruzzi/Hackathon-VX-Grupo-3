@@ -155,7 +155,7 @@ def _manual_review_context(monkeypatch, records, catalog, tmp_path):
         assert [material.record for material in analyzed] == records
         assert context_arg is context
         assert catalog_arg is catalog
-        assert corrector_name == "head_noun_v1"
+        assert corrector_name == "head_noun_v2"
         saved.append(pending_by_code)
         return "test-manual-review-run"
 
