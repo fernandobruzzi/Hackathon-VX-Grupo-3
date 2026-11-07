@@ -147,7 +147,7 @@ uv run vx-back classification-report ../data/desafio01/01_base_materiais.csv --i
 uv run vx-back classification-evaluate tests/fixtures/classification_review.json --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`; the default, `aliases_v1`, expands unambiguous technical aliases like `VALV ESF`, `FILT` or `RET` at the start of a field first. Every input
+Select the algorithm with `CLASSIFICATION_REPOSITORY` or `--repository`; the default, `aliases_v2`, reads the item name that opens the long description: an abbreviation counts only when it is the prefix of a single PDM word in that family (`PARAF`, `SEXT`, `RET` after `VALVULA`), technical synonyms are explicit (`HEXAGONAL`, `ALLEN`, `ORING`, `C/TERMINAIS`), and a class name after that opening is an attribute, not an ambiguity. Any leftover sibling word, second PDM name, conflicting short description or attachment falls back to `aliases_v1`, which stays selectable with `aliases_v1` and `rule_based_v1`. Classification changes the index signature: rebuild the index after switching. Every input
 record gets a result with its original values and evidence; reports do not change
 the master data. An `OUT_OF_SCOPE` classification can be a false negative and must
 not automatically reject an order.
@@ -761,7 +761,7 @@ Each proposal carries only the pending reasons of its own type as conflicts: an 
 
 ## Lot approval
 
-The #224 policy may apply safe same-unit aliases and complete PDM descriptions without text loss as SYSTEM, off by default; all other corrections require human approval, individually or in lots after a sample review (#36). See [automatic corrections](docs/correcoes-automaticas.md). The batch writes `review_lane` (`tier`, `lot_key`, `reasons`) in each correction's changeset (#119). A lot is the `PENDING` corrections with the same `lot_key` and tier 1 or 2, technical review pending, no fiscal review, and at least 20 items. Proposals without `review_lane` or with tier 3 never enter a lot, and `MERGE` and NCM never do.
+The #224 policy may apply safe same-unit aliases and complete PDM descriptions without text loss as SYSTEM, off by default and measured only for `aliases_v1` + `head_noun_v1`: with any other stack, including the current defaults, it refuses every item until measured again; all other corrections require human approval, individually or in lots after a sample review (#36). See [automatic corrections](docs/correcoes-automaticas.md). The batch writes `review_lane` (`tier`, `lot_key`, `reasons`) in each correction's changeset (#119). A lot is the `PENDING` corrections with the same `lot_key` and tier 1 or 2, technical review pending, no fiscal review, and at least 20 items. Proposals without `review_lane` or with tier 3 never enter a lot, and `MERGE` and NCM never do.
 
 Opening a lot review (`/saneamento/lotes/`) freezes its proposals and versions and draws the sample on the server: 10 items for tier 1 and 20 for tier 2, stored in `lot_reviews` and the same on every read. Governança must mark every sample item. Zero errors applies each proposal through the normal decision service, each in its own savepoint and with its own audit event pointing to the lot review and sample. Items that changed, were decided apart or no longer pass the PDM are reported as `STALE` or `SKIPPED` and don't block the rest. Any wrong item applies nothing, records the rule, and sends the whole lot back to individual review.
 

@@ -18,6 +18,18 @@ from repositories.normalization import get_normalization_repository
 DATA = Path(__file__).parents[2] / "data" / "desafio01"
 
 
+@pytest.fixture(scope="module", autouse=True)
+def fallback_stack():
+    """Casos revisados à mão na pilha literal, mantida como fallback de auditoria.
+
+    O padrão (aliases_v2 + head_noun_v2) tem seus casos em test_corrections_head_v2.py.
+    """
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setenv("CLASSIFICATION_REPOSITORY", "aliases_v1")
+        patch.setenv("CORRECTION_REPOSITORY", "head_noun_v1")
+        yield
+
+
 @pytest.fixture(scope="module")
 def catalog():
     return load_pdm(DATA / "03_padrao_cadastro_PDM.xlsx")

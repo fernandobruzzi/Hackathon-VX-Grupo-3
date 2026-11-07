@@ -14,6 +14,15 @@ from repositories.proposal_payload import approval_payload
 DATA = Path(__file__).parents[2] / "data/desafio01"
 
 
+@pytest.fixture(scope="module", autouse=True)
+def measured_stack():
+    """A política foi medida com aliases_v1 + head_noun_v1; outra pilha exige nova medição."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setenv("CLASSIFICATION_REPOSITORY", "aliases_v1")
+        patch.setenv("CORRECTION_REPOSITORY", "head_noun_v1")
+        yield
+
+
 @pytest.fixture(scope="module")
 def inputs():
     return load_pdm(DATA / "03_padrao_cadastro_PDM.xlsx"), {
@@ -205,3 +214,22 @@ def test_short_only_attributes_are_traced_and_require_human_pdm_review(inputs):
     assert "SHORT_DESCRIPTION_REQUIRES_REVIEW" in result.evidence["pending"]
     assert result.evidence["attribute_evidence"]["DUREZA"]["source_field"] == "short_description"
     assert result.evidence["original_short_description"] == record.short_description
+
+
+@pytest.mark.parametrize(
+    ("classifier", "corrector"),
+    [("aliases_v2", "head_noun_v1"), ("aliases_v1", "head_noun_v2"), ("aliases_v2", "head_noun_v2")],
+)
+def test_unmeasured_stack_cannot_inherit_authorization(inputs, monkeypatch, classifier, corrector):
+    # O padrão atual (aliases_v2 + head_noun_v2) não herda a medição da pilha literal.
+    catalog, records = inputs
+    record = replace(records["24794045"], database_id="11111111-1111-4111-8111-111111111111")
+    proposal = next(p for p in candidates(record, catalog) if p.proposal_type == "UNIT_CORRECTION")
+    _, changes, _ = approval_payload(
+        proposal, {record.code: record.database_id}, "22222222-2222-4222-8222-222222222222"
+    )
+    current = {"unit": record.unit, "ncm": record.ncm or None, "attributes": {}}
+    monkeypatch.setenv("CLASSIFICATION_REPOSITORY", classifier)
+    monkeypatch.setenv("CORRECTION_REPOSITORY", corrector)
+    result = assess_record(catalog, record, "UNIT_CORRECTION", changes, current, "22222222-2222-4222-8222-222222222222")
+    assert not result.eligible and "UNTRUSTED_CLASS" in result.reasons
