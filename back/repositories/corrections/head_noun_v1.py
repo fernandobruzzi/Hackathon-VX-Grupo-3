@@ -38,6 +38,10 @@ def opens_description(item_name: str, description: str) -> bool:
 class HeadNounV1CorrectionRepository:
     name = "head_noun_v1"
 
+    def trusted_class(self, material: AnalyzedMaterial) -> bool:
+        """O nome do item do PDM, por extenso, abre a descrição."""
+        return opens_description(material.item_name, material.record.description)
+
     def _alias_only(self, raw_unit: str, normalizer: NormalizationRepository) -> tuple[FieldCorrection, ...]:
         """Sem classe confiável, só a grafia da mesma unidade (PÇ, PCA, UN → PC) é corrigida.
 
@@ -63,7 +67,7 @@ class HeadNounV1CorrectionRepository:
                 ("SEM_CLASSE_CONFIAVEL: o classificador nao decidiu a classe",),
             )
         pdm_class = catalog.classes[material.pdm_class_id]
-        if material.item_name is None or not opens_description(material.item_name, record.description):
+        if material.item_name is None or not self.trusted_class(material):
             return CorrectionResult(
                 self._alias_only(record.unit, normalizer),
                 ("CLASSE_NAO_CONFIRMADA: o nome do item nao abre a descricao",),

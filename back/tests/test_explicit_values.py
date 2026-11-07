@@ -85,14 +85,19 @@ def test_registration_order_does_not_become_ready_with_an_invented_body_material
     assert "MATERIAL CORPO" not in result.attributes
 
 
-def test_real_incomplete_fittings_cannot_generate_a_fiscal_correction(catalog):
-    # O 11264434 informa MACHO NPT e FEMEA 45 JIC, sem os termos RETO e CURVA/GRAUS.
+def test_real_incomplete_fittings_keep_terminals_empty_in_the_fiscal_correction(catalog):
+    # O 11264434 informa MACHO NPT e FEMEA 45 JIC, sem os termos RETO e CURVA/GRAUS. O código da
+    # mangueira montada é único e não depende do tipo de terminal: a proposta fiscal sai, mas os
+    # terminais continuam vazios e a revisão fiscal continua obrigatória.
     record = next(record for record in read_csv_records(KIT / "01_base_materiais.csv") if record.code == "11264434")
     material = analyze_material(record, catalog, get_classification_repository(catalog), get_extraction_repository())
 
     assert "TERMINAL A" not in material.attributes
     assert "TERMINAL B" not in material.attributes
-    assert propose_ncm_corrections([material], catalog) == []
+    proposals = propose_ncm_corrections([material], catalog)
+    assert [p.changeset["after"]["ncm"] for p in proposals] == ["4009.22.10"]
+    assert proposals[0].fiscal_review_required
+    assert "TERMINAL A" not in proposals[0].changeset["after"]["attributes"]
 
 
 def test_explicit_fittings_preserve_the_required_fiscal_review(catalog):

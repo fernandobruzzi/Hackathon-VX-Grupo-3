@@ -236,6 +236,8 @@ class AnalyzedMaterial:
     attributes: dict[str, str]
     identity_key: str | None
     review_reasons: tuple[str, ...] = ()
+    # Regra que decidiu a classe; `*/head.name` indica o nome do PDM no começo da descrição.
+    classification_rule: str | None = None
 
 
 class MatchType(StrEnum):

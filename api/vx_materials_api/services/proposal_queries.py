@@ -105,8 +105,11 @@ def detail(db, proposal, principal, catalog):
             catalog,
             after.model_dump(),
             [item.model_dump() | {"material_code": codes.get(item.material_id)} for item in interpretations],
-            check_unit=proposal.technical_review_status != "NOT_REQUIRED" and not partial_enrichment,
-            allow_incomplete=partial_enrichment,
+            check_unit=proposal.technical_review_status != "NOT_REQUIRED"
+            and not partial_enrichment
+            and proposal.proposal_type != "NCM_CORRECTION",
+            # Correção fiscal grava só o NCM, como na aprovação: lacunas do PDM não a bloqueiam.
+            allow_incomplete=partial_enrichment or proposal.proposal_type == "NCM_CORRECTION",
         )
         conflicts.extend(blocker for blocker in blockers if blocker not in conflicts)
     try:

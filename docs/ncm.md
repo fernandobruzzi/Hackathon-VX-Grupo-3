@@ -43,9 +43,24 @@ pois essa versão não foi carregada. O PDM não é apresentado como tabela ofic
 
 `sanitize-report` inclui `NCM_CORRECTION` nas contagens de correções. `sanitize`
 persiste essas propostas pelo mesmo contrato `proposal-v1`, inclusive nos jobs
-retomáveis. Só materiais ativos, de classe confirmada pelo nome inicial e com
-PDM completo recebem proposta. Condição não resolvida ou vários códigos possíveis
-não são escolhidos por suposição.
+retomáveis. Recebem proposta materiais em qualquer status cuja classe vem do nome
+que abre a descrição, por extenso ou abreviado sem ambiguidade (`aliases_v2`). Só os
+atributos que decidem o código são exigidos. Condição não resolvida ou vários códigos
+possíveis não são escolhidos por suposição.
+
+Propor é mais restrito que a coerência, que segue o PDM ao pé da letra e continua igual
+no chat e na aprovação (`ncm_proposal_blockers`, política `ncm-proposal-v1`):
+
+- A posição do NCM depende da matéria (cap. 73 é ferro/aço; 4016, borracha vulcanizada).
+  O código único da classe só é proposto com `MATERIAL` ou `CLASSE RESISTENCIA` admitidos
+  pelo PDM. Classe de resistência de fixador (8.8, SAE GRAU 5, A2-70) só existe para aço.
+  Parafuso sem material nem classe e O-ring sem elastômero ficam sem proposta.
+- Anel ou vedação de sobressalente (`PDM110`) pode ser junta, artefato de borracha ou parte
+  de máquina: o equipamento de aplicação não decide sem material e desenho, e o item vai
+  para revisão manual.
+
+A aprovação de uma `NCM_CORRECTION` grava só o NCM, inclusive em material bloqueado ou
+obsoleto. Classe, atributos, descrição, identidade e canonicidade não mudam por ela.
 
 O original permanece no membro e em `changes.before`; `changes.after` traz o
 código proposto. `ncm_before_assessment` e `ncm_assessment` registram as avaliações,
@@ -68,6 +83,39 @@ aprovação anterior; é necessário gerar outra proposta e revisar novamente.
 Propostas legadas sem avaliação armazenada são conferidas pelo mesmo motor,
 preservando o vínculo existente do hash aos atributos e à referência PDM.
 Cada evento de aprovação registra a avaliação efetivamente conferida na auditoria.
+
+## Benchmark documental
+
+`data/benchmark_ncm/v1` traz 6.271 parafusos, válvulas e anéis com gabarito documental.
+O avaliador lê só a base sem gabarito para gerar as propostas e une o gabarito depois,
+por `ID_BENCHMARK`. Do diretório `back/`:
+
+```bash
+uv run python -m pipelines.measure_ncm_benchmark ../data/benchmark_ncm/v1 --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
+O relatório separa, por família, preservação dos corretos, correção dos incorretos,
+preenchimento dos ausentes, acurácia balanceada, precisão das propostas, alterações
+indevidas, propostas só de formato, abstenções e encaminhamento dos pendentes. Outra
+família ou versão com as mesmas colunas usa o mesmo avaliador. Os rótulos são documentais,
+sem revisão humana independente: a medição é de desenvolvimento e não autoriza aplicar
+nada.
+
+Medição em 7/11/2026 (`aliases_v2@1`, `head_noun_v2`, política `ncm-proposal-v1`):
+
+| Família   | Erros e ausências resolvidos | Acurácia balanceada | Precisão das propostas | Alterações indevidas | Pendentes encaminhados |
+| --------- | ---------------------------- | ------------------- | ---------------------- | -------------------- | ---------------------- |
+| Anéis     | 98/111                       | 91,8%               | 343/343                | 0                    | 346/346                |
+| Parafusos | 416/421                      | 99,3%               | 1628/1628              | 0                    | 17/17                  |
+| Válvulas  | 163/163                      | 100%                | 583/583                | 0                    | —                      |
+| Total     | 677/695 (97,4%)              | 98,2%               | 2554/2554              | 0                    | 363/363                |
+
+Antes destas regras, o mesmo avaliador resolvia 158/695 (22,7%), com acurácia balanceada
+de 59,3%. Manter o cadastro já acerta 88,24% dos pontuáveis, por isso a acurácia simples
+não é a métrica de referência. Das 2.554 propostas, 1.877 só mudam a grafia do código
+(`73181500` para `7318.15.00`) e também passam pela revisão fiscal. Os 18 restantes são
+anéis retentores escritos como `ANEL RETENTOR`, materiais por extenso fora do PDM
+(`ETILENO PROPILENO`) e um erro de digitação no nome (`PAARAFUSO`).
 
 ## Reprodução local
 
