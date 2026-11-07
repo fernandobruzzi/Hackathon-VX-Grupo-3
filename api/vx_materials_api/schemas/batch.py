@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+JobStatus = Literal["QUEUED", "RUNNING", "SUCCEEDED", "FAILED"]
 JobType = Literal["SANITIZE", "IMPORT_ORDERS", "ENRICH_REAL_PRODUCTS"]
 
 
@@ -51,7 +52,7 @@ class JobError(_Contract):
 class BatchJobOut(_Contract):
     id: UUID
     job_type: JobType
-    status: Literal["QUEUED", "RUNNING", "SUCCEEDED", "FAILED"]
+    status: JobStatus
     requested_by: str
     pdm_version: str
     ncm_version: str
@@ -68,3 +69,4 @@ class BatchJobList(_Contract):
     # O dataset que um novo job usaria: a tela inicia o job sem pedir o id ao usuário.
     latest_dataset_id: UUID | None
     next_cursor: str | None = Field(default=None)
+    active_job: BatchJobOut | None

@@ -1162,6 +1162,8 @@ O exemplo abaixo usa números observados no kit e mantém o resultado posterior 
 
 ### 6.5. Batch e publicação de pedidos
 
+O histórico batch é paginado por data e UUID, com cursor vinculado à empresa e ao filtro de status. A resposta inclui `active_job` independentemente da página ou filtro, para acompanhar retomadas antigas. Detalhes em [historico-batch.md](historico-batch.md).
+
 São necessários estes contratos complementares para fechar o fluxo.
 
 | Endpoint | Permissão | Entrada principal | Resultado |

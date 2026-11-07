@@ -10,7 +10,7 @@ from clients.storage import get_object_store
 from vx_materials_api import settings
 from vx_materials_api.dependencies import current_identity, db_session
 from vx_materials_api.errors import ApiProblem
-from vx_materials_api.schemas.batch import BatchJobList, BatchJobOut, BatchJobRequest, BatchJobResumeRequest
+from vx_materials_api.schemas.batch import BatchJobList, BatchJobOut, BatchJobRequest, BatchJobResumeRequest, JobStatus
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.security.sessions import verify_write
@@ -54,14 +54,21 @@ def start_job(
 
 
 @router.get("/jobs")
-def list_jobs(identity: Governance, db: Db, limit: Annotated[int, Query(ge=1, le=100)] = 20) -> BatchJobList:
+def list_jobs(
+    identity: Governance,
+    db: Db,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    cursor: Annotated[str | None, Query(max_length=512)] = None,
+    status: JobStatus | None = None,
+) -> BatchJobList:
     timeout = settings.batch_heartbeat_timeout_seconds()
-    jobs = batch_service.list_jobs(db, identity, limit, timeout)
+    jobs, next_cursor, active = batch_service.list_jobs(db, identity, limit, timeout, cursor=cursor, status=status)
     dataset = batch_service.latest_dataset(db, identity)
     return BatchJobList(
         items=[batch_service.to_contract(db, job) for job in jobs],
         latest_dataset_id=dataset.id if dataset else None,
-        next_cursor=None,
+        next_cursor=next_cursor,
+        active_job=batch_service.to_contract(db, active) if active else None,
     )
 
 

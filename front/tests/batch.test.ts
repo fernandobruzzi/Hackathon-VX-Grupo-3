@@ -75,7 +75,11 @@ for (const [action, code, message] of [
           },
           { status: 503 },
         );
-      return Response.json({ items: jobs, latest_dataset_id: "dataset" });
+      return Response.json({
+        items: jobs,
+        latest_dataset_id: "dataset",
+        active_job: jobs.find((job) => ["QUEUED", "RUNNING"].includes(job.status)) ?? null,
+      });
     };
     let view!: ReactTestRenderer;
     const click = async () => {
@@ -136,7 +140,7 @@ test("trocar a sessão descarta o comando sem resposta e uma nova operação rec
       keys.push(new Headers(init.headers).get("Idempotency-Key")!);
       throw new TypeError("Resposta perdida");
     }
-    return Response.json({ items: [], latest_dataset_id: "dataset" });
+    return Response.json({ items: [], latest_dataset_id: "dataset", active_job: null });
   };
   let view!: ReactTestRenderer;
   const buttons = (label: string) =>
@@ -204,7 +208,11 @@ for (const action of ["Iniciar job", "Reprocessar"]) {
         jobs = [];
         return Response.json({ ...job, status: "SUCCEEDED" });
       }
-      return Response.json({ items: jobs, latest_dataset_id: dataset });
+      return Response.json({
+        items: jobs,
+        latest_dataset_id: dataset,
+        active_job: jobs.find((job) => ["QUEUED", "RUNNING"].includes(job.status)) ?? null,
+      });
     };
     let view!: ReactTestRenderer;
     const click = async (label: string) =>

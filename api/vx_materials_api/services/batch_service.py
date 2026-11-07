@@ -5,6 +5,8 @@ progresso no banco (checkpoint e heartbeat). Antes de qualquer leitura ou dispar
 vida há mais que o prazo viram FAILED, com o checkpoint preservado: reprocessar continua dele.
 """
 
+import base64
+import binascii
 import hashlib
 import json
 import re
@@ -12,7 +14,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select, text, update
+from sqlalchemy import and_, func, or_, select, text, update
 from sqlalchemy.orm import Session
 
 from clients.storage import ObjectStore
@@ -245,21 +247,62 @@ def get_job(db: Session, identity: Identity, job_id: uuid.UUID, timeout_seconds:
     return job
 
 
-def list_jobs(db: Session, identity: Identity, limit: int, timeout_seconds: int) -> list[BatchJob]:
+def _history_cursor(job: BatchJob, tenant_id: uuid.UUID, status: str | None) -> str:
+    payload = [1, str(tenant_id), status, job.created_at.isoformat(), str(job.id)]
+    return base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).decode()
+
+
+def _history_position(cursor: str, tenant_id: uuid.UUID, status: str | None) -> tuple[datetime, uuid.UUID]:
+    try:
+        if not cursor or len(cursor) > 512:
+            raise ValueError
+        payload = json.loads(base64.b64decode(cursor, altchars=b"-_", validate=True))
+        if not isinstance(payload, list) or len(payload) != 5:
+            raise ValueError
+        version, tenant, saved_status, timestamp, job_id = payload
+        if type(version) is not int or version != 1 or tenant != str(tenant_id) or saved_status != status:
+            raise ValueError
+        if not isinstance(timestamp, str) or not isinstance(job_id, str):
+            raise ValueError
+        position = datetime.fromisoformat(timestamp)
+        if position.tzinfo is None or position.utcoffset() is None:
+            raise ValueError
+        return position, uuid.UUID(job_id)
+    except (ValueError, TypeError, binascii.Error, UnicodeError) as error:
+        raise ApiProblem(422, "INVALID_CURSOR", "Cursor do histórico inválido para esta empresa ou filtro.") from error
+
+
+def list_jobs(
+    db: Session,
+    identity: Identity,
+    limit: int,
+    timeout_seconds: int,
+    *,
+    cursor: str | None = None,
+    status: str | None = None,
+) -> tuple[list[BatchJob], str | None, BatchJob | None]:
+    position = _history_position(cursor, identity.tenant_id, status) if cursor is not None else None
     expire_stale_jobs(db, identity.tenant_id, timeout_seconds)
-    return list(
-        db.scalars(
-            select(BatchJob)
-            .where(BatchJob.tenant_id == identity.tenant_id)
-            .order_by(BatchJob.created_at.desc(), BatchJob.id)
-            .limit(limit)
+    query = select(BatchJob).where(BatchJob.tenant_id == identity.tenant_id)
+    if status is not None:
+        query = query.where(BatchJob.status == status)
+    if position is not None:
+        created_at, job_id = position
+        query = query.where(
+            or_(BatchJob.created_at < created_at, and_(BatchJob.created_at == created_at, BatchJob.id > job_id))
         )
-    )
+    rows = list(db.scalars(query.order_by(BatchJob.created_at.desc(), BatchJob.id).limit(limit + 1)))
+    items = rows[:limit]
+    next_cursor = _history_cursor(items[-1], identity.tenant_id, status) if len(rows) > limit else None
+    return items, next_cursor, _active_job(db, identity.tenant_id)
 
 
 def latest_dataset(db: Session, identity: Identity) -> Dataset | None:
     return db.scalar(
-        select(Dataset).where(Dataset.tenant_id == identity.tenant_id).order_by(Dataset.imported_at.desc()).limit(1)
+        select(Dataset)
+        .where(Dataset.tenant_id == identity.tenant_id)
+        .order_by(Dataset.imported_at.desc(), Dataset.id.desc())
+        .limit(1)
     )
 
 

@@ -1338,6 +1338,30 @@
               "minimum": 1,
               "maximum": 100
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Cursor opaco retornado em next_cursor. Reiniciar ao trocar tenant ou status.",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "QUEUED",
+                "RUNNING",
+                "SUCCEEDED",
+                "FAILED"
+              ]
+            }
           }
         ],
         "responses": {
@@ -1421,7 +1445,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Histórico por created_at DESC e id ASC, com cursor opaco vinculado ao tenant e filtro de status. Cursor inválido recebe 422 INVALID_CURSOR. active_job acompanha o job ativo autorizado independentemente do filtro ou página."
       },
       "post": {
         "operationId": "startBatchJob",
@@ -5603,12 +5628,24 @@
                 "type": "null"
               }
             ]
+          },
+          "active_job": {
+            "description": "Job ativo do tenant, mesmo fora da página ou do filtro; null quando não há execução ativa.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BatchJob"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "items",
           "latest_dataset_id",
-          "next_cursor"
+          "next_cursor",
+          "active_job"
         ],
         "additionalProperties": false
       },

@@ -885,7 +885,8 @@
         }
       ],
       "latest_dataset_id": "88888888-8888-4888-8888-888888888888",
-      "next_cursor": null
+      "next_cursor": null,
+      "active_job": null
     }
   },
   {
@@ -2230,6 +2231,187 @@
         "code": "MULTIPLE_DATASETS_NOT_SUPPORTED",
         "message": "O batch suporta exatamente um dataset por empresa no MVP. Múltiplas importações não são suportadas.",
         "request_id": "test-multiple-datasets",
+        "details": {}
+      }
+    }
+  },
+  {
+    "name": "batch-history-filtered-with-active-job",
+    "path": "/api/v1/batch/jobs",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "limit": 20,
+      "status": "FAILED"
+    },
+    "response": {
+      "items": [],
+      "latest_dataset_id": "88888888-8888-4888-8888-888888888888",
+      "next_cursor": null,
+      "active_job": {
+        "id": "66666666-6666-4666-8666-666666666666",
+        "job_type": "SANITIZE",
+        "status": "RUNNING",
+        "requested_by": "Fernanda · Cadastro",
+        "pdm_version": "pdm-kit-v1",
+        "ncm_version": "ncm-demo-v1",
+        "progress": {
+          "processed": 15780,
+          "total": 23554
+        },
+        "counts": {
+          "proposals": 1284,
+          "merges": 611,
+          "ncm": 402,
+          "enrichment": 15
+        },
+        "started_at": "2026-11-07T22:05:00Z",
+        "finished_at": null,
+        "heartbeat_at": "2026-11-07T16:10:00Z",
+        "error": null
+      }
+    }
+  },
+  {
+    "name": "batch-history-first-page",
+    "path": "/api/v1/batch/jobs",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "limit": 1,
+      "status": "FAILED"
+    },
+    "response": {
+      "items": [
+        {
+          "id": "66666666-6666-4666-8666-666666666666",
+          "job_type": "SANITIZE",
+          "status": "FAILED",
+          "requested_by": "Fernanda · Cadastro",
+          "pdm_version": "pdm-kit-v1",
+          "ncm_version": "ncm-demo-v1",
+          "progress": {
+            "processed": 15780,
+            "total": 23554
+          },
+          "counts": {
+            "proposals": 1284,
+            "merges": 611,
+            "ncm": 402,
+            "enrichment": 15
+          },
+          "started_at": "2026-11-07T22:05:00Z",
+          "finished_at": "2026-11-07T16:11:00Z",
+          "heartbeat_at": null,
+          "error": {
+            "code": "WORKER_TIMEOUT",
+            "message": "Processamento interrompido por ausência de heartbeat."
+          }
+        }
+      ],
+      "latest_dataset_id": "88888888-8888-4888-8888-888888888888",
+      "next_cursor": "WzEsIjExMTExMTExLTExMTEtNDExMS04MTExLTExMTExMTExMTExMSIsIkZBSUxFRCIsIjIwMjYtMTEtMDdUMTI6MDA6MDArMDA6MDAiLCI2NjY2NjY2Ni02NjY2LTQ2NjYtODY2Ni02NjY2NjY2NjY2NjYiXQ==",
+      "active_job": {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "job_type": "SANITIZE",
+        "status": "RUNNING",
+        "requested_by": "Fernanda · Cadastro",
+        "pdm_version": "pdm-kit-v1",
+        "ncm_version": "ncm-demo-v1",
+        "progress": {
+          "processed": 15780,
+          "total": 23554
+        },
+        "counts": {
+          "proposals": 1284,
+          "merges": 611,
+          "ncm": 402,
+          "enrichment": 15
+        },
+        "started_at": "2026-11-07T22:05:00Z",
+        "finished_at": null,
+        "heartbeat_at": "2026-11-07T16:10:00Z",
+        "error": null
+      }
+    }
+  },
+  {
+    "name": "batch-history-next-page",
+    "path": "/api/v1/batch/jobs",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "limit": 1,
+      "status": "FAILED",
+      "cursor": "WzEsIjExMTExMTExLTExMTEtNDExMS04MTExLTExMTExMTExMTExMSIsIkZBSUxFRCIsIjIwMjYtMTEtMDdUMTI6MDA6MDArMDA6MDAiLCI2NjY2NjY2Ni02NjY2LTQ2NjYtODY2Ni02NjY2NjY2NjY2NjYiXQ=="
+    },
+    "response": {
+      "items": [
+        {
+          "id": "22222222-2222-4222-8222-222222222222",
+          "job_type": "SANITIZE",
+          "status": "FAILED",
+          "requested_by": "Fernanda · Cadastro",
+          "pdm_version": "pdm-kit-v1",
+          "ncm_version": "ncm-demo-v1",
+          "progress": {
+            "processed": 15780,
+            "total": 23554
+          },
+          "counts": {
+            "proposals": 1284,
+            "merges": 611,
+            "ncm": 402,
+            "enrichment": 15
+          },
+          "started_at": "2026-11-07T22:05:00Z",
+          "finished_at": "2026-11-07T16:11:00Z",
+          "heartbeat_at": null,
+          "error": {
+            "code": "WORKER_TIMEOUT",
+            "message": "Processamento interrompido por ausência de heartbeat."
+          }
+        }
+      ],
+      "latest_dataset_id": "88888888-8888-4888-8888-888888888888",
+      "next_cursor": null,
+      "active_job": {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "job_type": "SANITIZE",
+        "status": "RUNNING",
+        "requested_by": "Fernanda · Cadastro",
+        "pdm_version": "pdm-kit-v1",
+        "ncm_version": "ncm-demo-v1",
+        "progress": {
+          "processed": 15780,
+          "total": 23554
+        },
+        "counts": {
+          "proposals": 1284,
+          "merges": 611,
+          "ncm": 402,
+          "enrichment": 15
+        },
+        "started_at": "2026-11-07T22:05:00Z",
+        "finished_at": null,
+        "heartbeat_at": "2026-11-07T16:10:00Z",
+        "error": null
+      }
+    }
+  },
+  {
+    "name": "batch-history-invalid-cursor",
+    "path": "/api/v1/batch/jobs",
+    "method": "get",
+    "status": 422,
+    "query": {
+      "cursor": "invalid!"
+    },
+    "response": {
+      "error": {
+        "code": "INVALID_CURSOR",
+        "message": "Cursor do histórico inválido para esta empresa ou filtro.",
+        "request_id": "batch-history-invalid",
         "details": {}
       }
     }

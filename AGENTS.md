@@ -669,6 +669,8 @@ See [`docs/pendencias.md`](docs/pendencias.md) for endpoints and operation.
 
 ## Full-base runs
 
+Batch history uses tenant/status-bound keyset cursors and exposes the active job independently of the history page or filter. Session/filter changes reset frontend pages. See [`docs/historico-batch.md`](docs/historico-batch.md).
+
 Batch sanitization supports exactly one dataset per tenant in the MVP. Start and resume reject multiple imports with `422 MULTIPLE_DATASETS_NOT_SUPPORTED` before launching; direct workers refuse the same ambiguous scope before reading stock.
 
 Starting and resuming batch jobs require a UUID `Idempotency-Key`. Repeating the

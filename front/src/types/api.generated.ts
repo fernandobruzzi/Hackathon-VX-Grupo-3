@@ -227,7 +227,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Listar os jobs mais recentes e o dataset que um novo job usaria. */
+    /**
+     * Listar os jobs mais recentes e o dataset que um novo job usaria.
+     * @description Histórico por created_at DESC e id ASC, com cursor opaco vinculado ao tenant e filtro de status. Cursor inválido recebe 422 INVALID_CURSOR. active_job acompanha o job ativo autorizado independentemente do filtro ou página.
+     */
     get: operations["listBatchJobs"];
     put?: never;
     /**
@@ -928,6 +931,8 @@ export interface components {
       /** @description Dataset que um novo job usaria. */
       latest_dataset_id: string | null;
       next_cursor: string | null;
+      /** @description Job ativo do tenant, mesmo fora da página ou do filtro; null quando não há execução ativa. */
+      active_job: components["schemas"]["BatchJob"] | null;
     };
     AuditEvent: {
       /** Format: uuid */
@@ -2526,6 +2531,9 @@ export interface operations {
     parameters: {
       query?: {
         limit?: number;
+        /** @description Cursor opaco retornado em next_cursor. Reiniciar ao trocar tenant ou status. */
+        cursor?: string;
+        status?: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
       };
       header?: never;
       path?: never;
