@@ -75,6 +75,11 @@ modelos e migrações, contratos OpenAPI, tipos do front, formatação e build e
 O comando instalado `vx-db upgrade` roda duas vezes em um banco separado dos testes.
 Os nomes dos jobs completos permanecem os mesmos.
 
+O check obrigatório `database` só passa quando os quatro jobs PostgreSQL passam.
+Cada job usa seu próprio runner e PostgreSQL. A suíte MCP roda em paralelo com
+os três grupos da API (demo, batch e os demais testes). O último grupo também inclui
+novos módulos automaticamente. Cada job imprime as dez maiores durações do pytest.
+
 Uma atualização nova do mesmo PR de produção cancela a execução anterior.
 Dependências uv/npm e camadas Docker têm cache; uv é fixado na versão do Dockerfile.
 Cada imagem tem escopo próprio no BuildKit. Um job cancelado pode não salvar cache;
