@@ -207,17 +207,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: bedrock:InvokeModel
-                Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-opus-5-5"
+                Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-sonnet-5"
               # O perfil US exige os destinos; a condicao impede invocacao direta.
               - Effect: Allow
                 Action: bedrock:InvokeModel
                 Resource:
-                  - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-opus-5-5
-                  - arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-opus-5-5
-                  - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-opus-5-5
+                  - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-5
+                  - arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-sonnet-5
+                  - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-5
                 Condition:
                   StringEquals:
-                    bedrock:InferenceProfileArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-opus-5-5"
+                    bedrock:InferenceProfileArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-sonnet-5"
       Tags:
         - { Key: vx-project, Value: !Ref Name }
 

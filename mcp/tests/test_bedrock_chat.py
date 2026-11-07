@@ -23,7 +23,7 @@ from vx_materials_mcp.chatbot.session_manager import build_turn_context
 from vx_materials_mcp.schemas.agent import AgentRunRequest, HistoryMessage
 from vx_materials_mcp.security import caller_to_environment
 
-MODEL = "us.anthropic.claude-opus-5-5"
+MODEL = "us.anthropic.claude-sonnet-5"
 
 
 class FakeBedrock:
@@ -169,7 +169,7 @@ def client_for(catalog, sdk):
     return TestClient(create_app(catalog, SECRET, connect, bedrock_client=sdk))
 
 
-def test_endpoint_calls_opus_twice_and_preserves_real_mcp_validation(catalog, monkeypatch):
+def test_endpoint_calls_sonnet_twice_and_preserves_real_mcp_validation(catalog, monkeypatch):
     monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
     sdk = FakeBedrock()
     response = run(client_for(catalog, sdk), BOLT)
@@ -180,7 +180,7 @@ def test_endpoint_calls_opus_twice_and_preserves_real_mcp_validation(catalog, mo
     assert data["material_card"]["can_submit"] is False
     assert "CLASSE RESISTENCIA" in data["material_card"]["missing_attributes"]
     assert any(c["name"] == "validate_and_format_pdm" for c in data["tool_calls"])
-    assert data["context_patch"]["planner"] == "bedrock_opus_5_5_v1"
+    assert data["context_patch"]["planner"] == "bedrock_sonnet_5_v1"
     assert "material_card" in sdk.calls[1]["messages"][-1]["content"][0]["text"]
     schema = botocore.session.get_session().get_service_model("bedrock-runtime").operation_model("Converse")
     for call in sdk.calls:

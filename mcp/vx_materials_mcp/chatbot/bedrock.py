@@ -17,7 +17,7 @@ from vx_materials_mcp.chatbot.prompts import MATERIAL_REGISTRATION_SYSTEM
 from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
 
-PLANNER = "bedrock_opus_5_5_v1"
+PLANNER = "bedrock_sonnet_5_v1"
 
 
 class BedrockError(Exception):
