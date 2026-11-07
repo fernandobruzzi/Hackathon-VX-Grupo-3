@@ -8,8 +8,8 @@ ensaio começar igual ao pitch.
 
 1. Apaga o estado operacional: auditoria, idempotência, consolidações de estoque, conversas,
    snapshots de qualidade, pedidos, enriquecimento, propostas, índice de busca, jobs, saldos, materiais e datasets.
-2. Garante as contas das três personas (`SOLICITANTE_OPERACAO`, `GESTOR_CADASTRO` e
-   `AUDITOR_FISCAL`), ativas e com o papel fixo do servidor.
+2. Garante as contas das personas (`SOLICITANTE_OPERACAO`, `GESTOR_CADASTRO`,
+   `AUDITOR_FISCAL` e `DEV_TI`), ativas e com o papel fixo do servidor.
 3. Recarrega o kit como veio, com os mesmos identificadores do `vx-bootstrap`.
 4. Refaz o índice de busca e as propostas, com as mesmas regras do batch.
 5. Importa os 520 pedidos do kit pela mesma importação de `vx-import-orders` (`IMPORT`, sem
