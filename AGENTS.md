@@ -227,8 +227,9 @@ Promotion CI is configured to run the local smoke, reset the demo with the cache
 API image, run the complete flow, then measure Agent concurrency and cancellation
 cleanup in an isolated Compose project. Its project name includes the run ID and
 attempt, and cleanup is configured after failures or cancellation. Only
-same-repository `homologacao` promotions to `main` run the eight complete CI checks;
-work PRs to `homologacao` keep their local verification gate. This is configuration
+same-repository `homologacao` promotions to `main` run the eight required CI checks.
+Work PRs to `homologacao` run style and repository policy and keep their local
+verification gate. This is configuration
 preparation for #157, which remains open: a fresh image build and the complete
 Compose flow still require execution with the RDS certificate endpoint available.
 `DB_PORT` and `API_BIND_PORT` choose local ports;
@@ -266,7 +267,7 @@ Each piece of work follows the same path:
 1. **Issue:** claim the issue, as described in [Claiming an issue](#claiming-an-issue). If none exists for the work, create one and assign it first. Nothing else starts before this.
 2. **Branch:** create a branch for it from an up-to-date `homologacao`, the default branch.
 3. **Develop:** work [local first](#local-first) and make atomic commits. Run the local checks.
-4. **PR:** [update and rebase on `homologacao`](#before-opening-a-pr), then open a pull request targeting `homologacao`, closing the issue. These PRs run no CI: the local checks are the gate, recorded in the PR.
+4. **PR:** [update and rebase on `homologacao`](#before-opening-a-pr), then open a pull request targeting `homologacao`, closing the issue. CI checks style and repository policy. Record the required local checks in the PR.
 5. **Merge:** rebase-merge into `homologacao`, then complete [the branch cleanup](#after-merging).
 6. **Promote:** when `homologacao` is ready for production, follow [Promoting to main](#promoting-to-main). Only that PR runs the full CI.
 
@@ -396,7 +397,7 @@ Never force-push `main` or a branch someone else is using.
 
 ### Promoting to main
 
-`main` receives only promotions of `homologacao`, opened from the same repository. This is the only PR that runs the full CI and the repository policy.
+`main` receives only promotions of `homologacao`, opened from the same repository. Only these PRs run the full CI.
 
 1. Freeze `homologacao`: ask the team not to merge into it until the promotion lands.
 2. Run the local checks on `homologacao` itself, including the database-backed suites, and `scripts/smoke_test.sh --mode flow` against a fresh `docker compose up --build`.
