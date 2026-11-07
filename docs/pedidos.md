@@ -88,6 +88,7 @@ autenticado, independentemente do nome de exibição. Centro, propriedade e esta
 no servidor antes do limite. A ordenação usa atualização decrescente e UUID para desempate.
 Use `next_cursor` para a página seguinte na mesma consulta; cursor inválido recebe 422.
 A tela oferece **Carregar mais pedidos** e reinicia a coleção ao trocar aba ou identidade.
+
 ## Complementar um pedido
 
 O dono pode complementar pedidos próprios; a Governança pode complementar importados sem dono,
@@ -102,3 +103,6 @@ classe, atributos e duplicidade; informação insuficiente mantém as pendência
 confirmada pelo chat, preenche somente atributos ausentes e preserva os valores já confirmados.
 Por exemplo, `SC-202600011` com `BITOLA: M12` pode seguir para revisão técnica. Informação aceita
 não significa cadastro aprovado nem decisão fiscal.
+
+A migração `0014_order_supplements` sucede `0013_manual_reviews` e deve ser aplicada antes
+de servir esta versão da API. Migrações já aplicadas permanecem intactas.

@@ -132,7 +132,7 @@ def import_orders(db, tenant_id, catalog, rows: list[OrderRow]) -> dict:
 
 
 def _visible(identity, order: RegistrationOrder) -> bool:
-    if order.tenant_id != identity.tenant_id:
+    if order.tenant_id != identity.tenant_id or (order.center_code and order.center_code not in identity.center_codes):
         return False
     if order.requester_user_id == identity.user_id:
         return True

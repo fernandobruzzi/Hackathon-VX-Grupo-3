@@ -446,6 +446,8 @@ def test_order_lifecycle_is_visible_in_authorized_audit(case, kit_orders):
     assert "ORDER_REGISTERED" not in {event["action"] for event in client.get("/api/v1/audit").json()["items"]}
     login(client, "SOLICITANTE_OPERACAO")
     assert [event["action"] for event in client.get("/api/v1/audit").json()["items"]] == ["ORDER_SUBMITTED"]
+
+
 def complement(client, me, order, text="BITOLA: M12", *, version=None, key=None):
     return client.post(
         f"{PATH}/{order.id}/complement",
@@ -571,3 +573,67 @@ def test_complement_audits_reclassified_order(imported):
     audit = db.scalar(select(AuditLog).where(AuditLog.entity_id == str(order.id)))
     assert audit.before_json["pdm_class_id"] is None
     assert audit.after_json["pdm_class_id"] == "PDM001"
+
+
+def test_owner_cannot_submit_orders_after_losing_center_access(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600001"]
+    me = login(client, "SOLICITANTE_OPERACAO")
+    owner = db.scalar(select(UserSso).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    order.origin, order.requester_user_id, order.status = "CHAT", owner.id, "DRAFT"
+    order.center_code = "9999"
+    db.commit()
+    assert client.get(PATH).json()["items"] == []
+    response = client.post(f"{PATH}/{order.id}/submit", json={"expected_version": 1}, headers=headers(me))
+    assert response.status_code in {403, 404}, response.text
+    db.refresh(order)
+    assert order.status == "DRAFT" and order.version == 1
+    assert db.scalar(select(func.count()).select_from(AuditLog).where(AuditLog.entity_id == str(order.id))) == 0
+
+
+@pytest.mark.parametrize("revoked", [None, "role", "center", "tenant", "ownership"])
+def test_complement_replay_rechecks_current_access(imported, revoked):
+    from dataclasses import replace
+
+    from vx_materials_api.schemas.orders import OrderComplementRequest
+    from vx_materials_api.security.identity import Identity
+    from vx_materials_api.security.permissions import permissions_for
+    from vx_materials_api.services.order_service import complement_order
+
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    login(client, "GESTOR_CADASTRO")
+    actor = db.scalar(select(UserSso).where(UserSso.subject == "GESTOR_CADASTRO"))
+    roles = tuple(actor.roles_snapshot)
+    identity = Identity(actor.id, TENANT_ID, roles, permissions_for(roles), frozenset({order.center_code}))
+    listed = client.get(PATH).json()["items"]
+    assert next(row for row in listed if row["id"] == str(order.id))["can_complement"] is True
+    payload = OrderComplementRequest(
+        expected_version=1, text="BITOLA: M12", source="Desenho do fornecedor", reason="Conferido no desenho"
+    )
+    key = uuid.uuid4()
+
+    def run():
+        return complement_order(db, identity, client.app.state.pdm_catalog, order.id, payload, key)
+
+    original = run()
+    count = db.scalar(select(func.count()).select_from(AuditLog))
+    if revoked == "role":
+        identity = replace(identity, roles=(), permissions=frozenset())
+    elif revoked == "center":
+        identity = replace(identity, center_codes=frozenset())
+    elif revoked == "tenant":
+        identity = replace(identity, tenant_id=uuid.uuid4())
+    elif revoked == "ownership":
+        login(client, "SOLICITANTE_OPERACAO")
+        order.requester_user_id = db.scalar(select(UserSso.id).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+        db.commit()
+    if revoked:
+        with pytest.raises(ApiProblem) as error:
+            run()
+        assert error.value.status in {403, 404}
+    else:
+        assert run() == original
+    db.refresh(order)
+    assert order.version == 2 and len(order.supplements) == 1
+    assert db.scalar(select(func.count()).select_from(AuditLog)) == count
