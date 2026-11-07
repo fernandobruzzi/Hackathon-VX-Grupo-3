@@ -167,15 +167,19 @@ def test_fixed_reviewed_cohort_eliminates_false_merges_and_explains_held_revisio
     # A #133 também retém 16490712/25536305: ACO ZINCADO não informa CARBONO.
     # A #204 reconhece FILT como FILTRO: 19076688 (FILT AR, FRAM, CA94051) entra no grupo revisado
     # 10860647/21440355 e o grupo ampliado deixa de ser subconjunto da coorte congelada.
-    assert result["retained_true_groups"] == 30
+    # A #263 também retém 15845002/22045268: o primeiro traz 82649616 no texto
+    # e 82649616-00 na coluna; a leitura independente exige confirmar esse sufixo.
+    assert result["retained_true_groups"] == 29
     assert result["retained_precision"] == 1.0
     assert [tuple(codes) for codes in result["unreviewed_changed_groups"]] == list(CHANGED_GROUPS_REVIEWED)
     removed_codes = {tuple(item["original_codes"]) for item in result["removed"]}
     assert set(OILS) in [set(codes) for codes in removed_codes]
     assert set(PARTS) in [set(codes) for codes in removed_codes]
     assert ("16490712", "25536305") in removed_codes
-    pending = {item["evidence"]["material_code"] for item in result["cohort_manual_review"]}
-    assert set(REVISIONS) <= pending
+    assert ("15845002", "22045268") in removed_codes
+    pending = {item["evidence"]["material_code"]: item for item in result["cohort_manual_review"]}
+    assert set(REVISIONS) <= pending.keys()
+    assert "OBSERVATION_CONFLICT:REFERENCIA FABRICANTE" in pending["15845002"]["reasons"]
     for material in materials.values():
         if material.record.code in REVISIONS:
             assert material_review_reasons(material, catalog.classes[material.pdm_class_id])
