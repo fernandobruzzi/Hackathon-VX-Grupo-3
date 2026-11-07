@@ -358,3 +358,95 @@ def test_missing_manufacturer_does_not_hide_a_conflicting_reviewed_brand_in_raw_
     )
     assert result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED"
     assert client.calls == []
+
+
+@pytest.mark.parametrize(
+    ("prefix", "suffix"),
+    [
+        ("X-", ""),
+        ("X/", ""),
+        ("X.", ""),
+        ("X", ""),
+        ("1-", ""),
+        ("1/", ""),
+        ("1.", ""),
+        ("1", ""),
+        ("X_", ""),
+        ("1_", ""),
+        ("", "-EM"),
+        ("", "/EM"),
+        ("", ".EM"),
+        ("", "EM"),
+        ("", "-1"),
+        ("", "/1"),
+        ("", ".1"),
+        ("", "1"),
+        ("", "_EM"),
+        ("", "_1"),
+    ],
+)
+@pytest.mark.parametrize("refresh", [False, True])
+def test_raw_reference_requires_the_whole_reviewed_sku_token(catalog, monkeypatch, prefix, suffix, refresh):
+    monkeypatch.setenv("APP_ENV", "local")
+    current = {
+        "manufacturer": "SKF",
+        "manufacturer_reference": "",
+        "pdm_class_id": None,
+        "attributes": {},
+        "original_description_long": f"ROL {prefix}6205-2RSH/C3{suffix} SKF",
+    }
+    cached = {**evidence("25MM"), "attribute_name": "DIAMETRO INTERNO"}
+    client = Client(content=b"SKF 6205-2RSH/C3 Bore diameter 25 mm")
+    result = module.Enrichment(Repository(rows=[cached], current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"], refresh=refresh
+    )
+    assert result.status == "PENDING"
+    assert result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED"
+    assert result.pending_attributes == ["DIAMETRO INTERNO"]
+    assert len(result.attributes) == 1 and result.attributes[0].persisted is True
+    assert client.calls == []
+
+
+@pytest.mark.parametrize("spelling", ["6205 2rsh / c3", "6205.2rsh.c3", "6205/2rsh-c3"])
+@pytest.mark.parametrize("refresh", [False, True])
+def test_raw_reference_preserves_case_and_in_sku_separator_spelling(catalog, monkeypatch, refresh, spelling):
+    monkeypatch.setenv("APP_ENV", "local")
+    current = {
+        "manufacturer": "SKF",
+        "manufacturer_reference": "",
+        "pdm_class_id": None,
+        "attributes": {},
+        "original_description_long": f"ROL {spelling} SKF",
+    }
+    cached = {**evidence("25MM"), "attribute_name": "DIAMETRO INTERNO"}
+    client = Client(content=b"SKF 6205-2RSH/C3 Bore diameter 25 mm")
+    result = module.Enrichment(Repository(rows=[cached], current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"], refresh=refresh
+    )
+    assert result.status == "EVIDENCE_FOUND" and result.pending_reason is None
+    assert all(row.valor == "25MM" for row in result.attributes)
+    assert any(row.persisted is True for row in result.attributes)
+    assert bool(client.calls) is refresh
+
+
+@pytest.mark.parametrize("code", sorted(REAL_PRODUCTS))
+@pytest.mark.parametrize(("prefix", "suffix"), [("X-", ""), ("", ".EM")])
+def test_extracted_reference_cannot_bypass_whole_sku_identity(catalog, code, prefix, suffix):
+    product = REAL_PRODUCTS[code]
+    attribute = "REFERENCIA" if product.pdm_class_id == "PDM020" else "REFERENCIA FABRICANTE"
+    current = {
+        "manufacturer": product.manufacturer,
+        "manufacturer_reference": "",
+        "pdm_class_id": product.pdm_class_id,
+        "attributes": {},
+        "original_description_long": f"PECA {product.manufacturer} {prefix}{product.reference}{suffix}",
+    }
+    cached = {**evidence(product.reference), "attribute_name": attribute}
+    client = Client()
+    result = module.Enrichment(Repository(rows=[cached], current=current), research(catalog, client)).run(
+        code, [attribute]
+    )
+    assert result.status == "PENDING", code
+    assert result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED", code
+    assert len(result.attributes) == 1 and result.attributes[0].persisted is True
+    assert client.calls == []
