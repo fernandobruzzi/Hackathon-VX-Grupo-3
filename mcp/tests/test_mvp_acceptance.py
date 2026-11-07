@@ -18,6 +18,7 @@ from test_conversation_flow import PDM, SECRET, SpyClient
 
 from domain.pdm_loader import load_pdm
 from pipelines.full_run import run_sanitize
+from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_api.db.models import (
     AuditLog,
     ChatMessage,
@@ -126,10 +127,13 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
         # Proposta do produtor batch, não uma proposta fabricada pelo teste/chat.
         proposal_id = db.execute(
             text("""
-            SELECT id FROM sanitization_proposals WHERE proposal_type = 'MERGE'
+            SELECT id FROM sanitization_proposals WHERE tenant_id = :tenant_id
+            AND status = 'PENDING' AND changeset->>'schema_version' = 'proposal-v1'
+            AND proposal_type = 'MERGE'
             AND changeset->'after'->'attributes'->>'REFERENCIA FABRICANTE' = 'WK 569/7'
             AND changeset->'conflicts' = '[]'::jsonb ORDER BY id LIMIT 1
-        """)
+        """),
+            {"tenant_id": TENANT_ID},
         ).scalar_one()
         proposal = db.get(SanitizationProposal, proposal_id)
         member_versions = {uuid.UUID(member["material_id"]): member["expected_version"] for member in proposal.members}
@@ -176,8 +180,20 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
     assert result.status_code == 200, result.text
     assert client.post(path + "/decide", json=payload, headers=headers(fiscal, key)).json() == result.json()
     assert result.json()["status"] == "APPLIED"
-    audit = client.get("/api/v1/audit").json()["items"]
-    events = [event for event in audit if event["entity"] == f"proposta {proposal_id}"]
+    events = []
+    cursor = None
+    seen_cursors = set()
+    while True:
+        response = client.get("/api/v1/audit", params={"limit": 1, **({"cursor": cursor} if cursor else {})})
+        assert response.status_code == 200, response.text
+        page = response.json()
+        events.extend(event for event in page["items"] if event["entity"] == f"proposta {proposal_id}")
+        cursor = page["next_cursor"]
+        if cursor is None:
+            break
+        assert cursor not in seen_cursors
+        seen_cursors.add(cursor)
+    assert seen_cursors  # As duas decisões exigem páginas distintas.
     assert len(events) == 2
     assert all(event["before"] and event["after"] and event["reason"] for event in events)
     applied = client.get(path).json()

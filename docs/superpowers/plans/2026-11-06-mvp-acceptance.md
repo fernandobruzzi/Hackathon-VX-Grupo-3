@@ -44,9 +44,11 @@
 - [x] Rodar suítes API/MCP com banco, back e verificações de estilo.
 - [x] Revisar o diff e atualizar a branch com main.
 
-Entrega por PR em rascunho com evidências e pendências; a #26 permanece aberta até a homologação final.
+Entrega de preparação local com **Refs #26**, integrável em `homologacao` independentemente do aceite AWS; a #26 permanece aberta até a homologação final.
 
-## Registro de execução
+## Registro histórico de execução da branch original
+
+As contagens e mutações abaixo pertencem à implementação original; não são reexecuções nem contagens da `homologacao` atual. As referências a pendências descrevem o estado daquela execução.
 
 - Revisão independente: acrescentada a verificação dos vínculos persistidos de consolidação, estado do principal e redirecionamentos dos materiais bloqueados.
 - Falhas controladas: omitir chamadas do painel falha na comparação com o MCP observado; impedir a gravação de `InventoryConsolidation` falha na conferência dos vínculos. As mutações são temporárias e não fazem parte da entrega.
@@ -54,3 +56,7 @@ Entrega por PR em rascunho com evidências e pendências; a #26 permanece aberta
 - API: 407 testes com PostgreSQL. Após o rebase, repetidos os 81 testes de sessão, chat, aprovação e dashboard; todos aprovados. MCP: 92 testes com banco após o rebase. Back: 351 testes após o rebase. Ruff, formatação Python e Prettier dos documentos novos aprovados.
 - Continuação: a #22 foi integrada na main `b162946`; a branch foi atualizada por rebase para revalidar o cenário com as regras fiscais atuais. A #73 e a homologação AWS continuam pendentes.
 - Após essa atualização, o cenário integrado passou com PostgreSQL e a suíte MCP completa passou com 94 testes, sem skips. Ruff, formatação e Prettier dos documentos novos foram conferidos novamente.
+
+## Integração atual
+
+Rebase sobre `5bb5b9febc6acd70901420570e6024eef6e5ac82`, que inclui `identity-v3`, classificador revisão 2, extrator revisão 9, resolução manual e enriquecimento com fonte. A consulta da proposta batch exige tenant, schema atual e estado PENDING; a leitura da auditoria percorre todas as páginas. Não há alteração de código de produção, kit, gabaritos ou dependências. Em 2026-11-07, a execução focada atual com PostgreSQL real (`TEST_DATABASE_URL` definido, `TMPDIR` exclusivo) passou: `cd mcp && uv run --locked pytest tests/test_mvp_acceptance.py -v` → **1 passed em 76,91 s, sem skips**. A paginação da auditoria foi exercitada com limite de um evento por página. `uv sync --locked`, Ruff check/format, Prettier dos dois documentos novos e `git diff --check` passaram. As três suítes completas não foram repetidas nesta preparação; as contagens acima continuam históricas. Compose HTTP, AWS/HTTPS/Cognito, três contas reais no navegador, Plano B EC2 e aceite humano permanecem sem verificação nesta execução.
