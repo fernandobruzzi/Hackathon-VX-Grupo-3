@@ -45,7 +45,10 @@ de caixa/separadores e preserva sufixos. Quando campos canônicos ainda faltam,
 usa o classificador/extrator compartilhados e exige evidência do PN completo
 revisado no texto original; o código do manifesto sozinho não comprova identidade.
 A ocorrência é do SKU inteiro: letras, dígitos, `_`, `-`, `/` ou `.` adjacentes
-fora do PN não são descartados. `X-6205-2RSH/C3` e `6205-2RSH/C3.EM` continuam
+fora do PN não são descartados. Espaços ao redor de `-`, `/`, `.` e `_`
+não rompem uma continuação do SKU: `X - 6205-2RSH/C3` e `6205-2RSH/C3 . EM`
+também são variantes não confirmadas. Essa comparação local não altera o texto
+original nem os campos atuais. `X-6205-2RSH/C3` e `6205-2RSH/C3.EM` continuam
 pendentes, preservando o cache histórico e sem pesquisa; caixa e separadores
 dentro do PN completo continuam aceitos. Uma referência reconhecida pelo extrator
 não dispensa esse limite do SKU inteiro no texto original, pois a extração pode
