@@ -402,7 +402,7 @@ def complete_turn(
             {"tenant": str(identity.tenant_id), "seed": seed},
         )
     session = _locked_session(db, identity, reservation.session_id)
-    _require_history_scope(db, identity, session)
+    history_centers = _require_history_scope(db, identity, session)
     if session.active_turn_id != reservation.turn_id or session.version != reservation.session_version:
         raise _conflict("TURN_SUPERSEDED", "O turno foi substituído por outro.")
     rules_version = rules_version() if callable(rules_version) else rules_version
@@ -415,6 +415,12 @@ def complete_turn(
 
     last = db.scalar(select(func.max(ChatMessage.sequence)).where(ChatMessage.session_id == session.id)) or 0
     tool_calls = [call.model_dump(mode="json") for call in result.tool_calls]
+    # O texto novo usa nomes de centros; só o histórico anterior passa pelo leitor legado.
+    # A autorização usa os códigos estruturados, inclusive se a ficha for reduzida depois.
+    centers = (
+        history_centers | _exposed_centers(result.material_card.model_dump(mode="json")) | _exposed_centers(tool_calls)
+    )
+    require_resource_scope(identity, session.tenant_id, centers)
     db.add_all(
         [
             ChatMessage(
@@ -465,11 +471,6 @@ def complete_turn(
             "existing": card.get("existing") if status == "EXISTING" else None,
             "similar_candidates": card["similar_candidates"],
         }
-    centers = (
-        _require_history_scope(db, identity, session)
-        | _exposed_centers(card)
-        | _exposed_centers([call.model_dump(mode="json") for call in result.tool_calls])
-    )
     session.context = {
         **context,
         **patch,

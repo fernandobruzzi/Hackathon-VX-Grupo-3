@@ -352,6 +352,70 @@ def agent_result(card, *calls, patch=None):
     return {**AGENT_RESULT, "tool_calls": list(calls), "material_card": card, "context_patch": patch or {}}
 
 
+@pytest.mark.parametrize("center_name", ["São Paulo", "Centro - Norte", "Unidade A, B. (SP)"])
+def test_first_existing_turn_preserves_center_names_and_structured_scope(client, agent, factory, center_name):
+    existing = deepcopy(EXISTING)
+    existing["inventory"][0]["center_name"] = center_name
+    candidate = {**similar(existing["material_code"], verified=True), "inventory": existing["inventory"]}
+    agent.result = agent_result({**CARD, "existing": existing}, search_call(candidate))
+    message = (
+        "Esse item já existe: use o código 16031971. Mesmo item. "
+        f"Estoque nos seus centros: 4 PC no centro {center_name}."
+    )
+    agent.result["assistant_message"] = message
+
+    response = send(client, center="1100")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "EXISTING"
+    assert body["assistant_message"] == message
+    assert body["material_card"]["existing"]["inventory"] == existing["inventory"]
+    session_id = body["session_id"]
+    detail = client.get(f"/api/v1/chat/sessions/{session_id}")
+    assert detail.status_code == 200
+    assert detail.json()["messages"][-1]["content"] == message
+    assert count(factory, "SELECT context->'history_center_codes' FROM chat_sessions WHERE id = :s", s=session_id) == [
+        "1100",
+        "1200",
+    ]
+    agent.result = AGENT_RESULT
+    assert send(client, session_id=session_id, version=1, center="1100").status_code == 200
+    assert client.get(f"/api/v1/chat/sessions/{session_id}").json()["messages"][1]["content"] == message
+
+
+@pytest.mark.parametrize("source", ["card", "tools", "card_without_search"])
+def test_friendly_name_never_authorizes_out_of_scope_result(client, agent, factory, identity, source):
+    existing = deepcopy(EXISTING)
+    existing["inventory"][0].update(center_code="9999", center_name="São Paulo - Unidade A.")
+    candidate = similar(existing["material_code"], verified=True)
+    card = {**CARD, "existing": existing} if source != "tools" else CARD
+    if source == "tools":
+        candidate["inventory"] = existing["inventory"]
+    calls = [] if source == "card_without_search" else [search_call(candidate)]
+    agent.result = agent_result(card, *calls)
+    agent.result["assistant_message"] = (
+        "Esse item já existe: use o código 16031971. Mesmo item. "
+        "Estoque nos seus centros: 4 PC no centro São Paulo - Unidade A."
+    )
+
+    response = send(client)
+
+    assert response.status_code == 404
+    assert (
+        count(
+            factory,
+            "SELECT count(*) FROM chat_messages m JOIN chat_sessions s ON s.id = m.session_id WHERE s.tenant_id = :t",
+            t=identity.tenant_id,
+        )
+        == 0
+    )
+    assert (
+        count(factory, "SELECT count(*) FROM chat_sessions WHERE tenant_id = :t AND version != 0", t=identity.tenant_id)
+        == 0
+    )
+
+
 @pytest.mark.parametrize(
     ("card", "calls", "status", "can_submit"),
     [
@@ -636,7 +700,9 @@ def test_history_rejects_unbounded_cursor(client, cursor):
     assert response.status_code == 422
 
 
-@pytest.mark.parametrize("source", ["session", "inventory", "past_inventory", "legacy_past_inventory"])
+@pytest.mark.parametrize(
+    "source", ["session", "inventory", "past_inventory", "legacy_past_inventory", "named_past_inventory"]
+)
 def test_history_and_resume_recheck_current_center_scope(factory, identity, agent, monkeypatch, source):
     from dataclasses import replace
 
@@ -654,12 +720,19 @@ def test_history_and_resume_recheck_current_center_scope(factory, identity, agen
         agent.result = agent_result(
             {**CARD, "existing": EXISTING}, search_call(similar(EXISTING["material_code"], verified=True))
         )
+    if source == "named_past_inventory":
+        agent.result["material_card"]["existing"] = deepcopy(EXISTING)
+        agent.result["material_card"]["existing"]["inventory"][0]["center_name"] = "São Paulo - Unidade A."
+        agent.result["assistant_message"] = (
+            "Esse item já existe: use o código 16031971. Mesmo item. "
+            "Estoque nos seus centros: 4 PC no centro São Paulo - Unidade A.."
+        )
     if source == "legacy_past_inventory":
         agent.result["assistant_message"] = (
             "Esse item já existe: use o código 16031971. Mesmo item. Estoque nos seus centros: 4 PC no centro 1200."
         )
     first = send(client, center="1200" if source == "session" else "1100").json()
-    if source in {"past_inventory", "legacy_past_inventory"}:
+    if source in {"past_inventory", "legacy_past_inventory", "named_past_inventory"}:
         agent.result = AGENT_RESULT
         assert send(client, session_id=first["session_id"], version=1, center="1100").status_code == 200
     if source in {"inventory", "legacy_past_inventory"}:
@@ -679,7 +752,9 @@ def test_history_and_resume_recheck_current_center_scope(factory, identity, agen
         json={
             "session_id": first["session_id"],
             "client_message_id": str(uuid.uuid4()),
-            "expected_session_version": 2 if source in {"past_inventory", "legacy_past_inventory"} else 1,
+            "expected_session_version": 2
+            if source in {"past_inventory", "legacy_past_inventory", "named_past_inventory"}
+            else 1,
             "message": "continuar",
             "center_code": "1100",
         },
@@ -718,6 +793,16 @@ def test_history_paginates_only_conversations_in_current_centers(factory, identi
 @pytest.mark.parametrize(
     "author,content,status",
     [
+        (
+            "ASSISTANT",
+            "Esse item já existe: use o código 123. Motivo. Estoque nos seus centros: 4 PC no centro 1200.",
+            200,
+        ),
+        (
+            "ASSISTANT",
+            "Esse item já existe: use o código 123. Motivo. Estoque nos seus centros: 4 PC no centro 9999.",
+            404,
+        ),
         ("ASSISTANT", "Esse item já existe: use o código 123. Motivo. Estoque nos seus centros: sem centro.", 404),
         (
             "ASSISTANT",
