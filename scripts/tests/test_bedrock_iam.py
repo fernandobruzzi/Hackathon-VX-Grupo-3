@@ -1,4 +1,4 @@
-"""Permissões offline do perfil Sonnet 5 do Agent e isolamento do batch."""
+"""Permissões offline do perfil de chat do Agent e isolamento do batch."""
 
 import re
 import sys
@@ -38,16 +38,16 @@ def construct_intrinsic(loader, tag, node):
 CloudFormationLoader.add_multi_constructor("!", construct_intrinsic)
 
 
-def resolve(value, config):
-    references = {"AWS::Region": config["region"], "AWS::AccountId": config["account_id"]}
+def resolve(value, config, parameters=None):
+    references = {"AWS::Region": config["region"], "AWS::AccountId": config["account_id"], **(parameters or {})}
     if isinstance(value, dict):
         if "Fn::Sub" in value:
             return re.sub(r"\$\{([^}]+)\}", lambda match: references[match[1]], value["Fn::Sub"])
         if "Ref" in value:
             return references[value["Ref"]]
-        return {key: resolve(item, config) for key, item in value.items()}
+        return {key: resolve(item, config, parameters) for key, item in value.items()}
     if isinstance(value, list):
-        return [resolve(item, config) for item in value]
+        return [resolve(item, config, parameters) for item in value]
     return value
 
 
@@ -62,8 +62,9 @@ def deployment():
     return config, template
 
 
-def invocation_grants(deployment, role):
+def invocation_grants(deployment, role, **overrides):
     config, template = deployment
+    parameters = {name: spec.get("Default") for name, spec in template["Parameters"].items()} | overrides
     grants = []
     for policy in template["Resources"][role]["Properties"]["Policies"]:
         for statement in as_list(policy["PolicyDocument"]["Statement"]):
@@ -74,7 +75,7 @@ def invocation_grants(deployment, role):
             ):
                 assert statement["Effect"] == "Allow"
                 assert actions == ["bedrock:InvokeModel"]
-                grants.append(resolve(statement, config))
+                grants.append(resolve(statement, config, parameters))
     return grants
 
 
@@ -118,3 +119,20 @@ def test_batch_role_retains_titan_without_chat_permissions(deployment):
     assert invocation_grants(deployment, "BatchTaskRole") == [
         {"Effect": "Allow", "Action": "bedrock:InvokeModel", "Resource": TITAN_ARN}
     ]
+
+
+def test_chat_grant_follows_the_selected_model(deployment):
+    # Na conta do workshop o Sonnet 5 não tem assinatura do Marketplace; o chat usa Haiku 4.5.
+    model = "anthropic.claude-haiku-4-5-20251001-v1:0"
+    config, template = deployment
+    assert re.fullmatch(template["Parameters"]["ChatModel"]["AllowedPattern"], model)
+    profile = f"arn:aws:bedrock:us-east-1:{config['account_id']}:inference-profile/us.{model}"
+    grants = invocation_grants(deployment, "WebTaskRole", ChatModel=model)
+    assert any(profile in as_list(grant["Resource"]) and not grant.get("Condition") for grant in grants)
+    for region in ("us-east-1", "us-east-2", "us-west-2"):
+        destination = f"arn:aws:bedrock:{region}::foundation-model/{model}"
+        matching = [grant for grant in grants if destination in as_list(grant["Resource"])]
+        assert matching and all(
+            grant.get("Condition") == {"StringEquals": {"bedrock:InferenceProfileArn": profile}} for grant in matching
+        )
+    assert not any("claude-sonnet-5" in str(grant) for grant in grants)
