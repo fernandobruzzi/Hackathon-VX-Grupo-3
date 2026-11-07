@@ -106,13 +106,14 @@ def test_material_without_class_gets_only_unit_alias(analyze, catalog, tools, co
 
 
 def test_unconfirmed_class_gets_only_unit_alias(analyze, catalog, tools):
-    # 15487300: "PARAF.  SEXTAVADO ... REVEST" em PCA; a classe achada no meio do texto não é usada.
+    # 15487300: o novo alias encontra parafuso, mas REVESTIMENTO também é peça do PDM.
+    # A ambiguidade é recusada antes da correção; só a grafia da unidade continua proposta.
     result = correct(analyze, catalog, tools, "15487300")
 
     assert [(c.field, c.before, c.after, c.rule) for c in result.corrections] == [
         ("unit", "PCA", "PC", ALIAS_WITHOUT_CLASS)
     ]
-    assert result.pending == ("CLASSE_NAO_CONFIRMADA: o nome do item nao abre a descricao",)
+    assert result.pending == ("SEM_CLASSE_CONFIAVEL: o classificador nao decidiu a classe",)
 
 
 def test_packaging_unit_without_class_stays_untouched(analyze, catalog, tools):
@@ -124,11 +125,14 @@ def test_packaging_unit_without_class_stays_untouched(analyze, catalog, tools):
 
 
 def test_class_found_mid_text_is_not_trusted(analyze, catalog, tools):
-    # 18495654: parafuso abreviado classificado como sobressalente pela palavra REVESTIMENTO.
-    material = analyze("18495654")
+    # O classificador anterior achava sobressalente pela palavra REVESTIMENTO no parafuso.
+    # Mesmo se outro classificador repetir essa decisão, o corretor exige o nome no começo.
+    material = analyze_material(
+        analyze("18495654").record, catalog, get_classification_repository(catalog, "rule_based_v1"), tools[1]
+    )
     assert material.pdm_class_id == "PDM110" and material.item_name == "REVESTIMENTO"
 
-    result = correct(analyze, catalog, tools, "18495654")
+    result = get_correction_repository().correct(material, catalog, tools[2])
 
     assert result.corrections == ()
     assert result.pending == ("CLASSE_NAO_CONFIRMADA: o nome do item nao abre a descricao",)
@@ -189,7 +193,7 @@ def test_summary_counts_proposals_changes_and_pending(analyze, catalog, tools):
     summary = summarize_corrections(proposals, pending)
 
     assert summary["pending"]["MATERIAL_NAO_ATIVO"] == 1
-    assert summary["pending"]["SEM_CLASSE_CONFIAVEL"] == 1
+    assert summary["pending"]["CLASSE_NAO_CONFIRMADA"] == 1
     assert summary["pending"]["UNIDADE_SEM_FATOR"] == 1
     assert summary["changes"]["merchandise_group"] == 1
 
@@ -262,3 +266,11 @@ def test_class_unit_difference_still_blocks_the_unit_correction(analyze, catalog
     )
 
     assert unit.conflicts == ("UNIDADE_DIFERENTE_DA_CLASSE: PC, padrao da classe L",)
+
+
+def test_pilot_bolt_with_mid_text_spare_name_abstains(analyze, catalog, tools):
+    material = analyze("18495654")
+    assert material.pdm_class_id is None
+    result = get_correction_repository().correct(material, catalog, tools[2])
+    assert result.corrections == ()
+    assert result.pending == ("SEM_CLASSE_CONFIAVEL: o classificador nao decidiu a classe",)
