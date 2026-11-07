@@ -36,7 +36,7 @@
     "cognito_client_secret": ""
   },
   "bedrock_embedding_model": "amazon.titan-embed-text-v2:0",
-  "bedrock_chat_model": "",
+  "bedrock_chat_model": "us.anthropic.claude-opus-5-5",
   "cognito_user_pool_id": "",
   "cognito_app_client_id": ""
 }

@@ -18,6 +18,7 @@ from repositories.classification import get_classification_repository
 from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.agent import TURN_TIMEOUT_SECONDS, ToolLimitExceeded, ToolRecorder, run_turn
+from vx_materials_mcp.chatbot.bedrock import BedrockError, BedrockPlanner
 from vx_materials_mcp.chatbot.session_manager import build_turn_context
 from vx_materials_mcp.chatbot.turns import AgentBusy, TurnCancelled, TurnManager, configured_limit
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
@@ -51,8 +52,11 @@ def create_app(
     connect: Connect,
     timeout_seconds: float = TURN_TIMEOUT_SECONDS,
     max_concurrent_turns: int | None = None,
+    bedrock_client: Any = None,
 ) -> FastAPI:
     turns = TurnManager(configured_limit() if max_concurrent_turns is None else max_concurrent_turns)
+    model_id = os.environ.get("BEDROCK_CHAT_MODEL_ID", "").strip()
+    planner = BedrockPlanner(model_id, bedrock_client) if model_id else None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -100,8 +104,13 @@ def create_app(
 
         async def execute() -> AgentRunResponse:
             context = build_turn_context(payload, catalog.classes, classifier, extractor)
+            # Reconstruir a descrição também nos botões: uma classe pode existir só na interpretação LLM.
+            # A ação estruturada continua indo intacta para o ciclo determinístico abaixo.
+            if planner:
+                context = await planner.interpret(payload, context, catalog)
             async with connect(caller) as client:
-                return await run_turn(payload, context, ToolRecorder(client))
+                result = await run_turn(payload, context, ToolRecorder(client))
+            return await planner.respond(payload, result) if planner else result
 
         try:
             turn = turns.start(execute)
@@ -128,6 +137,8 @@ def create_app(
             raise AgentError(503, "AGENT_STOPPING", "O agente está encerrando o atendimento.") from error
         except ToolLimitExceeded as error:
             raise AgentError(503, "AGENT_LIMIT", str(error)) from error
+        except BedrockError as error:
+            raise AgentError(503, error.code, str(error)) from error
         finally:
             disconnect.cancel()
             await asyncio.gather(disconnect, return_exceptions=True)
