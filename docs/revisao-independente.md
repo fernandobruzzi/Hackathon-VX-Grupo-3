@@ -17,6 +17,8 @@ seleção reproduzível feita por `sample_merges`. O tamanho efetivo é limitado
 frame disponível. A unidade é o grupo inteiro; pares de um grupo não são novas
 observações independentes. O frame contém somente propostas MERGE: não permite
 estimar recall nem avaliar materiais sobre os quais o algoritmo se absteve.
+Originais, análise e hash usam a mesma leitura do CSV, mesmo que o arquivo de
+entrada seja alterado durante a exportação.
 
 `review_cases` guarda todas as colunas originais dos membros selecionados e fichas
 vazias por grupo, classe e campo. `predictions` guarda as previsões separadamente.
