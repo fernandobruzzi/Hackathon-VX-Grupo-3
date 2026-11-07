@@ -1,4 +1,4 @@
-"""Permissões offline do perfil Opus do Agent e isolamento do batch."""
+"""Permissões offline do perfil Sonnet 5 do Agent e isolamento do batch."""
 
 import re
 import sys
@@ -12,12 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from aws_support import load_config, task_definitions  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-PROFILE_ARN = "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-opus-5-5"
+PROFILE_ARN = "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-sonnet-5"
 TITAN_ARN = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
-OPUS_ARNS = (
-    "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-opus-5-5",
-    "arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-opus-5-5",
-    "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-opus-5-5",
+SONNET_ARNS = (
+    "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-5",
+    "arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-sonnet-5",
+    "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-5",
 )
 
 
@@ -95,8 +95,8 @@ def test_agent_web_role_allows_its_selected_chat_profile(deployment):
     ), f"WebTaskRole cannot invoke selected chat profile {profile}"
 
 
-@pytest.mark.parametrize("model_arn", OPUS_ARNS)
-def test_web_role_allows_opus_destinations_only_through_source_profile(deployment, model_arn):
+@pytest.mark.parametrize("model_arn", SONNET_ARNS)
+def test_web_role_allows_sonnet_destinations_only_through_source_profile(deployment, model_arn):
     grants = [
         grant for grant in invocation_grants(deployment, "WebTaskRole") if model_arn in as_list(grant["Resource"])
     ]
@@ -106,10 +106,10 @@ def test_web_role_allows_opus_destinations_only_through_source_profile(deploymen
     )
 
 
-def test_web_role_keeps_model_access_limited_to_titan_and_opus_profile(deployment):
+def test_web_role_keeps_model_access_limited_to_titan_and_sonnet_profile(deployment):
     grants = invocation_grants(deployment, "WebTaskRole")
     resources = {resource for grant in grants for resource in as_list(grant["Resource"])}
-    assert resources == {TITAN_ARN, PROFILE_ARN, *OPUS_ARNS}
+    assert resources == {TITAN_ARN, PROFILE_ARN, *SONNET_ARNS}
     titan = [grant for grant in grants if TITAN_ARN in as_list(grant["Resource"])]
     assert all(not grant.get("Condition") for grant in titan)
 
