@@ -16,8 +16,9 @@ def catalog():
 
 
 class Client:
-    def __init__(self, *, fail=False, clock=None, url=None, source_id=None):
+    def __init__(self, *, fail=False, clock=None, url=None, source_id=None, content=b"DONALDSON DBL7300 Height 200 mm"):
         self.fail, self.clock, self.url, self.source_id = fail, clock, url, source_id
+        self.content = content
         self.calls = []
 
     def fetch(self, source):
@@ -29,7 +30,7 @@ class Client:
         return SourceDocument(
             self.source_id or source.id,
             self.url or source.url,
-            b"DONALDSON DBL7300 Height 200 mm",
+            self.content,
             "text/plain",
             "2026-11-07T00:00:00+00:00",
             True,
@@ -190,3 +191,170 @@ def test_multiple_sources_share_one_network_deadline(catalog, monkeypatch):
     assert [limit.total_timeout for limit in limits] == [3, 1.75]
     assert all(limit.io_timeout <= 1 for limit in limits)
     assert len(result.attributes) == 2
+
+
+def test_transport_deadline_failure_is_reported_as_timeout_with_cache_preserved(catalog):
+    clock = [0.0]
+
+    class LateFailure:
+        def fetch(self, _source):
+            clock[0] += 4
+            raise SourceError("Tempo total de consulta excedido")
+
+    result = module.Enrichment(
+        Repository(rows=[evidence()]), research(catalog, LateFailure(), clock=lambda: clock[0])
+    ).run("18308575", ["FABRICANTE"], refresh=True)
+    assert result.pending_reason == "SOURCE_QUERY_TIMEOUT"
+    assert result.pending_attributes == ["FABRICANTE"]
+    assert len(result.attributes) == 1 and result.attributes[0].persisted is True
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"manufacturer_reference": "6310-2Z/C3"},
+        {"manufacturer": "NSK"},
+        {"pdm_class_id": "PDM100"},
+        {"attributes": {"REFERENCIA": "6310-ZZ/C3"}},
+    ],
+)
+def test_changed_current_product_never_fetches_the_original_catalog_source(catalog, change):
+    current = {
+        "manufacturer": "SKF",
+        "manufacturer_reference": "6205-2RSH/C3",
+        "pdm_class_id": "PDM020",
+        "attributes": {},
+        **change,
+    }
+    cached = {**evidence("25MM"), "attribute_name": "DIAMETRO INTERNO"}
+    client = Client()
+    result = module.Enrichment(Repository(rows=[cached], current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"], refresh=True
+    )
+    assert result.status == "PENDING" and result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED"
+    assert result.pending_attributes == ["DIAMETRO INTERNO"]
+    assert len(result.attributes) == 1 and result.attributes[0].persisted is True
+    assert client.calls == []
+
+
+def test_changed_product_cache_is_provenance_without_claiming_current_evidence_found(catalog):
+    current = {
+        "manufacturer": "SKF",
+        "manufacturer_reference": "6310-2Z/C3",
+        "pdm_class_id": "PDM020",
+        "attributes": {},
+    }
+    cached = {**evidence("25MM"), "attribute_name": "DIAMETRO INTERNO"}
+    client = Client()
+    result = module.Enrichment(Repository(rows=[cached], current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"]
+    )
+    assert result.status == "PENDING" and result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED"
+    assert result.attributes[0].persisted is True
+    assert client.calls == []
+
+
+@pytest.mark.parametrize("code", sorted(REAL_PRODUCTS))
+def test_reviewed_bootstrap_identity_survives_missing_canonical_metadata(catalog, code):
+    from pathlib import Path
+
+    from pipelines.sanitize import read_csv_records
+
+    records = {row.code: row for row in read_csv_records(Path(PDM).with_name("01_base_materiais.csv"))}
+    row = records[code]
+    current = {
+        "manufacturer": row.manufacturer,
+        "manufacturer_reference": row.reference,
+        "pdm_class_id": None,
+        "attributes": {},
+        "original_description_long": row.description,
+        "original_description_short": row.short_description,
+    }
+    checker = getattr(research(catalog, Client()), "matches_current_product", None)
+    assert checker is not None, "O preview precisa conferir o produto atual além do código do manifesto"
+    assert checker(code, current)
+
+
+def test_genuine_bearing_reference_separator_spelling_keeps_research_available(catalog, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "local")
+
+    class BearingClient(Client):
+        def fetch(self, source):
+            self.calls.append(source)
+            return SourceDocument(
+                source.id,
+                source.url,
+                b"SKF 6205-2RSH/C3 Bore diameter 25 mm",
+                "text/plain",
+                "2026-11-07T00:00:00+00:00",
+                True,
+            )
+
+    current = {
+        "manufacturer": " skf ",
+        "manufacturer_reference": "6205 2rsh / c3",
+        "pdm_class_id": "PDM020",
+        "attributes": {},
+    }
+    client = BearingClient()
+    result = module.Enrichment(Repository(current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"]
+    )
+    assert result.status == "EVIDENCE_FOUND"
+    assert result.attributes[0].valor == "25MM" and client.calls
+
+
+@pytest.mark.parametrize("description", ["ROL 6310-2Z/C3 SKF", "ROL 6205-2RSH/C3X SKF", "ROL 6205-2RSH/C3/EM SKF"])
+def test_missing_metadata_never_overrides_conflicting_or_variant_raw_reference(catalog, description):
+    current = {
+        "manufacturer": "SKF",
+        "manufacturer_reference": "",
+        "pdm_class_id": None,
+        "attributes": {},
+        "original_description_long": description,
+    }
+    client = Client()
+    result = module.Enrichment(Repository(current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"]
+    )
+    assert result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED"
+    assert client.calls == []
+
+
+def test_real_bootstrap_bearing_can_preview_before_canonical_fields_exist(catalog, monkeypatch):
+    from pathlib import Path
+
+    from pipelines.sanitize import read_csv_records
+
+    monkeypatch.setenv("APP_ENV", "local")
+    row = next(row for row in read_csv_records(Path(PDM).with_name("01_base_materiais.csv")) if row.code == "20866024")
+    current = {
+        "manufacturer": row.manufacturer,
+        "manufacturer_reference": row.reference,
+        "pdm_class_id": None,
+        "attributes": {},
+        "original_description_long": row.description,
+    }
+    client = Client(content=b"SKF 6205-2RSH/C3 Bore diameter 25 mm")
+    result = module.Enrichment(Repository(current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"]
+    )
+    assert result.status == "EVIDENCE_FOUND"
+    assert result.attributes[0].valor == "25MM" and client.calls
+
+
+def test_missing_manufacturer_does_not_hide_a_conflicting_reviewed_brand_in_raw_source(catalog, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "local")
+    current = {
+        "manufacturer": "",
+        "manufacturer_reference": "",
+        "pdm_class_id": None,
+        "attributes": {},
+        "original_description_long": "ROL 6205-2RSH/C3 NSK",
+    }
+    client = Client(content=b"SKF 6205-2RSH/C3 Bore diameter 25 mm")
+    result = module.Enrichment(Repository(current=current), research(catalog, client)).run(
+        "20866024", ["DIAMETRO INTERNO"]
+    )
+    assert result.pending_reason == "CURRENT_PRODUCT_IDENTITY_CHANGED"
+    assert client.calls == []

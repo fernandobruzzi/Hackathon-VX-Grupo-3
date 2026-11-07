@@ -1,18 +1,23 @@
 """Cache persistido e preview limitado das fontes revisadas; publicação continua separada."""
 
 import json
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from domain.contracts import ClassificationInput
 from domain.enrichment_rules import check_simulated_evidence
+from domain.identity import manufacturer_key, reference_spelling_key
 from enrichment.catalog import REAL_PRODUCTS
 from enrichment.documents import document_pages
 from enrichment.evidence import build_attribute_evidence
 from enrichment.trusted_sources import FetchLimits, SourceError, TrustedSourceClient, validate_url
+from repositories.classification import get_classification_repository
 from repositories.enrichment import get_enrichment_repository
+from repositories.extraction import get_extraction_repository
 
 PendingReason = Literal[
     "TRUSTED_SOURCE_SERVICE_UNAVAILABLE",
@@ -20,6 +25,7 @@ PendingReason = Literal[
     "SOURCE_UNAVAILABLE",
     "EVIDENCE_NOT_FOUND",
     "NO_REVIEWED_EXACT_PRODUCT_SOURCE",
+    "CURRENT_PRODUCT_IDENTITY_CHANGED",
 ]
 
 
@@ -93,6 +99,52 @@ class TrustedSourceResearch:
             raise ValueError("Atributo fora da classe PDM do produto")
         return product, pdm_class
 
+    def matches_current_product(self, code: str, current: dict) -> bool:
+        product, pdm_class = self.validate_request(code, [])
+        description = current.get("pdm_description") or current.get("original_description_long") or ""
+        current_class = current.get("pdm_class_id")
+        if not current_class:
+            current_class = (
+                get_classification_repository(self._catalog).classify(ClassificationInput(description)).pdm_class_id
+            )
+        if current_class and current_class != product.pdm_class_id:
+            return False
+        attributes = current.get("attributes") or {}
+        extracted = get_extraction_repository().extract(pdm_class, description)
+        original = {name: item.value for name, item in extracted.attributes.items()}
+        makers = [current.get("manufacturer"), attributes.get("FABRICANTE")]
+        if not any(makers):
+            makers = [original.get("FABRICANTE")]
+        if not any(makers):
+            # Só nomes do catálogo revisado, quando não há fabricante atual explícito.
+            makers = [
+                name
+                for name in {item.manufacturer for item in REAL_PRODUCTS.values()}
+                if re.search(
+                    r"(?<![A-Z0-9])" + re.escape(manufacturer_key(name)) + r"(?![A-Z0-9])",
+                    manufacturer_key(description),
+                )
+            ]
+        if any(value and manufacturer_key(value) != manufacturer_key(product.manufacturer) for value in makers):
+            return False
+        expected = reference_spelling_key(product.reference.upper())
+        references = [
+            current.get("manufacturer_reference"),
+            attributes.get("REFERENCIA FABRICANTE"),
+            attributes.get("REFERENCIA"),
+        ]
+        if any(references):
+            return all(not value or reference_spelling_key(value.upper()) == expected for value in references)
+        if any(
+            reference_spelling_key(original.get(name, "").upper()) == expected
+            for name in ("REFERENCIA FABRICANTE", "REFERENCIA")
+        ):
+            return True
+        # O extrator técnico pode abreviar um PN de rolamento. A ocorrência inteira
+        # do único PN revisado preserva seus sufixos, aceitando somente separadores.
+        literal = r"[\s./\-]*".join(map(re.escape, expected))
+        return re.search(r"(?<![A-Z0-9])" + literal + r"(?![A-Z0-9/_-])", description.upper()) is not None
+
     def run(self, code: str, requested: list[str]) -> ResearchResult:
         product, pdm_class = self.validate_request(code, requested)
         if not product.sources:
@@ -137,6 +189,8 @@ class TrustedSourceResearch:
                     return ResearchResult(tuple(rows.values()), "SOURCE_QUERY_TIMEOUT")
                 rows.update(fresh)
             except SourceError:
+                if self._clock() >= deadline:
+                    return ResearchResult(tuple(rows.values()), "SOURCE_QUERY_TIMEOUT")
                 reason = "SOURCE_UNAVAILABLE"
         return ResearchResult(tuple(rows.values()), reason or (None if rows else "EVIDENCE_NOT_FOUND"))
 
@@ -154,10 +208,17 @@ class Enrichment:
         if self._research is not None:
             self._research.validate_request(material_code, requested)
         rows = self._repository.evidence_for_material(material_code, requested)
+        identity_changed = self._research is not None and not self._research.matches_current_product(
+            material_code, self._repository.material(material_code)
+        )
         missing = [name for name in requested if not any(row["attribute_name"] == name for row in rows)]
-        pending = requested if refresh else missing
-        reason = "TRUSTED_SOURCE_SERVICE_UNAVAILABLE" if pending else None
-        if pending and self._research is not None:
+        pending = requested if refresh or identity_changed else missing
+        reason = (
+            "CURRENT_PRODUCT_IDENTITY_CHANGED"
+            if identity_changed
+            else ("TRUSTED_SOURCE_SERVICE_UNAVAILABLE" if pending else None)
+        )
+        if pending and self._research is not None and not identity_changed:
             result = self._research.run(material_code, pending)
             cached_ids = {str(row["id"]) for row in rows}
             rows = [*rows, *(row for row in result.rows if str(row["id"]) not in cached_ids)]
