@@ -6,6 +6,7 @@ import { Button, Eyebrow, Select, Tabs, Seta } from "@/components/ui";
 import { cn } from "@/lib/format";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import type { ChatAction, ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
 import { MaterialCard } from "./MaterialCard";
 import { ChatHistory } from "./ChatHistory";
@@ -27,10 +28,13 @@ function errorMessage(error: unknown) {
 
 export function ChatPage() {
   const { me } = useAuth();
-  return me ? <Conversation key={me.user.id} /> : null;
+  if (!me) return null;
+  // Chamadas MCP são diagnóstico técnico: só a role Dev/TI as vê. A API também as omite para os demais.
+  const diagnostics = can(me, "chat:diagnostics");
+  return <Conversation key={`${me.user.id}:${diagnostics}`} diagnostics={diagnostics} />;
 }
 
-function Conversation() {
+function Conversation({ diagnostics }: { diagnostics: boolean }) {
   const { me, api } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [session, setSession] = useState<{ id: string; version: number } | null>(null);
@@ -110,10 +114,11 @@ function Conversation() {
       setSelected(res.session_id);
       setSession({ id: res.session_id, version: res.session_version });
       setLast(res);
-      setCalls((c) => [
-        ...c,
-        ...res.tool_calls.map((call) => ({ turn: res.session_version, call })),
-      ]);
+      if (diagnostics)
+        setCalls((c) => [
+          ...c,
+          ...res.tool_calls.map((call) => ({ turn: res.session_version, call })),
+        ]);
       setMessages((m) => [
         ...m,
         {
@@ -219,7 +224,7 @@ function Conversation() {
       if (historyRequest.current !== request) return;
       setSession({ id: saved.session_id, version: saved.session_version });
       setMessages(saved.messages);
-      setCalls(saved.calls);
+      setCalls(diagnostics ? saved.calls : []);
       setProcessing(saved.processing);
       if (saved.center_code) setCenter(saved.center_code);
       if (saved.submission)
@@ -420,15 +425,17 @@ function Conversation() {
 
       {/* Painel lateral */}
       <aside className="flex flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1">
-        <Tabs
-          value={panel}
-          onChange={setPanel}
-          items={[
-            { value: "ficha", label: "Ficha" },
-            { value: "mcp", label: "Chamadas MCP", count: calls.length },
-          ]}
-        />
-        {panel === "ficha" ? (
+        {diagnostics && (
+          <Tabs
+            value={panel}
+            onChange={setPanel}
+            items={[
+              { value: "ficha", label: "Ficha" },
+              { value: "mcp", label: "Chamadas MCP", count: calls.length },
+            ]}
+          />
+        )}
+        {!diagnostics || panel === "ficha" ? (
           last ? (
             <MaterialCard
               card={last.material_card}
