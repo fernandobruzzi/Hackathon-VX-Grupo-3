@@ -112,3 +112,23 @@ no código:
 5. Chat: enviar `expected_session_version` e tratar 409 de turno concorrente.
 
 O dashboard consulta métricas persistidas por dataset e centros autorizados; valores financeiros exigem o Auditor fiscal. Avaliação e comparação posterior indisponíveis ficam explícitas. Veja [as regras de cálculo](../docs/dashboard.md).
+
+## Abas por teclado
+
+Pedidos, fila de saneamento e detalhes do chat usam ativação **manual**. Tab entra
+pela aba selecionada; esquerda/direita percorrem circularmente as opções e Home/End
+focam a primeira/última, sem trocar conteúdo ou disparar requisições. Enter ou
+Espaço ativam o botão focado. Ao sair do grupo, a próxima entrada volta à aba
+selecionada. O próximo Tab alcança o painel (e então seus controles); na fila, passa antes pelo filtro de tipo de proposta.
+
+Cada grupo tem nome acessível e cada aba aponta para seu painel por `aria-controls`;
+o painel é nomeado pela aba com `aria-labelledby`. Painéis inativos ficam ocultos.
+Sem permissão para os detalhes MCP ou abas de revisão, o conteúdo permitido continua
+sem um grupo de abas adicional. O fundo preenchido marca seleção; o contorno externo
+de foco usa o token `--focus`, nos temas claro e escuro.
+
+Verificação assistiva manual pendente: com NVDA/Firefox ou VoiceOver/Safari,
+percorrer os três grupos e conferir nome, posição, seleção e painel anunciado;
+setas não devem anunciar seleção alterada antes de Enter/Espaço. Conferir também
+Tab/Shift+Tab, temas e carregamento na API. A inspeção automatizada da árvore
+acessível do navegador não substitui essa sessão com leitor de tela.

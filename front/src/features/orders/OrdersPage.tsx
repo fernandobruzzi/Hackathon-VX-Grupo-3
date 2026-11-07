@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
-import { Button, Code, PageHeader, Table, Tabs, Td, Th } from "@/components/ui";
+import { Button, Code, PageHeader, Table, Tabs, TabPanels, Td, Th } from "@/components/ui";
 import { OrderStatusBadge } from "@/components/ui/status";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -133,139 +133,149 @@ export function OrdersPage() {
       )}
       {reviewer && (
         <div className="mb-4">
-          <Tabs value={tab} onChange={setTab} items={tabs} />
+          <Tabs
+            id="orders"
+            label="Pedidos de cadastro"
+            value={tab}
+            onChange={setTab}
+            items={tabs}
+          />
         </div>
       )}
-      {error && (
-        <div role="alert" className="mb-4 text-alerta">
-          {error}{" "}
-          <Button size="sm" onClick={() => setRetry((value) => value + 1)}>
-            Tentar novamente
-          </Button>
-        </div>
-      )}
-      {editing && (
-        <OrderComplementForm
-          key={editing.id}
-          order={editing}
-          onCancel={() => setEditing(null)}
-          onSaved={(result) => {
-            setEditing(null);
-            setSaved(result);
-            setRemote((rows) => rows?.map((row) => (row.id === result.id ? result : row)) ?? null);
-          }}
-        />
-      )}
-      {saved && (
-        <p role="status" className="my-4 text-sm text-verde">
-          Complemento aceito. Resultado: {saved.status}
-          {saved.missing_attributes.length
-            ? `. Falta: ${saved.missing_attributes.join(", ")}`
-            : ". Sem pendências de atributos."}
-        </p>
-      )}
-      {reviewing && (
-        <OrderReviewPanel
-          key={reviewing}
-          id={reviewing}
-          onClose={() => setReviewing(null)}
-          onDecided={() => {
-            setReviewing(null);
-            setRetry((value) => value + 1);
-          }}
-        />
-      )}
-      <Table>
-        <thead>
-          <tr>
-            <Th>Pedido</Th>
-            <Th>Texto original</Th>
-            <Th>Centro</Th>
-            <Th>Classe</Th>
-            <Th>Status</Th>
-            <Th>Resultado</Th>
-            <Th>Atualizado</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((o) => (
-            <tr key={o.id} className="hover:bg-ink/60">
-              <Td>
-                <Code>{o.id.slice(0, 8)}</Code>
-                <p className="mt-1 text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">
-                  {o.origin === "IMPORT" ? "importado" : "chat"}
-                </p>
-              </Td>
-              <Td className="max-w-md text-sm">{o.original_text}</Td>
-              <Td>
-                <Code>{o.center_code || "—"}</Code>
-              </Td>
-              <Td>
-                <Code className="text-muted">{o.pdm_class_id ?? "—"}</Code>
-              </Td>
-              <Td>
-                <OrderStatusBadge value={o.status} />
-              </Td>
-              <Td className="text-sm">
-                {o.missing_attributes.length > 0 && (
-                  <span className="font-semibold text-aviso">
-                    Falta: {o.missing_attributes.join(", ")}
-                  </span>
-                )}
-                {(o.supplements ?? []).map((entry, index) => (
-                  <p key={index} className="mt-1 text-sm text-muted">
-                    Complemento: {entry.text} · Origem: {entry.source}
-                  </p>
-                ))}
-                {backend && o.can_complement && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setEditing(o);
-                      setSaved(null);
-                    }}
-                  >
-                    Complementar
-                  </Button>
-                )}
-                {o.material_code && (
-                  <span>
-                    {o.status === "REGISTERED" ? "Cadastrado como " : "Use "}
-                    <Code className="text-verde">{o.material_code}</Code>
-                  </span>
-                )}
-                {backend && (
-                  <Button size="sm" onClick={() => setReviewing(o.id)}>
-                    Revisar pedido
-                  </Button>
-                )}
-              </Td>
-              <Td>
-                <Code className="text-muted">{fmtDate(o.updated_at)}</Code>
-              </Td>
+      <TabPanels id="orders" values={["review", "all", "mine"]} active={tab} enabled={reviewer}>
+        {error && (
+          <div role="alert" className="mb-4 text-alerta">
+            {error}{" "}
+            <Button size="sm" onClick={() => setRetry((value) => value + 1)}>
+              Tentar novamente
+            </Button>
+          </div>
+        )}
+        {editing && (
+          <OrderComplementForm
+            key={editing.id}
+            order={editing}
+            onCancel={() => setEditing(null)}
+            onSaved={(result) => {
+              setEditing(null);
+              setSaved(result);
+              setRemote(
+                (rows) => rows?.map((row) => (row.id === result.id ? result : row)) ?? null,
+              );
+            }}
+          />
+        )}
+        {saved && (
+          <p role="status" className="my-4 text-sm text-verde">
+            Complemento aceito. Resultado: {saved.status}
+            {saved.missing_attributes.length
+              ? `. Falta: ${saved.missing_attributes.join(", ")}`
+              : ". Sem pendências de atributos."}
+          </p>
+        )}
+        {reviewing && (
+          <OrderReviewPanel
+            key={reviewing}
+            id={reviewing}
+            onClose={() => setReviewing(null)}
+            onDecided={() => {
+              setReviewing(null);
+              setRetry((value) => value + 1);
+            }}
+          />
+        )}
+        <Table>
+          <thead>
+            <tr>
+              <Th>Pedido</Th>
+              <Th>Texto original</Th>
+              <Th>Centro</Th>
+              <Th>Classe</Th>
+              <Th>Status</Th>
+              <Th>Resultado</Th>
+              <Th>Atualizado</Th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-      {backend && loading && (
-        <p role="status" className="mt-4 text-sm text-muted">
-          Carregando pedidos…
-        </p>
-      )}
-      {backend && nextCursor !== null && (
-        <Button
-          className="mt-4"
-          disabled={loading}
-          onClick={() => {
-            if (controller.current) void loadPage(nextCursor, true, controller.current.signal);
-          }}
-        >
-          Carregar mais pedidos
-        </Button>
-      )}
-      {backend && !loading && remote && rows.length === 0 && (
-        <p className="mt-4 text-sm text-muted">Nenhum pedido nesta lista.</p>
-      )}
+          </thead>
+          <tbody>
+            {rows.map((o) => (
+              <tr key={o.id} className="hover:bg-ink/60">
+                <Td>
+                  <Code>{o.id.slice(0, 8)}</Code>
+                  <p className="mt-1 text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">
+                    {o.origin === "IMPORT" ? "importado" : "chat"}
+                  </p>
+                </Td>
+                <Td className="max-w-md text-sm">{o.original_text}</Td>
+                <Td>
+                  <Code>{o.center_code || "—"}</Code>
+                </Td>
+                <Td>
+                  <Code className="text-muted">{o.pdm_class_id ?? "—"}</Code>
+                </Td>
+                <Td>
+                  <OrderStatusBadge value={o.status} />
+                </Td>
+                <Td className="text-sm">
+                  {o.missing_attributes.length > 0 && (
+                    <span className="font-semibold text-aviso">
+                      Falta: {o.missing_attributes.join(", ")}
+                    </span>
+                  )}
+                  {(o.supplements ?? []).map((entry, index) => (
+                    <p key={index} className="mt-1 text-sm text-muted">
+                      Complemento: {entry.text} · Origem: {entry.source}
+                    </p>
+                  ))}
+                  {backend && o.can_complement && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setEditing(o);
+                        setSaved(null);
+                      }}
+                    >
+                      Complementar
+                    </Button>
+                  )}
+                  {o.material_code && (
+                    <span>
+                      {o.status === "REGISTERED" ? "Cadastrado como " : "Use "}
+                      <Code className="text-verde">{o.material_code}</Code>
+                    </span>
+                  )}
+                  {backend && (
+                    <Button size="sm" onClick={() => setReviewing(o.id)}>
+                      Revisar pedido
+                    </Button>
+                  )}
+                </Td>
+                <Td>
+                  <Code className="text-muted">{fmtDate(o.updated_at)}</Code>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+        {backend && loading && (
+          <p role="status" className="mt-4 text-sm text-muted">
+            Carregando pedidos…
+          </p>
+        )}
+        {backend && nextCursor !== null && (
+          <Button
+            className="mt-4"
+            disabled={loading}
+            onClick={() => {
+              if (controller.current) void loadPage(nextCursor, true, controller.current.signal);
+            }}
+          >
+            Carregar mais pedidos
+          </Button>
+        )}
+        {backend && !loading && remote && rows.length === 0 && (
+          <p className="mt-4 text-sm text-muted">Nenhum pedido nesta lista.</p>
+        )}
+      </TabPanels>
     </>
   );
 }

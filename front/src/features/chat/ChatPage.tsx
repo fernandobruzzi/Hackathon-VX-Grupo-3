@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowUp, RotateCcw } from "lucide-react";
-import { Button, Eyebrow, Select, Tabs, Seta } from "@/components/ui";
+import { Button, Eyebrow, Select, Tabs, TabPanels, Seta } from "@/components/ui";
 import { cn } from "@/lib/format";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -519,6 +519,8 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
       <aside className="flex flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1">
         {diagnostics && (
           <Tabs
+            id="chat-details"
+            label="Detalhes do chat"
             value={panel}
             onChange={setPanel}
             items={[
@@ -527,24 +529,31 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
             ]}
           />
         )}
-        {!diagnostics || panel === "ficha" ? (
-          last ? (
-            <MaterialCard
-              card={last.material_card}
-              submitted={submitted ?? undefined}
-              onSubmit={submit}
-              onReply={send}
-              busy={replyBusy}
-            />
+        <TabPanels
+          id="chat-details"
+          values={["ficha", "mcp"]}
+          active={diagnostics ? panel : "ficha"}
+          enabled={diagnostics}
+        >
+          {!diagnostics || panel === "ficha" ? (
+            last ? (
+              <MaterialCard
+                card={last.material_card}
+                submitted={submitted ?? undefined}
+                onSubmit={submit}
+                onReply={send}
+                busy={replyBusy}
+              />
+            ) : (
+              <div className="rounded-md bg-surface p-6 text-sm leading-6 text-muted">
+                A ficha do item aparece aqui: classe PDM, atributos, o que falta, checagem de
+                duplicidade e NCM.
+              </div>
+            )
           ) : (
-            <div className="rounded-md bg-surface p-6 text-sm leading-6 text-muted">
-              A ficha do item aparece aqui: classe PDM, atributos, o que falta, checagem de
-              duplicidade e NCM.
-            </div>
-          )
-        ) : (
-          <ToolCallsPanel calls={calls} />
-        )}
+            <ToolCallsPanel calls={calls} />
+          )}
+        </TabPanels>
         {last && (
           <p className="font-mono text-[11px] text-muted">
             {last.request_id} · sessão v{last.session_version} · pedido{" "}
