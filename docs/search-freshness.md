@@ -100,3 +100,17 @@ A configuração e homologação desse processo contínuo na AWS fazem parte da 
 a equivalência operacional na EC2 acompanha a #29. O Compose local está integrado,
 mas isso não é evidência de homologação AWS. Sem o processo contínuo, a busca
 permanece pendente de forma segura após alterações, até uma indexação compatível.
+
+
+## Estado da integração
+
+A migração `0014_search_content_version` sucede `0013_manual_reviews`; as migrações
+já aplicadas de lotes, estoque vigente e revisão manual permanecem intactas.
+Os testes de busca e API verificam essa cadeia única, a correspondência com os
+modelos e a convivência com a revisão manual e o histórico de conversas.
+
+A configuração do serviço contínuo no Compose não substitui sua execução real.
+A aceitação de `docker compose up --build`, incluindo o ciclo de publicação,
+atualização e busca, continua pendente nesta preparação. O PR permanece em
+rascunho até essa verificação; resultados de testes em PostgreSQL descartável
+não comprovam esse critério operacional nem a homologação na AWS.
