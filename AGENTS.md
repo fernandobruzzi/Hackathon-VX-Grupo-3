@@ -640,6 +640,12 @@ See [`docs/pendencias.md`](docs/pendencias.md) for endpoints and operation.
 
 ## Full-base runs
 
+Starting and resuming batch jobs require a UUID `Idempotency-Key`. Repeating the
+same authenticated command returns the same job's current state without another
+manifest or launch, even after completion or an ambiguous launch failure. The UI
+retains the command for explicit retry; a new operation uses a new key. See
+[`docs/batch-idempotencia.md`](docs/batch-idempotencia.md).
+
 `vx-back sanitize --job-id <id>` runs a job the API created, and resumes from its checkpoint if it stopped. Analysis is saved in chunks of 1,000 materials under `runs/<job_id>/analysis/` in storage, and proposals are saved in batches of 500 in the same transaction as the checkpoint, so a rerun skips finished work and never duplicates a proposal. The job and every analysis chunk record the rules signature, the same PDM hash and revisions the search index uses. Resuming after any of them changed fails the job with the reason and leaves its chunks as they are: create a new job instead. Without `--job-id` the run is in memory, with nothing to resume. Locally, `APP_ENV=local uv run vx-batch-job` (from `api/`, with the `api_user` connection) also creates a job without the screen.
 
 Batch requests must include all three statuses (`ATIVO`, `BLOQUEADO`, `OBSOLETO`); subsets and empty status lists receive `422 SCOPE_NOT_SUPPORTED` before any job, manifest or task is created. Resume preserves the full-base scope. Governança starts jobs on `/batch` (`POST /api/v1/batch/jobs`); locally, sign in with the `GESTOR_CADASTRO` account. The API writes a manifest to `runs/<job_id>/manifest.json`, with no user token, and launches the task through `BATCH_RUNNER`: `local_process` runs `vx-back sanitize` as a subprocess with the `batch_user` connection from `BATCH_DATABASE_URL`, only with `APP_ENV=local`. An ECS RunTask runner joins it for AWS (#6). Each run claims the job with its own worker id in `checkpoint.lease`, and every write requires that lease and status `RUNNING`, so a second worker is refused while the first has a fresh heartbeat. The worker beats every 15 s between checkpoints. A job without a heartbeat for `BATCH_HEARTBEAT_TIMEOUT_SECONDS` (default 120) becomes `FAILED` with `WORKER_TIMEOUT`, or `WORKER_NOT_STARTED` if the task never started, and the old worker stops on its next write. `POST /api/v1/batch/jobs/{id}/resume` puts a failed job back in the queue and the task continues from its checkpoint.

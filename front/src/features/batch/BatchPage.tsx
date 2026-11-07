@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Play, RotateCcw } from "lucide-react";
 import {
   Badge,
@@ -21,6 +21,11 @@ import { ApiError, createApiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { fmtDate, fmtInt } from "@/lib/format";
 import type { BatchJob } from "@/types/api";
+import type { components } from "@/types/api.generated";
+
+type BatchCommand =
+  | { kind: "start"; key: string; body: components["schemas"]["BatchJobRequest"] }
+  | { kind: "resume"; key: string; jobId: string };
 
 const statusTone: Record<BatchJob["status"], [Tone, string]> = {
   QUEUED: ["neutral", "Na fila"],
@@ -55,8 +60,17 @@ function secondsSince(iso: string | null, now: number) {
 }
 
 export function BatchPage() {
-  const { me } = useAuth();
-  const api = useMemo(() => createApiClient({ getCsrfToken: () => me?.csrf_token ?? null }), [me]);
+  const { me, sessionRevision } = useAuth();
+  const revision = useRef(sessionRevision);
+  revision.current = sessionRevision;
+  const api = useMemo(
+    () =>
+      createApiClient({
+        getCsrfToken: () => me?.csrf_token ?? null,
+        getSessionRevision: () => revision.current,
+      }),
+    [me],
+  );
   const allowed = me?.permissions.includes("batch:run") ?? false;
   const [jobs, setJobs] = useState<BatchJob[]>([]);
   const [datasetId, setDatasetId] = useState<string | null>(null);
@@ -66,18 +80,36 @@ export function BatchPage() {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [pendingCommand, setPendingCommand] = useState<BatchCommand | null>(null);
+  const inFlight = useRef(false);
+
+  useEffect(() => {
+    setPendingCommand(null);
+    setJobs([]);
+    setDatasetId(null);
+    setLoaded(false);
+    setQueryError(null);
+    setActionError(null);
+    setBusy(false);
+    inFlight.current = false;
+  }, [sessionRevision]);
 
   const load = useCallback(async () => {
+    const started = revision.current;
     try {
       const list = await api.request("get", "/api/v1/batch/jobs", { query: { limit: 20 } });
+      if (started !== revision.current) return;
       setJobs(list.items);
       setDatasetId(list.latest_dataset_id);
       setQueryError(null);
     } catch (e) {
+      if (started !== revision.current) return;
       setQueryError(`Não foi possível atualizar os jobs: ${errorMessage(e)}`);
     } finally {
-      setLoaded(true);
-      setNow(Date.now());
+      if (started === revision.current) {
+        setLoaded(true);
+        setNow(Date.now());
+      }
     }
   }, [api]);
 
@@ -95,22 +127,57 @@ export function BatchPage() {
     return () => clearInterval(timer);
   }, [allowed, active, load]);
 
-  const run = async (label: string, action: () => Promise<unknown>) => {
+  const run = async (command: BatchCommand) => {
+    if (inFlight.current) return;
+    const started = revision.current;
+    inFlight.current = true;
+    setPendingCommand(command);
     setBusy(true);
     setActionError(null);
     try {
-      await action();
+      if (command.kind === "start") {
+        await api.request("post", "/api/v1/batch/jobs", {
+          body: command.body,
+          idempotencyKey: command.key,
+        });
+      } else {
+        await api.request("post", "/api/v1/batch/jobs/{id}/resume", {
+          params: { id: command.jobId },
+          body: {},
+          idempotencyKey: command.key,
+        });
+      }
+      if (started !== revision.current) return;
+      setPendingCommand(null);
     } catch (e) {
+      if (started !== revision.current) return;
+      if (
+        e instanceof ApiError &&
+        e.status >= 400 &&
+        e.status < 500 &&
+        ![408, 429].includes(e.status)
+      ) {
+        setPendingCommand(null);
+      }
+      const label =
+        command.kind === "start"
+          ? "iniciar o job"
+          : `reprocessar o job ${command.jobId.slice(0, 8)}`;
       setActionError(`Não foi possível ${label}: ${errorMessage(e)}`);
     } finally {
-      setBusy(false);
-      await load();
+      if (started === revision.current) {
+        inFlight.current = false;
+        setBusy(false);
+        await load();
+      }
     }
   };
 
   const start = () =>
-    run("iniciar o job", () =>
-      api.request("post", "/api/v1/batch/jobs", {
+    run(
+      pendingCommand ?? {
+        kind: "start",
+        key: crypto.randomUUID(),
         body: {
           dataset_id: datasetId ?? "",
           job_type: type,
@@ -118,15 +185,16 @@ export function BatchPage() {
           ncm_version: "ncm-demo-v1",
           scope: { pdm_class_ids: [], include_statuses: ["ATIVO", "BLOQUEADO", "OBSOLETO"] },
         },
-      }),
+      },
     );
 
   const resume = (job: BatchJob) =>
-    run(`reprocessar o job ${job.id.slice(0, 8)}`, () =>
-      api.request("post", "/api/v1/batch/jobs/{id}/resume", {
-        params: { id: job.id },
-        body: {},
-      }),
+    run(
+      pendingCommand ?? {
+        kind: "resume",
+        key: crypto.randomUUID(),
+        jobId: job.id,
+      },
     );
 
   const heartbeat = active ? secondsSince(active.heartbeat_at, now) : null;
@@ -154,6 +222,7 @@ export function BatchPage() {
               <Field label="Tipo">
                 <Select
                   value={type}
+                  disabled={busy || !!pendingCommand}
                   onChange={(e) => setType(e.target.value as BatchJob["job_type"])}
                 >
                   {Object.entries(typeLabel).map(([k, v]) => (
@@ -183,11 +252,26 @@ export function BatchPage() {
               </Field>
               <Button
                 onClick={start}
-                disabled={busy || !!active || !datasetId}
+                disabled={busy || !!pendingCommand || !!active || !datasetId}
                 className="self-start"
               >
                 <Play className="size-4" /> Iniciar job
               </Button>
+              {pendingCommand && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-aviso">
+                    A resposta anterior não foi confirmada. A nova tentativa consulta o mesmo
+                    comando, sem iniciar outra execução.
+                  </p>
+                  <Button
+                    onClick={() => run(pendingCommand)}
+                    disabled={busy}
+                    className="self-start"
+                  >
+                    Tentar novamente
+                  </Button>
+                </div>
+              )}
               {!datasetId && loaded && (
                 <p className="text-sm text-aviso">Nenhum dataset carregado: rode o bootstrap.</p>
               )}
@@ -304,7 +388,7 @@ export function BatchPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => resume(j)}
-                          disabled={busy || !!active}
+                          disabled={busy || !!pendingCommand || !!active}
                         >
                           <RotateCcw className="size-4" /> Reprocessar
                         </Button>

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { AuthProvider } from "../src/lib/auth";
+import { AuthProvider, useAuth } from "../src/lib/auth";
 import { BatchPage } from "../src/features/batch/BatchPage";
 import { meFor } from "../src/lib/permissions";
 
@@ -99,6 +99,132 @@ for (const action of ["Iniciar job", "Reprocessar"]) {
       failGet = false;
       await click();
       assert.equal(alerts(), "");
+    } finally {
+      await act(async () => view?.unmount());
+      globalThis.fetch = previousFetch;
+    }
+  });
+}
+
+test("trocar a sessão descarta o comando sem resposta e uma nova operação recebe outra chave", async () => {
+  const previousFetch = globalThis.fetch;
+  const keys: string[] = [];
+  let auth!: ReturnType<typeof useAuth>;
+  function Probe() {
+    auth = useAuth();
+    return null;
+  }
+  globalThis.fetch = async (url, init) => {
+    if (String(url).endsWith("/auth/config")) return Response.json({ mode: "local" });
+    if (String(url).endsWith("/auth/me") || String(url).endsWith("/auth/local-session")) {
+      return Response.json(meFor("GESTOR_CADASTRO"));
+    }
+    if (init?.method === "POST") {
+      keys.push(new Headers(init.headers).get("Idempotency-Key")!);
+      throw new TypeError("Resposta perdida");
+    }
+    return Response.json({ items: [], latest_dataset_id: "dataset" });
+  };
+  let view!: ReactTestRenderer;
+  const buttons = (label: string) =>
+    view.root
+      .findAllByType("button")
+      .filter((b) =>
+        b.children.some((child) => typeof child === "string" && child.includes(label)),
+      );
+  try {
+    await act(async () => {
+      view = create(
+        React.createElement(
+          AuthProvider,
+          null,
+          React.createElement(Probe),
+          React.createElement(BatchPage),
+        ),
+      );
+    });
+    await act(async () => buttons("Iniciar job")[0].props.onClick());
+    assert.equal(buttons("Tentar novamente").length, 1);
+    await act(async () => {
+      assert.equal(await auth.signIn("GESTOR_CADASTRO"), true);
+    });
+    assert.equal(buttons("Tentar novamente").length, 0);
+    await act(async () => buttons("Iniciar job")[0].props.onClick());
+    assert.equal(keys.length, 2);
+    assert.notEqual(keys[1], keys[0]);
+  } finally {
+    await act(async () => view?.unmount());
+    globalThis.fetch = previousFetch;
+  }
+});
+
+for (const action of ["Iniciar job", "Reprocessar"]) {
+  test(`${action}: repetir após resposta perdida conserva chave, corpo e recurso`, async () => {
+    const previousFetch = globalThis.fetch;
+    const calls: { url: string; key: string | null; body: BodyInit | null | undefined }[] = [];
+    let dataset = "dataset-original";
+    const job = {
+      id: "job-original",
+      status: "FAILED",
+      job_type: "SANITIZE",
+      requested_by: "gestor",
+      progress: { processed: 0, total: 1 },
+      counts: { proposals: 0 },
+      started_at: null,
+    };
+    let jobs = action === "Reprocessar" ? [job] : [];
+    globalThis.fetch = async (url, init) => {
+      if (String(url).endsWith("/auth/config")) return Response.json({ mode: "local" });
+      if (String(url).endsWith("/auth/me")) return Response.json(meFor("GESTOR_CADASTRO"));
+      if (init?.method === "POST") {
+        calls.push({
+          url: String(url),
+          key: new Headers(init.headers).get("Idempotency-Key"),
+          body: init.body,
+        });
+        if (calls.length === 1) {
+          dataset = "dataset-new";
+          // O servidor aceitou, mas a resposta não chegou. A listagem já mostra o job ativo.
+          jobs = [{ ...job, status: "QUEUED" }];
+          throw new TypeError("Resposta perdida");
+        }
+        jobs = [];
+        return Response.json({ ...job, status: "SUCCEEDED" });
+      }
+      return Response.json({ items: jobs, latest_dataset_id: dataset });
+    };
+    let view!: ReactTestRenderer;
+    const click = async (label: string) =>
+      act(async () => {
+        const button = view.root
+          .findAllByType("button")
+          .find((b) =>
+            b.children.some((child) => typeof child === "string" && child.includes(label)),
+          );
+        assert.ok(button);
+        assert.equal(button.props.disabled, false);
+        await button.props.onClick();
+      });
+    try {
+      await act(async () => {
+        view = create(React.createElement(AuthProvider, null, React.createElement(BatchPage)));
+      });
+      await click(action);
+      assert.equal(calls.length, 1);
+      assert.ok(view.root.findAll((n) => n.props.role === "alert").length);
+      await click("Tentar novamente");
+      assert.equal(calls.length, 2);
+      assert.deepEqual(calls[1], calls[0]);
+      assert.match(calls[0].key!, /^[0-9a-f-]{36}$/);
+      if (action === "Iniciar job") {
+        assert.equal(JSON.parse(String(calls[1].body)).dataset_id, "dataset-original");
+        await click("Iniciar job");
+        assert.notEqual(calls[2].key, calls[1].key);
+        assert.equal(JSON.parse(String(calls[2].body)).dataset_id, "dataset-new");
+      } else {
+        assert.match(calls[1].url, /job-original\/resume$/);
+        assert.equal(calls[1].body, "{}");
+      }
     } finally {
       await act(async () => view?.unmount());
       globalThis.fetch = previousFetch;
