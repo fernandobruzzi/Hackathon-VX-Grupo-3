@@ -1,13 +1,13 @@
 """Estoque MCP somente na observacao vigente de cada empresa.
 
-Revision ID: 0011_current_inventory_dataset
-Revises: 0010
+Revision ID: 0012_current_inventory_dataset
+Revises: 0011
 """
 
 from alembic import op
 
-revision = "0011_current_inventory_dataset"
-down_revision = "0010"
+revision = "0012_current_inventory_dataset"
+down_revision = "0011"
 branch_labels = None
 depends_on = None
 
