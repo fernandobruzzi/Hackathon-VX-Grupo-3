@@ -105,6 +105,10 @@ def main(argv: list[str] | None = None) -> int:
     sanitize.add_argument("--job-id")
     sanitize.add_argument("--manifest-key", help="Manifesto gravado pela API para o job, no armazenamento")
     sanitize.add_argument("--repository", help="Padrao: CANDIDATE_REPOSITORY ou exact_identity_v1")
+    internal = commands.add_parser(
+        "enrichment-report", help="Diagnostica completude e fontes internas sem banco ou rede"
+    )
+    internal.add_argument("--data-dir", default="data/desafio01")
     enrich = commands.add_parser(
         "enrich-real-products", help="Registra evidências e propostas imutáveis dos 15 produtos reais"
     )
@@ -147,6 +151,10 @@ def main(argv: list[str] | None = None) -> int:
             seed=args.seed,
             historical_paths=args.historical_source,
         )
+    elif args.command == "enrichment-report":
+        from pipelines.internal_enrichment import report_kit
+
+        result = report_kit(args.data_dir)
     elif args.command == "publish-enrichment":
         from repositories.enrichment_repository import publish_enrichment
 

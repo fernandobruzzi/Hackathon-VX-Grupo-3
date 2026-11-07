@@ -213,7 +213,9 @@ def test_real_report_exposes_denominators_and_development_provenance(tmp_path, m
     catalog = load_pdm(DATA / "03_padrao_cadastro_PDM.xlsx")
     context = full_run.RunContext(engine=SimpleNamespace(begin=lambda: nullcontext(connection)), tenant_id="test")
 
-    def save_reviews(connection_arg, records_arg, analyzed, pending_by_code, context_arg, catalog_arg, corrector_name):
+    def save_reviews(
+        connection_arg, records_arg, analyzed, pending_by_code, context_arg, catalog_arg, corrector_name, enrichment
+    ):
         assert connection_arg is connection
         assert records_arg is records
         assert [material.record for material in analyzed] == records
@@ -223,6 +225,16 @@ def test_real_report_exposes_denominators_and_development_provenance(tmp_path, m
         captured["manual_pending"] = pending_by_code
         return "test-manual-review-run"
 
+    # Esta avaliação isola as propostas de saneamento; fontes internas têm testes próprios de banco.
+    from clients.storage import LocalObjectStore
+
+    context.store = LocalObjectStore(tmp_path)
+    context.store.put_if_absent("diagnostic", b'{"results": []}')
+    monkeypatch.setattr(
+        full_run,
+        "run_internal_enrichment",
+        lambda *args: {"report_key": "diagnostic", "proposals": 0, "inserted": 0, "material_codes": []},
+    )
     monkeypatch.setattr(full_run, "save_all", save)
     monkeypatch.setattr(full_run, "save_manual_reviews", save_reviews)
     metrics = full_run.run_full(records, catalog, context)

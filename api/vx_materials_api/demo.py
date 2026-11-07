@@ -258,7 +258,7 @@ def reset(
         personas = ensure_personas(engine)
         loaded = bootstrap(directory, engine, store)
         index = run_index(workbook, database_url=database_url)
-        sanitize = run_sanitize(workbook, database_url=database_url)
+        sanitize = run_sanitize(workbook, database_url=database_url, store=store)
         catalog = load_pdm(workbook)
         orders = import_orders(engine, directory, catalog)
         picks = select_demo_proposals(engine, catalog)

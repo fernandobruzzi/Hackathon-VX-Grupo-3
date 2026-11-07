@@ -290,6 +290,20 @@ def _has_metric_gauge_evidence(work: _Extraction, evidence: str, gauge: str) -> 
     )
 
 
+def labeled_spans(attribute_names, segment):
+    """Rótulos e aliases aceitos, compartilhados com a checagem de observações contraditórias."""
+    labels = sorted({*KEY_ALIASES, *attribute_names, *_REFERENCE_LABELS}, key=len, reverse=True)
+    spans = []
+    for label in labels:
+        guard = r"(?=\s*:)" if label in COLON_ONLY_KEYS else ""
+        guard += r"(?=\s*:?\s*\d)" if label in DIGIT_ONLY_KEYS else ""
+        for match in re.finditer(rf"(?<![\w./\-]){re.escape(label)}(?![\w./\-]){guard}", segment):
+            if not any(start < match.end() and match.start() < end for start, end, _ in spans):
+                spans.append((match.start(), match.end(), label))
+    spans.sort()
+    return spans
+
+
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
     revision = "11-quantity-reference-199"
@@ -395,15 +409,7 @@ class RuleBasedV1ExtractionRepository:
                     # Manter a origem no pool impede que um código M12 vire medida física.
                     value = segment.rstrip().removesuffix(tail).rstrip()
                 return [value, *free] if value else free
-        labels = sorted({*KEY_ALIASES, *work.by_name, *_REFERENCE_LABELS}, key=len, reverse=True)
-        spans = []
-        for label in labels:
-            guard = r"(?=\s*:)" if label in COLON_ONLY_KEYS else ""
-            guard += r"(?=\s*:?\s*\d)" if label in DIGIT_ONLY_KEYS else ""
-            for match in re.finditer(rf"(?<![\w./\-]){re.escape(label)}(?![\w./\-]){guard}", segment):
-                if not any(start < match.end() and match.start() < end for start, end, _ in spans):
-                    spans.append((match.start(), match.end(), label))
-        spans.sort()
+        spans = labeled_spans(work.by_name, segment)
         position = 0
         for index, (start, end, label) in enumerate(spans):
             if start > position:

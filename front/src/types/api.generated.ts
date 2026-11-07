@@ -1487,6 +1487,7 @@ export interface components {
         attributes: {
           [key: string]: string | null;
         };
+        completeness?: components["schemas"]["MaterialCompletenessReview"] | null;
       };
       rules_signature: string;
       pdm_version: string;
@@ -1682,6 +1683,28 @@ export interface components {
       reasons: string[];
       /** @enum {string} */
       index_status: "NOT_REQUIRED" | "PENDING" | "CURRENT" | "FAILED";
+    };
+    MaterialCompleteness: {
+      /** @enum {string} */
+      status: "VALID" | "INCOMPLETE" | "INVALID" | "OUT_OF_SCOPE";
+      missing_required: string[];
+      not_applicable: string[];
+      conditional_pending: string[];
+      optional_missing: string[];
+      invalid: {
+        name: string;
+        reason: string;
+      }[];
+    };
+    MaterialCompletenessReview: {
+      before: components["schemas"]["MaterialCompleteness"];
+      after_suggestions: components["schemas"]["MaterialCompleteness"];
+      suggestions: {
+        [key: string]: string;
+      };
+      conflicts: {
+        [key: string]: string[];
+      };
     };
   };
   responses: never;

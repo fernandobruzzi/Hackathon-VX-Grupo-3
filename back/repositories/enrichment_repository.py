@@ -57,14 +57,28 @@ def plan_enrichment(material, item, catalog, manifest_hash, report_key):
     code = material["material_code"]
     if code not in REAL_PRODUCTS or item["material_code"] != code:
         raise ValueError("Proposta fora dos 15 produtos reais ou identidade divergente")
-    product = REAL_PRODUCTS[code]
-    baseline = original_attributes(catalog, product.pdm_class_id, material)
+    return _plan_attributes(
+        material, item, catalog, manifest_hash, report_key, REAL_PRODUCTS[code].pdm_class_id, "enrichment-v1"
+    )
+
+
+def plan_internal_enrichment(material, item, catalog, manifest_hash, report_key):
+    if material["material_code"] != item["material_code"] or item["pdm_class_id"] not in catalog.classes:
+        raise ValueError("Identidade interna ou classe divergente")
+    return _plan_attributes(
+        material, item, catalog, manifest_hash, report_key, item["pdm_class_id"], "internal-enrichment-v1"
+    )
+
+
+def _plan_attributes(material, item, catalog, manifest_hash, report_key, class_id, schema):
+    code = material["material_code"]
+    baseline = original_attributes(catalog, class_id, material)
     grouped = defaultdict(list)
     for source in item["evidence"]:
         grouped[source["attribute"]].append(source)
     after = dict(baseline)
     divergent, blocked, changes = [], [], []
-    definitions = {a.name: a for a in catalog.classes[product.pdm_class_id].attributes}
+    definitions = {a.name: a for a in catalog.classes[class_id].attributes}
     for name, sources in sorted(grouped.items()):
         candidates = {source["proposed_value"] for source in sources}
         current = baseline.get(name)
@@ -79,7 +93,7 @@ def plan_enrichment(material, item, catalog, manifest_hash, report_key):
             after[name] = candidate
             changes.append({"field": name, "before": None, "after": candidate, "source": sources[0]["source_url"]})
     context = {
-        "schema_version": "enrichment-v1",
+        "schema_version": schema,
         "report_key": report_key,
         "manifest_sha256": manifest_hash,
         "original_hash": original_hash(material),
@@ -88,9 +102,9 @@ def plan_enrichment(material, item, catalog, manifest_hash, report_key):
         "blocked_attributes": blocked,
     }
     conflicts = [] if changes else ["Nenhum atributo sem divergencia ou incompatibilidade PDM pode ser aplicado."]
-    if material.get("pdm_class_id") and material["pdm_class_id"] != product.pdm_class_id:
+    if material.get("pdm_class_id") and material["pdm_class_id"] != class_id:
         conflicts.append("Classe atual diverge da classe do produto real: exige nova revisao.")
-    item_name = original_item_name(catalog, product.pdm_class_id, material)
+    item_name = original_item_name(catalog, class_id, material)
     if item_name is None:
         conflicts.append("Nome do item nao foi confirmado na descricao original.")
     return {
@@ -100,14 +114,14 @@ def plan_enrichment(material, item, catalog, manifest_hash, report_key):
         "pdm_source_sha256": catalog.source_sha256,
         "primary_material_code": code,
         "after": {
-            "pdm_class_id": product.pdm_class_id,
+            "pdm_class_id": class_id,
             "item_name": item_name,
             "attributes": after,
             "unit": material["unit"],
             "ncm": material["ncm"],
         },
         "sources": {
-            "pdm_class_id": "Identidade original dos 15 produtos do manifesto",
+            "pdm_class_id": "Identidade confirmada nas fontes do dataset",
             "attributes": f"{extraction_signature(catalog)}; atributos originais e evidencias externas registradas",
             "unit": "Unidade atual preservada",
             "ncm": "NCM atual preservado",
@@ -158,109 +172,131 @@ def publish_enrichment(store: ObjectStore, report_key: str, catalog, database_ur
                 changes, baseline = plan_enrichment(
                     material, item, catalog, report["input_manifest_sha256"], report_key
                 )
-                if not changes["changes"]:
-                    previous = connection.execute(
-                        text("""SELECT id FROM sanitization_proposals
-                        WHERE tenant_id=:tenant AND primary_material_id=:material AND proposal_type='ENRICHMENT'
-                          AND changeset->'enrichment_context'->>'report_key'=:report
-                        ORDER BY created_at DESC LIMIT 1"""),
-                        {"tenant": manifest["tenant_id"], "material": str(material["id"]), "report": report_key},
-                    ).scalar()
-                    if previous:
-                        published.append({"material_code": item["material_code"], "proposal_id": str(previous)})
-                        continue
-                evidence_ids, hashes = [], {}
-                for evidence in item["evidence"]:
-                    source = {
-                        "id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"{material['id']}|{evidence['id']}")),
-                        "tenant_id": manifest["tenant_id"],
-                        "material_id": str(material["id"]),
-                        "attribute_name": evidence["attribute"],
-                        "proposed_value": evidence["proposed_value"],
-                        "source_url": evidence["source_url"],
-                        "source_title": evidence["source_title"],
-                        "source_excerpt": evidence["source_excerpt"],
-                        "source_page": str(evidence["source_page"]) if evidence["source_page"] is not None else None,
-                        "source_sha256": evidence["source_sha256"],
-                        "s3_object_key": evidence["object_key"],
-                        "retrieved_at": datetime.fromisoformat(evidence["retrieved_at"].replace("Z", "+00:00")),
-                        "confidence_level": evidence["confidence_level"],
-                        "confidence_basis": [
-                            *evidence["confidence_basis"],
-                            "EXTRACTION_RULE:" + evidence["extraction_rule"],
-                        ],
-                    }
-                    connection.execute(
-                        text("""INSERT INTO enrichment_sources
-                        (id,tenant_id,material_id,attribute_name,proposed_value,source_url,source_title,source_excerpt,
-                         source_page,source_sha256,s3_object_key,retrieved_at,confidence_level,confidence_basis)
-                        VALUES (:id,:tenant_id,:material_id,:attribute_name,CAST(:proposed_json AS jsonb),
-                                :source_url,:source_title,
-                                :source_excerpt,:source_page,:source_sha256,:s3_object_key,:retrieved_at,:confidence_level,
-                                CAST(:basis_json AS jsonb)) ON CONFLICT(id) DO NOTHING"""),
-                        source
-                        | {
-                            "proposed_json": _json(source["proposed_value"]),
-                            "basis_json": _json(source["confidence_basis"]),
-                        },
-                    )
-                    stored = (
-                        connection.execute(text("SELECT * FROM enrichment_sources WHERE id=:id"), {"id": source["id"]})
-                        .mappings()
-                        .one()
-                    )
-                    if (
-                        evidence_hash(stored) != evidence_hash(source)
-                        or str(stored["material_id"]) != str(material["id"])
-                        or str(stored["tenant_id"]) != manifest["tenant_id"]
-                    ):
-                        raise ValueError("Evidencia persistida mudou: exige nova proposta")
-                    evidence_ids.append(source["id"])
-                    hashes[source["id"]] = evidence_hash(stored)
-                after = changes["after"]
-                changes["ncm_assessment"] = asdict(
-                    check_ncm_consistency(
-                        catalog,
-                        after["pdm_class_id"],
-                        after["attributes"],
-                        after["ncm"],
-                        item_name=after["item_name"],
-                        snapshot=load_configured_ncm_snapshot(),
+                published.append(
+                    persist_enrichment(
+                        connection, material, item, changes, baseline, catalog, manifest["tenant_id"], report_key
                     )
                 )
-                changes["evidence_hashes"] = hashes
-                members = [
-                    {
-                        "material_id": str(material["id"]),
-                        "expected_version": material["version"],
-                        "pdm_class_id": changes["after"]["pdm_class_id"],
-                        "item_name": changes["after"]["item_name"],
-                        "attributes": baseline,
-                    }
-                ]
-                digest = proposal_hash(members, changes, evidence_ids)
-                proposal_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ENRICHMENT|{material['id']}|{digest}"))
-                fiscal = requires_snapshot_fiscal_review(changes["ncm_assessment"]) or bool(
-                    material["attributes"] and material["attributes"] != changes["after"]["attributes"]
-                )
-                connection.execute(
-                    text("""INSERT INTO sanitization_proposals
-                    (id,tenant_id,proposal_type,members,primary_material_id,changeset,changeset_hash,evidence_ids,
-                     technical_review_status,fiscal_review_status)
-                    VALUES (:id,:tenant,'ENRICHMENT',CAST(:members AS jsonb),:primary,CAST(:changes AS jsonb),:hash,
-                            CAST(:evidence AS jsonb),'PENDING',:fiscal) ON CONFLICT(id) DO NOTHING"""),
-                    {
-                        "id": proposal_id,
-                        "tenant": manifest["tenant_id"],
-                        "members": _json(members),
-                        "primary": str(material["id"]),
-                        "changes": _json(changes),
-                        "hash": digest,
-                        "evidence": _json(evidence_ids),
-                        "fiscal": "PENDING" if fiscal else "NOT_REQUIRED",
-                    },
-                )
-                published.append({"material_code": item["material_code"], "proposal_id": proposal_id})
     finally:
         engine.dispose()
     return {"report_key": report_key, "proposals": published, "master_data_modified": False}
+
+
+def persist_enrichment(
+    connection,
+    material,
+    item,
+    changes,
+    baseline,
+    catalog,
+    tenant_id,
+    report_key,
+    job_id=None,
+    *,
+    include_inserted=False,
+):
+    """Mesma persistência de evidências e aprovação para fontes internas e externas."""
+    if not changes["changes"]:
+        previous = connection.execute(
+            text("""SELECT id FROM sanitization_proposals
+            WHERE tenant_id=:tenant AND primary_material_id=:material AND proposal_type='ENRICHMENT'
+              AND changeset->'enrichment_context'->>'report_key'=:report
+            ORDER BY created_at DESC LIMIT 1"""),
+            {"tenant": tenant_id, "material": str(material["id"]), "report": report_key},
+        ).scalar()
+        if previous:
+            return {"material_code": item["material_code"], "proposal_id": str(previous)}
+    evidence_ids, hashes = [], {}
+    for evidence in item["evidence"]:
+        source = {
+            "id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"{material['id']}|{evidence['id']}")),
+            "tenant_id": tenant_id,
+            "material_id": str(material["id"]),
+            "attribute_name": evidence["attribute"],
+            "proposed_value": evidence["proposed_value"],
+            "source_url": evidence["source_url"],
+            "source_title": evidence["source_title"],
+            "source_excerpt": evidence["source_excerpt"],
+            "source_page": str(evidence["source_page"]) if evidence["source_page"] is not None else None,
+            "source_sha256": evidence["source_sha256"],
+            "s3_object_key": evidence["object_key"],
+            "retrieved_at": datetime.fromisoformat(evidence["retrieved_at"].replace("Z", "+00:00")),
+            "confidence_level": evidence["confidence_level"],
+            "confidence_basis": [
+                *evidence["confidence_basis"],
+                "EXTRACTION_RULE:" + evidence["extraction_rule"],
+            ],
+        }
+        connection.execute(
+            text("""INSERT INTO enrichment_sources
+            (id,tenant_id,material_id,attribute_name,proposed_value,source_url,source_title,source_excerpt,
+             source_page,source_sha256,s3_object_key,retrieved_at,confidence_level,confidence_basis)
+            VALUES (:id,:tenant_id,:material_id,:attribute_name,CAST(:proposed_json AS jsonb),
+                    :source_url,:source_title,
+                    :source_excerpt,:source_page,:source_sha256,:s3_object_key,:retrieved_at,:confidence_level,
+                    CAST(:basis_json AS jsonb)) ON CONFLICT(id) DO NOTHING"""),
+            source
+            | {
+                "proposed_json": _json(source["proposed_value"]),
+                "basis_json": _json(source["confidence_basis"]),
+            },
+        )
+        stored = (
+            connection.execute(text("SELECT * FROM enrichment_sources WHERE id=:id"), {"id": source["id"]})
+            .mappings()
+            .one()
+        )
+        if (
+            evidence_hash(stored) != evidence_hash(source)
+            or str(stored["material_id"]) != str(material["id"])
+            or str(stored["tenant_id"]) != tenant_id
+        ):
+            raise ValueError("Evidencia persistida mudou: exige nova proposta")
+        evidence_ids.append(source["id"])
+        hashes[source["id"]] = evidence_hash(stored)
+    after = changes["after"]
+    changes["ncm_assessment"] = asdict(
+        check_ncm_consistency(
+            catalog,
+            after["pdm_class_id"],
+            after["attributes"],
+            after["ncm"],
+            item_name=after["item_name"],
+            snapshot=load_configured_ncm_snapshot(),
+        )
+    )
+    changes["evidence_hashes"] = hashes
+    members = [
+        {
+            "material_id": str(material["id"]),
+            "expected_version": material["version"],
+            "pdm_class_id": changes["after"]["pdm_class_id"],
+            "item_name": changes["after"]["item_name"],
+            "attributes": baseline,
+        }
+    ]
+    digest = proposal_hash(members, changes, evidence_ids)
+    proposal_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ENRICHMENT|{material['id']}|{digest}"))
+    fiscal = requires_snapshot_fiscal_review(changes["ncm_assessment"]) or bool(
+        material["attributes"] and material["attributes"] != changes["after"]["attributes"]
+    )
+    inserted = connection.execute(
+        text("""INSERT INTO sanitization_proposals
+        (id,tenant_id,job_id,proposal_type,members,primary_material_id,changeset,changeset_hash,evidence_ids,
+         technical_review_status,fiscal_review_status)
+        VALUES (:id,:tenant,:job,'ENRICHMENT',CAST(:members AS jsonb),:primary,CAST(:changes AS jsonb),:hash,
+                CAST(:evidence AS jsonb),'PENDING',:fiscal) ON CONFLICT(id) DO NOTHING"""),
+        {
+            "id": proposal_id,
+            "tenant": tenant_id,
+            "job": job_id,
+            "members": _json(members),
+            "primary": str(material["id"]),
+            "changes": _json(changes),
+            "hash": digest,
+            "evidence": _json(evidence_ids),
+            "fiscal": "PENDING" if fiscal else "NOT_REQUIRED",
+        },
+    )
+    result = {"material_code": item["material_code"], "proposal_id": proposal_id}
+    return result | {"inserted": inserted.rowcount} if include_inserted else result
