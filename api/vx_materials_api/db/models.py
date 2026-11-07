@@ -256,6 +256,7 @@ class BatchJob(Base):
     task_arn: Mapped[str | None] = mapped_column(Text)
     heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     counts: Mapped[Any] = _jsonb()
+    automatic_corrections: Mapped[Any] = _jsonb()
     checkpoint: Mapped[Any] = _jsonb()
     error_summary: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = _created_at()
@@ -305,6 +306,7 @@ class SanitizationProposal(Base):
     evidence_ids: Mapped[Any] = _jsonb("[]")
     status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'PENDING'"))
     technical_review_status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'PENDING'"))
+    application_mode: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'HUMAN'"))
     technical_reviewer_id: Mapped[uuid.UUID | None] = _user_fk()
     fiscal_review_status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'NOT_REQUIRED'"))
     fiscal_reviewer_id: Mapped[uuid.UUID | None] = _user_fk()
@@ -518,3 +520,48 @@ class ManualReview(Base):
     pdm_source_sha256: Mapped[str] = mapped_column(Text, nullable=False)
     proposal_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("sanitization_proposals.id"))
     created_at: Mapped[datetime] = _created_at()
+
+
+class AutomaticCorrectionRun(Base):
+    """Execução autorizada pelo servidor, congelada nas propostas novas de um job."""
+
+    __tablename__ = "automatic_correction_runs"
+    __table_args__ = (
+        UniqueConstraint("job_id"),
+        CheckConstraint("mode IN ('SIMULATE', 'APPLY')", name="mode"),
+        Index("ix_automatic_correction_runs_tenant_id", "tenant_id"),
+    )
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("batch_jobs.id"), nullable=False)
+    mode: Mapped[str] = mapped_column(Text, nullable=False)
+    policy_version: Mapped[str] = mapped_column(Text, nullable=False)
+    rules_signature: Mapped[str] = mapped_column(Text, nullable=False)
+    target_ids: Mapped[Any] = _jsonb("[]")
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'RUNNING'"))
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()
+
+
+class AutomaticCorrectionResult(Base):
+    """Desfecho durável por proposta; a aplicação e seu registro compartilham a transação."""
+
+    __tablename__ = "automatic_correction_results"
+    __table_args__ = (
+        UniqueConstraint("run_id", "proposal_id"),
+        Index("ix_automatic_correction_results_tenant_id", "tenant_id"),
+    )
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("automatic_correction_runs.id"), nullable=False)
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sanitization_proposals.id"), nullable=False)
+    material_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("materials_master.id"))
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    eligible: Mapped[bool] = mapped_column(nullable=False, server_default=text("false"))
+    reasons: Mapped[Any] = _jsonb("[]")
+    evidence: Mapped[Any] = _jsonb()
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
+    index_status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'NOT_REQUIRED'"))
+    index_error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()

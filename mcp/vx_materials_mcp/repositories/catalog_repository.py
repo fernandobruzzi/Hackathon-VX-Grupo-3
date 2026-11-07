@@ -3,6 +3,7 @@
 from contextlib import nullcontext
 from uuid import UUID
 
+from mcp.server.mcpserver.exceptions import ToolError
 from sqlalchemy import Connection, Engine, bindparam, text
 
 from vx_materials_mcp.security import INVENTORY_FINANCIAL_VIEW, INVENTORY_VIEW
@@ -26,6 +27,14 @@ class CatalogRepository:
         self._engine = engine
         self._tenant_id = str(UUID(tenant_id))
 
+    def _automatic_index_ready(self, connection):
+        pending = connection.execute(
+            text("SELECT 1 FROM mcp_automatic_index_pending WHERE tenant_id = CAST(:tenant AS uuid) LIMIT 1"),
+            {"tenant": self._tenant_id},
+        ).first()
+        if pending:
+            raise ToolError("Índice aguarda atualização após correção automática; tente novamente após a recuperação.")
+
     def _connect(self):
         return nullcontext(self._engine) if isinstance(self._engine, Connection) else self._engine.connect()
 
@@ -37,6 +46,7 @@ class CatalogRepository:
             "WHERE c.tenant_id = CAST(:tenant_id AS uuid)"
         )
         with self._connect() as connection:
+            self._automatic_index_ready(connection)
             row = connection.execute(query, {"tenant_id": self._tenant_id, "version": version}).one()
         return row.materials, row.current
 
@@ -46,6 +56,7 @@ class CatalogRepository:
             "AND normalization_version = :version"
         )
         with self._connect() as connection:
+            self._automatic_index_ready(connection)
             return connection.execute(query, {"tenant_id": self._tenant_id, "version": version}).scalar_one()
 
     def by_identity(self, key: str, version: str) -> list[dict]:
@@ -55,6 +66,7 @@ class CatalogRepository:
             "AND i.candidate_identity_key = :key"
         )
         with self._connect() as connection:
+            self._automatic_index_ready(connection)
             return [
                 dict(row)
                 for row in connection.execute(
@@ -65,6 +77,8 @@ class CatalogRepository:
     def full_text(self, words: list[str], version: str, class_id: str | None, limit: int) -> list[dict]:
         """Full-text do PostgreSQL com qualquer um dos termos, ordenado por ts_rank_cd."""
         if not words:
+            with self._connect() as connection:
+                self._automatic_index_ready(connection)
             return []
         query = text(
             f"SELECT {_MATERIAL_COLUMNS}, ts_rank_cd(i.search_vector, q) AS rank {_FROM}, "
@@ -83,6 +97,7 @@ class CatalogRepository:
             "limit": limit,
         }
         with self._connect() as connection:
+            self._automatic_index_ready(connection)
             return [dict(row) for row in connection.execute(query, params).mappings()]
 
     def nearest(self, vector: list[float], version: str, class_id: str | None, limit: int) -> list[dict]:
@@ -103,6 +118,7 @@ class CatalogRepository:
             "limit": limit,
         }
         with self._connect() as connection:
+            self._automatic_index_ready(connection)
             return [dict(row) for row in connection.execute(query, params).mappings()]
 
     def inventory(self, material_ids: list[str], view: str, center_codes: frozenset[str]) -> dict[str, list[dict]]:
@@ -118,6 +134,7 @@ class CatalogRepository:
         ).bindparams(bindparam("ids", expanding=True), bindparam("centers", expanding=True))
         result: dict[str, list[dict]] = {}
         with self._connect() as connection:
+            self._automatic_index_ready(connection)
             params = {"tenant_id": self._tenant_id, "ids": material_ids, "centers": sorted(center_codes)}
             for row in connection.execute(query, params).mappings():
                 item = {"center_code": row["center_code"], "quantity": str(row["quantity"]), "unit": row["unit"]}

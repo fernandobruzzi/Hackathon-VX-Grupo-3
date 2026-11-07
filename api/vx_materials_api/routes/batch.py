@@ -3,14 +3,22 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, Query, Request
 from sqlalchemy.orm import Session
 
 from clients.storage import get_object_store
 from vx_materials_api import settings
 from vx_materials_api.dependencies import current_identity, db_session
 from vx_materials_api.errors import ApiProblem
-from vx_materials_api.schemas.batch import BatchJobList, BatchJobOut, BatchJobRequest, BatchJobResumeRequest, JobStatus
+from vx_materials_api.schemas.batch import (
+    AutomaticCorrectionReport,
+    AutomaticCorrectionRetryRequest,
+    BatchJobList,
+    BatchJobOut,
+    BatchJobRequest,
+    BatchJobResumeRequest,
+    JobStatus,
+)
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.security.sessions import verify_write
@@ -65,6 +73,7 @@ def list_jobs(
     jobs, next_cursor, active = batch_service.list_jobs(db, identity, limit, timeout, cursor=cursor, status=status)
     dataset = batch_service.latest_dataset(db, identity)
     return BatchJobList(
+        automatic_correction_mode=settings.automatic_correction_mode(),
         items=[batch_service.to_contract(db, job) for job in jobs],
         latest_dataset_id=dataset.id if dataset else None,
         next_cursor=next_cursor,
@@ -94,3 +103,49 @@ def resume_job(
         db, identity, job_id, task, settings.batch_heartbeat_timeout_seconds(), idempotency_key
     )
     return batch_service.to_contract(db, job)
+
+
+@router.get("/jobs/{job_id}/automatic-corrections")
+def automatic_report(
+    job_id: UUID,
+    request: Request,
+    identity: Governance,
+    db: Db,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    cursor: UUID | None = None,
+) -> AutomaticCorrectionReport:
+    from vx_materials_api.services.automatic_corrections import report
+
+    return report(db, identity, job_id, limit=limit, cursor=cursor)
+
+
+@router.post("/jobs/{job_id}/automatic-corrections/retry", status_code=202)
+def retry_automatic(
+    job_id: UUID,
+    payload: AutomaticCorrectionRetryRequest,
+    request: Request,
+    identity: Governance,
+    db: Db,
+    background_tasks: BackgroundTasks,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+) -> AutomaticCorrectionReport:
+    from vx_materials_api.db.models import BatchJob
+    from vx_materials_api.routes.sanitization import catalog
+    from vx_materials_api.services.automatic_corrections import process_job, report
+    from vx_materials_api.services.batch_service import _command, _remember_command
+
+    verify_write(request, identity)
+    body = report(db, identity, job_id)
+    job = db.get(BatchJob, job_id)
+    if not job.automatic_corrections:
+        raise ApiProblem(409, "AUTOMATION_NOT_ARMED", "O job não foi autorizado para aplicação automática.")
+    previous, digest = _command(db, identity, idempotency_key, "AUTOMATIC_RETRY", job_id, {})
+    if previous is None:
+        _remember_command(db, identity, idempotency_key, digest, job)
+        db.commit()
+    # Repetir o agendamento recupera uma queda após o commit do comando.
+    # Resultados duráveis e travas impedem reaplicar uma correção confirmada.
+    background_tasks.add_task(
+        process_job, request.app.state.session_factory, job_id, catalog(request), retry_errors=True
+    )
+    return body

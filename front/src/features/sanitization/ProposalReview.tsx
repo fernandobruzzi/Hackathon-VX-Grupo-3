@@ -1,4 +1,5 @@
 "use client";
+import { AutomaticDecision } from "./AutomaticDecision";
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
@@ -170,6 +171,11 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
         <div className="flex flex-wrap items-center gap-2">
           <ProposalTypeBadge value={p.proposal_type} />
           <ProposalStatusBadge value={p.status} />
+          <AutomaticDecision
+            status={p.status}
+            mode={"application_mode" in p ? p.application_mode : undefined}
+            automation={"automation" in p ? p.automation : undefined}
+          />
           <Code className="text-muted">v{p.version}</Code>
         </div>
       </header>

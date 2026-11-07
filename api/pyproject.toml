@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
+vx-auto-correct = "vx_materials_api.automatic_corrections_cli:main"
 vx-api = "vx_materials_api.main:main"
 vx-db = "vx_materials_api.db.cli:main"
 vx-demo = "vx_materials_api.demo:main"

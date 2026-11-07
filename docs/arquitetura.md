@@ -17,7 +17,7 @@
 > - **NCM (#22):** batch e MCP usam o mesmo avaliador PDM, com correções propostas para revisão técnica/fiscal e reavaliação na API. Formato e coerência não confirmam existência ou vigência oficial; sem a #30 esses campos ficam desconhecidos. Ver [`ncm.md`](ncm.md).
 > - **Normalização (seção 4):** fica em `back/repositories/normalization/`, não em `domain/normalization.py`, para permitir a troca de algoritmos.
 > - **Classificação (seção 4):** contrato compartilhado em `back/domain/contracts.py`, algoritmos em `back/repositories/classification/` e relatório por registro em `back/pipelines/classify.py`. Seleção por `CLASSIFICATION_REPOSITORY`; regras e limites da avaliação em [`classificacao.md`](classificacao.md).
-> - **Aprovação automática:** a decisão está em aberto na [issue #36](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/36).
+> - **Correções automáticas:** a #224 permite somente aliases da mesma unidade e descrição PDM completa sem perda, pela API e com auditoria SYSTEM; padrão desligado. Demais decisões preservam revisão humana. Ver [operação e política](correcoes-automaticas.md).
 > - **Envio do chat (#136):** a confirmação explícita persiste um pedido vinculado à conversa, com a ficha estruturada revalidada e auditoria transacional. O nome do item é preservado no pedido; validar um turno continua sem criar pedido nem material. Ver [`pedidos.md`](pedidos.md).
 > - **Pendências manuais (#68):** o batch persiste os motivos por material em fila separada, consultável pela Governança em `/pendencias/`. Encaminhar cria uma proposta versionada pelo fluxo normal, com fonte e auditoria; não edita o mestre. Contagens preservam a observação da execução e seguem o escopo de centros. Detalhes em [`pendencias.md`](pendencias.md).
 > - **Aprovação local (#20):** fila, decisão transacional e auditoria usam propostas persistidas. A consolidação mantém vínculos para os snapshots originais e altera as views MCP, sem editar saldos. Contrato do produtor e limites de integração em [`aprovacoes.md`](aprovacoes.md); login/RBAC reais continuam nas #7/#9.
@@ -775,7 +775,7 @@ Tipos principais:
 - ENRICHMENT
 - COMPOSITE
 
-Correções de PDM e de unidade levam `review_lane` no changeset (decisão da #36): nível 1 para grafia da mesma unidade, nível 2 para descrição e grupo no padrão sem perda de texto, ambos com classe confiável e sem pendência, e nível 3 para o resto, com os motivos (`UNTRUSTED_CLASS`, `CONFLICT`, `TEXT_LOSS`). `lot_key` é tipo|regra|classe. Níveis 1 e 2 podem ser aprovados em lote depois da revisão de uma amostra; o nível só muda como a pessoa revisa, nunca dispensa a aprovação. MERGE e NCM não têm nível e são sempre revisados item a item.
+Correções de PDM e de unidade levam `review_lane` no changeset (decisão da #36): nível 1 para grafia da mesma unidade, nível 2 para descrição e grupo no padrão sem perda de texto, ambos com classe confiável e sem pendência, e nível 3 para o resto, com os motivos (`UNTRUSTED_CLASS`, `CONFLICT`, `TEXT_LOSS`). `lot_key` é tipo|regra|classe. Níveis 1 e 2 podem ser aprovados em lote depois da revisão de uma amostra; o nível só organiza a revisão humana. A política separada da #224 pode aplicar aliases e descrições completas sem perda, quando habilitada; o nível sozinho não autoriza aplicação. MERGE e NCM não têm nível e são sempre revisados item a item.
 
 ```json
 "review_lane": {"tier": 2, "lot_key": "PDM_CORRECTION|head_noun_v1/description.pdm_format|PDM001", "reasons": []}

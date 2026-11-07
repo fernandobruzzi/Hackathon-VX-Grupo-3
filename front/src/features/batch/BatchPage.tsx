@@ -23,6 +23,8 @@ import { fmtDate, fmtInt } from "@/lib/format";
 import type { BatchJob } from "@/types/api";
 import type { components } from "@/types/api.generated";
 
+import { AutomaticCorrections } from "./AutomaticCorrections";
+
 type BatchCommand =
   | { kind: "start"; key: string; body: components["schemas"]["BatchJobRequest"] }
   | { kind: "resume"; key: string; jobId: string };
@@ -72,6 +74,7 @@ export function BatchPage() {
     [me],
   );
   const allowed = me?.permissions.includes("batch:run") ?? false;
+  const [automaticMode, setAutomaticMode] = useState("OFF");
   const [jobs, setJobs] = useState<BatchJob[]>([]);
   const [historyStatus, setHistoryStatus] = useState<BatchJob["status"] | "">("");
   const [active, setActive] = useState<BatchJob | null>(null);
@@ -143,6 +146,7 @@ export function BatchPage() {
           if (scope !== historyScope.current || generation !== historyGeneration.current) return;
           if (index === 0) {
             setActive(page.active_job ?? null);
+            setAutomaticMode(page.automatic_correction_mode ?? "OFF");
             setDatasetId(page.latest_dataset_id);
           }
           pages.push(page);
@@ -179,10 +183,19 @@ export function BatchPage() {
 
   // Acompanha o job enquanto ele está na fila ou rodando.
   useEffect(() => {
-    if (!allowed || !active) return;
+    if (
+      !allowed ||
+      (!active &&
+        !jobs.some(
+          (job) =>
+            ["WAITING", "RUNNING"].includes(job.automatic_corrections?.status ?? "") ||
+            (job.automatic_corrections?.counts.index_pending ?? 0) > 0,
+        ))
+    )
+      return;
     const timer = setInterval(() => void load(), POLL_MS);
     return () => clearInterval(timer);
-  }, [allowed, active, load]);
+  }, [allowed, active, jobs, load]);
 
   const run = async (command: BatchCommand) => {
     if (inFlight.current) return;
@@ -279,6 +292,15 @@ export function BatchPage() {
             <Card className="flex flex-col gap-4">
               <p className="text-xs font-extrabold tracking-[0.04em] text-verde uppercase">
                 Novo job
+              </p>
+              <p className="text-sm text-muted">
+                Correções automáticas:{" "}
+                {automaticMode === "OFF"
+                  ? "desligadas"
+                  : automaticMode === "SIMULATE"
+                    ? "somente simulação"
+                    : "habilitadas para novos jobs"}
+                .
               </p>
               <Field label="Tipo">
                 <Select
@@ -443,7 +465,10 @@ export function BatchPage() {
                       <Code>{j.id.slice(0, 8)}</Code>
                       <p className="text-xs text-muted">{j.requested_by}</p>
                     </Td>
-                    <Td>{typeLabel[j.job_type]}</Td>
+                    <Td>
+                      {typeLabel[j.job_type]}
+                      {j.automatic_corrections && <AutomaticCorrections jobId={j.id} />}
+                    </Td>
                     <Td>
                       <Badge tone={statusTone[j.status][0]}>{statusTone[j.status][1]}</Badge>
                       {j.error && (

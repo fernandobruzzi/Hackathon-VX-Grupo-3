@@ -4356,6 +4356,265 @@
           }
         }
       }
+    },
+    "/api/v1/batch/jobs/{id}/automatic-corrections": {
+      "get": {
+        "operationId": "getAutomaticCorrections",
+        "summary": "Consultar correções automáticas e motivos por proposta",
+        "tags": [
+          "batch"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomaticCorrectionReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batch/jobs/{id}/automatic-corrections/retry": {
+      "post": {
+        "operationId": "retryAutomaticCorrections",
+        "summary": "Retomar erros e indexação sem rearmar o job",
+        "tags": [
+          "batch"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Job criado ou recuperado pela mesma chave, no estado atual.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomaticCorrectionReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomaticCorrectionRetryRequest"
+              }
+            }
+          }
+        },
+        "description": "Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa. Novos comandos de processamento suportam exatamente um dataset por empresa no MVP; múltiplas importações recebem 422 MULTIPLE_DATASETS_NOT_SUPPORTED antes de criar job, manifesto ou task. A retomada verifica a mesma condição. Repetir um comando já aceito somente recupera seu job, sem iniciar processamento."
+      }
     }
   },
   "components": {
@@ -5167,6 +5426,23 @@
               }
             ],
             "description": "Omitido sem metrics:financial; nulo se o valor nao estiver disponivel."
+          },
+          "application_mode": {
+            "type": "string",
+            "enum": [
+              "HUMAN",
+              "AUTOMATIC"
+            ]
+          },
+          "automation": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProposalAutomation"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -5580,6 +5856,16 @@
                 "type": "null"
               }
             ]
+          },
+          "automatic_corrections": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AutomaticCorrectionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -5638,6 +5924,14 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "automatic_correction_mode": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "SIMULATE",
+              "APPLY"
             ]
           }
         },
@@ -6120,6 +6414,23 @@
           },
           "created_at": {
             "$ref": "#/components/schemas/UtcDateTime"
+          },
+          "application_mode": {
+            "type": "string",
+            "enum": [
+              "HUMAN",
+              "AUTOMATIC"
+            ]
+          },
+          "automation": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ProposalAutomation"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -8464,6 +8775,295 @@
             "maxLength": 2000
           }
         }
+      },
+      "AutomaticCorrectionSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "SIMULATE",
+              "APPLY"
+            ]
+          },
+          "configured_mode": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "SIMULATE",
+              "APPLY"
+            ]
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "execution_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DISABLED",
+              "WAITING",
+              "RUNNING",
+              "COMPLETED",
+              "POLICY_CHANGED",
+              "PAUSED"
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "reasons": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "configured_mode",
+          "policy_version",
+          "execution_id",
+          "status",
+          "counts",
+          "reasons"
+        ]
+      },
+      "AutomaticCorrectionItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proposal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "material_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ELIGIBLE",
+              "APPLIED",
+              "REVIEW",
+              "STALE",
+              "ERROR",
+              "SKIPPED"
+            ]
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "index_status": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUIRED",
+              "PENDING",
+              "CURRENT",
+              "FAILED"
+            ]
+          },
+          "index_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "proposal_id",
+          "material_id",
+          "status",
+          "eligible",
+          "reasons",
+          "attempts",
+          "index_status",
+          "index_error"
+        ]
+      },
+      "AutomaticCorrectionReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "SIMULATE",
+              "APPLY"
+            ]
+          },
+          "configured_mode": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "SIMULATE",
+              "APPLY"
+            ]
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "execution_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DISABLED",
+              "WAITING",
+              "RUNNING",
+              "COMPLETED",
+              "POLICY_CHANGED",
+              "PAUSED"
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "reasons": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomaticCorrectionItem"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "configured_mode",
+          "policy_version",
+          "execution_id",
+          "status",
+          "counts",
+          "reasons",
+          "items",
+          "next_cursor"
+        ]
+      },
+      "AutomaticCorrectionRetryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {},
+        "required": []
+      },
+      "ProposalAutomation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "SIMULATE",
+              "APPLY"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ELIGIBLE",
+              "APPLIED",
+              "REVIEW",
+              "STALE",
+              "ERROR",
+              "SKIPPED"
+            ]
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "execution_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "index_status": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUIRED",
+              "PENDING",
+              "CURRENT",
+              "FAILED"
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "status",
+          "policy_version",
+          "execution_id",
+          "reasons",
+          "index_status"
+        ]
       }
     },
     "parameters": {
