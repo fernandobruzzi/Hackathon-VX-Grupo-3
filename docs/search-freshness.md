@@ -8,7 +8,9 @@ SELECT somente nas views autorizadas, sem credenciais da API ou do batch.
 A versão de regras continua incluindo PDM/hash, classificação, extração, identidade
 e embeddings. O formato `search-index-v2` também invalida interpretações legadas que
 foram produzidas sem considerar os valores aprovados. Uma linha só está atual
-quando regras e revisão da fonte correspondem ao cadastro.
+quando regras e revisão da fonte correspondem ao cadastro. A cobertura é contada
+somente no tenant autenticado; pendências de outra empresa não alteram o estado
+da busca nem permitem consultar seus materiais.
 
 ## Atualização automática local
 
@@ -22,7 +24,13 @@ A descrição PDM e os atributos presentes na master são dados atuais, inclusiv
 materiais ainda não canônicos. Prevalecem sobre extrações sugeridas. Os originais
 permanecem nas colunas `original_description_*`; interpretações e identidades
 sugeridas ficam no índice, enquanto os valores aprovados permanecem na master.
-O atributo `is_canonical` não é usado como substituto da proveniência.
+O atributo `is_canonical` não é usado como substituto da proveniência. A busca
+revalida a mesma fonte atual usada pelo indexador, incluindo substantivo e
+atributos aprovados, em vez de sobrescrevê-los com uma extração do texto histórico.
+Sem valores aprovados, as contradições do original continuam impedindo a
+identidade verificada. Revisões de peça no original e conflitos entre os campos
+estruturados atuais e os atributos continuam exigindo revisão; uma atualização
+do índice não homologa intercambiabilidade.
 
 Um advisory lock por tenant serializa indexadores. Cada lote é confirmado numa
 transação e não sobrescreve uma revisão mais recente. Se a master muda durante a
@@ -37,11 +45,29 @@ somente leitura que executa as consultas. Assim, uma mudança entre a checagem e
 busca não mistura estados. Enquanto faltar uma linha atual, devolve
 `INDEX_UPDATING` e orienta nova tentativa; não conclui que não existe item igual.
 A verificação de duplicidade de pedidos também recusa conclusões negativas com
-índice incompleto. Uma identidade atual já encontrada pode ser confirmada.
+índice incompleto. Uma chave coincidente apenas recupera candidatos: API e MCP
+revalidam a mesma fonte atual e usam a decisão compartilhada de identidade.
+A análise do pedido também conserva o texto recebido, anexos e complementos:
+a descrição formatada não substitui essa evidência, pois pode omitir `REV A`.
+No chat, os atributos confirmados continuam prevalecendo sobre referências antigas
+corrigidas; conservar o texto não faz uma nova extração desses valores obsoletos.
+A verificação automática e a avaliação de pedidos liberam `EXISTING` somente
+com `SAME_MATERIAL`, inclusive para cadastros canônicos. O chat também conserva
+a escolha explícita do solicitante por um candidato similar recém-oferecido;
+essa escolha encerra a ficha como reutilização, sem criar um pedido de cadastro. Um conflito confirmado é descartado como duplicidade; uma evidência
+inconclusiva fica na revisão técnica, com candidatos e motivo visível em
+`missing_attributes`. Confirmar ou publicar enquanto essa dúvida persiste retorna
+`IDENTITY_REVIEW_REQUIRED`, sem aprovar uma equivalência por decisão genérica. Uma identidade atual já encontrada pode ser confirmada. Na API, candidatos e
+cobertura são calculados numa única instrução SQL para não misturar uma lista
+antiga com uma cobertura já reconstruída. A decisão que pode publicar um pedido
+adquire primeiro o lock das aprovações do tenant (seed 0) e depois o lock já
+existente dos pedidos (seed 1); retém ambos até o commit. Assim, uma aprovação
+não altera o cadastro entre a última verificação e a publicação.
 
 O indexador registra `INDEX_REFRESH_FAILED`, retira sua saúde e tenta novamente
 no próximo ciclo. Inspecione `docker compose logs index`; depois de corrigir a
-causa, a recuperação acontece automaticamente. Para uma operação pontual,
+causa, a recuperação acontece automaticamente. Um ciclo pendente ou ocupado
+também retira a saúde anterior; somente um ciclo completo volta a liberá-la. Para uma operação pontual,
 `vx-back index --if-stale` usa a mesma lógica. O comando sem `--watch` continua
 finito, inclusive nas tasks de preparação do deploy.
 

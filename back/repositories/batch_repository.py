@@ -98,6 +98,7 @@ class SearchSource:
     record: MaterialRecord
     approved_class_id: str | None
     approved_attributes: dict
+    original_description: str | None = None
 
 
 def read_search_sources(
@@ -123,8 +124,12 @@ def read_search_sources(
         for row in rows:
             record = _record(row, [], Decimal(0))
             if row["pdm_description"]:
-                record = replace(record, description=row["pdm_description"])
-            result.append(SearchSource(record, row["pdm_class_id"], dict(row["attributes"] or {})))
+                record = replace(record, description=row["pdm_description"], short_description="")
+            result.append(
+                SearchSource(
+                    record, row["pdm_class_id"], dict(row["attributes"] or {}), row["original_description_long"]
+                )
+            )
         return result
 
 

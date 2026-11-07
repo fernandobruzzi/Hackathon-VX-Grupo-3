@@ -131,7 +131,12 @@ def test_import_distinguishes_statuses_and_repeats_nothing(imported, kit_orders)
 
 def test_import_marks_orders_that_already_exist(case, kit_orders):
     client, db, version = case
-    existing = material(db, "90000002")
+    from pipelines.import_orders import analyze_order
+
+    analysis = analyze_order(
+        kit_orders[0], client.app.state.pdm_catalog, *get_repositories(client.app.state.pdm_catalog)
+    )
+    existing = set_current_identity(material(db, "90000002"), analysis)
     index(db, version, existing, BUCHA)
     result = import_orders(db, TENANT_ID, client.app.state.pdm_catalog, kit_orders)
     assert result["by_status"]["EXISTING"] == 1
@@ -181,7 +186,11 @@ def test_duplicate_found_before_publishing_stops_the_order(imported):
     order = orders["SC-202600001"]
     governance = login(client, "GESTOR_CADASTRO")
     assert decide(client, governance, order.id, 1).status_code == 200
-    rival = material(db, "80000001", identity=BUCHA, canonical=True)
+    from pipelines.import_orders import OrderRow, analyze_order
+
+    row = OrderRow("rival", order.original_text, order.attachment_text, order.center_code, None)
+    analysis = analyze_order(row, client.app.state.pdm_catalog, *get_repositories(client.app.state.pdm_catalog))
+    rival = set_current_identity(material(db, "80000001", identity=BUCHA, canonical=True), analysis)
     db.commit()
     fiscal = login(client, "AUDITOR_FISCAL")
     response = decide(client, fiscal, order.id, 2)
@@ -834,3 +843,267 @@ def test_order_review_and_reopened_result_preserve_current_actor_complement_perm
     assert reopened.status_code == 200, reopened.text
     assert reopened.json()["status"] == "INCOMPLETE"
     assert reopened.json()["can_complement"] is True
+
+
+@pytest.mark.parametrize("pending", ["new_material", "stale_revision", "foreign_index"])
+def test_negative_duplicate_check_requires_complete_current_tenant_index(case, pending):
+    from vx_materials_api.services.order_service import SearchIndexMissing, existing_materials
+
+    client, db, version = case
+    row = material(db, "90000001")
+    index(db, version, row, "PDM999|OUTRO")
+    if pending == "new_material":
+        material(db, "90000002")
+    elif pending == "stale_revision":
+        row.version += 1
+    else:
+        db.scalar(select(MaterialSearchIndex)).tenant_id = uuid.uuid4()
+    db.flush()
+    with pytest.raises(SearchIndexMissing):
+        existing_materials(
+            db, TENANT_ID, client.app.state.pdm_catalog, complete_part_analysis(client.app.state.pdm_catalog), version
+        )
+
+
+def test_published_canonical_duplicate_stays_visible_while_index_update_is_pending(case):
+    from vx_materials_api.services.order_service import existing_materials
+
+    client, db, version = case
+    analysis = complete_part_analysis(client.app.state.pdm_catalog)
+    canonical = current_part(db, version, analysis)
+    db.delete(db.scalar(select(MaterialSearchIndex).where(MaterialSearchIndex.material_id == canonical.id)))
+    material(db, "90000001")
+    assert existing_materials(db, TENANT_ID, client.app.state.pdm_catalog, analysis, version) == [str(canonical.id)]
+
+
+def test_publication_serializes_with_material_approval_and_order_decisions(imported, monkeypatch):
+    from sqlalchemy import text
+
+    from vx_materials_api.services import order_service
+
+    client, db, _, _, orders = imported
+    order = orders["SC-202600001"]
+    technical = decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1)
+    assert technical.status_code == 200, technical.text
+    publish = order_service._publish
+    observed = False
+
+    def locked_publish(*args):
+        nonlocal observed
+        with db.get_bind().engine.connect() as competing:
+            for seed in (0, 1):
+                assert not competing.scalar(
+                    text("SELECT pg_try_advisory_xact_lock(hashtextextended(:tenant, :seed))"),
+                    {"tenant": str(TENANT_ID), "seed": seed},
+                ), f"A publicação não excluiu a operação concorrente do tenant (seed={seed})"
+        observed = True
+        return publish(*args)
+
+    monkeypatch.setattr(order_service, "_publish", locked_publish)
+    response = decide(client, login(client, "AUDITOR_FISCAL"), order.id, 2)
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "REGISTERED" and observed
+
+
+def complete_part_analysis(catalog, noun="MANTO", reference="N1234567", manufacturer="METSO"):
+    from domain.pdm_validator import validate_pdm
+    from pipelines.import_orders import OrderAnalysis
+
+    attributes = {
+        "FABRICANTE": manufacturer,
+        "REFERENCIA FABRICANTE": reference,
+        "APLICACAO": "BRITADOR CONICO",
+        "MODELO EQUIPAMENTO": "HP400",
+    }
+    validation = validate_pdm(catalog, "PDM110", attributes, item_name=noun)
+    assert validation.can_submit
+    return OrderAnalysis(
+        "READY_FOR_REVIEW", "PDM110", noun, attributes, (), validation.identity_key, validation.formatted_description
+    )
+
+
+def set_current_identity(row, analysis):
+    row.pdm_class_id = analysis.pdm_class_id
+    row.attributes = analysis.attributes
+    row.pdm_description = analysis.formatted_description
+    row.original_description_long = analysis.formatted_description
+    row.manufacturer = analysis.attributes["FABRICANTE"]
+    row.manufacturer_reference = analysis.attributes["REFERENCIA FABRICANTE"]
+    return row
+
+
+def current_part(db, version, analysis):
+    row = set_current_identity(material(db, "80000001", identity=analysis.identity_key, canonical=True), analysis)
+    index(db, version, row, analysis.identity_key)
+    return row
+
+
+@pytest.mark.parametrize("difference", ["noun", "suffix", "attribute", "revision", "structured", "ambiguous"])
+def test_order_identity_does_not_confirm_a_matching_key_with_unresolved_evidence(case, difference):
+    from vx_materials_api.services.order_service import _evaluate
+
+    client, db, version = case
+    analysis = complete_part_analysis(client.app.state.pdm_catalog)
+    candidate = complete_part_analysis(
+        client.app.state.pdm_catalog,
+        noun="CONCAVO" if difference == "noun" else "MANTO",
+        reference="N1234567-00" if difference == "suffix" else "N1234567",
+    )
+    row = current_part(db, version, candidate)
+    if difference == "attribute":
+        row.attributes = {**row.attributes, "MODELO EQUIPAMENTO": "HP300"}
+    elif difference == "revision":
+        row.original_description_long += " REV A"
+    elif difference == "structured":
+        row.manufacturer_reference = "N9999999"
+    elif difference == "ambiguous":
+        row.pdm_description = "MANTO EIXO METSO N1234567"
+    db.commit()
+    result = _evaluate(db, TENANT_ID, client.app.state.pdm_catalog, analysis, version)
+    assert result[0] == "READY_FOR_REVIEW"
+    assert result[1] == [str(row.id)]
+    assert "REVISAO DE IDENTIDADE" in ", ".join(result[2])
+
+
+@pytest.mark.parametrize("difference", ["candidate_noun", "requested_revision"])
+def test_order_decision_does_not_override_a_shared_identity_review(case, difference):
+    client, db, version = case
+    analysis = complete_part_analysis(client.app.state.pdm_catalog)
+    candidate = current_part(
+        db,
+        version,
+        complete_part_analysis(
+            client.app.state.pdm_catalog, noun="CONCAVO" if difference == "candidate_noun" else "MANTO"
+        ),
+    )
+    login(client, "SOLICITANTE_OPERACAO")
+    owner = db.scalar(select(UserSso.id).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    order = RegistrationOrder(
+        tenant_id=TENANT_ID,
+        origin="CHAT",
+        requester_user_id=owner,
+        original_text=analysis.formatted_description + ("; REV A" if difference == "requested_revision" else ""),
+        center_code="1100",
+        status="READY_FOR_REVIEW",
+        pdm_class_id=analysis.pdm_class_id,
+        item_name=analysis.item_name,
+        attributes=analysis.attributes,
+    )
+    db.add(order)
+    db.commit()
+    materials_before = db.scalar(select(func.count()).select_from(MaterialMaster))
+    audit_before = db.scalar(select(func.count()).select_from(AuditLog))
+    response = decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1)
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "IDENTITY_REVIEW_REQUIRED"
+    assert response.json()["error"]["details"]["candidate_material_ids"] == [str(candidate.id)]
+    db.refresh(order)
+    assert order.status == "READY_FOR_REVIEW" and order.version == 1
+    assert db.scalar(select(func.count()).select_from(MaterialMaster)) == materials_before
+    assert db.scalar(select(func.count()).select_from(AuditLog)) == audit_before
+
+
+def get_repositories(catalog):
+    return get_classification_repository(catalog), get_extraction_repository()
+
+
+def test_real_sulzer_cover_pair_is_routed_to_identity_review(case):
+    import csv
+
+    from pipelines.import_orders import OrderRow, analyze_order
+    from vx_materials_api.services.order_service import _evaluate
+
+    client, db, version = case
+    catalog = client.app.state.pdm_catalog
+    with (KIT / "01_base_materiais.csv").open(encoding="utf-8-sig") as stream:
+        original = {
+            row["CODIGO_MATERIAL"]: row
+            for row in csv.DictReader(stream)
+            if row["CODIGO_MATERIAL"] in {"25187467", "21290535"}
+        }
+    analyses = {
+        code: analyze_order(
+            OrderRow(code, row["DESCRICAO_LONGA"], None, "1100", None), catalog, *get_repositories(catalog)
+        )
+        for code, row in original.items()
+    }
+    assert all(analysis.status == "READY_FOR_REVIEW" for analysis in analyses.values())
+    candidate = material(db, "21290535")
+    candidate.original_description_long = original["21290535"]["DESCRICAO_LONGA"]
+    candidate.manufacturer = original["21290535"]["FABRICANTE"]
+    candidate.manufacturer_reference = original["21290535"]["REFERENCIA_FABRICANTE"]
+    index(db, version, candidate, analyses["21290535"].identity_key)
+    status, candidates, reasons = _evaluate(db, TENANT_ID, catalog, analyses["25187467"], version)
+    assert status == "READY_FOR_REVIEW" and candidates == [str(candidate.id)]
+    assert any("SUBSTANTIVO_CONTRADIZ_REFERENCIA" in reason for reason in reasons)
+
+
+def test_import_preserves_review_candidate_and_visible_identity_reason(case):
+    from pipelines.import_orders import OrderRow
+
+    client, db, version = case
+    catalog = client.app.state.pdm_catalog
+    requested = complete_part_analysis(catalog)
+    candidate = current_part(db, version, complete_part_analysis(catalog, noun="CONCAVO"))
+    imported = import_orders(
+        db, TENANT_ID, catalog, [OrderRow("IDENTITY_REVIEW", requested.formatted_description, None, "1100", None)]
+    )
+    assert imported["by_status"] == {"READY_FOR_REVIEW": 1}
+    order = db.scalar(select(RegistrationOrder).where(RegistrationOrder.source_order_id == "IDENTITY_REVIEW"))
+    assert order.candidate_material_ids == [str(candidate.id)]
+    login(client, "GESTOR_CADASTRO")
+    row = next(item for item in client.get(PATH).json()["items"] if item["id"] == str(order.id))
+    assert row["status"] == "READY_FOR_REVIEW"
+    assert any("REVISAO DE IDENTIDADE" in reason for reason in row["missing_attributes"])
+
+
+def test_confirmed_different_current_material_does_not_become_existing_from_an_index_key(case):
+    from vx_materials_api.services.order_service import _evaluate
+
+    client, db, version = case
+    analysis = complete_part_analysis(client.app.state.pdm_catalog)
+    other = complete_part_analysis(client.app.state.pdm_catalog, manufacturer="SANDVIK")
+    candidate = current_part(db, version, other)
+    db.scalar(
+        select(MaterialSearchIndex).where(MaterialSearchIndex.material_id == candidate.id)
+    ).candidate_identity_key = analysis.identity_key
+    db.commit()
+    status, candidates, reasons = _evaluate(db, TENANT_ID, client.app.state.pdm_catalog, analysis, version)
+    assert status == "READY_FOR_REVIEW" and candidates == [] and reasons == ()
+
+
+@pytest.mark.parametrize(
+    "source", ["request", "attachment", "structured_chat", "structured_chat_attachment", "structured_chat_supplement"]
+)
+def test_requested_original_revision_cannot_become_plain_existing_material(case, source):
+    from types import SimpleNamespace
+
+    from pipelines.import_orders import OrderRow, analyze_order
+    from vx_materials_api.services.order_service import _analysis, _evaluate
+
+    client, db, version = case
+    catalog = client.app.state.pdm_catalog
+    plain = complete_part_analysis(catalog)
+    candidate = current_part(db, version, plain)
+    raw = plain.formatted_description + ("; REV A" if source in {"request", "structured_chat"} else "")
+    attachment = "REV A" if source in {"attachment", "structured_chat_attachment"} else None
+    if attachment:
+        raw += ";"
+    if source.startswith("structured_chat"):
+        order = SimpleNamespace(
+            origin="CHAT",
+            item_name=plain.item_name,
+            pdm_class_id=plain.pdm_class_id,
+            attributes=plain.attributes,
+            original_text=raw,
+            attachment_text=attachment,
+            supplements=[{"text": "REV A"}] if source == "structured_chat_supplement" else [],
+        )
+        analysis = _analysis(order, catalog, *get_repositories(catalog))
+    else:
+        analysis = analyze_order(OrderRow("REV", raw, attachment, "1100", None), catalog, *get_repositories(catalog))
+    assert analysis.status == "READY_FOR_REVIEW" and analysis.identity_key == plain.identity_key
+    assert "REV A" not in analysis.formatted_description
+    status, candidates, reasons = _evaluate(db, TENANT_ID, catalog, analysis, version)
+    assert status == "READY_FOR_REVIEW" and candidates == [str(candidate.id)]
+    assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in reason for reason in reasons)

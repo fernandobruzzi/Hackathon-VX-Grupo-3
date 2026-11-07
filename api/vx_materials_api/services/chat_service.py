@@ -341,6 +341,7 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest, *
     if request.session_id is None:
         validate_action({}, request)
     context = session.context or {}
+    rules_version = rules_version() if callable(rules_version) else rules_version
     rules_version = rules_version or cache_rules(_catalog(None))
     proof = _catalog_proof(db, identity.tenant_id, rules_version)
     saved = context.get(DUPLICATE_CHECK)
@@ -388,7 +389,6 @@ def complete_turn(
 ) -> ChatTurnResponse:
     # Mesma ordem dos escritores: a conclusão só confirma prova e mensagens num catálogo estável.
     # Os locks são curtos e vêm antes do lock da conversa, como no envio de pedidos.
-    rules_version = rules_version or cache_rules(_catalog(None))
     for seed in (0, 1):
         db.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:tenant, :seed))"),
@@ -398,6 +398,8 @@ def complete_turn(
     _require_history_scope(db, identity, session)
     if session.active_turn_id != reservation.turn_id or session.version != reservation.session_version:
         raise _conflict("TURN_SUPERSEDED", "O turno foi substituído por outro.")
+    rules_version = rules_version() if callable(rules_version) else rules_version
+    rules_version = rules_version or cache_rules(_catalog(None))
     if _catalog_proof(db, identity.tenant_id, rules_version) != reservation.catalog_proof:
         session.context = _clear_duplicate_check(session.context or {})
         session.active_turn_id = None

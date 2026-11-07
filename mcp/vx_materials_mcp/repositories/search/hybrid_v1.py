@@ -10,6 +10,8 @@ from domain.contracts import AnalyzedMaterial, ClassificationInput, MaterialReco
 from domain.identity import compare_attributes, item_name_review_reasons, partial_identity_key, resolve_item_name
 from domain.identity_decision import decide_identity
 from domain.pdm_validator import validate_pdm
+from pipelines.search_index import analyze_search_candidate
+from repositories.batch_repository import SearchSource
 from repositories.candidates.tokens_v1 import tokens
 from vx_materials_mcp.security import INVENTORY_PERMISSION, Caller, inventory_view
 
@@ -130,20 +132,29 @@ class HybridV1SearchRepository:
                 row["original_description_long"] or "",
                 manufacturer=row.get("manufacturer") or "",
                 reference=row.get("manufacturer_reference") or "",
+                version=row.get("material_version", 1),
             )
-            classification = self._classifier.classify(ClassificationInput(record.description))
-            extraction = self._extractor.extract(pdm_class, record.description)
-            # Evidência atual conhecida vence o índice, que só recupera candidatos.
-            their = {**their, **{name: value.value for name, value in extraction.attributes.items()}}
-            item_name, name_review = self._item(pdm_class, classification)
-            candidate = AnalyzedMaterial(
-                record,
-                classification.pdm_class_id or row["proposed_class_id"],
-                item_name,
+            approved = row.get("approved_class_id") is not None or row.get("approved_attributes")
+            current = MaterialRecord(
+                record.code,
+                record.status,
+                (row.get("pdm_description") or record.description) if approved else record.description,
+                manufacturer=record.manufacturer,
+                reference=record.reference,
+                version=record.version,
+            )
+            candidate = analyze_search_candidate(
+                SearchSource(
+                    current, row.get("approved_class_id"), row.get("approved_attributes") or {}, record.description
+                ),
+                self._pdm,
+                self._classifier,
+                self._extractor,
+                row["proposed_class_id"],
                 their,
                 row["candidate_identity_key"],
-                review_reasons=name_review,
             )
+            their = candidate.attributes
             decision = decide_identity(self._pdm, requested, candidate)
             verified = bool(requested.identity_key) and decision.status == "SAME_MATERIAL"
             if decision.status != "SAME_MATERIAL":

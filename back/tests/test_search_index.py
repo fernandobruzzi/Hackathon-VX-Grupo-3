@@ -141,3 +141,38 @@ def test_partial_approved_unknown_value_does_not_reuse_an_old_inferred_identity(
     current = analyze_source(source, catalog, *repositories)
     assert "REFERENCIA FABRICANTE" not in current.attributes
     assert current.identity_key is None
+
+
+def test_partial_approved_values_do_not_erase_ambiguous_item_evidence(catalog, repositories):
+    from domain.contracts import MaterialRecord
+    from pipelines.search_index import analyze_source
+    from repositories.batch_repository import SearchSource
+
+    source = SearchSource(
+        MaterialRecord("1", "ATIVO", "MANTO EIXO METSO N1234567"),
+        "PDM110",
+        {"FABRICANTE": "METSO", "REFERENCIA FABRICANTE": "N1234567"},
+    )
+    current = analyze_source(source, catalog, *repositories)
+    assert current.item_name is None
+    assert "SUBSTANTIVO_AMBIGUO" in current.review_reasons
+
+
+def test_watch_withdraws_health_when_an_existing_index_becomes_pending(monkeypatch, tmp_path):
+    from pipelines import search_index
+
+    ready = tmp_path / "ready"
+    monkeypatch.setattr(search_index, "Path", lambda path: ready)
+    attempts = iter([{"pending": 0, "written": 1}, {"pending": 1, "written": 0}, {"busy": True}])
+    monkeypatch.setattr(search_index, "run_index", lambda *args, **kwargs: next(attempts))
+    states = []
+
+    def pause(seconds):
+        states.append(ready.exists())
+        if len(states) == 3:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(search_index.time, "sleep", pause)
+    with pytest.raises(KeyboardInterrupt):
+        search_index.watch_index()
+    assert states == [True, False, False]

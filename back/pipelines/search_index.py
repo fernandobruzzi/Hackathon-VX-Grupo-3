@@ -18,8 +18,19 @@ from pathlib import Path
 
 from sqlalchemy import create_engine, text
 
-from domain.contracts import AnalyzedMaterial, ClassificationRepository, ExtractionRepository, PdmCatalog
-from domain.identity import partial_identity_key
+from domain.contracts import (
+    AnalyzedMaterial,
+    ClassificationInput,
+    ClassificationRepository,
+    ExtractionRepository,
+    PdmCatalog,
+)
+from domain.identity import (
+    item_name_review_reasons,
+    partial_identity_key,
+    reference_review_reasons,
+    resolve_item_name,
+)
 from domain.pdm_validator import validate_pdm
 from pipelines.sanitize import _REDIRECT_PREFIX, _catalog, analysis_signature, analyze_material
 from repositories.batch_repository import (
@@ -83,15 +94,38 @@ def analyze_source(source: SearchSource, catalog, classifier, extractor) -> Anal
             attributes.pop(name, None)
         else:
             attributes[name] = value
-    item = next(
-        (name for name in sorted(cls.item_names, key=len, reverse=True) if source.record.description.startswith(name)),
-        analyzed.item_name,
-    )
-    if item not in cls.item_names:
-        item = cls.item_names[0] if len(cls.item_names) == 1 else None
+    classification = classifier.classify(ClassificationInput(source.record.description))
+    names = [e.matched_name for e in classification.evidence if e.class_id == class_id]
+    prefix = source.record.description.split(";", 1)[0]
+    # A descrição PDM aprovada declara o nome completo; texto livre ambíguo não escolhe um deles.
+    item = prefix if prefix in cls.item_names else resolve_item_name(cls, names)
+    review = () if prefix in cls.item_names else item_name_review_reasons(cls, names)
+    review += reference_review_reasons(cls, attributes, source.original_description or "")
     validation = validate_pdm(catalog, class_id, attributes, item_name=item)
     identity = validation.identity_key or partial_identity_key(cls, attributes)
-    return AnalyzedMaterial(source.record, class_id, item, attributes, identity)
+    return AnalyzedMaterial(source.record, class_id, item, attributes, identity, review_reasons=review)
+
+
+def analyze_search_candidate(source, catalog, classifier, extractor, indexed_class_id, indexed_attributes, indexed_key):
+    """Revalidação compartilhada: fonte aprovada vence inferência; original não aprovado conserva contradições."""
+    if source.approved_class_id is not None or source.approved_attributes:
+        return analyze_source(source, catalog, classifier, extractor)
+    classification = classifier.classify(ClassificationInput(source.record.description))
+    class_id = indexed_class_id or classification.pdm_class_id
+    if class_id not in catalog.classes:
+        return AnalyzedMaterial(source.record, None, None, {}, None)
+    cls = catalog.classes[class_id]
+    extracted = extractor.extract(cls, source.record.description)
+    attributes = {**(indexed_attributes or {}), **{name: value.value for name, value in extracted.attributes.items()}}
+    names = [e.matched_name for e in classification.evidence if e.class_id == class_id]
+    return AnalyzedMaterial(
+        source.record,
+        classification.pdm_class_id or class_id,
+        resolve_item_name(cls, names),
+        attributes,
+        indexed_key,
+        review_reasons=item_name_review_reasons(cls, names),
+    )
 
 
 @contextmanager
@@ -183,6 +217,8 @@ def watch_index(pdm_workbook=None, *, poll_seconds=2):
             result = run_index(pdm_workbook, if_stale=True)
             if not result.get("busy") and not result.get("pending"):
                 ready.touch()
+            else:
+                ready.unlink(missing_ok=True)
             if result.get("written") or result.get("pending"):
                 print(json.dumps(result, ensure_ascii=False), flush=True)
         except Exception as error:

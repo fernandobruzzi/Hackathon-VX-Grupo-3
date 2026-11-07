@@ -14,6 +14,53 @@ Object.assign(globalThis, {
   document: { documentElement: { dataset: {} } },
 });
 
+for (const pending of [false, true]) {
+  test(`identidade pendente bloqueia aprovação, preserva rejeição: ${pending}`, async () => {
+    const previousFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      if (String(url).endsWith("/auth/config")) return Response.json({ mode: "local" });
+      if (String(url).endsWith("/auth/me")) return Response.json(meFor("GESTOR_CADASTRO"));
+      return Response.json({
+        items: [
+          {
+            id: "identity-review",
+            origin: "CHAT",
+            requester: "Solicitante",
+            original_text: "MANTO METSO N1234567",
+            center_code: "1300",
+            pdm_class_id: "PDM110",
+            status: "READY_FOR_REVIEW",
+            missing_attributes: pending
+              ? ["REVISAO DE IDENTIDADE: REVISAO_DE_PECA_NAO_CONFIRMADA"]
+              : [],
+            material_code: null,
+            updated_at: "2026-11-06T00:00:00Z",
+            version: 1,
+          },
+        ],
+        next_cursor: null,
+      });
+    };
+    let view!: ReactTestRenderer;
+    try {
+      await act(async () => {
+        view = create(React.createElement(AuthProvider, null, React.createElement(OrdersPage)));
+      });
+      const button = (label: string) =>
+        view.root
+          .findAllByType("button")
+          .find((item) =>
+            item.children.some((child) => typeof child === "string" && child.includes(label)),
+          );
+      assert.equal(button("Aprovar parte técnica")?.props.disabled, pending);
+      assert.equal(button("Rejeitar")?.props.disabled, false);
+    } finally {
+      await act(async () => view?.unmount());
+      globalThis.fetch = previousFetch;
+    }
+  });
+}
+
 test("pedidos percorre mais de 100 itens e reinicia por aba e identidade", async () => {
   const previousFetch = globalThis.fetch;
   const queries: URLSearchParams[] = [];

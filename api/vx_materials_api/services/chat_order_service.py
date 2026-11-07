@@ -63,6 +63,12 @@ def submit_chat_order(db, identity, catalog, session_id, expected_version, key, 
         raise ApiProblem(422, "PDM_INVALID", "A ficha não atende ao PDM atual. Revise antes de enviar.")
     # O validador resolve o item único quando o contexto não precisa escolhê-lo.
     item_name = validation.formatted_description.split(";", 1)[0]
+    messages = db.scalars(
+        select(ChatMessage)
+        .where(ChatMessage.session_id == session.id, ChatMessage.author_type == "USER")
+        .order_by(ChatMessage.sequence)
+    ).all()
+    original_text = "\n".join(message.content for message in messages)
     analysis = OrderAnalysis(
         STATUS_READY,
         card.pdm_class_id,
@@ -71,25 +77,21 @@ def submit_chat_order(db, identity, catalog, session_id, expected_version, key, 
         (),
         validation.identity_key,
         validation.formatted_description,
+        source_text=original_text,
     )
     _, _, version = order_service._rules(catalog)
-    status, candidates = order_service._evaluate(db, identity.tenant_id, analysis, version)
-    messages = db.scalars(
-        select(ChatMessage)
-        .where(ChatMessage.session_id == session.id, ChatMessage.author_type == "USER")
-        .order_by(ChatMessage.sequence)
-    ).all()
+    status, candidates, missing = order_service._evaluate(db, identity.tenant_id, catalog, analysis, version)
     order = RegistrationOrder(
         tenant_id=identity.tenant_id,
         source_order_id=f"CHAT:{session.id}",
         requester_user_id=identity.user_id,
         origin="CHAT",
-        original_text="\n".join(message.content for message in messages),
+        original_text=original_text,
         center_code=context["center_code"],
         pdm_class_id=card.pdm_class_id,
         item_name=item_name,
         attributes=attributes,
-        missing_attributes=[],
+        missing_attributes=list(missing),
         candidate_material_ids=candidates,
         status=status,
     )

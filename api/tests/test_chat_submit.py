@@ -1,6 +1,8 @@
 """Envio explícito de ficha do chat com sessão local, banco real e revisão posterior."""
 
 import uuid
+from contextlib import nullcontext
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -14,6 +16,7 @@ from test_orders import decide, headers, index, login, material
 
 from domain.identity import identity_signature
 from domain.pdm_validator import validate_pdm
+from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_api.db.models import AuditLog, ChatSession, MaterialMaster, RegistrationOrder
 from vx_materials_api.services.agent_client import AgentClient
 
@@ -56,10 +59,39 @@ def ready_agent(catalog):
     return agent, validation
 
 
+def index_current_catalog(db, catalog, version):
+    """Índice real na transação do teste; a suíte completa pode deixar materiais de outras fixtures."""
+    from pipelines.search_index import analyze_source, search_text
+    from repositories.batch_repository import read_search_sources, write_search_index
+    from repositories.classification import get_classification_repository
+    from repositories.extraction import get_extraction_repository
+
+    connection = db.connection()
+    engine = SimpleNamespace(connect=lambda: nullcontext(connection), begin=lambda: nullcontext(connection))
+    classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
+    rows = []
+    for source in read_search_sources(engine, str(TENANT_ID), version, only_stale=True):
+        analyzed = analyze_source(source, catalog, classifier, extractor)
+        rows.append(
+            {
+                "material_id": source.record.database_id,
+                "source_version": source.record.version,
+                "proposed_class_id": analyzed.pdm_class_id,
+                "extracted_attributes": analyzed.attributes,
+                "search_text": search_text(analyzed),
+                "candidate_identity_key": analyzed.identity_key,
+                "embedding": None,
+                "embedding_model": None,
+            }
+        )
+    write_search_index(engine, str(TENANT_ID), version, rows)
+
+
 @pytest.fixture
 def ready(case, monkeypatch):
     monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", "test-only-chat-submit-secret-with-32-bytes")
     client, db, version = case
+    index_current_catalog(db, client.app.state.pdm_catalog, version)
     index(db, version, material(db, "90000001"), "PDM999|OUTRO")
     agent, validation = ready_agent(client.app.state.pdm_catalog)
     client.app.state.agent_client = AgentClient("http://agent", transport=httpx.MockTransport(agent))
@@ -188,7 +220,21 @@ def test_changed_version_and_forged_payload_are_refused(ready):
 
 def test_duplicate_created_after_chat_is_not_forwarded_for_new_registration(ready):
     _, db, _, _, identity_key = ready
-    rival = material(db, "80000001", identity=identity_key, canonical=True)
+    from test_orders import set_current_identity
+
+    from pipelines.import_orders import OrderAnalysis
+
+    catalog = ready[0].app.state.pdm_catalog
+    analysis = OrderAnalysis(
+        "READY_FOR_REVIEW",
+        "PDM110",
+        "BUCHA",
+        ATTRIBUTES,
+        (),
+        identity_key,
+        validate_pdm(catalog, "PDM110", ATTRIBUTES, item_name="BUCHA").formatted_description,
+    )
+    rival = set_current_identity(material(db, "80000001", identity=identity_key, canonical=True), analysis)
     db.commit()
     response = submit(ready)
     assert response.status_code == 200, response.text
@@ -360,3 +406,66 @@ def test_simultaneous_requests_with_different_keys_create_one_order(factory, cat
             db.execute(delete(OperationRequest).where(OperationRequest.user_id == identity.user_id))
             db.execute(delete(UserSso).where(UserSso.id == identity.user_id))
             db.commit()
+
+
+def test_same_reference_with_another_noun_is_submitted_for_review_without_verified_reuse(ready):
+    from test_orders import index, set_current_identity
+
+    from pipelines.import_orders import OrderAnalysis
+    from vx_materials_api.services.order_service import _rules
+
+    client, db, _, _, key = ready
+    catalog = client.app.state.pdm_catalog
+    candidate = OrderAnalysis(
+        "READY_FOR_REVIEW",
+        "PDM110",
+        "RODA GUIA",
+        ATTRIBUTES,
+        (),
+        key,
+        validate_pdm(catalog, "PDM110", ATTRIBUTES, item_name="RODA GUIA").formatted_description,
+    )
+    rival = set_current_identity(material(db, "80000001", identity=key, canonical=True), candidate)
+    index(db, _rules(catalog)[2], rival, key)
+    response = submit(ready)
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "READY_FOR_REVIEW"
+    order = db.get(RegistrationOrder, uuid.UUID(response.json()["order_id"]))
+    assert order.material_id is None and order.candidate_material_ids == [str(rival.id)]
+    assert any("REVISAO DE IDENTIDADE" in reason for reason in order.missing_attributes)
+
+
+@pytest.mark.parametrize("revision", [False, True])
+def test_chat_submission_preserves_raw_identity_warning_without_reextracting_old_corrected_pn(ready, revision):
+    from test_orders import index, set_current_identity
+
+    from pipelines.import_orders import OrderAnalysis
+    from vx_materials_api.db.models import ChatMessage
+    from vx_materials_api.services.order_service import _rules
+
+    client, db, _, turn, key = ready
+    catalog = client.app.state.pdm_catalog
+    text = "Preciso de BUCHA; PN anterior VX136000 estava errado; confirmo VX136001" + ("; REV A" if revision else "")
+    message = db.scalar(
+        select(ChatMessage).where(
+            ChatMessage.session_id == uuid.UUID(turn["session_id"]), ChatMessage.author_type == "USER"
+        )
+    )
+    message.content = text
+    candidate = OrderAnalysis(
+        "READY_FOR_REVIEW",
+        "PDM110",
+        "BUCHA",
+        ATTRIBUTES,
+        (),
+        key,
+        validate_pdm(catalog, "PDM110", ATTRIBUTES, item_name="BUCHA").formatted_description,
+    )
+    rival = set_current_identity(material(db, "80000001", identity=key, canonical=True), candidate)
+    index(db, _rules(catalog)[2], rival, key)
+    response = submit(ready)
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == ("READY_FOR_REVIEW" if revision else "EXISTING")
+    order = db.get(RegistrationOrder, uuid.UUID(response.json()["order_id"]))
+    assert order.original_text == text and order.attributes["REFERENCIA FABRICANTE"] == "VX136001"
+    assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in reason for reason in order.missing_attributes) is revision
