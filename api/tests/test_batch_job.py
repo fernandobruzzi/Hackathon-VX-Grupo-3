@@ -190,7 +190,9 @@ def test_resume_after_metrics_finalization_failure(base, tmp_path, monkeypatch, 
     job_id = new_job(admin)
     store = LocalObjectStore(tmp_path)
     original_read = full_run.read_materials
-    monkeypatch.setattr(full_run, "read_materials", lambda engine, tenant: original_read(engine, tenant)[:2])
+    monkeypatch.setattr(
+        full_run, "read_materials", lambda engine, tenant, **kwargs: original_read(engine, tenant, **kwargs)[:2]
+    )
     original_put = store.put_if_absent
     original_finish = full_run.finish_job
     failed = False
@@ -236,7 +238,9 @@ def test_frozen_final_metrics_refuse_changed_rules(base, tmp_path, monkeypatch):
     job_id = new_job(admin)
     store = LocalObjectStore(tmp_path)
     original_read = full_run.read_materials
-    monkeypatch.setattr(full_run, "read_materials", lambda engine, tenant: original_read(engine, tenant)[:2])
+    monkeypatch.setattr(
+        full_run, "read_materials", lambda engine, tenant, **kwargs: original_read(engine, tenant, **kwargs)[:2]
+    )
     original_finish = full_run.finish_job
 
     def fail_finish(*args):

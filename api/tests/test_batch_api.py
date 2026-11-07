@@ -341,3 +341,152 @@ def test_status_subsets_are_rejected_without_side_effects(clean_jobs, storage, s
     assert not list(storage._root.rglob("manifest.json"))
     with clean_jobs[0].connect() as connection:
         assert connection.execute(text("SELECT count(*) FROM batch_jobs")).scalar_one() == 0
+
+
+@pytest.fixture
+def extra_import(clean_jobs):
+    """Segunda importação com material próprio e outro saldo de um material já conhecido."""
+    admin, _, _, original_dataset = clean_jobs
+    dataset_id, material_id = uuid.uuid4(), uuid.uuid4()
+    with admin.begin() as connection:
+        original_material = connection.execute(
+            text("SELECT id FROM materials_master WHERE tenant_id = :t ORDER BY material_code LIMIT 1"),
+            {"t": TENANT_ID},
+        ).scalar_one()
+        connection.execute(
+            text("INSERT INTO datasets (id, tenant_id, files) VALUES (:id, :t, '{}')"),
+            {"id": dataset_id, "t": TENANT_ID},
+        )
+        connection.execute(
+            text(
+                "INSERT INTO materials_master (id, tenant_id, source_system, material_code, status) "
+                "VALUES (:id, :t, 'ERP', 'SECOND-IMPORT', 'ATIVO')"
+            ),
+            {"id": material_id, "t": TENANT_ID},
+        )
+        for line, item in enumerate([original_material, material_id], 1):
+            connection.execute(
+                text(
+                    "INSERT INTO material_inventory_snapshots "
+                    "(tenant_id, dataset_id, material_id, center_code, quantity, unit, "
+                    "total_value, source_line, raw_record) "
+                    "VALUES (:t, :d, :m, 'SECOND', 98765, 'PC', 123456, :line, '{}')"
+                ),
+                {"t": TENANT_ID, "d": dataset_id, "m": item, "line": line},
+            )
+    yield dataset_id
+    with admin.begin() as connection:
+        connection.execute(text("DELETE FROM material_inventory_snapshots WHERE dataset_id = :d"), {"d": dataset_id})
+        connection.execute(text("DELETE FROM materials_master WHERE id = :m"), {"m": material_id})
+        connection.execute(text("DELETE FROM datasets WHERE id = :d"), {"d": dataset_id})
+
+
+@pytest.mark.parametrize("selected", ["original", "new"])
+def test_multiple_imports_rejected_before_start(clean_jobs, storage, extra_import, selected):
+    runner = RecordingRunner()
+    client = client_for(clean_jobs, runner=runner)
+    dataset = clean_jobs[3] if selected == "original" else extra_import
+    response = post(client, "/api/v1/batch/jobs", start_body(dataset))
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "MULTIPLE_DATASETS_NOT_SUPPORTED"
+    assert "um dataset por empresa" in response.json()["error"]["message"]
+    validator({"$ref": "#/components/schemas/ApiError"}).validate(response.json())
+    assert runner.launched == []
+    assert not list(storage._root.rglob("manifest.json"))
+    with clean_jobs[0].connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM batch_jobs")).scalar_one() == 0
+
+
+def test_other_tenant_dataset_does_not_block_start(clean_jobs, storage):
+    other = uuid.uuid4()
+    with clean_jobs[0].begin() as connection:
+        connection.execute(
+            text("INSERT INTO datasets (id, tenant_id, files) VALUES (:id, :t, '{}')"), {"id": other, "t": uuid.uuid4()}
+        )
+    try:
+        runner = RecordingRunner()
+        response = post(client_for(clean_jobs, runner=runner), "/api/v1/batch/jobs", start_body(clean_jobs[3]))
+        assert response.status_code == 202
+        assert len(runner.launched) == 1
+    finally:
+        with clean_jobs[0].begin() as connection:
+            connection.execute(text("DELETE FROM datasets WHERE id = :id"), {"id": other})
+
+
+def test_resume_refuses_import_added_after_failure(clean_jobs, storage, request):
+    runner = RecordingRunner()
+    client = client_for(clean_jobs, runner=runner)
+    job = post(client, "/api/v1/batch/jobs", start_body(clean_jobs[3])).json()
+    with clean_jobs[0].begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE batch_jobs SET status = 'FAILED', checkpoint = CAST(:checkpoint AS jsonb), "
+                "error_summary = 'TEST: Interrompido' WHERE id = :id"
+            ),
+            {"id": job["id"], "checkpoint": json.dumps({"save": {"saved": 5}})},
+        )
+    before = storage.get(runner.launched[0].manifest_key)
+    request.getfixturevalue("extra_import")
+    response = post(client, f"/api/v1/batch/jobs/{job['id']}/resume")
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "MULTIPLE_DATASETS_NOT_SUPPORTED"
+    assert len(runner.launched) == 1
+    assert storage.get(runner.launched[0].manifest_key) == before
+    with clean_jobs[0].connect() as connection:
+        row = connection.execute(
+            text("SELECT status, checkpoint, error_summary FROM batch_jobs WHERE id = :id"), {"id": job["id"]}
+        ).one()
+        assert tuple(row) == ("FAILED", {"save": {"saved": 5}}, "TEST: Interrompido")
+
+
+@pytest.mark.parametrize("with_job", [False, True])
+def test_direct_worker_refuses_multiple_imports_before_analysis(clean_jobs, storage, request, with_job, monkeypatch):
+    runner = RecordingRunner()
+    job_id = None
+    if with_job:
+        client = client_for(clean_jobs, runner=runner)
+        job_id = post(client, "/api/v1/batch/jobs", start_body(clean_jobs[3])).json()["id"]
+    request.getfixturevalue("extra_import")
+    monkeypatch.setattr(
+        "repositories.batch_repository._record",
+        lambda *_: pytest.fail("O worker não pode sequer montar materiais com saldos ambíguos"),
+    )
+    with pytest.raises(ValueError, match="exatamente um dataset"):
+        run_sanitize(PDM, job_id, database_url=clean_jobs[2], store=storage)
+    assert not list(storage._root.rglob("chunk-*.json"))
+    with clean_jobs[0].connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM sanitization_proposals")).scalar_one() == 0
+        if job_id:
+            assert (
+                connection.execute(text("SELECT status FROM batch_jobs WHERE id = :id"), {"id": job_id}).scalar_one()
+                == "FAILED"
+            )
+
+
+@pytest.mark.parametrize("resume", [False, True])
+def test_accepted_command_replays_after_new_import_without_launch(clean_jobs, storage, request, resume):
+    runner = RecordingRunner()
+    client = client_for(clean_jobs, runner=runner)
+    path = "/api/v1/batch/jobs"
+    body = start_body(clean_jobs[3])
+    expected_launches = 1
+    if resume:
+        job = post(client, path, body).json()
+        with clean_jobs[0].begin() as connection:
+            connection.execute(text("UPDATE batch_jobs SET status = 'FAILED' WHERE id = :id"), {"id": job["id"]})
+        path, body = f"{path}/{job['id']}/resume", {}
+        expected_launches = 2
+    headers = {"Idempotency-Key": str(uuid.uuid4()), "Origin": "http://localhost:8000", "X-CSRF-Token": CSRF}
+    accepted = client.post(path, json=body, headers=headers)
+    assert accepted.status_code == 202
+    request.getfixturevalue("extra_import")
+    replay = client.post(path, json=body, headers=headers)
+    assert replay.status_code == 202
+    assert replay.json()["id"] == accepted.json()["id"]
+    assert len(runner.launched) == expected_launches
+    assert len(list(storage._root.rglob("manifest.json"))) == 1
+    refused = post(client, path, body)
+    assert refused.status_code == 422
+    assert refused.json()["error"]["code"] == "MULTIPLE_DATASETS_NOT_SUPPORTED"
+    with clean_jobs[0].connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM operation_requests")).scalar_one() == expected_launches

@@ -121,6 +121,16 @@ def _launch(db: Session, job: BatchJob, runner: BatchRunner) -> None:
     db.commit()
 
 
+def _require_single_dataset(db: Session, tenant_id: uuid.UUID) -> None:
+    count = db.scalar(select(func.count()).select_from(Dataset).where(Dataset.tenant_id == tenant_id))
+    if count != 1:
+        raise ApiProblem(
+            422,
+            "MULTIPLE_DATASETS_NOT_SUPPORTED",
+            "O batch suporta exatamente um dataset por empresa no MVP. Múltiplas importações não são suportadas.",
+        )
+
+
 def start_job(
     db: Session,
     identity: Identity,
@@ -155,6 +165,7 @@ def start_job(
     )
     if previous is not None:
         return _replay_job(db, identity, previous)
+    _require_single_dataset(db, identity.tenant_id)
     active = _active_job(db, identity.tenant_id)
     if active is not None:
         raise ApiProblem(409, "JOB_ALREADY_RUNNING", "Já existe um job em andamento.", {"job_id": str(active.id)})
@@ -207,6 +218,7 @@ def resume_job(
     previous, digest = _command(db, identity, idempotency_key, "RESUME", job_id, {})
     if previous is not None:
         return _replay_job(db, identity, previous)
+    _require_single_dataset(db, identity.tenant_id)
     if job.status != "FAILED":
         raise ApiProblem(409, "JOB_NOT_RESUMABLE", "Só um job que falhou pode ser reprocessado.")
     active = _active_job(db, identity.tenant_id)

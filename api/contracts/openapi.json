@@ -1542,7 +1542,7 @@
             }
           }
         },
-        "description": "Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa."
+        "description": "Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa. Novos comandos de processamento suportam exatamente um dataset por empresa no MVP; múltiplas importações recebem 422 MULTIPLE_DATASETS_NOT_SUPPORTED antes de criar job, manifesto ou task. A retomada verifica a mesma condição. Repetir um comando já aceito somente recupera seu job, sem iniciar processamento."
       }
     },
     "/api/v1/batch/jobs/{id}": {
@@ -1783,7 +1783,7 @@
             }
           }
         },
-        "description": "Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa."
+        "description": "Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa. Novos comandos de processamento suportam exatamente um dataset por empresa no MVP; múltiplas importações recebem 422 MULTIPLE_DATASETS_NOT_SUPPORTED antes de criar job, manifesto ou task. A retomada verifica a mesma condição. Repetir um comando já aceito somente recupera seu job, sem iniciar processamento."
       }
     },
     "/api/v1/registration-orders": {
