@@ -553,6 +553,12 @@ Reordered words may match a PDM value only when all its words are present; an in
 
 For labels without separators, preserve the remaining attributes after a whole matched prefix. Generic `ZINCADO` stays pending; `ZINCADO BRANCO` supplies the complete finish. Boundary rules, all changed-value evidence, merge reviews and index-only rebuild instructions: [label boundaries](docs/label-boundaries.md).
 
+An inline colon label also preserves preceding attributes: `M12 x 50 CLASSE: 8.8`
+keeps the size and length. Compound manufacturer headers retain their original
+meaning. Extraction revision `9-inline-label-prefix-198` changes the index signature;
+rebuild only the index and keep existing proposals for manual review. See
+[the measured deltas and regression cases](docs/inline-label-prefix.md).
+
 ## Real product enrichment
 
 `vx-back enrich-real-products` reads the bootstrap manifest and preserves external
