@@ -37,7 +37,7 @@ def catalog():
 def test_bundle_preserves_exact_documentary_fields():
     from enrichment.internal_documents import parse_bundle
 
-    content = bundle([document(short_description="FILTRO OLEO")])
+    content = bundle([document(short_description="FILTRO OLEO", merchandise_group="FLT01")])
     result = parse_bundle(content, "dataset-01")
     assert result == json.loads(content)
 
@@ -118,6 +118,9 @@ def test_bundle_rejects_unknown_scope_duplicate_documents_and_fields(changes):
         {"attributes": {"ALTURA": "100MM"}},
         {"manufacturer": False},
         {"manufacturer_reference": None},
+        {"merchandise_group": None},
+        {"merchandise_group": False},
+        {"merchandise_group": "SOB01\nTUB01"},
         {"text": "FILTRO\x00ALTURA: 100MM"},
         {"title": "FICHA\nAPROVADA"},
     ],
@@ -156,6 +159,7 @@ def test_non_json_utf8_and_duplicate_json_keys_are_rejected(content):
         ("manufacturer", 201),
         ("manufacturer_reference", 201),
         ("short_description", 121),
+        ("merchandise_group", 201),
     ],
 )
 def test_document_field_size_is_bounded(field, size):
@@ -233,3 +237,38 @@ def test_document_cannot_fill_an_unconfirmed_material_identity(catalog, changes)
     )
     result = internal_report([target], sources, catalog, "dataset-01")["results"][0]
     assert result["suggestions"] == {}
+
+
+@pytest.mark.parametrize("group,expected_class", [(None, None), ("TUB01", None), ("SOB01", "PDM110")])
+def test_documentary_group_resolves_bucha_only_when_supplied_on_the_document(catalog, group, expected_class):
+    from domain.contracts import MaterialRecord
+    from enrichment.internal_documents import bundle_object_key, load_supplemental_sources
+    from pipelines.internal_enrichment import internal_report
+    from pipelines.sanitize import analyze_material
+    from repositories.classification import get_classification_repository
+    from repositories.extraction import get_extraction_repository
+
+    supplied_group = {} if group is None else {"merchandise_group": group}
+    content = bundle(
+        [
+            document(
+                text="BUCHA; APLICACAO: ESCAVADEIRA HIDRAULICA; MODELO EQUIPAMENTO: 6015B",
+                manufacturer="CATERPILLAR",
+                manufacturer_reference="5072254",
+                **supplied_group,
+            )
+        ]
+    )
+    sources = load_supplemental_sources(content, "dataset-01", catalog, bundle_object_key(content, "dataset-01"))
+    assert sources[0].material.record.group == (group or "")
+    assert sources[0].material.pdm_class_id == expected_class
+    target = analyze_material(
+        MaterialRecord("t", "ATIVO", "BUCHA", group="SOB01", manufacturer="CATERPILLAR", reference="5072254"),
+        catalog,
+        get_classification_repository(catalog),
+        get_extraction_repository(),
+    )
+    result = internal_report([target], sources, catalog, "dataset-01")["results"][0]
+    assert result["suggestions"] == (
+        {"APLICACAO": "ESCAVADEIRA HIDRAULICA", "MODELO EQUIPAMENTO": "6015B"} if expected_class else {}
+    )

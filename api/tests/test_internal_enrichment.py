@@ -28,8 +28,8 @@ def internal_case(approval_case, connection, monkeypatch, request):
     from pipelines.full_run import run_full
 
     case = approval_case
-    supplemental = getattr(request, "param", "csv") == "supplemental"
-    grouped = getattr(request, "param", "csv") == "group"
+    supplemental = getattr(request, "param", "csv") in {"supplemental", "supplemental_group"}
+    grouped = getattr(request, "param", "csv") in {"group", "supplemental_group"}
     monkeypatch.delenv("ENRICHMENT_INTERNAL_SOURCES_KEY", raising=False)
     monkeypatch.setenv("ENRICHMENT_LLM_MAX_CALLS", "0")
     db, m, dataset = case["session"], case["materials"][0], case["dataset"]
@@ -60,7 +60,7 @@ def internal_case(approval_case, connection, monkeypatch, request):
             "CODIGO_MATERIAL": "donor",
             "STATUS": "ATIVO",
             "DESCRICAO_LONGA": (
-                BUCHA + "; APLICACAO: ESCAVADEIRA HIDRAULICA; MODELO EQUIPAMENTO: 6015B"
+                BUCHA + ("" if supplemental else "; APLICACAO: ESCAVADEIRA HIDRAULICA; MODELO EQUIPAMENTO: 6015B")
                 if grouped
                 else FILTER + ("" if supplemental else "; ALTURA: 100MM")
             ),
@@ -83,11 +83,18 @@ def internal_case(approval_case, connection, monkeypatch, request):
             "dataset_id": str(dataset.id),
             "documents": [
                 {
-                    "id": "ficha-filtro",
-                    "title": "Ficha técnica interna — filtro LF9009",
-                    "text": FILTER + "; ALTURA: 100MM",
+                    "id": "ficha-bucha" if grouped else "ficha-filtro",
+                    "title": (
+                        "Ficha técnica interna — bucha 5072254" if grouped else "Ficha técnica interna — filtro LF9009"
+                    ),
+                    "text": (
+                        BUCHA + "; APLICACAO: ESCAVADEIRA HIDRAULICA; MODELO EQUIPAMENTO: 6015B"
+                        if grouped
+                        else FILTER + "; ALTURA: 100MM"
+                    ),
                     "kind": "INTERNAL_DOCUMENT",
                 }
+                | ({"merchandise_group": "SOB01"} if grouped else {})
             ],
         }
         document_bytes = json.dumps(document, ensure_ascii=False).encode()
@@ -476,7 +483,7 @@ def test_unrelated_document_keeps_original_source_date_hash_and_proposal(interna
     assert case["proposal"].status == "PENDING" and "ALTURA" not in case["materials"][0].attributes
 
 
-@pytest.mark.parametrize("internal_case", ["group"], indirect=True)
+@pytest.mark.parametrize("internal_case", ["group", "supplemental_group"], indirect=True)
 def test_original_group_resolves_bucha_for_internal_enrichment_and_approval(internal_case):
     case = internal_case
     proposal = case["proposal"]
@@ -501,7 +508,7 @@ def test_original_group_resolves_bucha_for_internal_enrichment_and_approval(inte
     assert material.original_description_long == BUCHA and material.original_merchandise_group == "SOB01"
 
 
-@pytest.mark.parametrize("internal_case", ["group"], indirect=True)
+@pytest.mark.parametrize("internal_case", ["group", "supplemental_group"], indirect=True)
 @pytest.mark.parametrize("changed_group", [None, "TUB01"])
 def test_missing_or_changed_original_group_refuses_approval_despite_a_revised_group(internal_case, changed_group):
     from domain.enrichment_rules import original_hash
