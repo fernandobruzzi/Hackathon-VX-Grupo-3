@@ -282,9 +282,15 @@ e não constitui revisão técnica independente.
 
 O guarda usa a bitola já interpretada e validada, com evidência fora de campos
 de referência: `PN:M12`, `REF:M12`, `MODELO:M12`, `REF:M1234`, `REF:MA`,
-`MODELO:MF` e a referência estruturada não confirmam rosca métrica. A extração
-legada de `BITOLA` nesses metadados permanece; ela não autoriza completar `ROSCA`.
-`M12` físico sem rótulo e `BITOLA:M12` continuam confirmando o alias. `MA` e `MF`
+`MODELO:MF` e a referência estruturada não confirmam rosca métrica.
+A primeira correção limitava apenas o alias de `ROSCA`; a integração também
+filtra cada ocorrência no leitor métrico, antes de preencher `BITOLA` ou
+comprimento. Assim, `PN:M12`, `REF:M12` e `MODELO:M12` não fornecem uma bitola
+física, mesmo com `ROSCA:METRICA GROSSA` explícita. O código e seu rótulo ficam
+no texto não resolvido. `M12` físico sem rótulo e `BITOLA:M12` continuam válidos,
+inclusive em `REF:M12 BITOLA M12`, sem consumir o código da referência. Esse filtro
+físico adicional não acrescenta diferenças nos 23.554 materiais nem nos 520
+pedidos em relação à primeira correção do guarda. `MA` e `MF`
 continuam válidos em `ROSCA:ROSCA GROSSA MA` e `ROSCA:ROSCA FINA MF`, sem
 emprestar evidência de outro rótulo. Uma bitola explícita em polegadas veta o
 alias mesmo com esses marcadores. O rolamento `BLINDADO` com `MODELO:6004ZZ`
