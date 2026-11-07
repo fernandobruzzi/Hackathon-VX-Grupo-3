@@ -11,8 +11,13 @@ AWS_RUNTIME_VARIABLES = (
 )
 
 
+# Variáveis que selecionam um cliente externo; o valor `simulated_v1` só vale localmente.
+SIMULATED_SELECTORS = ("EMBEDDING_REPOSITORY", "LLM_REPOSITORY")
+
+
 def check_simulated_clients() -> None:
-    if os.environ.get("EMBEDDING_REPOSITORY") != "simulated_v1":
+    selected = [name for name in SIMULATED_SELECTORS if os.environ.get(name, "").strip() == "simulated_v1"]
+    if not selected:
         return
     if os.environ.get("APP_ENV", "production") != "local" or any(os.environ.get(key) for key in AWS_RUNTIME_VARIABLES):
-        raise RuntimeError("EMBEDDING_REPOSITORY=simulated_v1 exige APP_ENV=local fora de runtime AWS")
+        raise RuntimeError(f"{selected[0]}=simulated_v1 exige APP_ENV=local fora de runtime AWS")
