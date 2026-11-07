@@ -203,13 +203,20 @@ O deploy exige que os digests existam no ECR antes de executar qualquer migraç�
 3. Ler `deployment/generated/receipt.json`. O script executa migração, senhas,
    bootstrap e índice, verifica exit codes e espera a **nova** revisão de web,
    sem aceitar a revisão antiga saudável como evidência. Guarda o ARN anterior.
-4. Preencher `public_origin` com o HTTPS observado, sem barra final. Registrar
-   `<public_origin>/auth/callback/` no app client. Ativar apenas code flow e scopes
-   `openid email profile`. Criar grupos e contas conforme [`autenticacao.md`](../docs/autenticacao.md).
-5. Preencher pool/client/domain e chave Fernet, mudar `auth_backend=cognito`,
-   repetir preflight e publicar `<commit>-auth`. O validador confere HTTPS, região,
-   chave, callback, scopes e correspondência de eventual client secret.
-6. Executar login no navegador, conferir cookie `__Host-vx_session`, logout,
+4. Atualizar a stack com `PublicOrigin=<origem HTTPS observada>`, sem barra final.
+   O template cria o User Pool só com cadastro por administrador, o domínio do
+   Hosted UI, os grupos `ROLE_*` e um app client público. O client usa code flow
+   com `openid email profile`, callback `<origem>/auth/callback/` e logout
+   `<origem>/login/`. As saídas `Cognito*` vão para `aws.local.json`.
+5. Contas da demo: `aws_demo_accounts.py --apply` cria Ana Souza (Solicitante),
+   Bruno Oliveira (Governança PDM) e Carla Pereira (Fiscal) em `example.com`, sem
+   convite por e-mail, cada uma só no próprio grupo. As senhas ficam no segredo
+   `<name>/demo-accounts` e nunca são impressas; leia-as com
+   `aws secretsmanager get-secret-value --secret-id <name>/demo-accounts`.
+6. Mudar `auth_backend=cognito`, repetir preflight e publicar `<commit>-auth`. O
+   validador confere HTTPS, região, chave, callback, scopes e correspondência de
+   eventual client secret. A chave Fernet já vem do segredo `session-encryption`.
+7. Executar login no navegador, conferir cookie `__Host-vx_session`, logout,
    três papéis, CSRF, decisão técnica/fiscal e um turno MCP. O smoke autenticado
    aceita o cookie jar de uma sessão Solicitante real. Registrar evidências na #91.
 
@@ -227,6 +234,28 @@ O planejador de chat atual continua determinístico: definir `BEDROCK_CHAT_MODEL
 não implementa um planejador LLM. A chamada curta do preflight só comprova acesso
 ao modelo. O repositório de embeddings atual fixa Titan V2; outros IDs exigem outra
 implementação e reindexação compatível.
+
+## Domínio próprio
+
+O Express não aceita domínio próprio e reverte mudanças no balanceador que
+gerencia. Para servir em `vx.cerne.pro`, a stack recebe `CustomDomain` e
+`ExpressEndpoint` (host do Express, sem `https://`). Ela cria um certificado ACM
+validado por DNS e um CloudFront sem cache. O CloudFront repassa cookies, query e
+`Origin`, mas não o `Host`, porque o balanceador do Express roteia pelo próprio
+host. Por isso a API devolve redirects do front como caminhos relativos.
+
+1. Se o domínio tiver registros CAA, incluir `0 issue "amazon.com"` no apex. Sem
+   isso o ACM não emite. No Vercel DNS, os CAA padrão permitem só Let's Encrypt,
+   Sectigo e Google.
+2. Atualizar a stack com `CustomDomain`, `ExpressEndpoint` e
+   `PublicOrigin=https://<domínio>`, que também troca o callback do Cognito. O
+   update espera a validação: ler o registro em
+   `aws acm describe-certificate` e criar o CNAME `_…` no DNS.
+3. Criar o CNAME do subdomínio para a saída `CustomDomainTarget`.
+4. Mudar `public_origin` em `aws.local.json` e publicar uma release nova. O deploy
+   exige liveness tanto no Express quanto no domínio próprio. Entre o update da
+   stack e o deploy, o login pelo endereço antigo falha no Hosted UI, porque o
+   callback já mudou.
 
 ## Falhas, exclusão mútua e rollback
 
@@ -250,10 +279,12 @@ downgrade automático nem exclusão automática de RDS/bucket.
 Comprovado na conta do workshop (#6): roles e PassRole, Express com o Agent como
 sidecar, HTTPS público servindo o front pela API e Agent sem ingresso. Também
 comprovados: RDS privado, `vector` 0.8.2, migração e senhas, e logins TLS
-`verify-full` de `api_user`, `batch_user` e `mcp_reader`. Ainda falta:
+`verify-full` de `api_user`, `batch_user` e `mcp_reader`. Na #91: login Cognito
+real com cookie `__Host-vx_session` Secure, HttpOnly, SameSite=Lax e host-only,
+`/auth/me` sem tokens, turno de chat pelo Agent, logout encerrando também a sessão
+do Hosted UI e domínio próprio pelo CloudFront. Ainda falta:
 
 - Batch disparado pela API no ECS (`ecs:RunTask` da role web) e invocações reais do Bedrock.
-- Login Cognito e cookies aceitos pelo navegador em HTTPS (#91).
 - Plano B EC2/Caddy preparado em [`docs/ec2.md`](../docs/ec2.md); validar na EC2 (#29).
 - Reset completo de propostas/pedidos/sessões da demo (#34).
 
