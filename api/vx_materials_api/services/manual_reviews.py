@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from sqlalchemy import or_, select, text, tuple_, union
 
+from domain.ncm_rules import requires_snapshot_fiscal_review
 from domain.pdm_validator import validate_pdm
 from domain.proposal_validation import is_approvable
 from domain.proposals import canonical_hash, proposal_hash
@@ -26,7 +27,7 @@ from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.proposals import ProposalChangeset
 from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.services.approval_service import inventory_rows
-from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
+from vx_materials_api.services.ncm_validation import create_ncm_assessment, evaluate_proposed_ncm
 
 
 def scoped_query(principal):
@@ -211,7 +212,8 @@ def propose_resolution(db, principal, review_id, payload, key, request_id, catal
         },
     }
     parsed_changes = ProposalChangeset.model_validate_json(json.dumps(changeset))
-    changeset["ncm_assessment"] = evaluate_proposed_ncm(catalog, parsed_changes)
+    changeset["ncm_assessment"] = create_ncm_assessment(catalog, parsed_changes)
+    evaluate_proposed_ncm(catalog, ProposalChangeset.model_validate_json(json.dumps(changeset)))
     snapshots = list(
         db.scalars(
             select(MaterialInventorySnapshot).where(
@@ -258,7 +260,8 @@ def propose_resolution(db, principal, review_id, payload, key, request_id, catal
         }
     ]
     fiscal = (
-        normalizer.normalize_ncm(material.ncm).value != normalizer.normalize_ncm(payload.ncm).value
+        requires_snapshot_fiscal_review(changeset["ncm_assessment"])
+        or normalizer.normalize_ncm(material.ncm).value != normalizer.normalize_ncm(payload.ncm).value
         or (material.pdm_class_id is not None and material.pdm_class_id != payload.pdm_class_id)
         or (bool(material.attributes) and material.attributes != payload.attributes)
     )

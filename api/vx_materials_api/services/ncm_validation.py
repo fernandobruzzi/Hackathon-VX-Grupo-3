@@ -9,25 +9,31 @@ from domain.proposals import canonical_hash
 from vx_materials_api.errors import ApiError
 
 
-def evaluate_proposed_ncm(catalog, changes, *, require_consistency=True):
+def create_ncm_assessment(catalog, changes):
+    """Vincula referência atual ao conteúdo novo, antes de persistir a proposta."""
     try:
         snapshot = load_configured_ncm_snapshot()
+        result = asdict(
+            check_ncm_consistency(
+                catalog,
+                changes.after.pdm_class_id,
+                changes.after.attributes,
+                changes.after.ncm,
+                item_name=changes.after.item_name,
+                snapshot=snapshot,
+            )
+        )
     except NcmSnapshotError as error:
         raise ApiError(
             409, "NCM_REFERENCE_UNAVAILABLE", "A referencia fiscal configurada esta indisponivel."
         ) from error
-    if snapshot is not None and changes.ncm_assessment is None:
+    return result
+
+
+def evaluate_proposed_ncm(catalog, changes, *, require_consistency=True):
+    result = create_ncm_assessment(catalog, changes)
+    if result["ncm_version"] is not None and changes.ncm_assessment is None:
         raise ApiError(409, "NCM_ASSESSMENT_CHANGED", "A base fiscal mudou. Gere e revise uma nova proposta.")
-    result = asdict(
-        check_ncm_consistency(
-            catalog,
-            changes.after.pdm_class_id,
-            changes.after.attributes,
-            changes.after.ncm,
-            item_name=changes.after.item_name,
-            snapshot=snapshot,
-        )
-    )
     if changes.ncm_assessment is not None and canonical_hash(changes.ncm_assessment) != canonical_hash(result):
         raise ApiError(409, "NCM_ASSESSMENT_CHANGED", "A base fiscal mudou. Gere e revise uma nova proposta.")
     if require_consistency and changes.after.ncm is not None and result["technical_consistency"] != "CONSISTENT":
