@@ -53,8 +53,14 @@ IPs e mantém a validação TLS para o host original, impedindo nova resolução
 conexão. Redirecionamentos passam pela mesma política.
 
 Limites padrão: dois redirecionamentos, 2 MB por documento, quatro segundos por
-operação de rede e doze segundos para a consulta. O DNS também tem prazo.
-Conteúdo comprimido e tipos diferentes de HTML, texto e PDF são recusados. PDFs
+operação de rede e doze segundos para a consulta. O prazo total cobre DNS,
+conexão/TLS, linha de status, cabeçalhos e corpo, incluindo delimitadores de
+respostas chunked; bytes lentos não renovam esse prazo.
+Conteúdo HTTP comprimido e tipos diferentes de HTML, texto e PDF são recusados.
+A leitura de PDF usa os limites nativos do pypdf: 2 MB por fluxo descomprimido
+e por conjunto de fluxos da página, com orçamento de decodificação de 20 MB por
+fluxo. A configuração fica restrita à leitura do documento; esses limites não
+representam um teto de memória total do processo. PDFs
 precisam ter texto, até dez páginas e conteúdo de página limitado. Erros HTTP,
 timeout, bloqueios e páginas sem conteúdo utilizável produzem pendências, sem
 fabricar valores nem contornar restrições do site.

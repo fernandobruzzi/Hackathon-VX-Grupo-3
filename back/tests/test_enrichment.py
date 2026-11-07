@@ -362,3 +362,28 @@ def test_unsupported_pdf_is_a_pending_source_error(kind):
     doc = SourceDocument("pdf", LF9009.url, content, "application/pdf", STAMP, simulated=True)
     with pytest.raises(SourceError, match="PDF"):
         document_pages(doc)
+
+
+@pytest.mark.parametrize("array", [False, True])
+def test_compressed_pdf_stops_at_decoding_budget_before_assembling_page(array):
+    from pypdf import PdfWriter, get_configuration
+    from pypdf.errors import LimitReachedError
+    from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=72, height=72)
+    parts = []
+    for _ in range(2 if array else 1):
+        stream = DecodedStreamObject()
+        stream.set_data(b" " * (1_200_000 if array else 2_400_000))
+        parts.append(writer._add_object(stream.flate_encode()))
+    page[NameObject("/Contents")] = ArrayObject(parts) if array else parts[0]
+    output = io.BytesIO()
+    writer.write(output)
+    assert len(output.getvalue()) < 2_000_000
+    document = SourceDocument("pdf", LF9009.url, output.getvalue(), "application/pdf", STAMP)
+    configuration = get_configuration()
+    with pytest.raises(SourceError) as error:
+        document_pages(document)
+    assert isinstance(error.value.__cause__, LimitReachedError)
+    assert get_configuration() == configuration
