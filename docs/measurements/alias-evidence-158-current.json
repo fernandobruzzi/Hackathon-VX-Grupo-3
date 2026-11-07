@@ -8,10 +8,10 @@
     "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
   },
   "before": {
-    "head": "e86e77a878cea1b48ab0c57ae25232c2fdbc83f5",
+    "head": "23b37a6df8eaf06d3b3061beb7d8a626e53adc3b",
     "implementation_state": "working_tree_sources_identified_by_sha256",
     "source_sha256": {
-      "back/repositories/extraction/rule_based_v1.py": "ef885e035ce67dea28d9aebfb92b23237129709aae3e599d1ee0eb971abf8386",
+      "back/repositories/extraction/rule_based_v1.py": "d5e69b461f5e8887cc2e2a37adf078c95e5359641359132366485b3b7565de34",
       "back/repositories/extraction/rule_based_v1_tables.py": "9fc0b8d6112eb4b6adbac29a92cf88dfbace718a2627e6a5d794f89f38644503",
       "back/repositories/classification/aliases_v1.py": "9edadb79386d4417b37e7d9794feec50ea9d2ebae17f21aa30bc024af0580c7b"
     },
@@ -21,14 +21,14 @@
     ],
     "extractor": [
       "rule_based_v1",
-      "8"
+      "9-inline-label-prefix-198"
     ]
   },
   "after": {
-    "head": "59273ddd07d5efbc7199c5a0f4c13ac712cc8752",
+    "head": "8e729794dd4029a6af052b1f54ed3e051018a8f0",
     "implementation_state": "working_tree_sources_identified_by_sha256",
     "source_sha256": {
-      "back/repositories/extraction/rule_based_v1.py": "11f80eb96a664042a3768a6b9a008e16d3a955228acb5c58ac942f0b5fdc1755",
+      "back/repositories/extraction/rule_based_v1.py": "18b1326931b107c8430e3e2e1334c57b4bcd37624d444aa9f1beb8eb80e887f0",
       "back/repositories/extraction/rule_based_v1_tables.py": "369f8d4701186f5c645f0a0e7af99d0a4eaeb4df32cb32f3827cda9085d25604",
       "back/repositories/classification/aliases_v1.py": "9edadb79386d4417b37e7d9794feec50ea9d2ebae17f21aa30bc024af0580c7b"
     },
@@ -38,7 +38,7 @@
     ],
     "extractor": [
       "rule_based_v1",
-      "9"
+      "10"
     ]
   },
   "materials": {
@@ -226,27 +226,225 @@
     ],
     "before": {
       "rows": 23554,
-      "filled_attributes": 74306,
+      "filled_attributes": 74310,
       "statuses": {
         "OUT_OF_SCOPE": 5625,
-        "VALID": 10927,
-        "INCOMPLETE": 7002
+        "VALID": 10928,
+        "INCOMPLETE": 7001
       },
-      "identity_keys": 11813
+      "identity_keys": 11814
     },
     "after": {
       "rows": 23554,
-      "filled_attributes": 74301,
+      "filled_attributes": 74305,
       "statuses": {
         "OUT_OF_SCOPE": 5625,
-        "VALID": 10927,
-        "INCOMPLETE": 7002
+        "VALID": 10928,
+        "INCOMPLETE": 7001
       },
-      "identity_keys": 11813
+      "identity_keys": 11814
     }
   },
   "orders": {
-    "changes": [],
+    "changes": [
+      {
+        "id": "SC-202600031",
+        "fields": {
+          "REFERENCIA FABRICANTE": {
+            "before": "DO",
+            "after": "2713243123"
+          }
+        },
+        "before": {
+          "class": "PDM110",
+          "item": "AMORTECEDOR",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "LUDOWICI 3.6X8.5",
+            "FABRICANTE": "FLSMIDTH",
+            "REFERENCIA FABRICANTE": "DO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Item amortecedor FLSMIDTH 2713243123 do LUDOWICI 3.6X8.5, código do fabricante na plaqueta"
+        },
+        "after": {
+          "class": "PDM110",
+          "item": "AMORTECEDOR",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "LUDOWICI 3.6X8.5",
+            "FABRICANTE": "FLSMIDTH",
+            "REFERENCIA FABRICANTE": "2713243123"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Item amortecedor FLSMIDTH 2713243123 do LUDOWICI 3.6X8.5, código do fabricante na plaqueta"
+        }
+      },
+      {
+        "id": "SC-202600048",
+        "fields": {
+          "REFERENCIA FABRICANTE": {
+            "before": "DO",
+            "after": "6644889826"
+          }
+        },
+        "before": {
+          "class": "PDM110",
+          "item": "TELA",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "LUDOWICI 3.6X8.5",
+            "FABRICANTE": "FLSMIDTH",
+            "REFERENCIA FABRICANTE": "DO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Peça tela FLSMIDTH 6644889826 do LUDOWICI 3.6X8.5, código do fabricante na plaqueta"
+        },
+        "after": {
+          "class": "PDM110",
+          "item": "TELA",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "LUDOWICI 3.6X8.5",
+            "FABRICANTE": "FLSMIDTH",
+            "REFERENCIA FABRICANTE": "6644889826"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Peça tela FLSMIDTH 6644889826 do LUDOWICI 3.6X8.5, código do fabricante na plaqueta"
+        }
+      },
+      {
+        "id": "SC-202600416",
+        "fields": {
+          "REFERENCIA FABRICANTE": {
+            "before": "DO",
+            "after": "N72836H06"
+          }
+        },
+        "before": {
+          "class": "PDM110",
+          "item": "VIGA",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "LH 8X20",
+            "FABRICANTE": "METSO",
+            "REFERENCIA FABRICANTE": "DO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Peça viga METSO N72836H06 do LH 8X20, código do fabricante na plaqueta"
+        },
+        "after": {
+          "class": "PDM110",
+          "item": "VIGA",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "LH 8X20",
+            "FABRICANTE": "METSO",
+            "REFERENCIA FABRICANTE": "N72836H06"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Peça viga METSO N72836H06 do LH 8X20, código do fabricante na plaqueta"
+        }
+      },
+      {
+        "id": "SC-202600451",
+        "fields": {
+          "REFERENCIA FABRICANTE": {
+            "before": "DO",
+            "after": "497-9544"
+          }
+        },
+        "before": {
+          "class": "PDM110",
+          "item": "PINO",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "6030",
+            "FABRICANTE": "CATERPILLAR",
+            "REFERENCIA FABRICANTE": "DO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Preciso de pino CATERPILLAR 497-9544 do 6030, código do fabricante na plaqueta"
+        },
+        "after": {
+          "class": "PDM110",
+          "item": "PINO",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "6030",
+            "FABRICANTE": "CATERPILLAR",
+            "REFERENCIA FABRICANTE": "497-9544"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Preciso de pino CATERPILLAR 497-9544 do 6030, código do fabricante na plaqueta"
+        }
+      },
+      {
+        "id": "SC-202600481",
+        "fields": {
+          "REFERENCIA FABRICANTE": {
+            "before": "DO",
+            "after": null
+          }
+        },
+        "before": {
+          "class": "PDM110",
+          "item": "VIGA",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "T-CLASS 3.0X7.3",
+            "FABRICANTE": "HAVER",
+            "REFERENCIA FABRICANTE": "DO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Peça viga HAVER HB-798945 do T-CLASS 3.0X7.3, código do fabricante na plaqueta"
+        },
+        "after": {
+          "class": "PDM110",
+          "item": "VIGA",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "T-CLASS 3.0X7.3",
+            "FABRICANTE": "HAVER"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Peça viga HAVER HB-798945 do T-CLASS 3.0X7.3, código do fabricante na plaqueta"
+        }
+      },
+      {
+        "id": "SC-202600497",
+        "fields": {
+          "REFERENCIA FABRICANTE": {
+            "before": "DO",
+            "after": "87796744"
+          }
+        },
+        "before": {
+          "class": "PDM110",
+          "item": "ROTOR",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "MEGANORM 100-315",
+            "FABRICANTE": "KSB",
+            "REFERENCIA FABRICANTE": "DO"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Item rotor KSB 87796744 do MEGANORM 100-315, código do fabricante na plaqueta"
+        },
+        "after": {
+          "class": "PDM110",
+          "item": "ROTOR",
+          "attributes": {
+            "MODELO EQUIPAMENTO": "MEGANORM 100-315",
+            "FABRICANTE": "KSB",
+            "REFERENCIA FABRICANTE": "87796744"
+          },
+          "status": "INCOMPLETE",
+          "identity_key": null,
+          "description": "Item rotor KSB 87796744 do MEGANORM 100-315, código do fabricante na plaqueta"
+        }
+      }
+    ],
     "before": {
       "rows": 520,
       "filled_attributes": 1922,
@@ -259,7 +457,7 @@
     },
     "after": {
       "rows": 520,
-      "filled_attributes": 1922,
+      "filled_attributes": 1921,
       "statuses": {
         "READY_FOR_REVIEW": 256,
         "INCOMPLETE": 183,
