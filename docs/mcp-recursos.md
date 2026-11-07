@@ -89,7 +89,7 @@ não são bytes fiscais oficiais. A captura oficial do Siscomex continua bloquea
 por HTTP403 nesta integração. Uma tabela simulada/unverificada não comprova
 classificação fiscal do produto nem autoriza publicação ou aprovação.
 
-A migração `0016_mcp_resource_scope`, após `0015_order_fiscal_review`, acrescenta apenas as views de identidade ativa e manifesto, com
+A migração `0018_mcp_resource_scope`, após `0017_automatic_corrections`, acrescenta apenas as views de identidade ativa e manifesto, com
 `SELECT` para `mcp_reader`; não concede acesso às tabelas nem escrita. O MCP confere
 o tenant assinado contra o usuário ativo em cada consulta sensível; mudança de
 tenant ou desativação do usuário retira o acesso mesmo se o token interno ainda estiver no prazo.
