@@ -135,15 +135,10 @@ class TrustedSourceResearch:
         ]
         if any(references):
             return all(not value or reference_spelling_key(value.upper()) == expected for value in references)
-        if any(
-            reference_spelling_key(original.get(name, "").upper()) == expected
-            for name in ("REFERENCIA FABRICANTE", "REFERENCIA")
-        ):
-            return True
-        # O extrator técnico pode abreviar um PN de rolamento. A ocorrência inteira
-        # do único PN revisado preserva seus sufixos, aceitando somente separadores.
+        # O extrator técnico pode abreviar um PN ou reconhecê-lo dentro de uma variante.
+        # Sem referência atual explícita, só o SKU revisado inteiro confirma a identidade.
         literal = r"[\s./\-]*".join(map(re.escape, expected))
-        return re.search(r"(?<![A-Z0-9])" + literal + r"(?![A-Z0-9/_-])", description.upper()) is not None
+        return re.search(r"(?<![A-Z0-9/_.\-])" + literal + r"(?![A-Z0-9/_.\-])", description.upper()) is not None
 
     def run(self, code: str, requested: list[str]) -> ResearchResult:
         product, pdm_class = self.validate_request(code, requested)
