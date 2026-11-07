@@ -15,6 +15,7 @@ arquivo, que não vai para os revisores. Nada aqui altera dados, propostas ou de
 import hashlib
 import json
 import random
+import tempfile
 from io import BytesIO
 from pathlib import Path
 
@@ -33,7 +34,7 @@ from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
 from repositories.normalization import get_normalization_repository
 
-SCHEMA = "experiment-v1"
+SCHEMA = "experiment-v2"
 SEED = 207
 PAIRS_SIZE = 40
 CORRECTIONS_SIZE = 40
@@ -80,7 +81,13 @@ def select(
     catalog = _catalog(pdm_workbook)
     classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
     normalizer = get_normalization_repository()
-    records = read_csv_records(csv_path)
+    dataset = Path(csv_path).read_bytes()
+    with tempfile.NamedTemporaryFile() as snapshot:
+        snapshot.write(dataset)
+        snapshot.flush()
+        records = read_csv_records(snapshot.name)
+    if len({r.code for r in records}) != len(records):
+        raise ValueError("Código de material repetido no CSV")
     by_code = {record.code: record for record in records}
     analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
     active = {m.record.code for m in analyzed if m.record.status == "ATIVO"}
@@ -100,7 +107,20 @@ def select(
         key=lambda item: (-item[0], item[1], item[2]),
     )
     pool = near[: max(pairs_size * 5, NEAR_POOL)]
-    part_b = rng.sample(pool, min(pairs_size, len(pool)))
+    # Every negative control retains a hard-neighbor pair, plus same-class fillers.
+    # Match the complete A size distribution: no pair slicing of MERGE groups.
+    if len(pool) < len(part_a):
+        raise ValueError("Controles cegos insuficientes para os grupos propostos")
+    part_b = []
+    analyzed_by_code = {m.record.code: m for m in analyzed}
+    for proposal, (_, a, b) in zip(part_a, rng.sample(pool, len(part_a)), strict=True):
+        candidates = sorted(
+            code for code in active - {a, b} if analyzed_by_code[code].pdm_class_id == analyzed_by_code[a].pdm_class_id
+        )
+        needed = len(proposal.material_codes) - 2
+        if len(candidates) < needed:
+            raise ValueError("Controles cegos sem materiais suficientes da mesma classe")
+        part_b.append(sorted([a, b, *rng.sample(candidates, needed)]))
 
     corrections, _ = propose_corrections(analyzed, catalog, normalizer, get_correction_repository())
     tier2 = sorted(
@@ -128,18 +148,36 @@ def select(
     part_d = sorted(chosen)
     rng.shuffle(part_d)
 
-    cases = [("A", sorted(p.material_codes)) for p in part_a] + [("B", [a, b]) for _, a, b in part_b]
+    cases = [("A", sorted(p.material_codes)) for p in part_a] + [("B", codes) for codes in part_b]
     rng.shuffle(cases)
     rng.shuffle(part_c)
     key = {
         "schema": SCHEMA,
         "seed": seed,
         "sizes": {"pairs": pairs_size, "corrections": corrections_size, "slice": slice_size},
-        "dataset_sha256": hashlib.sha256(Path(csv_path).read_bytes()).hexdigest(),
+        "dataset_sha256": hashlib.sha256(dataset).hexdigest(),
         "analysis_signature": analysis_signature(catalog, classifier, extractor),
-        "implementation": implementation_fingerprint(),
+        "implementation": {
+            "analysis": implementation_fingerprint(),
+            "experiment_files": {
+                name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+                for name in ("experiment.py", "experiment_result.py", "merge_sample.py")
+            },
+        },
+        "unit": "WHOLE_PROPOSAL_GROUP",
+        "layout": "experiment-workbook-v2",
+        "slice_order": part_d,
+        "system_merge_pairs": sorted([list(pair) for pair in merged if set(pair) <= set(part_d)]),
+        "system_decision_kind": "PROPOSED_MERGE_NOT_APPLIED",
         "frames": {
             "merges": len(merges),
+            "merges_frame": [
+                {"id": p.id, "codes": sorted(p.material_codes), "changeset_hash": p.changeset_hash}
+                for p in sorted(merges, key=lambda p: p.id)
+            ],
+            "near_pool_frame": pool,
+            "tier2_frame": [p.id for p in tier2],
+            "slice_class_frame": sorted(in_class),
             "near_pairs_not_merged": len(near),
             "near_pool": len(pool),
             "tier2_descriptions": len(tier2),
@@ -180,10 +218,8 @@ def select(
 
 def package_id(key: dict) -> str:
     """Identifica o conteúdo do pacote; a planilha leva o mesmo valor para ser conferida."""
-    content = {name: key[name] for name in ("schema", "seed", "analysis_signature", "dataset_sha256", "pairs")}
-    content["corrections"] = key["corrections"]
-    content["slice"] = key["slice"]
-    return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+    content = {name: value for name, value in key.items() if name != "package_id"}
+    return hashlib.sha256(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
 def _style(sheet, widths: dict[str, int], answer_columns: str, first_row: int = 2) -> None:
@@ -210,6 +246,7 @@ GUIDE = [
     "  Fabricantes diferentes de peças equivalentes contam como NAO. Escreva a evidência em poucas palavras.",
     "Aba 'Descrição': a proposta está CORRETA se descreve o mesmo item sem errar nenhum valor.",
     "  PERDEU INFORMAÇÃO se algo útil do original sumiu, como uma medida, um material ou uma aplicação.",
+    "  Registre a evidência em O que, mesmo para SIM/NAO. Sem evidência o caso fica inconclusivo.",
     "Aba 'Manual': tarefa cronometrada. Anote a hora de início e de fim (hh:mm). Em até 40 minutos, dê o mesmo",
     "  número na coluna GRUPO aos parafusos que são o mesmo item. Pare quando o tempo acabar e anote a linha.",
     "",
@@ -253,7 +290,8 @@ def workbook(key: dict) -> Workbook:
     manual.append(["Início (hh:mm)", None, "Fim (hh:mm)", None, "Parei na linha", None])
     manual.append([])
     manual.append(["Linha", "Código", "Descrição original", "Unidade", "GRUPO", "Descrição padronizada (opcional)"])
-    for line, (code, item) in enumerate(key["slice"].items(), 1):
+    for line, code in enumerate(key["slice_order"], 1):
+        item = key["slice"][code]
         manual.append([line, code, item["description"], item["unit"], None, None])
     _style(manual, {"A": 7, "B": 11, "C": 80, "D": 8, "E": 12, "F": 60}, "EF", first_row=4)
     for cell in ("B1", "D1", "F1"):
@@ -264,6 +302,12 @@ def workbook(key: dict) -> Workbook:
         for cell in header:
             cell.font = _BOLD
         sheet.freeze_panes = "C4" if sheet is manual else "B2"
+    # Force raw strings to literal Excel strings, including leading '='.
+    for sheet in wb:
+        for row in sheet:
+            for cell in row:
+                if isinstance(cell.value, str):
+                    cell.data_type = "s"
     return wb
 
 

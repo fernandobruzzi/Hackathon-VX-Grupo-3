@@ -35,6 +35,7 @@ def fill(summary, key, path, reviewer, flip_pairs=(), unsure=(), wrong_descripti
     for row in wb["Descrição"].iter_rows(min_row=2):
         row[4].value = "NAO" if row[0].value in wrong_descriptions else "SIM"
         row[5].value = "NAO"
+        row[6].value = "evidência sintética de teste"
     manual = wb["Manual"]
     manual["B1"], manual["D1"] = "14:00", "14:30"
     for row in manual.iter_rows(min_row=4):
@@ -121,7 +122,7 @@ def test_workbook_rows_follow_the_key(packet):
     _, key = packet
     wb = workbook(key)
     assert [row[0] for row in wb["Mesmo item"].iter_rows(min_row=2, values_only=True)] == list(key["pairs"])
-    assert [row[1] for row in wb["Manual"].iter_rows(min_row=4, values_only=True)] == list(key["slice"])
+    assert [row[1] for row in wb["Manual"].iter_rows(min_row=4, values_only=True)] == key["slice_order"]
 
 
 def test_cli_generates_and_scores(packet, tmp_path, capsys):
@@ -131,3 +132,186 @@ def test_cli_generates_and_scores(packet, tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)["package_id"] == key["package_id"]
     with pytest.raises(SystemExit):
         main(["experiment-packets", CSV, "--pdm-workbook", PDM, "--out-dir", str(tmp_path), "--pairs", "0"])
+
+
+@pytest.mark.parametrize(
+    "sheet,cell,value",
+    [
+        ("Mesmo item", "A3", "P001"),
+        ("Mesmo item", "B2", "edited material"),
+        ("Descrição", "C2", "edited original"),
+        ("Manual", "B4", "unknown"),
+        ("Mesmo item", "C2", "SI"),
+        ("Mesmo item", "C2", "=1+1"),
+    ],
+)
+def test_mutated_review_is_rejected(packet, tmp_path, sheet, cell, value):
+    summary, key = packet
+    path = fill(summary, key, tmp_path / "mutated.xlsx", "Ana")
+    wb = load_workbook(path)
+    wb[sheet][cell] = value
+    wb.save(path)
+    with pytest.raises(ExperimentError):
+        experiment_result(summary["key"], [path])
+
+
+def test_missing_evidence_is_inconclusive(packet, tmp_path):
+    summary, key = packet
+    path = fill(summary, key, tmp_path / "empty.xlsx", "Ana")
+    wb = load_workbook(path)
+    for row in wb["Mesmo item"].iter_rows(min_row=2):
+        row[3].value = None
+    wb.save(path)
+    result = experiment_result(summary["key"], [path])
+    assert result["merges_proposed"]["precision"]["denominator"] == 0
+
+
+def test_cardinality_balanced_and_complete_digest(packet):
+    from collections import Counter
+
+    from pipelines.experiment import package_id
+
+    _, key = packet
+    assert Counter(len(v["codes"]) for v in key["pairs"].values() if v["part"] == "A") == Counter(
+        len(v["codes"]) for v in key["pairs"].values() if v["part"] == "B"
+    )
+    for field in ("frames", "sizes", "implementation"):
+        changed = {**key, field: {"tampered": True}}
+        assert package_id(changed) != key["package_id"]
+
+
+def test_raw_formula_text_stays_plain(packet, tmp_path):
+    import copy
+
+    _, key = packet
+    key = copy.deepcopy(key)
+    case = next(iter(key["corrections"].values()))
+    case["original"] = "=1+1"
+    case["proposed"] = "=2+2"
+    wb = workbook(key)
+    assert wb["Descrição"]["C2"].data_type == "s"
+    assert wb["Descrição"]["C2"].value == "=1+1"
+    path = tmp_path / "literal.xlsx"
+    wb.save(path)
+    restored = load_workbook(path)
+    assert restored["Descrição"]["C2"].data_type == "s"
+    assert restored["Descrição"]["D2"].value == "=2+2"
+
+
+def test_row_reordering_is_valid(packet, tmp_path):
+    summary, key = packet
+    path = fill(summary, key, tmp_path / "reordered.xlsx", "Ana")
+    wb = load_workbook(path)
+    sheet = wb["Mesmo item"]
+    rows = list(sheet.iter_rows(min_row=2, values_only=True))
+    for index, values in enumerate(reversed(rows), 2):
+        for column, value in enumerate(values, 1):
+            sheet.cell(index, column).value = value
+    wb.save(path)
+    assert experiment_result(summary["key"], [path])["merges_proposed"]["precision"]["denominator"] == 4
+
+
+@pytest.mark.parametrize("field", ["implementation", "frames", "sizes", "system_merge_pairs", "layout"])
+def test_key_provenance_mutation_is_rejected(packet, tmp_path, field):
+    summary, key = packet
+    modified = {**key, field: "modified"}
+    key_path = tmp_path / "bad.json"
+    key_path.write_text(json.dumps(modified))
+    path = fill(summary, key, tmp_path / "valid.xlsx", "Ana")
+    with pytest.raises(ExperimentError, match="alterada"):
+        experiment_result(str(key_path), [path])
+
+
+def test_same_key_is_not_a_merge_decision(packet, tmp_path):
+    import copy
+
+    from pipelines.experiment import package_id
+
+    summary, key = packet
+    modified = copy.deepcopy(key)
+    for item in modified["slice"].values():
+        item["identity_key"] = "same retrieval key with conflicting attributes"
+    modified["system_merge_pairs"] = []
+    modified["package_id"] = package_id(modified)
+    key_path = tmp_path / "key.json"
+    key_path.write_text(json.dumps(modified))
+    base = tmp_path / "base.xlsx"
+    workbook(modified).save(base)
+    path = fill({"sheet": str(base)}, modified, tmp_path / "review.xlsx", "Ana")
+    manual = experiment_result(str(key_path), [path])["manual_task"][0]
+    assert manual["duplicate_pairs"]["person"] > 0
+    assert manual["duplicate_pairs"]["system_among_grouped"] == 0
+
+
+def test_duplicate_reviewer_names_normalize_whitespace(packet, tmp_path):
+    summary, key = packet
+    paths = [fill(summary, key, tmp_path / f"{i}.xlsx", name) for i, name in enumerate(["Ana Maria", "  ANA   MARIA "])]
+    with pytest.raises(ExperimentError, match="mesmo revisor"):
+        experiment_result(summary["key"], paths)
+
+
+def test_csv_hash_and_analysis_use_one_snapshot(monkeypatch):
+    import hashlib
+
+    actual_read = Path.read_bytes
+    calls = []
+
+    def changing_read(path):
+        if str(path) == CSV:
+            calls.append(path)
+            return actual_read(path) if len(calls) == 1 else b"changed after snapshot"
+        return actual_read(path)
+
+    monkeypatch.setattr(Path, "read_bytes", changing_read)
+    key = select(CSV, PDM, **SIZES)
+    assert len(calls) == 1
+    assert key["dataset_sha256"] == hashlib.sha256(actual_read(Path(CSV))).hexdigest()
+
+
+@pytest.mark.parametrize("mutation", ["duplicate", "missing", "extra", "swapped_code", "edited_unit", "formula_note"])
+def test_schema_and_all_row_ids_bound(packet, tmp_path, mutation):
+    summary, key = packet
+    path = fill(summary, key, tmp_path / "bad-rows.xlsx", "Ana")
+    wb = load_workbook(path)
+    sheet = wb["Manual"]
+    if mutation == "duplicate":
+        for column in range(1, 7):
+            sheet.cell(5, column).value = sheet.cell(4, column).value
+    elif mutation == "missing":
+        sheet.delete_rows(4)
+    elif mutation == "extra":
+        sheet.append(["extra", "unknown", "text", "PC"])
+    elif mutation == "swapped_code":
+        sheet["B4"], sheet["B5"] = sheet["B5"].value, sheet["B4"].value
+    elif mutation == "edited_unit":
+        sheet["D4"] = "edited"
+    else:
+        wb["Descrição"]["G2"] = "=1+1"
+    wb.save(path)
+    with pytest.raises(ExperimentError):
+        experiment_result(summary["key"], [path])
+
+
+def test_unsubstantiated_corrections_are_inconclusive(packet, tmp_path):
+    summary, key = packet
+    path = fill(summary, key, tmp_path / "no-notes.xlsx", "Ana")
+    wb = load_workbook(path)
+    for row in wb["Descrição"].iter_rows(min_row=2):
+        row[6].value = None
+    wb.save(path)
+    result = experiment_result(summary["key"], [path])
+    assert result["lot_descriptions"]["correct"]["denominator"] == 0
+    assert result["lot_descriptions"]["lost_information"]["denominator"] == 0
+
+
+def test_control_groups_keep_unproposed_pair_and_full_a_groups(packet):
+    from pipelines.experiment import _pairs
+
+    _, key = packet
+    proposals = {tuple(item["codes"]) for item in key["frames"]["merges_frame"]}
+    proposed_pairs = set().union(*(_pairs(codes) for codes in proposals))
+    for case in key["pairs"].values():
+        if case["part"] == "A":
+            assert tuple(sorted(case["codes"])) in proposals
+        else:
+            assert _pairs(case["codes"]) - proposed_pairs
