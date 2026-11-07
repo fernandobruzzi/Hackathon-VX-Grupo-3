@@ -7,7 +7,7 @@ from domain.contracts import CorrectionRepository
 from repositories.corrections.head_noun_v1 import HeadNounV1CorrectionRepository
 from repositories.corrections.head_noun_v2 import HeadNounV2CorrectionRepository
 
-DEFAULT_REPOSITORY = HeadNounV1CorrectionRepository.name
+DEFAULT_REPOSITORY = HeadNounV2CorrectionRepository.name
 
 REPOSITORIES: dict[str, Callable[[], CorrectionRepository]] = {
     HeadNounV1CorrectionRepository.name: HeadNounV1CorrectionRepository,

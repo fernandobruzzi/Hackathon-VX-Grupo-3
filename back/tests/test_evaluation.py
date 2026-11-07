@@ -221,7 +221,7 @@ def test_real_report_exposes_denominators_and_development_provenance(tmp_path, m
         assert [material.record for material in analyzed] == records
         assert context_arg is context
         assert catalog_arg is catalog
-        assert corrector_name == "head_noun_v1"
+        assert corrector_name == "head_noun_v2"
         captured["manual_pending"] = pending_by_code
         return "test-manual-review-run"
 
