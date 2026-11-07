@@ -2,13 +2,13 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [homologacao, main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
 
 permissions:
   contents: read
 
-# CI só na promoção homologacao -> main. Testes de trabalho rodam localmente (docs/devops.md).
+# PRs de trabalho rodam estilo. A promoção também roda testes e imagens (docs/devops.md).
 # CI descartável: uma execução nova do mesmo PR cancela a anterior, que testava um
 # estado já superado. Este workflow não publica nem migra nada fora do runner. Um job de deploy
 # ou migração real não pode entrar aqui: precisa de workflow e grupo próprios, sem cancelamento,
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   style:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'homologacao' || (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,10 +42,9 @@ jobs:
         working-directory: front
       - run: npm run format:check
         working-directory: front
-      - run: node --test scripts/tests/*.test.cjs
 
   python:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -77,31 +76,31 @@ jobs:
           docker compose -f "$RUNNER_TEMP/vx-ec2/compose.json" config --no-env-resolution --quiet
 
   database-api-demo:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     uses: ./.github/workflows/database-tests.yml
     with:
       suite: api-demo
 
   database-api-batch:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     uses: ./.github/workflows/database-tests.yml
     with:
       suite: api-batch
 
   database-api-main:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     uses: ./.github/workflows/database-tests.yml
     with:
       suite: api-main
 
   database-mcp:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     uses: ./.github/workflows/database-tests.yml
     with:
       suite: mcp
 
   database:
-    if: ${{ always() && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ always() && github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     needs: [database-api-demo, database-api-batch, database-api-main, database-mcp]
     runs-on: ubuntu-latest
     steps:
@@ -111,7 +110,7 @@ jobs:
         run: test "$RESULTS" = "success success success success"
 
   front:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -136,7 +135,7 @@ jobs:
       - run: npm run build
 
   images:
-    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:

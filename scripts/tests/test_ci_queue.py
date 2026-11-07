@@ -11,7 +11,7 @@ from ci_queue_report import timing  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 CI = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 DATABASE_TESTS = (ROOT / ".github" / "workflows" / "database-tests.yml").read_text(encoding="utf-8")
-REQUIRED_JOBS = ("style", "python", "database", "front", "images")
+PROMOTION_JOBS = ("python", "database", "front", "images")
 DATABASE_JOBS = ("database-api-demo", "database-api-batch", "database-api-main", "database-mcp")
 
 
@@ -42,13 +42,14 @@ class QueueTimingTests(unittest.TestCase):
 class WorkflowTests(unittest.TestCase):
     def test_complete_ci_requires_the_same_repository_promotion(self):
         guard = (
-            "${{ github.event.pull_request.head.ref == 'homologacao' && "
-            "github.event.pull_request.head.repo.full_name == github.repository }}"
+            "github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && "
+            "github.event.pull_request.head.repo.full_name == github.repository"
         )
-        for name in (*REQUIRED_JOBS, *DATABASE_JOBS):
+        self.assertIn(f"  style:\n    if: ${{{{ github.base_ref == 'homologacao' || ({guard}) }}}}\n", CI)
+        for name in (*PROMOTION_JOBS, *DATABASE_JOBS):
             with self.subTest(job=name):
-                expected = guard.replace("${{ ", "${{ always() && ") if name == "database" else guard
-                self.assertIn(f"  {name}:\n    if: {expected}\n", CI)
+                prefix = "always() && " if name == "database" else ""
+                self.assertIn(f"  {name}:\n    if: ${{{{ {prefix}{guard} }}}}\n", CI)
 
     def test_required_database_check_requires_all_suites(self):
         job = CI.split("\n  database:\n", 1)[1].split("\n  front:\n", 1)[0]
@@ -70,13 +71,13 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("if: always()", CI)
         self.assertNotRegex(CI, r"docker compose[^\n]*run[^\n]*--no-build")
 
-    def test_validation_only_runs_for_pull_requests_targeting_main(self):
+    def test_validation_only_runs_for_pull_requests_targeting_integration_or_production(self):
         for filename in ("ci.yml", "policy.yml"):
             with self.subTest(workflow=filename):
                 workflow = (ROOT / ".github" / "workflows" / filename).read_text(encoding="utf-8")
                 triggers = re.search(r"(?ms)^on:\n(.*?)(?=^\S)", workflow).group(1)
                 self.assertEqual(re.findall(r"(?m)^  (\w+):", triggers), ["pull_request"])
-                self.assertRegex(triggers, r"(?m)^    branches: \[main\]$")
+                self.assertRegex(triggers, r"(?m)^    branches: \[homologacao, main\]$")
                 self.assertIn("edited", triggers)  # Retargetar um PR para main também precisa validar.
                 self.assertNotIn("paths", triggers)  # Checks obrigatórios não podem ficar pendentes por filtro.
 
@@ -85,7 +86,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertRegex(CI, r"(?m)^  cancel-in-progress: true$")
 
     def test_required_check_names_stay(self):
-        for name in REQUIRED_JOBS:
+        for name in ("style", *PROMOTION_JOBS):
             self.assertRegex(CI, rf"(?m)^  {name}:$")
         self.assertIn("module: [back, mcp, api]", CI)
 

@@ -12,14 +12,12 @@ dos checks locais, incluindo testes pulados e verificações não executadas.
 Integre com rebase apenas depois de conferir essa evidência. Os comandos por área
 estão no [guia do time](../AGENTS.md#commands).
 
-Os workflows `CI` e `Repository policy` só são disparados por `pull_request`
-com destino `main`. PRs para `homologacao` e pushes, inclusive o merge em `main`,
-não iniciam esses workflows. Não há
-gatilho agendado ou manual. Isso concentra os minutos de CI na promoção para produção, sem executar de novo o mesmo lote após o
-merge. Corrija falhas de desenvolvimento localmente antes de publicar outra versão.
-Os jobs completos também conferem a origem: somente `homologacao` do mesmo
-repositório os executa. Um PR de outra branch ou fork para `main` recebe a
-recusa de `policy`, sem iniciar os jobs completos.
+Os workflows `CI` e `Repository policy` são disparados por `pull_request` com
+destino `homologacao` ou `main`. Em `homologacao`, os únicos jobs que usam runner
+são `style` (Ruff e Prettier) e `policy` (regras da branch e dos commits).
+A promoção de `homologacao` deste repositório para `main` executa todos os checks,
+com as suítes PostgreSQL em paralelo. Um PR de outra branch ou fork para `main`
+recebe a recusa de `policy`. Pushes, merges e agendamentos não disparam esses workflows.
 
 ## Promover para produção
 
@@ -205,8 +203,8 @@ Configuração aplicada em 6/11/2026:
   `python (back)`, `python (mcp)`, `python (api)`, `database`, `front`, `images` e
   `policy` do GitHub Actions, histórico linear, só rebase e sem bypass, push direto,
   force-push ou exclusão.
-- `homologacao` exige PR e só aceita rebase, sem checks obrigatórios: eles não são
-  disparados nessa base e ficariam pendentes. É protegida contra exclusão, o que a
+- `homologacao` exige PR e só aceita rebase. Os checks `style` e `policy` aparecem
+  no PR sem exigência pelo ruleset. É protegida contra exclusão, o que a
   preserva da exclusão automática de branches após o merge da promoção. Só o papel
   de administrador pode contornar a regra, para a sincronização por force-push.
 - Merge commits e squash continuam desabilitados no repositório.
@@ -214,10 +212,8 @@ Configuração aplicada em 6/11/2026:
   workflow, e a checagem de política não substitui revisão de código.
 
 A política aceita em `main` somente a promoção da `homologacao` deste repositório.
-Para PRs de trabalho, a validação local mantém o formato de branch, atribuições
-automáticas conhecidas e a ausência de merge commits por conferência na revisão.
-`node --test` testa o validador com exemplos; não inspeciona automaticamente a
-branch e os commits da entrega.
+Para PRs de trabalho, `policy` inspeciona a branch e os commits da entrega.
+`node --test` cobre o comportamento do validador com exemplos.
 
 ### Ativar o fluxo e migrar PRs existentes
 
