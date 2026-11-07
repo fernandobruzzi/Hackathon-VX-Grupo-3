@@ -4,7 +4,7 @@
 
 **Arquitetura:** duas chamadas Converse por turno: interpretação estruturada e redação baseada na ficha validada. O ciclo MCP atual continua calculando validação, duplicidade e prontidão. Sem modelo configurado, permanece o fluxo local por regras. Configuração AWS usa `us.anthropic.claude-opus-5-5`; sem fallback silencioso quando configurado.
 
-**Decisão:** reutilizar boto3 e o ciclo existente, evitando outro framework de agentes ou alterações no contrato do frontend. Não executar um loop livre de ferramentas: isso permitiria pular verificações obrigatórias.
+**Decisão:** reutilizar boto3 e o ciclo existente, sem outro framework de agentes nem mudanças no fluxo público do frontend. O contrato interno API → Agent inclui a classe/nome da última ficha aceita; seus tipos são regenerados. Não executar um loop livre de ferramentas: isso permitiria pular verificações obrigatórias.
 
 - [x] Testar chamadas SDK, histórico, evidência literal de atributos, classe/nome permitidos, correções e troca de classe.
 - [x] Implementar cliente Bedrock e system prompt versionado; validar toda saída e limitar chamadas e tempo de rede.
@@ -17,13 +17,18 @@
 
 Com `UV_CACHE_DIR=/tmp/vx-uv-cache`:
 
-- `cd back && uv run --locked pytest -q`: 1.012 passaram.
-- `cd mcp && TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_opus_mcp_test uv run --locked pytest -q`: 397 passaram, sem skips.
-- `cd api && TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_opus_api_test uv run --locked pytest -q`: 734 passaram, sem skips.
-- `uv run --locked --package vx-materials-mcp pytest mcp/tests/test_bedrock_chat.py -q`: 25 passaram após as correções da revisão.
-- `uv run --locked --package vx-materials-back pytest scripts/tests/test_aws.py scripts/tests/test_ec2.py -q`: 28 testes e 11 subtests passaram.
+- `cd back && uv run --locked pytest -q --durations=5`: 1.012 passaram.
+- `cd mcp && TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_opus_fix_mcp_test uv run --locked pytest -q --durations=5`: 410 passaram, sem skips.
+- `cd api && TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_opus_fix_full_api_test uv run --locked pytest -q --durations=5`: 738 passaram, sem skips.
+- Verificação final dos ajustes na busca: `uv run --locked --package vx-materials-mcp pytest mcp/tests/test_bedrock_chat.py mcp/tests/test_search_identity_safety.py -q`: 52 passaram.
+- Verificação final do erro sem perda de estado: `TEST_DATABASE_URL=postgresql+psycopg://migration_user:local_only_migration@127.0.0.1:5432/vx_opus_fix_uncertain_test uv run --locked --package vx-materials-api pytest api/tests/test_chat.py -q`: 65 passaram.
+- `uv run --locked --package vx-materials-back pytest scripts/tests -q`: 61 testes e 26 subtests passaram. Os seis casos de IAM foram observados falhando antes da correção (cinco falhas por falta de acesso e um caso de isolamento já aprovado).
+- Em `front/`: `npm run api:generate`, `npm run api:check`, `npm run typecheck`, `npm test` e `npm run build`: aprovados; 90 testes.
 - `uv run --locked ruff check .`, `uv run --locked ruff format --check .` e `git diff --check`: aprovados.
 
-A revisão independente identificou e verificou a correção de dois casos: valores históricos
-normalizados não devem parecer correções novas, e ações de candidatos precisam reconstruir
-classes reconhecidas apenas pelo LLM sem alterar a decisão estruturada do usuário.
+As regressões reproduzem troca de classe e de item dentro da classe, remoção persistida,
+tentativa de restaurar fatos históricos e uma classificação inconclusiva sem perda de estado.
+A busca usa só os atributos aceitos; trechos de revisão de peça são preservados pelo mesmo
+regex do domínio, para que limpar o histórico da consulta não autorize uma identidade insegura.
+Três variantes de revisão foram verificadas com o repositório Hybrid real. A revisão independente
+final não encontrou outros bloqueios concretos. Invocação real e aplicação da stack continuam pendentes.

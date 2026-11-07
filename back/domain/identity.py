@@ -21,6 +21,11 @@ _REFERENCE_NEUTRAL_SUFFIX = re.compile(r"-00$")
 _REVISION = re.compile(r"\bREV(?:IS[AÃ]O|ISION)?(?:\s*[:.\-]\s*|\s+)[A-Z0-9]+\b", re.IGNORECASE)
 
 
+def reference_revision_evidence(*originals: str) -> tuple[str, ...]:
+    """Preserva só os trechos de revisão que o motor de identidade já exige revisar."""
+    return tuple(dict.fromkeys(match.group(0) for original in originals for match in _REVISION.finditer(original)))
+
+
 def resolve_item_name(pdm_class: PdmClass, matched_names: Iterable[str]) -> str | None:
     """Usa a evidência do classificador; classe com vários itens não ganha um nome arbitrário."""
     if len(pdm_class.item_names) == 1:

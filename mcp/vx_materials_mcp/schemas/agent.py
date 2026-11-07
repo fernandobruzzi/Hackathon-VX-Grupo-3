@@ -75,6 +75,9 @@ class AgentContext(_Contract):
     center_code: str
     history: list[HistoryMessage]
     confirmed_attributes: dict[str, str | None]
+    # Identidade da última ficha persistida pela API, não da classificação da mensagem atual.
+    pdm_class_id: str | None = None
+    item_name: str | None = None
     # Lidos pela API do contexto persistido da sessão, nunca do retorno anterior do Agent sem validação.
     offered_material_codes: list[str] = Field(default_factory=list)
     dismissed_material_codes: list[str] = Field(default_factory=list)

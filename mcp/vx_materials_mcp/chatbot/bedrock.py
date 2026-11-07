@@ -11,6 +11,8 @@ from botocore.exceptions import BotoCoreError, ClientError
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from domain.contracts import ClassificationStatus, PdmCatalog
+from domain.identity import reference_revision_evidence
+from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot.prompts import MATERIAL_REGISTRATION_SYSTEM
 from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
@@ -91,6 +93,8 @@ class BedrockPlanner:
                 "history": [message.model_dump(mode="json") for message in request.context.history],
                 "message": request.message if request.action is None else None,
                 "confirmed_attributes": request.context.confirmed_attributes,
+                "previous_pdm_class_id": request.context.pdm_class_id,
+                "previous_item_name": request.context.item_name,
                 "catalog": [
                     {"pdm_class_id": c.id, "item_names": c.item_names, "attributes": [asdict(a) for a in c.attributes]}
                     for c in catalog.classes.values()
@@ -109,17 +113,29 @@ class BedrockPlanner:
             if proposal.pdm_class_id is None:
                 if proposal.attributes or proposal.item_name is not None:
                     raise ValueError("Atributos sem classe")
-                return context
+                if request.context.pdm_class_id is not None:
+                    # Resposta inconclusiva não substitui a ficha aceita nem apaga retiradas.
+                    raise ValueError("Classe inconclusiva para uma ficha existente")
+                # Sem classe segura, não ressuscitar atributos pela extração de mensagens antigas.
+                return replace(context, attributes={}, search_text=request.message)
             pdm_class = catalog.classes[proposal.pdm_class_id]
             if proposal.item_name not in pdm_class.item_names:
                 raise ValueError("Nome fora da classe")
-            same_class = context.pdm_class is not None and context.pdm_class.id == pdm_class.id
-            attributes = dict(context.attributes) if same_class else {}
             known = {a.name for a in pdm_class.attributes}
-            if same_class:
-                # Valores já confirmados prevalecem sobre a reextração das mensagens antigas.
-                attributes.update({k: v for k, v in request.context.confirmed_attributes.items() if k in known})
+            previous = request.context
+            same_item = previous.item_name == proposal.item_name or (
+                previous.item_name is None and len(pdm_class.item_names) == 1
+            )
+            same_material = previous.pdm_class_id == pdm_class.id and same_item
+            attributes = {k: v for k, v in previous.confirmed_attributes.items() if k in known} if same_material else {}
+            if request.action is None:
+                # Regras só interpretam a mensagem atual. O histórico já virou estado aceito na API.
+                extracted = get_extraction_repository().extract(pdm_class, request.message).attributes
+                attributes.update({name: value.value for name, value in extracted.items()})
             messages = user_messages(request)
+            if previous.pdm_class_id is not None and not same_material:
+                # Em outro material, fatos antigos não são evidência para a nova ficha.
+                messages = [request.message] if request.action is None else []
             seen = set()
             for attribute in proposal.attributes:
                 if attribute.name not in known or attribute.name in seen:
@@ -128,6 +144,14 @@ class BedrockPlanner:
                 # A saída do modelo é uma proposta. Exigir trecho literal, inclusive para apagar valores.
                 if not any(attribute.source in message for message in messages):
                     raise ValueError("Fonte ausente no texto do usuário")
+                if (
+                    same_material
+                    and attribute.value is not None
+                    and attribute.name in previous.confirmed_attributes
+                    and previous.confirmed_attributes[attribute.name] is None
+                    and attribute.source not in request.message
+                ):
+                    raise ValueError("Valor retirado exige nova afirmação do usuário")
                 if attribute.value is not None and (
                     not attribute.value.strip() or attribute.value.casefold() not in attribute.source.casefold()
                 ):
@@ -141,7 +165,15 @@ class BedrockPlanner:
                 evidence=(),
                 rule=PLANNER,
             )
-            return TurnContext(classification, pdm_class, proposal.item_name, attributes)
+            # A busca também extrai atributos do texto: não enviar fatos históricos retirados/de outro item.
+            query = " ".join(
+                [
+                    proposal.item_name,
+                    *(f"{name}: {value}" for name, value in attributes.items() if value),
+                    *reference_revision_evidence(*user_messages(request)),
+                ]
+            )
+            return TurnContext(classification, pdm_class, proposal.item_name, attributes, search_text=query)
         except (KeyError, TypeError, ValueError, ValidationError) as error:
             raise BedrockError() from error
 

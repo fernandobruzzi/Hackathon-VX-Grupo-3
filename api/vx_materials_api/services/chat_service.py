@@ -365,6 +365,8 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest, *
             "center_code": request.center_code,
             "history": _history(db, session.id),
             "confirmed_attributes": context.get("confirmed_attributes", {}),
+            "pdm_class_id": (context.get("material_card") or {}).get("pdm_class_id"),
+            "item_name": (context.get("material_card") or {}).get("pdm_class_name"),
             "offered_material_codes": context.get("offered_material_codes", []),
             "dismissed_material_codes": context.get("dismissed_material_codes", []),
             "duplicate_check": _agent_duplicate_check(context.get(DUPLICATE_CHECK)),
