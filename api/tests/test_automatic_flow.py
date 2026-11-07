@@ -23,6 +23,13 @@ from vx_materials_api.services.automatic_corrections import capture_context, pro
 KIT = Path(__file__).parents[2] / "data/desafio01"
 
 
+@pytest.fixture(autouse=True)
+def measured_stack(monkeypatch):
+    """A política #224 foi medida com aliases_v1 + head_noun_v1; outra pilha exige nova medição."""
+    monkeypatch.setenv("CLASSIFICATION_REPOSITORY", "aliases_v1")
+    monkeypatch.setenv("CORRECTION_REPOSITORY", "head_noun_v1")
+
+
 @pytest.fixture
 def flow_database(migrated_url):
     engine = create_engine(migrated_url)

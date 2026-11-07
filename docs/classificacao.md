@@ -26,8 +26,9 @@ result = repository.classify(
 Ignora caixa, acentos, separadores e as preposições DA/DAS/DE/DO/DOS. Não expande
 abreviações técnicas nem interpreta inglês.
 
-`aliases_v1`, o padrão, aplica as mesmas regras depois de trocar aliases técnicos
-inequívocos pela forma do PDM (seção [Aliases técnicos](#aliases-técnicos)).
+`aliases_v1` aplica as mesmas regras depois de trocar aliases técnicos
+inequívocos pela forma do PDM (seção [Aliases técnicos](#aliases-técnicos)). O padrão,
+`aliases_v2`, decide primeiro pelo nome que abre a descrição ([seção](#nome-que-abre-a-descrição-aliases_v2-padrão)).
 
 Os três textos — descrição longa, curta e anexo — são considerados. O nome mais
 específico prevalece quando os trechos se sobrepõem: PARAFUSO SEXTAVADO INTERNO
@@ -56,6 +57,41 @@ Cada resultado carrega a entrada original, regra versionada, candidatos,
 evidências por campo, versão e SHA-256 do PDM. O relatório acrescenta identificador
 e posição lógica do registro de origem e hash do CSV. Códigos repetidos não são
 descartados. Não há score de confiança nem chamada externa.
+
+## Nome que abre a descrição (`aliases_v2`, padrão)
+
+O começo da descrição longa, até a primeira vírgula, ponto e vírgula, dois-pontos,
+parênteses, ` - ` ou palavra com dígito, é o nome do item. A barra não separa
+(`FILTRO SEPARADOR AR/OLEO`, `C/TERMINAIS`). Um nome do PDM ali decide a classe, e outro
+nome de classe depois desse trecho é atributo: `VALVULA ESFERA ... EXTREMIDADE FLANGE RF`
+é válvula esfera.
+
+No trecho inicial:
+
+- uma abreviação vira a palavra do PDM só se for prefixo de uma única palavra dos nomes da
+  família (`PARAF`, `SEXT`; depois de `VALVULA`, `RET` é `RETENCAO` e `GAV` é `GAVETA`).
+  Preposições nunca são abreviação (`COM` não é `COMBUSTIVEL`);
+- prefixo de duas famílias (`MANG`: mangote ou mangueira) só se resolve com outra palavra
+  do nome (`MANG HIDRAULICA MONTADA`); `MANG 4POL` fica em dúvida;
+- o feminino de uma palavra da família vira o masculino (`CAB SEXTAVADA`);
+- sinônimos técnicos explícitos: `HEXAGONAL` = `SEXTAVADO`, `ALLEN` = `SEXTAVADO INTERNO`,
+  `ORING` = `O RING`, `C/TERMINAIS` ou `COM TERMINAIS` = `MONTADA` (o PDM separa a mangueira
+  sem acessórios, 4009.21.10, da montada, 4009.22.10);
+- o nome vale com todas as suas palavras no trecho, em qualquer ordem, e o mais longo vence.
+
+Volta para as regras do `aliases_v1`, sem classe por suposição: palavra de um item irmão
+que sobra (`FILTRO SEPARADOR AR` não é `FILTRO AR`), outro nome do PDM inteiro no trecho
+(`MANTO EIXO`), descrição curta que começa com outra classe, anexo que cita outra classe e
+nome de uma palavra que exige o grupo (`TE`, `BUCHA`). A classe decidida assim recebe a
+regra `aliases_v2/head.name`, que o NCM e as correções do `head_noun_v2` tratam como nome
+inicial confirmado. A extração continua lendo o texto original.
+
+Na base completa, o `aliases_v2` classifica 21.972 materiais, contra 17.929 do `aliases_v1`.
+Das 367 mudanças em materiais que já tinham classe, as amostradas conferem com a descrição
+(mangueira com terminais é montada, `ALLEN` é sextavado interno, parafuso não é sobressalente
+por citar `REVESTIMENTO`). Nas coortes revisadas de unificação, a precisão continua sem erro
+(28/28): o grupo que deixou de ser contado ganhou um terceiro membro idêntico. Os testes estão
+em `tests/test_classification_aliases_v2.py` e `tests/test_corrections_head_v2.py`.
 
 ## Aliases técnicos
 

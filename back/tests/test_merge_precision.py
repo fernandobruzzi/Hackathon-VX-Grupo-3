@@ -70,12 +70,15 @@ def test_aliases_cohort_retains_labels_and_records_conservative_abstention(evalu
     # identity-v3 retinha sete positivos históricos, dois inconclusivos e o erro conhecido.
     # A #263 retém mais um: 25808476 traz PN 7701 6900 11-00 no texto e sem -00 na coluna.
     # Os rótulos permanecem; a divergência entre campos exige confirmação do sufixo.
-    assert report["precision"]["denominator"] == 29
+    # Com aliases_v2, ANEL ORING 35X3 NBR (27235430) passa a ter classe e entra no grupo revisado
+    # 20051147+20226271. A comparação exige o grupo exato, então o superconjunto conta como
+    # abstenção, sem nenhum erro novo: 29 → 28 propostos.
+    assert report["precision"]["denominator"] == 28
     assert report["counts"]["wrong"] == 0
     assert report["inconclusive_reviews"] == 2
-    assert report["positive_recovery_in_cohort"]["numerator"] == 29
+    assert report["positive_recovery_in_cohort"]["numerator"] == 28
     assert report["positive_recovery_in_cohort"]["denominator"] == 37
-    assert report["algorithm_abstention"]["numerator"] == 11
+    assert report["algorithm_abstention"]["numerator"] == 12
     assert report["precision"]["value"] >= 0.95
     held = next(case for case in report["cases"] if case["codes"] == ["18675010", "25808476", "27155952"])
     assert held["expected"] is True and held["proposed"] is False
@@ -90,6 +93,13 @@ def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
 
     sample = json.loads((Path(__file__).parent / "fixtures/merge_identity_sample_73.json").read_text(encoding="utf-8"))
     current = {tuple(sorted(proposal.material_codes)) for proposal in evaluated["current_merges"]}
+    # Grupo revisado contido num grupo maior continua proposto: com aliases_v2, SEGMENTO CAIXA
+    # MANCAL (27304012) de mesma referência Voith entra no grupo de 26881312, ainda bloqueado.
+    contained = {
+        tuple(sorted(item["codes"]))
+        for item in sample["reviewed"]
+        if any(set(item["codes"]) < set(codes) for codes in current)
+    }
     assert sample["review_kind"] == "DEVELOPMENT_REGRESSION" and sample["independent"] is False
     assert len(sample["reviewed"]) == 40
     assert all(item["same_item"] is True for item in sample["reviewed"])
@@ -100,7 +110,9 @@ def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
     # O parceiro 11375285 não tem conflito; basta um membro sem identidade para reter o grupo.
     suffix_abstention = ("11375285", "19758278")
     withdrawn = {
-        tuple(sorted(item["codes"])) for item in sample["reviewed"] if tuple(sorted(item["codes"])) not in current
+        tuple(sorted(item["codes"]))
+        for item in sample["reviewed"]
+        if tuple(sorted(item["codes"])) not in current | contained
     }
     assert withdrawn == {qualifier_abstention, suffix_abstention}
     pending = {

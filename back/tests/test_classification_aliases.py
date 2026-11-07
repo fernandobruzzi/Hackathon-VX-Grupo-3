@@ -50,7 +50,9 @@ def alias_evidence(result):
 
 
 def test_aliases_are_the_default_and_the_previous_rules_stay_selectable(catalog):
-    assert DEFAULT_REPOSITORY == "aliases_v1"
+    # aliases_v2 é o padrão; aliases_v1 e rule_based_v1 seguem selecionáveis para auditoria.
+    assert DEFAULT_REPOSITORY == "aliases_v2"
+    assert get_classification_repository(catalog, "aliases_v1").name == "aliases_v1"
     assert get_classification_repository(catalog, "rule_based_v1").name == "rule_based_v1"
 
 
