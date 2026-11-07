@@ -360,3 +360,36 @@ class EnrichmentRepository(Protocol):
     def extract(
         self, pdm_class: PdmClass, manufacturer: str, reference: str, pages: tuple[str, ...]
     ) -> tuple[EnrichmentClaim, ...]: ...
+
+
+@dataclass(frozen=True)
+class LlmCall:
+    """Registro de uma chamada de modelo: o que rodou e quanto custou, sem prompt nem segredos."""
+
+    repository: str
+    model: str
+    prompt_version: str
+    input_tokens: int
+    output_tokens: int
+    latency_ms: int
+    attempts: int
+    simulated: bool
+
+
+@dataclass(frozen=True)
+class LlmResult:
+    """Resposta estruturada já validada pelo esquema pedido."""
+
+    data: dict
+    call: LlmCall
+
+
+class LlmRepository(Protocol):
+    """Modelo de linguagem substituível. Só devolve dados que passaram no esquema; resposta inválida,
+    recusa, erro ou orçamento esgotado viram `LlmError`, nunca um sucesso fictício."""
+
+    name: str
+    model: str
+    simulated: bool
+
+    def complete(self, *, system: str, prompt: str, schema: dict, tool_name: str, prompt_version: str) -> LlmResult: ...
