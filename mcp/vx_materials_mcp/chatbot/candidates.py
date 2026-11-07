@@ -17,6 +17,7 @@ aceita pela API, sem nova busca.
 import re
 import unicodedata
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from domain.identity import identity_signature
@@ -150,8 +151,20 @@ def _ask(similar: list[SimilarCandidate]) -> str:
     )
 
 
+def _inventory_message(row: InventoryRow) -> str:
+    unit = row.unit
+    if unit == "PC":
+        try:
+            singular = Decimal(row.quantity) == 1
+        except InvalidOperation:
+            singular = False
+        unit = "peça" if singular else "peças"
+    center = (row.center_name or "").strip() or row.center_code
+    return f"{row.quantity} {unit} no centro {center}"
+
+
 def existing_message(existing: ExistingMatch) -> str:
-    stock = ", ".join(f"{row.quantity} {row.unit} no centro {row.center_code}".strip() for row in existing.inventory)
+    stock = ", ".join(_inventory_message(row) for row in existing.inventory)
     where = f" Estoque nos seus centros: {stock}." if stock else " Sem estoque nos seus centros."
     return f"Esse item já existe: use o código {existing.material_code}. {existing.reason}{where}"
 

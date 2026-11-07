@@ -20,7 +20,7 @@ from vx_materials_mcp.app import create_app
 from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.bedrock import BedrockError, BedrockPlanner
 from vx_materials_mcp.chatbot.session_manager import build_turn_context
-from vx_materials_mcp.schemas.agent import AgentRunRequest, HistoryMessage
+from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse, HistoryMessage
 from vx_materials_mcp.security import caller_to_environment
 
 MODEL = "us.anthropic.claude-sonnet-5"
@@ -607,3 +607,20 @@ def test_curated_bedrock_search_preserves_revision_review(catalog, revision):
     assert result["match_status"] == "REVIEW_REQUIRED"
     assert result["candidates"][0]["identity_verified"] is False
     assert "REVISAO_DE_PECA_NAO_CONFIRMADA" in result["candidates"][0]["pending_checks"]
+
+
+def test_existing_stock_summary_is_preserved_with_bedrock(catalog, monkeypatch):
+    from test_inventory_message import match
+
+    monkeypatch.delenv("BEDROCK_CHAT_MODEL_ID", raising=False)
+    data = run(client_for(catalog, FakeBedrock()), BOLT).json()
+    data["material_card"]["existing"] = match(
+        [
+            dict(center_code="2100", center_name="Centro Industrial", quantity="10", unit="PC"),
+            dict(center_code="2200", quantity="1", unit="PC"),
+        ]
+    ).model_dump()
+    result = AgentRunResponse.model_validate(data)
+    response = asyncio.run(BedrockPlanner(MODEL, FakeBedrock()).respond(request(), result))
+    assert "10 peças no centro Centro Industrial, 1 peça no centro 2200." in response.assistant_message
+    assert response.material_card == result.material_card
