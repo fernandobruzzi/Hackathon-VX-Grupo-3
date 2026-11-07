@@ -61,6 +61,14 @@ _POOL_RING = re.compile(r"(?<![\w,.])(\d+(?:[.,]\d+)?)X(\d+(?:[.,]\d+)?)\b")
 _POOL_REFERENCE = re.compile(
     r"(?<![\w/.\-])(?:[A-Z]{1,3}\s)?[A-Z0-9]*\d[A-Z0-9/.\-]*(?:\s\d[A-Z0-9/.\-]*)*(?![\w/.\-])"
 )
+_QUANTITY_NUMBER = r"\d+(?:[.,]\d+)*"
+_QUANTITY_UNIT = r"(?:UNIDADES?|UNID|UND|UN|PECAS?|PCS?)"
+_REQUESTED_QUANTITY = re.compile(
+    rf"\b(?:QTD|QTDE|QUANTIDADE)\s*[:=]?\s*{_QUANTITY_NUMBER}(?:\s*{_QUANTITY_UNIT})?\b"
+    rf"|\b{_QUANTITY_NUMBER}\s*{_QUANTITY_UNIT}\b"
+    rf"|\b(?:PRECISO|NECESSITO|QUERO|SOLICITO|PEDIR|COMPRAR)\s+(?:DE\s*)?"
+    rf"{_QUANTITY_NUMBER}(?:\s*{_QUANTITY_UNIT})?\b"
+)
 _POOL_BEARING = re.compile(r"\b\d{4,5}[A-Z]*(?:[\s\-/]*(?:2RS|ZZ))?(?:[\s\-/]*C3)?\b")
 # Evidência exigida por aliases que completariam o valor (#158).
 _METRIC_THREADS = frozenset({"METRICA GROSSA", "METRICA FINA"})
@@ -284,7 +292,7 @@ def _has_metric_gauge_evidence(work: _Extraction, evidence: str, gauge: str) -> 
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "10"
+    revision = "11-quantity-reference-199"
 
     def extract(
         self,
@@ -311,7 +319,7 @@ class RuleBasedV1ExtractionRepository:
         pool = self._scan_measures(work, pool)
         pool = self._scan_inches(work, pool)
         pool = self._scan_bearing_reference(work, pool)
-        pool = self._scan_manufacturer_reference(work, pool)
+        pool = self._scan_manufacturer_reference(work, pool, text)
         blocked = self._require_alias_evidence(work, text, manufacturer_reference)
         self._apply_documented_inferences(work, blocked)
 
@@ -576,7 +584,7 @@ class RuleBasedV1ExtractionRepository:
         work.set("REFERENCIA", fitted[0], matches[0][0], f"{fitted[1]}.unlabeled")
         return pool[: matches[0].start()] + pool[matches[0].end() :]
 
-    def _scan_manufacturer_reference(self, work: _Extraction, pool: str) -> str:
+    def _scan_manufacturer_reference(self, work: _Extraction, pool: str, source_text: str) -> str:
         """Código sem rótulo em classes de referência: só se sobrar exatamente um no texto."""
         if "REFERENCIA FABRICANTE" not in work.by_name or "REFERENCIA FABRICANTE" in work.found:
             return pool
@@ -586,6 +594,15 @@ class RuleBasedV1ExtractionRepository:
         code = matches[0][0].strip()
         # Código curto como 6-4 costuma ser medida ou modelo, não referência.
         if len(re.sub(r"[\s.\-/]", "", code)) < _MIN_UNLABELED_REFERENCE:
+            return pool
+        # O contexto vem do texto anterior aos rótulos: `QUANTIDADE: 2000` não pode perder o nome
+        # do campo e reaparecer como referência. Nada escolhe um código entre candidatos ambíguos.
+        quantity_codes = {
+            re.sub(r"\s+", "", candidate[0])
+            for quantity in _REQUESTED_QUANTITY.finditer(source_text)
+            for candidate in _POOL_REFERENCE.finditer(quantity[0])
+        }
+        if re.sub(r"\s+", "", code) in quantity_codes:
             return pool
         work.set("REFERENCIA FABRICANTE", code, code, "reference.unlabeled")
         return pool[: matches[0].start()] + pool[matches[0].end() :]
