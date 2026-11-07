@@ -49,6 +49,9 @@ export function OrderReviewPanel({
       });
     return () => request.abort();
   }, [api, id, me, retry]);
+  const identityReview = detail?.order.missing_attributes.some((reason) =>
+    reason.startsWith("REVISAO DE IDENTIDADE:"),
+  );
   const technical = detail?.order.status === "READY_FOR_REVIEW" && can(me, "orders:decide");
   const fiscal = detail?.order.status === "PENDING_FISCAL" && can(me, "ncm:decide");
   const canReopen = detail?.order.status === "PENDING_FISCAL" && can(me, "orders:decide");
@@ -194,6 +197,11 @@ export function OrderReviewPanel({
               <p>Justificativa: {detail.fiscal_decision.reason}</p>
             </div>
           )}
+          {identityReview && (
+            <p role="alert" className="text-aviso">
+              A identidade exige revisão técnica das evidências antes da aprovação.
+            </p>
+          )}
           {fiscal && !detail.technical_review_current && (
             <p role="alert" className="text-aviso">
               A ficha ou as regras mudaram após a aprovação técnica. É necessária nova revisão antes
@@ -238,6 +246,7 @@ export function OrderReviewPanel({
                       disabled={
                         busy ||
                         !reason.trim() ||
+                        identityReview ||
                         (fiscal && (!ncm || !source.trim() || !detail.technical_review_current))
                       }
                       onClick={() => decide("APPROVE")}

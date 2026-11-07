@@ -122,6 +122,8 @@ versão e avaliação na mesma transação da publicação; o material usa exata
 A repetição explícita mantém chave e payload, inclusive após perda da resposta.
 
 A escolha fica vinculada ao hash da avaliação apresentada e à ficha aprovada tecnicamente.
+A assinatura técnica também vincula texto original, anexo e complementos: a descrição
+formatada não substitui a evidência bruta de identidade.
 Alterar atributos, item, PDM ou regras após a aprovação técnica impede publicar
 (`TECHNICAL_REVIEW_CHANGED`); uma avaliação fiscal diferente exige nova consulta
 (`NCM_ASSESSMENT_CHANGED`). Pedidos legados já no Fiscal, sem a ficha técnica registrada pela
@@ -139,3 +141,11 @@ pedidos registrados e rejeitados permanecem fechados.
 
 A migração `0015_order_fiscal_review` sucede `0014_order_supplements`; aplique-a antes de servir
 a revisão fiscal. Ela acrescenta o registro das decisões e não fabrica aprovações de pedidos legados.
+
+
+Na publicação, a evidência de origem do novo material é a concatenação ordenada dos textos
+brutos do pedido, do anexo e dos complementos, com quebras de linha entre os registros.
+Essa concatenação derivada é gravada em `original_description_long`; não deve ser apresentada
+como cópia literal de uma única entrada. O pedido mantém seus campos originais e complementos
+separados, e a descrição PDM continua distinta dessa evidência. A busca posterior considera
+os sinais de revisão e contradição contidos em qualquer uma dessas fontes.
