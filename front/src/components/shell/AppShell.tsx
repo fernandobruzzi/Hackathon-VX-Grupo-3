@@ -9,7 +9,6 @@ import {
   FileSearch,
   GitMerge,
   History,
-  LogOut,
   MessagesSquare,
   Moon,
   PackageSearch,
@@ -19,6 +18,7 @@ import {
   Check,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { SignOutButton } from "./SignOutButton";
 import { can, PERSONAS } from "@/lib/permissions";
 import { cn } from "@/lib/format";
 import type { Permission } from "@/types/api";
@@ -91,18 +91,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const {
-    me,
-    ready,
-    signOut,
-    theme,
-    toggleTheme,
-    authMode,
-    error,
-    backend,
-    sessionBusy,
-    sessionRevision,
-  } = useAuth();
+  const { me, ready, theme, toggleTheme, authMode, error, backend, sessionBusy, sessionRevision } =
+    useAuth();
   const router = useRouter();
   const path = usePathname();
 
@@ -177,34 +167,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <button
-          disabled={sessionBusy}
-          onClick={async () => {
-            try {
-              await signOut();
-              router.replace("/login/");
-            } catch {
-              window.alert("Não foi possível confirmar a saída. Tente novamente.");
-            }
-          }}
-          className="mt-4 flex items-center gap-2 rounded-[10px] px-3 py-2 text-sm text-on-profundo/80 hover:bg-white/8"
-        >
-          <LogOut className="size-4" /> Sair
-        </button>
+        <SignOutButton
+          appearance="sidebar"
+          className="mt-4 w-full"
+          onSignedOut={() => router.replace("/login/")}
+        />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-surface-2 bg-ink/95 px-6 backdrop-blur">
-          <MobileNav />
-          <div className="ml-auto flex items-center gap-3">
+        <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-surface-2 bg-ink/95 px-4 py-3 backdrop-blur sm:px-6 lg:h-16 lg:flex-nowrap lg:py-0">
+          <div className="w-full min-w-0 lg:hidden">
+            <MobileNav />
+          </div>
+          <div className="ml-auto flex w-full min-w-0 items-center justify-end gap-3 lg:w-auto">
+            <SignOutButton
+              className="mr-auto lg:hidden"
+              onSignedOut={() => router.replace("/login/")}
+            />
             <button
               onClick={toggleTheme}
               aria-label="Alternar tema"
-              className="grid size-10 place-items-center rounded-md ring-1 ring-surface-2 ring-inset hover:bg-surface"
+              className="grid size-10 shrink-0 place-items-center rounded-md ring-1 ring-surface-2 ring-inset hover:bg-surface"
             >
               {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
             </button>
-            <PersonaSwitcher />
+            <div className="max-w-56 min-w-0">
+              <PersonaSwitcher />
+            </div>
           </div>
         </header>
         <main
@@ -243,7 +232,11 @@ export function PersonaSwitcher() {
   const current = PERSONAS.find((p) => p.label === me.demo.active_persona);
   // No Cognito, só contas da lista de demonstração com DEMO_MODE têm persona e podem trocar.
   if (!current || (authMode === "cognito" && !me.demo.enabled))
-    return <span className="text-sm font-semibold">{me.user.display_name}</span>;
+    return (
+      <span className="block truncate text-sm font-semibold" title={me.user.display_name}>
+        {me.user.display_name}
+      </span>
+    );
   const displayName = backend ? me.user.display_name : current.name;
   return (
     <div className="relative">
@@ -252,18 +245,20 @@ export function PersonaSwitcher() {
         onClick={() => setOpen((o) => !o)}
         aria-busy={sessionBusy}
         aria-expanded={open && !sessionBusy}
-        className="flex items-center gap-3 rounded-md bg-surface py-1.5 pr-3 pl-1.5 ring-1 ring-surface-2 ring-inset"
+        className="flex w-full max-w-full min-w-0 items-center gap-3 rounded-md bg-surface py-1.5 pr-3 pl-1.5 ring-1 ring-surface-2 ring-inset"
       >
-        <span className="grid size-8 place-items-center rounded-full bg-profundo text-xs font-extrabold text-esmeralda">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-profundo text-xs font-extrabold text-esmeralda">
           {displayName.slice(0, 1)}
         </span>
-        <span className="hidden text-left leading-tight sm:block">
-          <span className="block text-sm font-bold">{displayName}</span>
+        <span className="hidden min-w-0 text-left leading-tight sm:block">
+          <span className="block truncate text-sm font-bold" title={displayName}>
+            {displayName}
+          </span>
           <span className="block text-[11px] font-semibold tracking-[0.06em] text-verde uppercase">
             {current.short}
           </span>
         </span>
-        <ChevronDown className="size-4 text-muted" />
+        <ChevronDown className="size-4 shrink-0 text-muted" />
       </button>
       {sessionBusy && (
         <span role="status" className="text-xs text-muted">
@@ -271,7 +266,7 @@ export function PersonaSwitcher() {
         </span>
       )}
       {open && !sessionBusy && (
-        <div className="absolute top-14 right-0 w-80 rounded-lg bg-surface p-2 shadow-[0_0_0_1px_var(--surface-2)]">
+        <div className="absolute top-14 right-0 w-[min(20rem,calc(100vw-2rem))] rounded-lg bg-surface p-2 shadow-[0_0_0_1px_var(--surface-2)]">
           <p className="px-3 pt-1 pb-2 text-[11px] font-extrabold tracking-[0.08em] text-muted uppercase">
             Trocar persona · modo demo
           </p>
@@ -315,7 +310,7 @@ function MobileNav() {
       aria-label="Navegação"
       value={items.find((i) => path?.startsWith(i.href))?.href ?? ""}
       onChange={(e) => (window.location.href = e.target.value)}
-      className="h-10 rounded-md bg-surface px-3 text-sm font-semibold ring-1 ring-surface-2 ring-inset lg:hidden"
+      className="h-11 w-full min-w-0 rounded-md bg-surface px-3 text-sm font-semibold ring-1 ring-surface-2 ring-inset lg:hidden"
     >
       {items.map((i) => (
         <option key={i.href} value={i.href}>

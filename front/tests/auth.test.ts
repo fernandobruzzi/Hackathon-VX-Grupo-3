@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "../src/lib/auth";
 import { ApiError, StaleSessionError } from "../src/lib/api";
 import { meFor } from "../src/lib/permissions";
 import { PersonaSwitcher } from "../src/components/shell/AppShell";
+import { SignOutButton } from "../src/components/shell/SignOutButton";
 import type { Me } from "../src/types/api";
 
 Object.assign(globalThis, { React, IS_REACT_ACT_ENVIRONMENT: true });
@@ -85,6 +86,7 @@ async function setup(
         null,
         React.createElement(Probe),
         React.createElement(PersonaSwitcher),
+        React.createElement(SignOutButton, { onSignedOut: () => navigations.push("/login/") }),
       ),
     );
   });
@@ -330,4 +332,42 @@ test("falha na configuração continua visível mesmo com o perfil inicial confi
   await h.reject(h.requests[0]);
   assert.equal(h.auth.ready, true);
   assert.match(h.auth.error!, /configuração de autenticação/);
+});
+
+test("botão de saída serializa cliques e informa progresso antes de redirecionar", async (t) => {
+  const h = await setup(t, { mode: "cognito" });
+  const control = () => h.view.root.findByProps({ "aria-label": "Sair da conta" });
+  await act(async () => {
+    void control().props.onClick();
+    void control().props.onClick();
+  });
+  assert.equal(h.requests.length, 1);
+  assert.equal(h.requests[0].path, "/api/v1/auth/logout");
+  assert.equal(control().props.disabled, true);
+  assert.equal(control().props["aria-busy"], true);
+  assert.match(JSON.stringify(h.view.toJSON()), /Saindo/);
+  assert.deepEqual(h.navigations, []);
+  await h.respond(h.requests[0], {});
+  assert.equal(h.auth.me, null);
+  assert.deepEqual(h.navigations, ["/login/"]);
+});
+
+test("botão de saída permite repetir após falha com identidade reconciliada", async (t) => {
+  const h = await setup(t, { mode: "cognito" });
+  const control = () => h.view.root.findByProps({ "aria-label": "Sair da conta" });
+  await act(async () => {
+    void control().props.onClick();
+  });
+  await h.reject(h.requests[0]);
+  assert.equal(h.auth.me?.user.id, requester.user.id);
+  assert.match(h.auth.error ?? "", /Não foi possível confirmar a saída/);
+  assert.equal(control().props.disabled, false);
+  assert.deepEqual(h.navigations, []);
+  await act(async () => {
+    void control().props.onClick();
+  });
+  assert.equal(h.requests.length, 2);
+  await h.respond(h.requests[1], {});
+  assert.equal(h.auth.me, null);
+  assert.deepEqual(h.navigations, ["/login/"]);
 });
