@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from domain.contracts import ClassificationStatus, PdmCatalog
 from domain.identity import reference_revision_evidence
 from repositories.extraction import get_extraction_repository
+from vx_materials_mcp.chatbot.candidates import existing_message
 from vx_materials_mcp.chatbot.prompts import MATERIAL_REGISTRATION_SYSTEM
 from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
@@ -198,7 +199,10 @@ class BedrockPlanner:
             raise BedrockError() from error
         return result.model_copy(
             update={
-                "assistant_message": text.strip(),
+                # O estoque autorizado mantém quantidades e apresentação determinísticas.
+                "assistant_message": existing_message(result.material_card.existing)
+                if result.material_card.existing
+                else text.strip(),
                 "context_patch": {**result.context_patch, "planner": PLANNER},
             }
         )
