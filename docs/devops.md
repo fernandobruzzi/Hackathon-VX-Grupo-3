@@ -63,7 +63,8 @@ recebe a recusa de `policy`. Pushes, merges e agendamentos não disparam esses w
    git merge-base --is-ancestor origin/main origin/homologacao
    ```
 
-A promoção integra código em `main`; deploy e migração de produção seguem o
+A promoção integra código em `main` e dispara o deploy automático na AWS. A
+configuração e a recuperação de falhas estão no
 [runbook de publicação](../deployment/README.md).
 
 ## O que o CI comprova
@@ -85,8 +86,10 @@ Cada imagem tem escopo próprio no BuildKit. Um job cancelado pode não salvar c
 
 Este workflow é descartável: não publica, não migra banco fora do runner e não usa
 segredos da AWS. `scripts/tests/test_ci_queue.py` protege essa separação. Deploy e
-migração reais seguem o lock S3 do runbook; se forem automatizados, precisam de
-workflow e grupo próprios com `cancel-in-progress: false`.
+migração reais rodam no workflow próprio `Deploy` (`deploy.yml`, #277), somente em
+push para `main` ou por disparo manual a partir de `main`. Ele usa o grupo
+`deploy-production` com `cancel-in-progress: false` e o lock S3 do runbook;
+`scripts/tests/test_deploy_workflow.py` protege gatilho, concorrência e credenciais.
 
 ### Histórico da fila (#108)
 
