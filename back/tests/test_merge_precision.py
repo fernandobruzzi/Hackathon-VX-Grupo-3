@@ -67,15 +67,22 @@ def test_aliases_cohort_retains_labels_and_records_conservative_abstention(evalu
     assert sum(case["same_item"] is True for case in groups["reviewed"]) == 39
     report = compare_merges(evaluated["current_merges"], groups, pairs, cohort["review_additions"])["groups"]
     assert report["counts"]["reviewed"] == 38
-    # identity-v3 retém sete positivos históricos, dois inconclusivos e o erro conhecido.
-    # Os rótulos não mudam para esconder essa perda de cobertura.
-    assert report["precision"]["denominator"] == 30
+    # identity-v3 retinha sete positivos históricos, dois inconclusivos e o erro conhecido.
+    # A #263 retém mais um: 25808476 traz PN 7701 6900 11-00 no texto e sem -00 na coluna.
+    # Os rótulos permanecem; a divergência entre campos exige confirmação do sufixo.
+    assert report["precision"]["denominator"] == 29
     assert report["counts"]["wrong"] == 0
     assert report["inconclusive_reviews"] == 2
-    assert report["positive_recovery_in_cohort"]["numerator"] == 30
+    assert report["positive_recovery_in_cohort"]["numerator"] == 29
     assert report["positive_recovery_in_cohort"]["denominator"] == 37
-    assert report["algorithm_abstention"]["numerator"] == 10
+    assert report["algorithm_abstention"]["numerator"] == 11
     assert report["precision"]["value"] >= 0.95
+    held = next(case for case in report["cases"] if case["codes"] == ["18675010", "25808476", "27155952"])
+    assert held["expected"] is True and held["proposed"] is False
+    pending = {
+        row["evidence"]["material_code"]: row["reasons"] for row in evaluated["identity_review"]["manual_review"]
+    }
+    assert "OBSERVATION_CONFLICT:REFERENCIA FABRICANTE" in pending["25808476"]
 
 
 def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
@@ -89,13 +96,14 @@ def test_identity_v2_development_sample_keeps_its_own_review(evaluated):
     # A #133 também retém o TE sem BW explícito, preservando seu rótulo histórico.
     qualifier_abstention = ("13563770", "29792424")
     assert qualifier_abstention not in current
-    withdrawn = [
-        item
-        for item in sample["reviewed"]
-        if tuple(sorted(item["codes"])) not in current and tuple(sorted(item["codes"])) != qualifier_abstention
-    ]
-    assert withdrawn
+    # A #263 também retém 19758278: 97201762 no texto diverge de 97201762-00 na coluna.
+    # O parceiro 11375285 não tem conflito; basta um membro sem identidade para reter o grupo.
+    suffix_abstention = ("11375285", "19758278")
+    withdrawn = {
+        tuple(sorted(item["codes"])) for item in sample["reviewed"] if tuple(sorted(item["codes"])) not in current
+    }
+    assert withdrawn == {qualifier_abstention, suffix_abstention}
     pending = {
         row["evidence"]["material_code"]: row["reasons"] for row in evaluated["identity_review"]["manual_review"]
     }
-    assert all("SUFIXO_REFERENCIA_NAO_CONFIRMADO" in pending[code] for item in withdrawn for code in item["codes"])
+    assert "OBSERVATION_CONFLICT:REFERENCIA FABRICANTE" in pending["19758278"]
