@@ -280,3 +280,70 @@ def test_manifest_allows_all_15_real_codes_and_never_borrows_another_tenant_mani
             foreign.require_real_material(codes[0])
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize("operation", ["material", "evidence", "evidence_for_material", "require_real_material"])
+def test_resources_bind_active_user_to_the_signed_tenant(resource_data, operation):
+    data = resource_data
+    caller = Caller(data["foreign_user"], data["caller"]["tenant_id"], frozenset({"materials:read"}))
+    arguments = {
+        "material": ("foreign-resource-code",),
+        "evidence": (data["foreign_source"],),
+        "evidence_for_material": ("foreign-resource-code", ["FABRICANTE"]),
+        "require_real_material": ("16031971",),
+    }
+    engine = create_engine(data["reader"])
+    try:
+        with pytest.raises(ValueError, match="nao autorizada"):
+            getattr(ResourceRepository(engine, caller), operation)(*arguments[operation])
+    finally:
+        engine.dispose()
+
+
+def test_enrichment_eligibility_never_borrows_an_old_dataset_manifest(resource_data):
+    data = resource_data
+    latest = uuid.uuid4()
+    with data["admin"].begin() as connection:
+        connection.execute(
+            text("INSERT INTO datasets(id,tenant_id,imported_at) VALUES (:id,:tenant,now()+interval '2 days')"),
+            {"id": latest, "tenant": data["caller"]["tenant_id"]},
+        )
+    engine = create_engine(data["reader"])
+    try:
+        caller = Caller(data["caller"]["user_id"], data["caller"]["tenant_id"], frozenset({"materials:read"}))
+        with pytest.raises(ValueError, match="15 produtos reais"):
+            ResourceRepository(engine, caller).require_real_material("16031971")
+    finally:
+        engine.dispose()
+        with data["admin"].begin() as connection:
+            connection.execute(text("DELETE FROM datasets WHERE id=:id"), {"id": latest})
+
+
+def test_stale_signed_tenant_cannot_start_research_after_user_reassignment(resource_data):
+    from vx_materials_mcp.tools.enrich_from_trusted_source import Enrichment
+
+    class NeverResearch:
+        def validate_request(self, *_args):
+            pytest.fail("Identidade desatualizada iniciou pesquisa")
+
+        def run(self, *_args):
+            pytest.fail("Identidade desatualizada iniciou consulta externa")
+
+    data = resource_data
+    caller = Caller(data["caller"]["user_id"], data["caller"]["tenant_id"], frozenset({"materials:read"}))
+    engine = create_engine(data["reader"])
+    try:
+        with data["admin"].begin() as connection:
+            connection.execute(
+                text("UPDATE users_sso SET tenant_id=:tenant WHERE id=:id"),
+                {"tenant": data["foreign_tenant"], "id": caller.user_id},
+            )
+        with pytest.raises(ValueError, match="nao autorizada"):
+            Enrichment(ResourceRepository(engine, caller), NeverResearch()).run("16031971", ["FABRICANTE"])
+    finally:
+        engine.dispose()
+        with data["admin"].begin() as connection:
+            connection.execute(
+                text("UPDATE users_sso SET tenant_id=:tenant WHERE id=:id"),
+                {"tenant": caller.tenant_id, "id": caller.user_id},
+            )

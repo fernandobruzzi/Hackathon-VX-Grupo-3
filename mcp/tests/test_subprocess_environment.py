@@ -14,6 +14,7 @@ def test_aws_region_and_task_credentials_reach_stdio_without_api_secrets(monkeyp
     monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
     monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/v2/credentials/example")
     monkeypatch.setenv("DATABASE_URL", "mcp-reader-only")
+    monkeypatch.setenv("ENRICHMENT_REPOSITORY", "catalog_labels_v1")
     monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", "internal-secret")
     monkeypatch.setenv("SESSION_ENCRYPTION_KEY", "session-secret")
     monkeypatch.setenv("API_DB_PASSWORD", "api-secret")
@@ -47,6 +48,7 @@ def test_aws_region_and_task_credentials_reach_stdio_without_api_secrets(monkeyp
     assert env["AWS_REGION"] == env["AWS_DEFAULT_REGION"] == "us-east-1"
     assert env["AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"] == "/v2/credentials/example"
     assert env["DATABASE_URL"] == "mcp-reader-only"
+    assert env["ENRICHMENT_REPOSITORY"] == "catalog_labels_v1"
     assert env["VX_CALLER"] == '{"user_id":"caller"}'
     assert not {"AGENT_INTERNAL_TOKEN_SECRET", "SESSION_ENCRYPTION_KEY", "API_DB_PASSWORD"} & env.keys()
 

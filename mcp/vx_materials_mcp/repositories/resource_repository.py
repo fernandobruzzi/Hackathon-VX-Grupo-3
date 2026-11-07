@@ -78,8 +78,9 @@ class ResourceRepository:
         with self._engine.connect() as connection:
             eligible = connection.execute(
                 text(
-                    "SELECT EXISTS (SELECT 1 FROM mcp_datasets d JOIN mcp_catalog c "
-                    "ON c.tenant_id = d.tenant_id WHERE d.tenant_id::text = :tenant "
+                    "SELECT EXISTS (SELECT 1 FROM (SELECT tenant_id, real_material_codes FROM mcp_datasets "
+                    "WHERE tenant_id::text = :tenant ORDER BY imported_at DESC, id DESC LIMIT 1) d "
+                    "JOIN mcp_catalog c ON c.tenant_id = d.tenant_id WHERE d.tenant_id::text = :tenant "
                     "AND c.material_code = :code AND jsonb_array_length(d.real_material_codes) = 15 "
                     "AND d.real_material_codes ? :code)"
                 ),
