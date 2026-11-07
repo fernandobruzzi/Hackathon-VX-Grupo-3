@@ -31,6 +31,9 @@ class ResourceRepository:
             raise ValueError("Consulta de material nao autorizada")
         return signed_tenant
 
+    def require_read_access(self) -> None:
+        self._tenant()
+
     def material(self, code: str) -> dict:
         tenant = self._tenant()
         with self._engine.connect() as connection:
