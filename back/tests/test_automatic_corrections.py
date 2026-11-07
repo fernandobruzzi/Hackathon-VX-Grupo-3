@@ -97,9 +97,37 @@ def test_alias_without_trusted_class_is_human(inputs, code):
     assert not result.eligible and "UNTRUSTED_CLASS" in result.reasons
 
 
-def test_real_revision_text_is_not_discarded(inputs):
-    result = verdict(inputs, "15452229", "PDM_CORRECTION")
+def test_real_revision_reference_conflict_has_no_pdm_rewrite(inputs):
+    from pipelines.sanitize import analyze_material
+    from repositories.classification import get_classification_repository
+    from repositories.extraction import get_extraction_repository
+
+    catalog, records = inputs
+    record = records["15452229"]
+    analyzed = analyze_material(record, catalog, get_classification_repository(catalog), get_extraction_repository())
+    assert "OBSERVATION_CONFLICT:REFERENCIA FABRICANTE" in analyzed.review_reasons
+    assert not any(p.proposal_type == "PDM_CORRECTION" for p in candidates(record, catalog))
+
+
+def test_revision_text_outside_reference_is_not_discarded(inputs):
+    catalog, records = inputs
+    record = replace(
+        records["15452229"],
+        description=records["15452229"].description.replace(" REV A", "") + "; REV A",
+        database_id="test",
+    )
+    proposal = next(p for p in candidates(record, catalog) if p.proposal_type == "PDM_CORRECTION")
+    _, payload, _ = approval_payload(proposal, {record.code: record.database_id}, "dataset")
+    result = assess_record(
+        catalog,
+        record,
+        "PDM_CORRECTION",
+        payload,
+        {"unit": record.unit, "ncm": record.ncm, "attributes": {}},
+        "dataset",
+    )
     assert not result.eligible and "TEXT_LOSS" in result.reasons
+    assert "REV" in result.evidence["lost_terms"]
 
 
 def test_unknown_algorithm_revision_cannot_inherit_authorization(inputs, monkeypatch):
@@ -111,3 +139,69 @@ def test_unknown_algorithm_revision_cannot_inherit_authorization(inputs, monkeyp
     monkeypatch.setattr(automatic_corrections, "get_extraction_repository", lambda: extractor)
     result = verdict(inputs, "24794045", "UNIT_CORRECTION")
     assert not result.eligible and "UNTRUSTED_CLASS" in result.reasons
+
+
+def test_unknown_classifier_revision_cannot_inherit_authorization(inputs, monkeypatch):
+    from pipelines import automatic_corrections
+    from repositories.classification import get_classification_repository
+
+    classifier = get_classification_repository(inputs[0])
+    classifier.revision = "unreviewed-revision"
+    monkeypatch.setattr(automatic_corrections, "get_classification_repository", lambda _: classifier)
+    result = verdict(inputs, "24794045", "UNIT_CORRECTION")
+    assert not result.eligible and "UNTRUSTED_CLASS" in result.reasons
+
+
+def test_unknown_field_reader_revision_cannot_inherit_authorization(inputs, monkeypatch):
+    from pipelines import automatic_corrections
+
+    monkeypatch.setattr(automatic_corrections, "MATERIAL_FIELDS_VERSION", "unreviewed-fields", raising=False)
+    result = verdict(inputs, "24794045", "UNIT_CORRECTION")
+    assert not result.eligible and "UNTRUSTED_CLASS" in result.reasons
+
+
+@pytest.mark.parametrize(
+    ("description", "group"),
+    [
+        ("PARAF SEXTAVADO METRICA GROSSA M12X50 8.8 ACO CARBONO NATURAL DIN 933", "FIX01"),
+        ("PARAFUSO SEXT. INTERNO, M12X50 12.9 ACO LIGA OXIDADO PRETO CILINDRICA", "FIX01"),
+        ("FLG ENCAIXE SW 2POL 300# RF A182 F316 ASME B16.5", "TUB01"),
+        ("PLACA TRASERA METSO PN MM4504436 BOMBA POLPA MM400", "SOB01"),
+        ("BUCHA GUIA MANCAL KSB PN 123456 BOMBA CENTRIFUGA", "SOB01"),
+    ],
+)
+def test_pilot_aliases_remain_in_human_review(inputs, description, group):
+    from domain.contracts import MaterialRecord
+
+    catalog, _ = inputs
+    record = MaterialRecord("pilot", "ATIVO", description, group=group, unit="PCA", database_id="test")
+    proposal = next(p for p in candidates(record, catalog) if p.proposal_type == "UNIT_CORRECTION")
+    _, payload, _ = approval_payload(proposal, {record.code: record.database_id}, "dataset")
+    result = assess_record(
+        catalog, record, "UNIT_CORRECTION", payload, {"unit": "PCA", "ncm": None, "attributes": {}}, "dataset"
+    )
+    assert not result.eligible and "UNTRUSTED_CLASS" in result.reasons
+
+
+def test_short_only_attributes_are_traced_and_require_human_pdm_review(inputs):
+    catalog, records = inputs
+    record = replace(
+        records["16454102"],
+        description="ANEL O-RING DIAMETRO DE 15MM, COM SECAO TRANSV 2 MM, NBR",
+        short_description="DUREZA: 70 SHORE A",
+        database_id="test",
+    )
+    proposal = next(p for p in candidates(record, catalog) if p.proposal_type == "PDM_CORRECTION")
+    _, payload, _ = approval_payload(proposal, {record.code: record.database_id}, "dataset")
+    result = assess_record(
+        catalog,
+        record,
+        "PDM_CORRECTION",
+        payload,
+        {"unit": record.unit, "ncm": record.ncm, "attributes": {}},
+        "dataset",
+    )
+    assert not result.eligible
+    assert "SHORT_DESCRIPTION_REQUIRES_REVIEW" in result.evidence["pending"]
+    assert result.evidence["attribute_evidence"]["DUREZA"]["source_field"] == "short_description"
+    assert result.evidence["original_short_description"] == record.short_description
