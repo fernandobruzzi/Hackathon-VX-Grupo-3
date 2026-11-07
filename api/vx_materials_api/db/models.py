@@ -11,6 +11,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Identity,
     Index,
     Integer,
     LargeBinary,
@@ -564,5 +565,39 @@ class AutomaticCorrectionResult(Base):
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
     index_status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'NOT_REQUIRED'"))
     index_error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()
+
+
+class MaterialRequest(Base):
+    __tablename__ = "material_requests"
+    __table_args__ = (
+        CheckConstraint("quantity > 0 AND quantity <> 'NaN'::numeric", name="positive_quantity"),
+        CheckConstraint("length(btrim(unit)) > 0", name="unit"),
+        CheckConstraint("length(btrim(original_text)) > 0", name="original_text"),
+        CheckConstraint("length(btrim(center_code)) > 0", name="center_code"),
+        CheckConstraint("version > 0", name="version"),
+        CheckConstraint(
+            "status IN ('EM_IDENTIFICACAO', 'AGUARDANDO_CADASTRO', 'EM_ATENDIMENTO', 'ENCERRADA')", name="status"
+        ),
+        CheckConstraint("(status = 'ENCERRADA') = (closure_reason IS NOT NULL)", name="closure_reason"),
+        Index("ix_material_requests_tenant_id_requester_user_id", "tenant_id", "requester_user_id"),
+        Index("ix_material_requests_tenant_id_center_code_status", "tenant_id", "center_code", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    protocol_number: Mapped[int] = mapped_column(BigInteger, Identity(), nullable=False, unique=True)
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    requester_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    original_text: Mapped[str] = mapped_column(Text, nullable=False)
+    material_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("materials_master.id"))
+    quantity: Mapped[Any] = mapped_column(Numeric(24, 6), nullable=False)
+    unit: Mapped[str] = mapped_column(Text, nullable=False)
+    center_code: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    closure_reason: Mapped[str | None] = mapped_column(Text)
+    chat_session_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("chat_sessions.id"))
+    registration_order_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("registration_orders.id"))
+    version: Mapped[int] = _version()
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = _updated_at()
