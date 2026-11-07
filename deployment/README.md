@@ -257,6 +257,37 @@ host. Por isso a API devolve redirects do front como caminhos relativos.
    stack e o deploy, o login pelo endereço antigo falha no Hosted UI, porque o
    callback já mudou.
 
+## Deploy automático a cada promoção (#277)
+
+O workflow `Deploy` publica cada push em `main`. Ele assume por OIDC a role
+`<name>-github-deploy`, que só aceita tokens de `main` deste repositório e não
+usa chaves de longa duração. Em seguida, constrói as três imagens X86_64 no
+runner e roda o mesmo `aws_deploy.py` com release
+`<sha>-<run_id>-<tentativa>`. O resumo da execução mostra release, origem e task
+definition.
+
+Preparação, uma vez por conta:
+
+1. Atualizar a stack com `GitHubRepository=<owner>/<repo>`. Ela cria o provedor
+   OIDC do GitHub e a role. A role recebe ECR só nos repositórios `<name>-*`,
+   ECS só no cluster e nas famílias do projeto, PassRole só nas quatro roles,
+   o prefixo `locks/` do bucket e leitura dos segredos que o deploy confere.
+2. Criar as variáveis do repositório no GitHub, sem segredos:
+   - `AWS_DEPLOY_ROLE_ARN`: saída `GitHubDeployRoleArn`;
+   - `AWS_REGION`;
+   - `AWS_DEPLOY_NAME`: o `name` da configuração;
+   - `AWS_DEPLOY_CONFIG`: o conteúdo de `aws.local.json`. O workflow troca as
+     imagens pelos digests construídos e fixa `X86_64`.
+
+   Sem `AWS_DEPLOY_ROLE_ARN`, o job é ignorado.
+3. Depois da preparação, um disparo manual em `main` (Actions → Deploy → Run
+   workflow) publica o commit atual.
+
+Falha no meio mantém o lock, como no deploy manual. Confira as tasks ECS antes de
+remover a versão do lock e use "Re-run all jobs": a nova tentativa gera release,
+tags e tokens novos. Deploys manuais continuam possíveis. Para não competir com
+o automático, use a mesma configuração e confira se não há execução em andamento.
+
 ## Falhas, exclusão mútua e rollback
 
 Um lock S3 condicional impede dois deploys com o mesmo `name` ao mesmo tempo.
