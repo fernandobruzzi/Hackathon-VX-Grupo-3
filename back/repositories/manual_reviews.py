@@ -42,7 +42,17 @@ def save_manual_reviews(
     completeness = (
         {
             item["material_code"]: {
-                name: item[name] for name in ("before", "after_suggestions", "suggestions", "conflicts")
+                name: item[name]
+                for name in (
+                    "before",
+                    "after_suggestions",
+                    "suggestions",
+                    "conflicts",
+                    "classification",
+                    "gaps",
+                    "record_conflicts",
+                    "assisted_candidates",
+                )
             }
             for item in enrichment["results"]
         }

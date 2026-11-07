@@ -26,6 +26,7 @@ import type { components } from "@/types/api.generated";
 type Review = components["schemas"]["ManualReview"];
 type ReviewList = components["schemas"]["ManualReviewList"];
 type Catalog = components["schemas"]["ManualReviewCatalog"];
+type Completeness = components["schemas"]["MaterialCompletenessReview"];
 export const REASON_LABELS: Record<string, string> = {
   ENRICHMENT_REQUIRED: "Dados técnicos a complementar",
   DESCRICAO_FORA_DO_PADRAO: "Descrição incompleta ou fora do padrão",
@@ -36,6 +37,85 @@ export const REASON_LABELS: Record<string, string> = {
   UNIDADE_DIFERENTE_DA_CLASSE: "Unidade diferente da classe",
   MATERIAL_NAO_ATIVO: "Material bloqueado ou obsoleto",
 };
+
+const GAP_LABELS: Record<string, string> = {
+  CLASS_UNRESOLVED: "Classe a confirmar",
+  CLASS_OUT_OF_SCOPE: "Classe não reconhecida no PDM",
+  CONTRADICTORY_OBSERVATIONS: "Conflito no registro",
+  CONFLICTING_SOURCES: "Conflito entre fontes",
+  IDENTITY_NOT_CONFIRMED: "Identidade do material a confirmar",
+  TEXT_NOT_RECOGNIZED: "Trecho ainda não interpretado",
+  NO_SUPPORTED_EVIDENCE: "Sem evidência suficiente",
+  CONDITION_UNRESOLVED: "Aplicabilidade a confirmar",
+  INVALID_VALUE: "Valor incompatível com o PDM",
+};
+
+export function CompletenessDiagnostics({ completeness }: { completeness?: Completeness | null }) {
+  if (!completeness) return null;
+  const classification = completeness.classification;
+  return (
+    <div className="mt-2 max-w-md space-y-2 text-sm">
+      {!!completeness.before.missing_required.length && (
+        <p>Faltam: {completeness.before.missing_required.join(", ")}.</p>
+      )}
+      {!!completeness.before.conditional_pending.length && (
+        <p>Aplicabilidade a confirmar: {completeness.before.conditional_pending.join(", ")}.</p>
+      )}
+      {classification && classification.status !== "CLASSIFIED" && (
+        <p>
+          {classification.status === "UNRESOLVED"
+            ? "Classe a confirmar"
+            : "Classe não reconhecida no PDM"}
+          {classification.candidate_class_ids.length
+            ? `: ${classification.candidate_class_ids.join(", ")}.`
+            : "."}
+        </p>
+      )}
+      {!!completeness.gaps?.length && (
+        <ul className="list-disc space-y-1 pl-4">
+          {completeness.gaps.map((gap, index) => (
+            <li key={`${gap.attribute ?? "classe"}-${gap.reason}-${index}`}>
+              <span className="font-semibold">{GAP_LABELS[gap.reason] ?? gap.reason}: </span>
+              {gap.question}
+            </li>
+          ))}
+        </ul>
+      )}
+      {Object.entries(completeness.record_conflicts ?? {}).map(([name, values]) => (
+        <p key={`record-${name}`} className="text-aviso">
+          Conflito no registro · {name}: {values.join(", ")}.
+        </p>
+      ))}
+      {Object.entries(completeness.conflicts).map(([name, values]) => (
+        <p key={`sources-${name}`} className="text-aviso">
+          Conflito entre fontes · {name}: {values.join(", ")}.
+        </p>
+      ))}
+      {!!completeness.assisted_candidates?.length && (
+        <details>
+          <summary className="cursor-pointer font-semibold">Leituras a conferir</summary>
+          <p className="mt-1 text-muted">
+            Confirmação manual necessária. Confira o trecho e registre a fonte ao complementar.
+          </p>
+          {completeness.assisted_candidates.map((candidate, index) => (
+            <div key={`${candidate.attribute}-${index}`} className="mt-2">
+              <p>
+                {candidate.attribute}: <strong>{candidate.value}</strong>
+              </p>
+              <p className="text-xs text-muted">Campo de origem: {candidate.source_field}</p>
+              <blockquote className="mt-1 whitespace-pre-wrap">“{candidate.excerpt}”</blockquote>
+            </div>
+          ))}
+        </details>
+      )}
+      {!!Object.keys(completeness.suggestions).length && (
+        <Link className="inline-block text-verde underline" href="/enriquecimento/">
+          Revisar sugestões com fontes
+        </Link>
+      )}
+    </div>
+  );
+}
 
 function message(error: unknown) {
   if (error instanceof ApiError) {
@@ -227,28 +307,7 @@ export function ManualReviewsPage() {
                                 {REASON_LABELS[r] ?? r}
                               </p>
                             ))}
-                            {!!row.observation.completeness?.before.missing_required.length && (
-                              <p className="mt-2 text-sm">
-                                Faltam:{" "}
-                                {row.observation.completeness.before.missing_required.join(", ")}.
-                              </p>
-                            )}
-                            {!!row.observation.completeness?.before.conditional_pending.length && (
-                              <p className="mt-1 text-sm">
-                                Aplicabilidade a confirmar:{" "}
-                                {row.observation.completeness.before.conditional_pending.join(", ")}
-                                .
-                              </p>
-                            )}
-                            {!!Object.keys(row.observation.completeness?.suggestions ?? {})
-                              .length && (
-                              <Link
-                                className="mt-2 inline-block text-verde underline"
-                                href="/enriquecimento/"
-                              >
-                                Revisar sugestões com fontes
-                              </Link>
-                            )}
+                            <CompletenessDiagnostics completeness={row.observation.completeness} />
                           </Td>
                           <Td>
                             {row.proposal_id ? (
@@ -403,6 +462,7 @@ function ResolutionForm({
         Os valores extraídos são sugestões. Confira cada valor na fonte antes de encaminhar. Campos
         condicionais são validados pelo PDM ao enviar.
       </p>
+      <CompletenessDiagnostics completeness={row.observation.completeness} />
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <Field label="Classe PDM">
           <Select

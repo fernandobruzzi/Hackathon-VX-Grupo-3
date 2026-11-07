@@ -72,6 +72,11 @@ class ReviewLane(StrictModel):
     reasons: list[str] = Field(default_factory=list)
 
 
+class SupplementalSource(StrictModel):
+    object_key: str = Field(min_length=1, max_length=1024)
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class EnrichmentContext(StrictModel):
     schema_version: Literal["enrichment-v1", "internal-enrichment-v1"]
     report_key: str = Field(min_length=1, max_length=1024)
@@ -80,6 +85,7 @@ class EnrichmentContext(StrictModel):
     extraction_signature: str = Field(min_length=1, max_length=128)
     divergent_attributes: list[str] = Field(default_factory=list)
     blocked_attributes: list[str] = Field(default_factory=list)
+    supplemental_source: SupplementalSource | None = None
 
 
 class ProposalChangeset(StrictModel):

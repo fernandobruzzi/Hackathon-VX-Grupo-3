@@ -9254,6 +9254,120 @@
                 "type": "string"
               }
             }
+          },
+          "classification": {
+            "$ref": "#/components/schemas/EnrichmentClassification"
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrichmentGap"
+            }
+          },
+          "record_conflicts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "assisted_candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistedAttributeCandidate"
+            }
+          }
+        }
+      },
+      "EnrichmentClassification": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "candidate_class_ids"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "CLASSIFIED",
+              "UNRESOLVED",
+              "OUT_OF_SCOPE"
+            ]
+          },
+          "candidate_class_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EnrichmentGap": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attribute",
+          "reason",
+          "question"
+        ],
+        "properties": {
+          "attribute": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "CLASS_UNRESOLVED",
+              "CLASS_OUT_OF_SCOPE",
+              "CONTRADICTORY_OBSERVATIONS",
+              "CONFLICTING_SOURCES",
+              "IDENTITY_NOT_CONFIRMED",
+              "TEXT_NOT_RECOGNIZED",
+              "NO_SUPPORTED_EVIDENCE",
+              "CONDITION_UNRESOLVED",
+              "INVALID_VALUE"
+            ]
+          },
+          "question": {
+            "type": "string"
+          }
+        }
+      },
+      "AssistedAttributeCandidate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attribute",
+          "value",
+          "source_field",
+          "excerpt"
+        ],
+        "description": "Leitura assistida a conferir manualmente. Não preenche o cadastro nem autoriza aprovação.",
+        "properties": {
+          "attribute": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "source_field": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "extraction_rule": {
+            "type": "string"
+          },
+          "manual_confirmation_required": {
+            "type": "boolean",
+            "const": true
           }
         }
       }

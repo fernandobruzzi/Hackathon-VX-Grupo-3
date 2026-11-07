@@ -23,6 +23,7 @@ def expand(words: tuple[str, ...], aliases: tuple[Alias, ...] = ALIASES) -> tupl
                 if words[position : position + len(a.pattern)] == a.pattern
                 and (position == 0 or not a.at_start)
                 and not (position and words[position - 1] in a.not_after)
+                and not (position + len(a.pattern) < len(words) and words[position + len(a.pattern)] in a.not_before)
             ),
             None,
         )
@@ -38,7 +39,7 @@ def expand(words: tuple[str, ...], aliases: tuple[Alias, ...] = ALIASES) -> tupl
 
 class AliasesV1ClassificationRepository(RuleBasedV1ClassificationRepository):
     name = "aliases_v1"
-    revision = "2"
+    revision = "3-pilot-families-263"
 
     def _words(self, field, text, notes):
         words, used = expand(super()._words(field, text, notes))
