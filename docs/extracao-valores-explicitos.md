@@ -291,6 +291,10 @@ no texto não resolvido. A origem de referência também respeita abreviações 
 ponto, com ou sem espaço: `REF. M12X50`, `PN.M12X50`, `P/N. M12X50`,
 `MODELO.M12X50`, `REFERENCIA. M12X50` e `COD.M12X50`. Essas formas permanecem
 literalmente não resolvidas e não fornecem `BITOLA`, `COMPRIMENTO` ou `ROSCA`.
+O mesmo limite reconhece os separadores de referência `:`, `.`, `=`, `-`, `/`
+e espaço; `REF-M12X50` e `REF/M12X50` também não viram dimensões físicas.
+O rótulo `P/N` conserva a leitura de referências e não impede uma bitola física
+separada, como em `P/N/M12X50 BITOLA M12`.
 `M12` físico sem rótulo e `BITOLA:M12` continuam válidos,
 inclusive em `REF:M12 BITOLA M12`, sem consumir o código da referência. Esse filtro
 físico adicional não acrescenta diferenças nos 23.554 materiais nem nos 520

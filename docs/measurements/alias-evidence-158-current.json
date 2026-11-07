@@ -25,10 +25,10 @@
     ]
   },
   "after": {
-    "head": "5bb5b9febc6acd70901420570e6024eef6e5ac82",
+    "head": "59273ddd07d5efbc7199c5a0f4c13ac712cc8752",
     "implementation_state": "working_tree_sources_identified_by_sha256",
     "source_sha256": {
-      "back/repositories/extraction/rule_based_v1.py": "58444fbdd64360cf0d91da2935a8c0bc2df3b6ccb5c92af6e8707d82f9ef4259",
+      "back/repositories/extraction/rule_based_v1.py": "11f80eb96a664042a3768a6b9a008e16d3a955228acb5c58ac942f0b5fdc1755",
       "back/repositories/extraction/rule_based_v1_tables.py": "369f8d4701186f5c645f0a0e7af99d0a4eaeb4df32cb32f3827cda9085d25604",
       "back/repositories/classification/aliases_v1.py": "9edadb79386d4417b37e7d9794feec50ea9d2ebae17f21aa30bc024af0580c7b"
     },
