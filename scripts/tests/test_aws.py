@@ -20,6 +20,11 @@ from aws_deploy import deploy, deployment_lock, one_off, register, validate_secr
 from aws_preflight import Report, preflight  # noqa: E402
 from aws_support import ConfigurationError, canonical_task, load_config, render, task_definitions  # noqa: E402
 
+
+def boto3_client_can_paginate(operation):
+    return botocore.session.get_session().create_client("ecs", region_name="us-east-1").can_paginate(operation)
+
+
 EXAMPLE = Path(__file__).resolve().parents[2] / "deployment" / "aws.example.json"
 
 
@@ -176,11 +181,21 @@ class AwsTests(unittest.TestCase):
         web_arn = "arn:aws:ecs:us-east-1:123456789012:task-definition/vx-grupo3-web:1"
         ecs.describe_services.side_effect = [
             {"services": []},
-            {"services": [{"taskDefinition": web_arn, "runningCount": 1, "pendingCount": 0}]},
+            {
+                "services": [
+                    {
+                        "runningCount": 1,
+                        "pendingCount": 0,
+                        "currentServiceRevisions": [{"arn": "new", "runningTaskCount": 1}],
+                    }
+                ]
+            },
         ]
-        ecs.get_paginator.return_value.paginate.side_effect = [
-            [{"serviceDeployments": [{"targetServiceRevisionArn": "old", "status": "SUCCESSFUL"}]}],
-            [{"serviceDeployments": [{"targetServiceRevisionArn": "new", "status": "SUCCESSFUL"}]}],
+        ecs.can_paginate.return_value = False
+        ecs.list_service_deployments.side_effect = [
+            {"serviceDeployments": [{"targetServiceRevisionArn": "old", "status": "SUCCESSFUL"}]},
+            {"serviceDeployments": [], "nextToken": "page-2"},
+            {"serviceDeployments": [{"targetServiceRevisionArn": "new", "status": "SUCCESSFUL"}]},
         ]
         ecs.describe_service_revisions.side_effect = [
             {"serviceRevisions": [{"serviceRevisionArn": "old", "taskDefinition": "arn:old"}]},
@@ -217,13 +232,76 @@ class AwsTests(unittest.TestCase):
             deploy(self.config, Mock(), "release", receipt)
             self.assertEqual([c.args[-1] for c in run.call_args_list], ["migrate", "bootstrap", "index"])
             sleep.assert_called_once_with(10)
+            ecs.get_paginator.assert_not_called()
+            self.assertEqual(ecs.list_service_deployments.call_args_list[2].kwargs.get("nextToken"), "page-2")
             self.assertEqual(json.loads(receipt.read_text())["public_origin"], "https://example.com")
+
+    def test_redeploy_reads_previous_revision_from_express_not_describe_services(self):
+        ecs, ecr = Mock(), Mock()
+        web_arn = "arn:aws:ecs:us-east-1:123456789012:task-definition/vx-grupo3-web:2"
+        existing = {"serviceArn": "arn:service", "status": "ACTIVE", "runningCount": 1, "pendingCount": 0}
+        ecs.describe_services.side_effect = [
+            {"services": [existing]},
+            {"services": [{**existing, "currentServiceRevisions": [{"arn": "new", "runningTaskCount": 1}]}]},
+        ]
+        ecs.list_service_deployments.return_value = {
+            "serviceDeployments": [{"targetServiceRevisionArn": "new", "status": "SUCCESSFUL"}]
+        }
+        ecs.describe_service_revisions.return_value = {
+            "serviceRevisions": [{"serviceRevisionArn": "new", "taskDefinition": web_arn}]
+        }
+        ecs.update_express_gateway_service.return_value = {"service": {"serviceArn": "arn:service"}}
+        ecs.describe_express_gateway_service.side_effect = [
+            {
+                "service": {
+                    "infrastructureRoleArn": self.config["roles"]["infrastructure"],
+                    "activeConfigurations": [{"taskDefinitionArn": "arn:previous"}],
+                }
+            },
+            {
+                "service": {
+                    "activeConfigurations": [
+                        {
+                            "taskDefinitionArn": web_arn,
+                            "ingressPaths": [{"accessType": "PUBLIC", "endpoint": "https://example.com"}],
+                        }
+                    ]
+                }
+            },
+        ]
+        response = io.BytesIO(b'{"status":"ok"}')
+        response.status = 200
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("aws_deploy.client", side_effect=lambda session, name: ecs if name == "ecs" else ecr),
+            patch("aws_deploy.validate_secrets"),
+            patch("aws_deploy.deployment_lock", return_value=nullcontext()),
+            patch(
+                "aws_deploy.register",
+                side_effect=lambda client, d: f"arn:aws:ecs:us-east-1:123456789012:task-definition/{d['family']}:2",
+            ),
+            patch("aws_deploy.one_off", return_value="arn:task"),
+            patch("aws_deploy.time.sleep"),
+            patch("aws_deploy.urlopen", return_value=response),
+            redirect_stdout(io.StringIO()),
+        ):
+            receipt = Path(directory) / "receipt.json"
+            deploy(self.config, Mock(), "release", receipt)
+            self.assertEqual(json.loads(receipt.read_text())["previous_task_definition"], "arn:previous")
+            ecs.create_express_gateway_service.assert_not_called()
+
+    def test_service_deployments_follow_next_token_of_the_real_api(self):
+        model = botocore.session.get_session().get_service_model("ecs")
+        operation = model.operation_model("ListServiceDeployments")
+        self.assertIn("nextToken", operation.input_shape.members)
+        self.assertIn("nextToken", operation.output_shape.members)
+        self.assertFalse(boto3_client_can_paginate("list_service_deployments"))
 
     def test_canary_rollback_is_failure_even_if_old_service_is_healthy(self):
         ecs = Mock()
-        ecs.get_paginator.return_value.paginate.return_value = [
-            {"serviceDeployments": [{"targetServiceRevisionArn": "new", "status": "ROLLBACK_SUCCESSFUL"}]},
-        ]
+        ecs.list_service_deployments.return_value = {
+            "serviceDeployments": [{"targetServiceRevisionArn": "new", "status": "ROLLBACK_SUCCESSFUL"}]
+        }
         ecs.describe_service_revisions.return_value = {
             "serviceRevisions": [
                 {

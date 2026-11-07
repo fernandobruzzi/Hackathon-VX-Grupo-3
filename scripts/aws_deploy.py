@@ -244,13 +244,23 @@ def validate_secrets(config, session):
         raise ConfigurationError("Todos os serviços devem usar o mesmo banco operacional, nunca _test")
 
 
+def service_deployments(ecs, cluster, service):
+    """ListServiceDeployments não tem paginator no SDK: seguir nextToken explicitamente."""
+    deployments, token = [], None
+    while True:
+        page = ecs.list_service_deployments(cluster=cluster, service=service, **({"nextToken": token} if token else {}))
+        deployments.extend(page.get("serviceDeployments", []))
+        token = page.get("nextToken")
+        if not token:
+            return deployments
+
+
 def wait_for_service(ecs, config, service_arn, definition):
     """Express usa canário: rolloutState de rolling update não é uma condição válida."""
     deadline = time.monotonic() + 1200
     revisions = {}
     while time.monotonic() < deadline:
-        pages = ecs.get_paginator("list_service_deployments").paginate(cluster=config["cluster"], service=service_arn)
-        deployments = [d for page in pages for d in page.get("serviceDeployments", [])]
+        deployments = service_deployments(ecs, config["cluster"], service_arn)
         unknown = list({d["targetServiceRevisionArn"] for d in deployments} - revisions.keys())
         for offset in range(0, len(unknown), 20):
             result = ecs.describe_service_revisions(serviceRevisionArns=unknown[offset : offset + 20])
@@ -271,13 +281,18 @@ def wait_for_service(ecs, config, service_arn, definition):
             }:
                 raise ConfigurationError("Deploy interrompido ou em rollback; conferir recibo sem reverter o banco")
             if status == "SUCCESSFUL":
+                # Serviços Express não expõem taskDefinition em DescribeServices: conferir a revisão.
+                target = matching[0]["targetServiceRevisionArn"]
                 observed = ecs.describe_services(cluster=config["cluster"], services=[service_arn])
                 services = observed.get("services", [])
                 if (
                     services
-                    and services[0].get("taskDefinition") == definition
                     and services[0]["runningCount"] > 0
                     and services[0]["pendingCount"] == 0
+                    and any(
+                        r.get("arn") == target and r.get("runningTaskCount", 0) > 0
+                        for r in services[0].get("currentServiceRevisions", [])
+                    )
                 ):
                     return
         time.sleep(10)
@@ -301,14 +316,17 @@ def deploy(config, session, release, receipt_path):
         if any(failure.get("reason") != "MISSING" for failure in existing.get("failures", [])):
             raise ConfigurationError("Consulta ao serviço ECS falhou; não criar outro serviço")
         service = next((s for s in existing.get("services", []) if s["status"] == "ACTIVE"), None)
+        previous = None
         if service:
             current = ecs.describe_express_gateway_service(serviceArn=service["serviceArn"])["service"]
             if current["infrastructureRoleArn"] != config["roles"]["infrastructure"]:
                 raise ConfigurationError("Role de infraestrutura diverge; não recriar serviço automaticamente")
+            # DescribeServices não traz taskDefinition em serviços Express.
+            previous = next((c.get("taskDefinitionArn") for c in current.get("activeConfigurations", [])), None)
         receipt = {
             "release": release,
             "task_definitions": registered,
-            "previous_task_definition": service["taskDefinition"] if service else None,
+            "previous_task_definition": previous,
             "tasks": {},
         }
 
