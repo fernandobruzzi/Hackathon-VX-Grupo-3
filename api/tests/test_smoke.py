@@ -20,3 +20,16 @@ def test_serves_front_build_without_hiding_api(tmp_path):
     client = TestClient(create_app(tmp_path))
     assert client.get("/").text == "<h1>front</h1>"
     assert client.get("/api/v1/healthz").json() == {"status": "ok"}
+
+
+def test_front_trailing_slash_redirect_stays_on_the_browser_domain(tmp_path):
+    # Atrás do CloudFront, o Host que chega é o do Express; um redirect absoluto
+    # mandaria o navegador para fora do domínio próprio, onde o login não vale.
+    (tmp_path / "index.html").write_text("<h1>front</h1>")
+    (tmp_path / "saneamento" / "revisao").mkdir(parents=True)
+    (tmp_path / "saneamento" / "revisao" / "index.html").write_text("<h1>revisao</h1>")
+    client = TestClient(create_app(tmp_path), base_url="http://express-origin.internal")
+    response = client.get("/saneamento/revisao?id=abc", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "/saneamento/revisao/?id=abc"
+    assert client.get("/saneamento/revisao/?id=abc").text == "<h1>revisao</h1>"

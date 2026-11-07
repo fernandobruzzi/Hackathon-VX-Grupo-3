@@ -5,6 +5,7 @@ import secrets
 from collections.abc import Callable
 from functools import cache
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import uvicorn
 from fastapi import FastAPI
@@ -110,8 +111,24 @@ def create_app(
 
     # Montado por ultimo: as rotas da API tem prioridade sobre os arquivos estaticos.
     if front_dist:
-        app.mount("/", StaticFiles(directory=front_dist, html=True), name="front")
+        app.mount("/", FrontFiles(directory=front_dist, html=True), name="front")
     return app
+
+
+class FrontFiles(StaticFiles):
+    """Arquivos do front com redirect relativo para a barra final.
+
+    O Starlette monta o redirect com o Host recebido. Atrás do CloudFront esse Host
+    é o do Express, e o navegador sairia do domínio próprio, onde o login vale.
+    """
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        location = response.headers.get("location")
+        if response.status_code in (301, 302, 307, 308) and location:
+            target = urlsplit(location)
+            response.headers["location"] = urlunsplit(("", "", target.path, target.query, ""))
+        return response
 
 
 app = create_app(settings.front_dist_dir())
