@@ -46,7 +46,7 @@ def kit_orders():
 
 
 @pytest.fixture
-def case(connection, catalog, monkeypatch):
+def case(order_database, connection, catalog, monkeypatch):
     monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     db = Session(bind=connection, join_transaction_mode="create_savepoint", expire_on_commit=False)

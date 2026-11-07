@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
 from vx_materials_api.db.cli import alembic_config
+from vx_materials_api.db.models import Base
 
 TEST_URL = os.environ.get("TEST_DATABASE_URL")
 
@@ -45,6 +46,16 @@ def connection(migrated_url):
         transaction = conn.begin()
         yield conn
         transaction.rollback()
+    engine.dispose()
+
+
+@pytest.fixture(scope="module")
+def order_database(migrated_url):
+    """Pedidos criam seus dados; não herdam o kit carregado por outro módulo."""
+    engine = create_engine(migrated_url)
+    tables = ", ".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
+    with engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE {tables} CASCADE"))
     engine.dispose()
 
 
