@@ -103,12 +103,16 @@ def agent():
     return FakeAgent()
 
 
-@pytest.fixture
-def client(factory, identity, agent, monkeypatch):
-    monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
+@pytest.fixture(autouse=True)
+def current_rules_path(monkeypatch):
     monkeypatch.setenv(
         "PDM_WORKBOOK_PATH", str(Path(__file__).parents[2] / "data/desafio01/03_padrao_cadastro_PDM.xlsx")
     )
+
+
+@pytest.fixture
+def client(factory, identity, agent, monkeypatch):
+    monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
     app = create_app(
         session_factory=factory,
         identity_provider=lambda db: identity,
@@ -226,7 +230,14 @@ def test_agent_failure_releases_turn_without_saving(client, agent, factory):
 
 
 def test_other_users_session_is_not_found(client, factory, agent, monkeypatch):
+    from vx_materials_api.routes import chat
+
     first = send(client).json()
+
+    def unavailable_rules(request):
+        raise AssertionError("Foreign-session authorization must precede catalog loading")
+
+    monkeypatch.setattr(chat, "catalog", unavailable_rules)
     stranger = _new_identity(factory)
     other = TestClient(
         create_app(

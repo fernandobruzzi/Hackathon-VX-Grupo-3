@@ -502,7 +502,7 @@ def list_sessions(db: Session, identity: Identity, *, limit: int, offset: int) -
     )
     items = []
     visible = 0
-    for session, text in rows:
+    for session, title_text in rows:
         centers = _session_centers(db, session)
         if centers is None or centers - identity.center_codes:
             continue
@@ -514,7 +514,7 @@ def list_sessions(db: Session, identity: Identity, *, limit: int, offset: int) -
         items.append(
             {
                 "id": session.id,
-                "title": (text or "Conversa sem mensagens")[:120],
+                "title": (title_text or "Conversa sem mensagens")[:120],
                 "updated_at": session.updated_at.isoformat(),
             }
         )
