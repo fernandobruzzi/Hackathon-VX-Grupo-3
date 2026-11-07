@@ -205,6 +205,8 @@ def logout(payload: EmptyRequest, request: Request, response: Response, caller: 
         session.revoked_at = datetime.now(UTC)
         db.commit()
     response.delete_cookie(cookie, secure=cookie == SESSION_COOKIE, httponly=True, samesite="lax")
+    if request.app.state.auth_mode == "cognito":
+        return {"logged_out": True, "provider_logout_url": request.app.state.cognito_config.logout_url}
     return {"logged_out": True}
 
 

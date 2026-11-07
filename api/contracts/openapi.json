@@ -7316,6 +7316,11 @@
         "properties": {
           "logged_out": {
             "const": true
+          },
+          "provider_logout_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Somente no Cognito: o navegador deve seguir este endereço para encerrar também a sessão do provedor."
           }
         },
         "required": [

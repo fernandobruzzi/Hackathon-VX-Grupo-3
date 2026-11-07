@@ -18,7 +18,8 @@ interface AuthCtx {
   refresh: () => Promise<Me>;
   signIn: (persona?: PersonaLabel) => Promise<boolean>;
   switchPersona: (persona: PersonaLabel) => void;
-  signOut: () => Promise<void>;
+  /** Resolve `true` quando o navegador vai sair da aplicação para encerrar a sessão do provedor. */
+  signOut: () => Promise<boolean>;
   theme: "light" | "dark";
   toggleTheme: () => void;
 }
@@ -221,16 +222,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (!beginTransition()) throw new Error("Aguarde a atualização da sessão.");
+    let navigating = false;
     try {
-      if (backend) await api.request("post", "/api/v1/auth/logout", { body: {} });
+      const result = backend
+        ? await api.request("post", "/api/v1/auth/logout", { body: {} })
+        : undefined;
       write(KEY, null);
       setSession(null);
+      // No Cognito, a sessão do Hosted UI sobrevive ao logout da API: sem encerrá-la,
+      // o próximo login volta à mesma conta sem pedir senha.
+      const providerLogout = result?.provider_logout_url;
+      if (providerLogout?.startsWith("https://")) {
+        window.location.assign(providerLogout);
+        navigating = true;
+      }
+      return navigating;
     } catch (error) {
       await reconcileSession();
       setError("Não foi possível confirmar a saída. Confira a sessão e tente novamente.");
       throw error;
     } finally {
-      endTransition();
+      if (!navigating) endTransition();
     }
   }, [api, backend, beginTransition, endTransition, reconcileSession, setSession]);
   const toggleTheme = useCallback(() => {
