@@ -4,9 +4,68 @@ import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { AuthProvider } from "../src/lib/auth";
 import { ChatPage } from "../src/features/chat/ChatPage";
+import { meFor } from "../src/lib/permissions";
 
 (globalThis as Record<string, unknown>).React = React;
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
+
+test("seletor exibe nome recebido da sessão e envia o código do centro", async () => {
+  process.env.NEXT_PUBLIC_DATA_SOURCE = "api";
+  const originalFetch = globalThis.fetch;
+  const me = meFor("SOLICITANTE_OPERACAO");
+  me.scope = {
+    center_codes: ["1100", "0010"],
+    center_names: { "1100": "USINA DE BENEFICIAMENTO" },
+  };
+  const writes: Record<string, unknown>[] = [];
+  Object.assign(globalThis, {
+    window: {
+      location: { pathname: "/chat/" },
+      matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
+      addEventListener() {},
+      removeEventListener() {},
+    },
+    document: { documentElement: { dataset: {} } },
+    localStorage: { getItem: () => null },
+    fetch: async (url: string, init: RequestInit) => {
+      if (url.endsWith("/auth/config")) return Response.json({ mode: "local" });
+      if (url.endsWith("/auth/me")) return Response.json(me);
+      if (init.method === "POST") {
+        writes.push(JSON.parse(init.body as string));
+        return Response.json(
+          { error: { code: "TEST", message: "teste", details: {}, request_id: "test" } },
+          { status: 503 },
+        );
+      }
+      return Response.json({ items: [], next_cursor: null });
+    },
+  });
+  let view!: ReactTestRenderer;
+  try {
+    await act(async () => {
+      view = create(React.createElement(AuthProvider, null, React.createElement(ChatPage)));
+    });
+    const selector = view.root.findByProps({ id: "center" });
+    const options = selector.findAllByType("option");
+    assert.deepEqual(
+      options.map((option) => [option.props.value, option.children.join("")]),
+      [
+        ["1100", "USINA DE BENEFICIAMENTO"],
+        ["0010", "0010"],
+      ],
+    );
+    await act(async () => selector.props.onChange({ target: { value: "1100" } }));
+    await act(async () =>
+      view.root.findByType("textarea").props.onChange({ target: { value: "parafuso" } }),
+    );
+    await act(async () => view.root.findByType("form").props.onSubmit({ preventDefault() {} }));
+    assert.equal(writes[0].center_code, "1100");
+  } finally {
+    if (view) await act(async () => view.unmount());
+    globalThis.fetch = originalFetch;
+    delete process.env.NEXT_PUBLIC_DATA_SOURCE;
+  }
+});
 
 for (const outcome of ["success", "failure"] as const) {
   test(`Nova conversa ignora ${outcome} tardio sem finalizar o novo turno`, async () => {

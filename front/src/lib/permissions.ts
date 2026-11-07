@@ -92,7 +92,17 @@ export function meFor(label: PersonaLabel): Me {
   return {
     user: { id: `demo-${label.toLowerCase()}`, display_name: p.name, roles: [p.role] },
     permissions: ROLE_PERMISSIONS[p.role],
-    scope: { center_codes: ["1100", "1200", "1300", "2100", "2200", "9000"] },
+    scope: {
+      center_codes: ["1100", "1200", "1300", "2100", "2200", "9000"],
+      center_names: {
+        "1100": "MINA SERRA AZUL",
+        "1200": "USINA DE BENEFICIAMENTO",
+        "1300": "TERMINAL PORTUARIO",
+        "2100": "UTE SERRA AZUL",
+        "2200": "PCH RIO CLARO",
+        "9000": "CD CENTRAL",
+      },
+    },
     demo: { enabled: true, active_persona: label },
     csrf_token: "demo-csrf",
   };

@@ -4866,6 +4866,13 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "center_names": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Nomes dos centros autorizados no dataset vigente, indexados pelo código. Ausentes ou contraditórios usam o código na interface."
               }
             },
             "required": [
@@ -4997,6 +5004,13 @@
           },
           "unit": {
             "type": "string"
+          },
+          "center_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome do centro preservado na origem, quando disponível."
           }
         },
         "required": [

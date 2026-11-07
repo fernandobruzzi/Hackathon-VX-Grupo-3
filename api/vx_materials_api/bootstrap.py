@@ -22,6 +22,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
 
 from clients.storage import ObjectStore, get_object_store
+from domain.centers import split_center
 from domain.pdm_loader import load_pdm
 from vx_materials_api import settings
 from vx_materials_api.db.models import Dataset, MaterialInventorySnapshot, MaterialMaster, ReferenceVersion
@@ -136,6 +137,7 @@ def _material_values(row: dict[str, str], target: str | None, reason: str | None
 
 
 def _snapshot_values(row: dict[str, str], line: int, dataset_id: uuid.UUID) -> dict:
+    center_code, center_name = split_center(row["CENTRO"])
     quantity = Decimal(row["ESTOQUE_ATUAL"])
     price = Decimal(row["PRECO_MEDIO_UNITARIO"])
     return {
@@ -143,7 +145,8 @@ def _snapshot_values(row: dict[str, str], line: int, dataset_id: uuid.UUID) -> d
         "tenant_id": TENANT_ID,
         "dataset_id": dataset_id,
         "material_id": _material_id(row["CODIGO_MATERIAL"]),
-        "center_code": row["CENTRO"].split(" - ", 1)[0],
+        "center_code": center_code,
+        "center_name": center_name,
         "quantity": quantity,
         "unit": _empty_to_none(row["UNIDADE_MEDIDA"]),
         "unit_price": price,

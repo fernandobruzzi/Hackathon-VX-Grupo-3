@@ -14,6 +14,7 @@ class _Contract(BaseModel):
 
 class InventoryRow(_Contract):
     center_code: str
+    center_name: str | None = None
     quantity: str
     unit: str
 

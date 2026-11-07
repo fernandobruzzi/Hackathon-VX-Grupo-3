@@ -39,11 +39,18 @@ from vx_materials_api.security.sessions import (
     unseal,
     verify_write,
 )
+from vx_materials_api.services.centers import authorized_center_names
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 local_router = APIRouter(prefix="/api/v1/auth", tags=["local-auth"])
 Db = Annotated[Session, Depends(db_session)]
 Caller = Annotated[Identity, Depends(current_identity)]
+
+
+def profile(db: Session, identity: Identity):
+    result = me_response(identity)
+    result["scope"]["center_names"] = authorized_center_names(db, identity)
+    return result
 
 
 class CallbackRequest(BaseModel):
@@ -144,8 +151,8 @@ def callback(payload: CallbackRequest, request: Request, response: Response, db:
 
 
 @router.get("/me")
-def me(caller: Caller):
-    return me_response(caller)
+def me(caller: Caller, db: Db):
+    return profile(db, caller)
 
 
 @router.post("/demo/switch")
@@ -191,7 +198,7 @@ def demo_switch(payload: DemoSwitchRequest, request: Request, response: Response
     db.commit()
     seconds = max(0, int((row.AuthSession.expires_at - datetime.now(UTC)).total_seconds()))
     secure_cookie(response, SESSION_COOKIE, token, seconds)
-    return me_response(identity)
+    return profile(db, identity)
 
 
 @router.post("/logout")
@@ -260,7 +267,8 @@ def local_session(payload: LocalRequest, request: Request, response: Response, d
     )
     db.commit()
     response.set_cookie(LOCAL_COOKIE, token, httponly=True, samesite="lax", max_age=3600)
-    return me_response(
+    return profile(
+        db,
         Identity(
             user_id,
             TENANT_ID,
@@ -270,5 +278,5 @@ def local_session(payload: LocalRequest, request: Request, response: Response, d
             center_codes=frozenset(CENTERS),
             csrf_token=csrf,
             persona=payload.persona,
-        )
+        ),
     )
