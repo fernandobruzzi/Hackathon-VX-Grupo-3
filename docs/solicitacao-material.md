@@ -1,0 +1,240 @@
+# Solicitação de material: modelo e regras de atendimento
+
+Modelo operacional da jornada do solicitante (M7, #236). Este documento é a referência para
+as issues #237 a #251. Ele é uma **proposta pendente de validação com a operação**: as decisões
+marcadas como abertas na seção 10 precisam de resposta registrada na #236 antes de virarem
+código. Nada aqui está implementado.
+
+## 1. Objetivo
+
+A pessoa que precisa de um material quer recebê-lo, não criar um cadastro. Exemplo: “preciso de
+10 unidades da caneta X para o centro 1200”. A solicitação de material registra essa
+necessidade e a acompanha até a entrega pelo estoque, o encaminhamento para compras ou o
+cancelamento.
+
+Cadastro, PDM, identidade, revisões técnica e fiscal, permissões e auditoria continuam como
+estão e passam a apoiar a jornada. Nenhuma regra de identidade muda: semelhança nunca autoriza
+unificação nem substituição.
+
+## 2. Conceitos
+
+| Conceito | O que é | O que não é |
+|---|---|---|
+| Solicitação de material | Necessidade de uma pessoa ou equipe: material, quantidade, unidade, centro | Não é pedido de cadastro nem compra |
+| Pedido de cadastro | Trabalho de criar ou completar a identificação de um material (fluxo existente em [pedidos.md](pedidos.md)) | Não entrega nem compra nada |
+| Reserva | Compromisso de saldo de um centro para uma solicitação | Não é saída física |
+| Entrega | Saída física confirmada de uma quantidade reservada | Não desconta saldo uma segunda vez |
+| Reversão | Movimento compensatório de uma entrega | Não apaga nem edita a entrega original |
+| Encaminhamento para compras | Demanda registrada para Compras obter uma quantidade | Não comprova pedido ao fornecedor, recebimento ou entrega |
+| Mesmo material sob outro código | Identidade comprovada pela decisão compartilhada de identidade | Equivalência técnica não basta |
+| Equivalente autorizado | Material distinto com equivalência técnica registrada e aprovada | Não é o mesmo material; saldos nunca se somam |
+
+## 3. Entidades
+
+Os nomes de tabela e campo são definidos na #237; aqui fica o conteúdo mínimo.
+
+- **Solicitação:** protocolo legível, tenant, solicitante, centro de destino, texto original,
+  material resolvido (opcional até a identificação), quantidade solicitada, unidade, estado,
+  motivo de encerramento e versão para controle otimista. Vínculos com conversa e pedido de
+  cadastro.
+- **Reserva:** solicitação, material principal, centro, quantidade, estado (`ATIVA`,
+  `CONSUMIDA`, `CANCELADA`), dataset de referência do saldo.
+- **Movimento:** reserva, tipo (`ENTREGA`, `REVERSAO`), quantidade sempre positiva,
+  referência ao movimento revertido quando houver. Movimentos são somente inserção.
+- **Encaminhamento para compras:** solicitação, material (código existente ou publicado),
+  quantidade, unidade, centro, estado (`ENCAMINHADO`, `ACEITO`, `DEVOLVIDO`, `CANCELADO`) e
+  motivo.
+
+Os snapshots de estoque importados (`material_inventory_snapshots`) nunca são alterados por
+nenhuma dessas entidades.
+
+## 4. Quantidades
+
+### 4.1 Saldo de um material em um centro
+
+| Termo | Definição |
+|---|---|
+| Saldo importado (`S`) | Soma dos snapshots do dataset vigente do tenant para o material principal no centro, seguindo as consolidações aprovadas, como a consulta de estoque atual |
+| Reservado (`R`) | Soma das reservas `ATIVA` do material no centro |
+| Saídas (`E`) | Entregas menos reversões registradas contra o mesmo dataset vigente |
+| Disponível (`D`) | `S − R − E` |
+
+Consultar `D` não cria registro algum. Reservar exige `quantidade ≤ D` no momento da
+transação. Entregar converte reserva em saída: `R` diminui e `E` aumenta na mesma quantidade,
+então `D` não muda na entrega.
+
+### 4.2 Atendimento de uma solicitação
+
+| Termo | Definição |
+|---|---|
+| Solicitado (`Q`) | Quantidade pedida, na unidade do material |
+| Reservado da solicitação (`r`) | Reservas `ATIVA` da solicitação |
+| Entregue da solicitação (`e`) | Entregas menos reversões da solicitação |
+| Encaminhado (`c`) | Encaminhamentos para compras não cancelados nem devolvidos |
+| Pendente (`p`) | `Q − r − e − c` |
+
+**Invariante:** `r + e + c ≤ Q` e `p ≥ 0` em qualquer momento e após qualquer sequência de
+operações. A mesma unidade nunca é contada em duas parcelas.
+
+### 4.3 Exemplo numérico
+
+Centro 1200, caneta X, `S = 6`, sem reservas. A solicitação pede `Q = 10`.
+
+| Passo | `D` do centro | `r` | `e` | `c` | `p` |
+|---|---|---|---|---|---|
+| Solicitação criada | 6 | 0 | 0 | 0 | 10 |
+| Reserva de 6 | 0 | 6 | 0 | 0 | 4 |
+| Encaminhamento de 4 | 0 | 6 | 0 | 4 | 0 |
+| Entrega de 6 | 0 | 0 | 6 | 4 | 0 |
+| Reversão de 1 entrega | 1 | 0 | 5 | 4 | 1 |
+
+Uma segunda solicitação no mesmo centro, durante a reserva, vê `D = 0`.
+
+### 4.4 Unidades
+
+A quantidade é registrada na unidade do material. Unidades de embalagem sem fator conhecido
+(`CX`, `CT`, `JG`) bloqueiam conversão, como no saneamento: a solicitação pede a unidade do
+material ou fica pendente de revisão.
+
+## 5. Estados da solicitação
+
+O estado descreve o processo; as quantidades da seção 4 descrevem o progresso.
+
+| Estado | Significado | Quem age |
+|---|---|---|
+| `EM_IDENTIFICACAO` | Material ainda não resolvido: identificação inconclusiva em revisão | Cadastro |
+| `AGUARDANDO_CADASTRO` | Material inexistente; pedido de cadastro vinculado em andamento | Cadastro, Fiscal |
+| `EM_ATENDIMENTO` | Material resolvido; quantidades sendo reservadas, entregues ou encaminhadas | Almoxarifado, Compras |
+| `ENCERRADA` | Sem pendência nem reserva ativa, ou cancelada; tem motivo | — |
+
+Motivos de encerramento: `ATENDIDA_ESTOQUE` (`e = Q`), `ATENDIDA_PARCIAL_COMPRAS`
+(`e > 0`, `c > 0`), `ENCAMINHADA_COMPRAS` (`e = 0`, `c = Q`), `CANCELADA`,
+`CADASTRO_REJEITADO`.
+
+| De | Para | Gatilho |
+|---|---|---|
+| (criação) | `EM_ATENDIMENTO` | Material identificado, inclusive sob outro código (código ativo) |
+| (criação) | `AGUARDANDO_CADASTRO` | Material inexistente, confirmado pelo solicitante; cria o pedido de cadastro |
+| (criação) | `EM_IDENTIFICACAO` | Identificação inconclusiva |
+| `EM_IDENTIFICACAO` | `EM_ATENDIMENTO` | Cadastro resolve para um material existente |
+| `EM_IDENTIFICACAO` | `AGUARDANDO_CADASTRO` | Cadastro conclui que o material não existe |
+| `AGUARDANDO_CADASTRO` | `EM_ATENDIMENTO` | Pedido `REGISTERED` (usa o novo código) ou `EXISTING` (usa o código ativo encontrado) |
+| `AGUARDANDO_CADASTRO` | `ENCERRADA` | Pedido `REJECTED` (`CADASTRO_REJEITADO`, com o motivo) |
+| `EM_ATENDIMENTO` | `ENCERRADA` | `p = 0` e `r = 0` |
+| qualquer não encerrado | `ENCERRADA` | Cancelamento pelo solicitante ou responsável (`CANCELADA`) |
+
+Ao cancelar, reservas ativas são canceladas e encaminhamentos `ENCAMINHADO` são cancelados.
+Entregas já feitas permanecem; revertê-las é uma operação separada. Uma solicitação encerrada
+não reabre: o solicitante cria outra.
+
+## 6. Caminhos de atendimento
+
+1. **Identificado com saldo suficiente:** reserva de `Q`, depois entrega.
+2. **Identificado sem saldo:** encaminhamento de `Q` para compras com o código existente; nenhum
+   pedido de cadastro.
+3. **Atendimento parcial:** reserva de `D` e encaminhamento de `Q − D`. Se `D` mudar entre a
+   consulta e a reserva, a divisão é recalculada na transação; nunca se reserva mais que o
+   disponível nem se encaminha uma quantidade já reservada.
+4. **Inexistente:** pedido de cadastro vinculado; após `REGISTERED`, segue para o caminho 2
+   (o material novo não tem saldo).
+5. **Inconclusivo:** revisão pelo Cadastro. O sistema não presume inexistência, não cria
+   pedido de cadastro automaticamente e não oferece substituto.
+6. **Apenas semelhante:** nunca vira o material da solicitação sem confirmação explícita do
+   solicitante. Substituição só por equivalente autorizado (#246) e com registro na solicitação.
+
+Material bloqueado ou obsoleto segue a indicação de código ativo existente; um obsoleto nunca é
+reservado nem encaminhado.
+
+## 7. Reserva, entrega, cancelamento e reversão
+
+- **Reserva:** uma transação lê `D` com bloqueio por material principal e centro, insere a
+  reserva e grava auditoria. Duas reservas concorrentes acima de `D` resultam em uma aceita e
+  outra recusada (`409`).
+- **Entrega:** consome total ou parcialmente uma reserva `ATIVA`. Parte não entregue continua
+  reservada. A reserva vira `CONSUMIDA` quando toda a quantidade foi entregue.
+- **Cancelamento de reserva:** libera apenas a quantidade reservada e não entregue.
+- **Reversão de entrega:** insere um movimento `REVERSAO` apontando a entrega, limitado à
+  quantidade ainda não revertida. Devolve a quantidade a `D` e a `p`.
+
+Todas as operações exigem `Idempotency-Key`, versão esperada da solicitação, autorização por
+ação e centro e auditoria na mesma transação, como as aprovações atuais.
+
+## 8. Encaminhamento para compras
+
+O encaminhamento leva código, quantidade, unidade, centro e solicitação de origem. Compras
+aceita ou devolve com motivo; devolver retorna a quantidade a `p`. A interface nunca o
+apresenta como compra realizada ou material recebido. Acompanhar pedido ao fornecedor e
+recebimento fica fora deste modelo (ver decisão D7).
+
+## 9. Papéis e permissões
+
+Os papéis entram na matriz existente (`security/permissions.py`), validados no servidor, com
+escopo de tenant e centro.
+
+| Ação | Solicitante | Cadastro (Governança) | Fiscal | Almoxarifado | Compras |
+|---|---|---|---|---|---|
+| Criar e acompanhar a própria solicitação | Sim | Sim | Sim | Sim | Sim |
+| Cancelar a própria solicitação | Sim | Sim | Sim | Sim | Sim |
+| Resolver identificação inconclusiva | Não | Sim | Não | Não | Não |
+| Reservar, entregar, cancelar reserva | Não | Não | Não | Sim | Não |
+| Reverter entrega | Não | Não | Não | Sim | Não |
+| Ler e tratar encaminhamentos | Não | Não | Não | Não | Sim |
+| Aprovar cadastro, NCM ou unificação | Não | Como hoje | Como hoje | Não | Não |
+
+Permissões propostas: `requests:create`, `requests:read_own`, `requests:cancel_own`,
+`requests:identify`, `stock:reserve`, `stock:deliver`, `stock:reverse`, `purchasing:read`,
+`purchasing:handle`. Papéis novos: `ROLE_ALMOXARIFADO` e `ROLE_COMPRAS` (#244).
+
+## 10. Decisões abertas com a operação
+
+Cada item precisa de resposta registrada na #236, com quem decidiu. A proposta indica o padrão
+que será implementado se a operação concordar.
+
+- [ ] **D1. Atendimento parcial:** automático (reserva o disponível e encaminha o resto) ou por
+  escolha do solicitante? *Proposta:* o solicitante escolhe entre parcial ou aguardar tudo por
+  compras; padrão parcial.
+- [ ] **D2. Expiração de reserva:** reserva expira? *Proposta:* sem expiração automática no MVP;
+  Almoxarifado cancela manualmente.
+- [ ] **D3. Quem confirma a entrega:** Almoxarifado ou o solicitante ao receber? *Proposta:*
+  Almoxarifado confirma; o solicitante só acompanha.
+- [ ] **D4. Novo dataset de estoque:** ao importar um snapshot mais recente, as saídas anteriores
+  já estão refletidas nele? *Proposta:* sim; saídas e reservas contam contra o dataset em que
+  foram criadas, e reservas ativas são revisadas na troca de dataset.
+- [ ] **D5. Janela de reversão:** há prazo para reverter uma entrega? *Proposta:* sem prazo,
+  sempre com motivo.
+- [ ] **D6. Transferência entre centros:** saldo em outro centro pode atender? *Proposta:* só
+  informativo no MVP (#251); transferência é decisão do Almoxarifado, fora deste modelo.
+- [ ] **D7. Acompanhamento de compras:** registrar pedido ao fornecedor e recebimento?
+  *Proposta:* fora do MVP; o encaminhamento termina em `ACEITO` ou `DEVOLVIDO`.
+- [ ] **D8. Quem pode cancelar:** só o solicitante, ou também Almoxarifado e Compras?
+  *Proposta:* o solicitante; responsáveis apenas devolvem a própria parcela com motivo.
+
+## 11. Invariantes para os testes
+
+Toda implementação da M7 deve manter, com testes no PostgreSQL:
+
+1. `r + e + c ≤ Q` e `p ≥ 0` após qualquer sequência de operações.
+2. `D ≥ 0` para todo material e centro, inclusive com reservas concorrentes.
+3. Consultar disponibilidade não insere registros.
+4. Entregar não altera `D`; reverter aumenta `D` exatamente na quantidade revertida.
+5. Snapshots importados e saldos originais nunca são alterados.
+6. Movimentos não são editados nem apagados; correções são novos movimentos.
+7. Toda transição tem auditoria com ator, papel efetivo, antes e depois.
+8. Repetir uma operação com a mesma `Idempotency-Key` não duplica efeito nem auditoria.
+9. Semelhança sem identidade comprovada nunca define o material da solicitação.
+
+## 12. Issues da M7
+
+| Issue | Parte deste modelo |
+|---|---|
+| #237 | Seção 3 (solicitação), estados da seção 5 |
+| #238 | Caminhos 1, 4, 5 e 6 da seção 6 a partir do chat |
+| #239 | Seções 4.1 e 7 (reserva) |
+| #240 | Seção 7 (entrega, cancelamento, reversão) |
+| #241 | Caminho 2 e seção 8 |
+| #242 | Caminho 3 e decisão D1 |
+| #243 | Transição `AGUARDANDO_CADASTRO` → `EM_ATENDIMENTO` |
+| #244 | Seção 9 |
+| #245 | Estados e quantidades visíveis ao solicitante |
+| #246 | Caminho 6, equivalentes autorizados |
+| #248 a #251 | Avisos, notificações, indicadores e decisão D6 |
