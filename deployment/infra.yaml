@@ -455,15 +455,18 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              # Sem permissao por recurso nestas acoes de leitura/registro.
               - Effect: Allow
-                Action:
-                  - ecs:DescribeServiceDeployments
-                  - ecs:DescribeServiceRevisions
-                  - ecs:DescribeTaskDefinition
-                  - ecs:ListServiceDeployments
-                  - ecs:RegisterTaskDefinition
+                Action: [ecs:DescribeTaskDefinition, ecs:RegisterTaskDefinition]
                 Resource: "*"
+              # O canario acompanha somente as implantacoes e revisoes do servico deste deploy.
+              - Effect: Allow
+                Action: ecs:ListServiceDeployments
+                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${Name}/${Name}"
+              - Effect: Allow
+                Action: ecs:DescribeServiceRevisions
+                Resource:
+                  - !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${Name}/${Name}"
+                  - !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service-revision/${Name}/${Name}/*"
               - Effect: Allow
                 Action: ecs:RunTask
                 Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${Name}-*:*"
