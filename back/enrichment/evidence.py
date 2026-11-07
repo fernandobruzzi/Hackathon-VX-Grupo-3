@@ -3,7 +3,7 @@
 import hashlib
 import json
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 
 from clients.storage import ObjectConflictError, ObjectStore
 from domain.contracts import EnrichmentClaim
@@ -58,8 +58,7 @@ def persist_document(store: ObjectStore, spec: SourceSpec, document: SourceDocum
     return metadata
 
 
-def record_evidence(
-    store: ObjectStore,
+def build_attribute_evidence(
     code: str,
     claim: EnrichmentClaim,
     spec: SourceSpec,
@@ -75,7 +74,9 @@ def record_evidence(
         or claim.excerpt not in pages[claim.page - 1]
     ):
         raise SourceError("Trecho da evidência ausente no documento")
-    body = persist_document(store, spec, document)
+    if document.source_id != spec.id:
+        raise SourceError("Identificador da fonte divergente")
+    validate_url(document.url, spec.allowed_hosts)
     basis = ("EXACT_PART_NUMBER", "EXPLICIT_CATALOG_LABEL")
     if spec.kind == "MANUFACTURER":
         level, basis = "HIGH", ("MANUFACTURER_DOMAIN", *basis)
@@ -109,13 +110,29 @@ def record_evidence(
         source_excerpt=claim.excerpt,
         source_page=claim.page,
         source_sha256=document.sha256,
-        object_key=body["object_key"],
-        retrieved_at=body["retrieved_at"],
+        object_key=f"evidence/{document.sha256}/source",
+        retrieved_at=document.retrieved_at,
         confidence_level=level,
         confidence_basis=basis,
         extraction_rule=f"{repository_name}/{claim.attribute}",
         simulated=document.simulated,
     )
+    return evidence
+
+
+def record_evidence(
+    store: ObjectStore,
+    code: str,
+    claim: EnrichmentClaim,
+    spec: SourceSpec,
+    document: SourceDocument,
+    pages: tuple[str, ...],
+    *,
+    repository_name: str = "catalog_labels_v1",
+) -> AttributeEvidence:
+    evidence = build_attribute_evidence(code, claim, spec, document, pages, repository_name=repository_name)
+    body = persist_document(store, spec, document)
+    evidence = replace(evidence, object_key=body["object_key"], retrieved_at=body["retrieved_at"])
     data = json.dumps(asdict(evidence), sort_keys=True, ensure_ascii=False).encode()
     digest = hashlib.sha256(data).hexdigest()
     store.put_if_absent(f"evidence/{evidence.id}/{digest}.json", data)

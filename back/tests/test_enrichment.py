@@ -387,3 +387,19 @@ def test_compressed_pdf_stops_at_decoding_budget_before_assembling_page(array):
         document_pages(document)
     assert isinstance(error.value.__cause__, LimitReachedError)
     assert get_configuration() == configuration
+
+
+def test_readonly_evidence_builder_matches_the_persisted_producer():
+    from enrichment import evidence as module
+
+    builder = getattr(module, "build_attribute_evidence", None)
+    assert builder is not None, "O preview deve reutilizar validação, confiança e identidade do produtor"
+    document = simulated_document(LF9009)
+    pages = document_pages(document)
+    claim = EnrichmentClaim("ALTURA", "300MM", "Height 300 mm", 1)
+    preview = builder("16031971", claim, LF9009, document, pages)
+    store = MemoryStore()
+    assert store.objects == {}
+    persisted = record_evidence(store, "16031971", claim, LF9009, document, pages)
+    assert preview == persisted
+    assert store.objects

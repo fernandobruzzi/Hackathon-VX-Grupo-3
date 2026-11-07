@@ -18,7 +18,7 @@ from vx_materials_mcp.security import caller_from_environment
 from vx_materials_mcp.tools import check_ncm_consistency as check_ncm_consistency_tool
 from vx_materials_mcp.tools import get_pdm_template as get_pdm_template_tool
 from vx_materials_mcp.tools import validate_and_format_pdm as validate_and_format_pdm_tool
-from vx_materials_mcp.tools.enrich_from_trusted_source import Enrichment, EnrichmentResult
+from vx_materials_mcp.tools.enrich_from_trusted_source import Enrichment, EnrichmentResult, TrustedSourceResearch
 from vx_materials_mcp.tools.search_similar_materials import SimilarMaterialsSearch
 
 PDM_PATH_VARIABLE = "PDM_WORKBOOK_PATH"
@@ -87,16 +87,16 @@ def build_server(
         )
 
     resources = resources or ResourceRepository(None, None)
-    enrichment = Enrichment(resources)
+    enrichment = Enrichment(resources, TrustedSourceResearch(catalog))
 
-    @server.tool(annotations=_READ_ONLY)
+    @server.tool(annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=True))
     def enrich_from_trusted_source(
         material_code: str, attributes_requested: list[str], refresh: bool = False
     ) -> EnrichmentResult:
-        """Consulta evidências em cache dos 15 produtos reais autorizados pelo manifesto do servidor.
+        """Consulta cache e fontes revisadas dos 15 produtos reais autorizados pelo manifesto vigente.
 
-        Pesquisa externa indisponível retorna PENDING explicitamente, preservando o cache.
-        Evidência é proposta e não publica atributos nem autoriza aprovação.
+        Pesquisa sem evidência ou com prazo excedido retorna PENDING, preservando o cache.
+        Preview não persistido é proposta; não publica atributos nem autoriza aprovação.
         """
         try:
             return enrichment.run(material_code, attributes_requested, refresh)
