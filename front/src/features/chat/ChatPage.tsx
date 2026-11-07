@@ -310,10 +310,12 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               id="center"
               value={center}
               onChange={(e) => setCenter(e.target.value)}
-              className="h-9 w-28 text-sm"
+              className="h-9 w-full text-sm sm:w-80"
             >
               {me?.scope.center_codes.map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {me.scope.center_names?.[c] || c}
+                </option>
               ))}
             </Select>
             {selected && (

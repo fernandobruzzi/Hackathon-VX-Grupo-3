@@ -58,6 +58,29 @@ const feedback = (view: ReactTestRenderer) =>
   view.root.findByProps({ role: "status" }).children.join("");
 const copyButton = (view: ReactTestRenderer) => view.root.findByType("button");
 
+test("estoque mostra apenas o nome do centro e usa código quando o nome falta", async () => {
+  const card = cardFor("00001234");
+  card.existing!.inventory = [
+    { center_code: "1200", center_name: "USINA DE BENEFICIAMENTO", quantity: "4", unit: "PC" },
+    { center_code: "0010", center_name: null, quantity: "2", unit: "PC" },
+  ];
+  let view!: ReactTestRenderer;
+  try {
+    await act(async () => {
+      view = create(React.createElement(MaterialCard, { card }));
+    });
+    const text = view.root
+      .findAllByType("p")
+      .map((p) => p.children.join(""))
+      .join(" ");
+    assert.match(text, /USINA DE BENEFICIAMENTO · 4 PC/);
+    assert.doesNotMatch(text, /1200/);
+    assert.match(text, /0010 · 2 PC/);
+  } finally {
+    await act(async () => view?.unmount());
+  }
+});
+
 test("copia somente o código ativo com zeros e confirma apenas depois da resolução", async () => {
   const values: string[] = [];
   let finish!: () => void;

@@ -179,7 +179,7 @@ export function MaterialsPage() {
                     {m.inventory.length ? (
                       m.inventory.map((i) => (
                         <Code key={`${i.center_code}-${i.unit}`} className="block">
-                          {i.center_code}: {i.quantity} {i.unit}
+                          {i.center_name || i.center_code}: {i.quantity} {i.unit}
                         </Code>
                       ))
                     ) : (

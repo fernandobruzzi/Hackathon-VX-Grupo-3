@@ -51,14 +51,24 @@ def kit(engines):
                 {"t": tenant, "at": imported_at},
             ).scalar_one()
 
-        def stock(dataset_id, material_id, center, quantity, line, unit="PC"):
+        def stock(dataset_id, material_id, center, quantity, line, unit="PC", name=None):
             return db.execute(
                 text(
-                    "INSERT INTO material_inventory_snapshots (tenant_id, dataset_id, material_id, center_code, "
+                    "INSERT INTO material_inventory_snapshots "
+                    "(tenant_id, dataset_id, material_id, center_code, center_name, "
                     "quantity, unit, unit_price, total_value, source_line) "
-                    "VALUES (:t, :d, :m, :c, :q, :u, 10, 999, :l) RETURNING id"
+                    "VALUES (:t, :d, :m, :c, :name, :q, :u, 10, 999, :l) RETURNING id"
                 ),
-                {"t": tenant, "d": dataset_id, "m": material_id, "c": center, "q": quantity, "u": unit, "l": line},
+                {
+                    "t": tenant,
+                    "d": dataset_id,
+                    "m": material_id,
+                    "c": center,
+                    "name": name,
+                    "q": quantity,
+                    "u": unit,
+                    "l": line,
+                },
             ).scalar_one()
 
         def proposal(kind, material_ids, status="PENDING"):
@@ -78,8 +88,8 @@ def kit(engines):
         old = dataset("2026-01-01T00:00:00Z")
         new = dataset("2026-02-01T00:00:00Z")
         stock(old, valve, "1100", "500", 1)
-        stock(new, valve, "1100", "6", 1)
-        stock(new, valve, "1100", "1.50", 2)
+        stock(new, valve, "1100", "6", 1, name="MINA NORTE")
+        stock(new, valve, "1100", "1.50", 2, name="MINA NORTE")
         stock(new, valve, "9000", "40", 3)  # fora do escopo do usuário de teste
         consolidated = stock(new, blocked, "1200", "2", 4, unit="CX")
         stock(new, twin, "1200", "3", 5)
@@ -144,22 +154,37 @@ def test_inventory_respects_user_centers_latest_dataset_and_consolidations(engin
     assert items["10293847"]["description"] == "VALVULA ESFERA 2POL INOX 316 ROSCA NPT"
     assert items["10500000"]["description"] == "VALVULA ESFERA 2POL ANTIGA"
     assert items["10293847"]["inventory"] == [
-        {"center_code": "1100", "quantity": "7.5", "unit": "PC"},
-        {"center_code": "1200", "quantity": "20", "unit": "PC"},
+        {"center_code": "1100", "center_name": "MINA NORTE", "quantity": "7.5", "unit": "PC"},
+        {"center_code": "1200", "center_name": None, "quantity": "20", "unit": "PC"},
     ]
     assert items["10500000"]["inventory"] == []
-    assert items["10293848"]["inventory"] == [{"center_code": "1200", "quantity": "3", "unit": "PC"}]
+    assert items["10293848"]["inventory"] == [
+        {"center_code": "1200", "center_name": None, "quantity": "3", "unit": "PC"}
+    ]
 
     only_1200 = by_code(search(client(engines, kit, centers=("1200",)), q="valvula"))
     assert [row["center_code"] for row in only_1200["10293847"]["inventory"]] == ["1200"]
     assert by_code(search(client(engines, kit, centers=()), q="valvula"))["10293847"]["inventory"] == []
 
 
+def test_session_exposes_only_authorized_center_names(engines, kit):
+    response = client(engines, kit, centers=("1100", "1200")).get("/api/v1/auth/me")
+    assert response.status_code == 200
+    assert response.json()["scope"] == {
+        "center_codes": ["1100", "1200"],
+        "center_names": {"1100": "MINA NORTE"},
+    }
+    assert client(engines, kit, centers=("1200",)).get("/api/v1/auth/me").json()["scope"] == {
+        "center_codes": ["1200"],
+        "center_names": {},
+    }
+
+
 def test_financial_role_still_gets_no_price_or_value(engines, kit):
     body = search(client(engines, kit, role="ROLE_AUDITOR_FISCAL", centers=("1100", "9000")), q="10293847")
     rows = body["items"][0]["inventory"]
     assert [row["center_code"] for row in rows] == ["1100", "9000"]
-    assert all(set(row) == {"center_code", "quantity", "unit"} for row in rows)
+    assert all(set(row) == {"center_code", "center_name", "quantity", "unit"} for row in rows)
 
 
 def test_flags_come_from_master_data_and_pending_proposals(engines, kit):

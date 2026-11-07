@@ -25,9 +25,13 @@ def test_legacy_proposals_become_stale_with_a_system_audit(connection):
         )
     )
     migration = importlib.import_module("vx_materials_api.db.migrations.versions.0005_inventory_consolidation")
+    centers = importlib.import_module("vx_materials_api.db.migrations.versions.0019_center_names")
     with Operations.context(MigrationContext.configure(connection)):
+        # A migração histórica precede a coluna de nome nas views de estoque.
+        centers.downgrade()
         migration.downgrade()
         migration.upgrade()
+        centers.upgrade()
     row = (
         connection.execute(select(SanitizationProposal).where(SanitizationProposal.id == proposal_id)).mappings().one()
     )

@@ -737,6 +737,10 @@ export interface components {
       permissions: components["schemas"]["Permission"][];
       scope: {
         center_codes: string[];
+        /** @description Nomes dos centros autorizados no dataset vigente, indexados pelo código. Ausentes ou contraditórios usam o código na interface. */
+        center_names?: {
+          [key: string]: string;
+        };
       };
       demo: {
         enabled: boolean;
@@ -775,6 +779,8 @@ export interface components {
       center_code: string;
       quantity: components["schemas"]["Decimal"];
       unit: string;
+      /** @description Nome do centro preservado na origem, quando disponível. */
+      center_name?: string | null;
     };
     ExistingMatch: {
       material_code: string;

@@ -45,7 +45,7 @@ export function MaterialCard({
             </p>
             {card.existing.inventory.map((i) => (
               <p key={i.center_code} className="font-mono text-sm">
-                Centro {i.center_code} · {i.quantity} {i.unit}
+                {i.center_name || i.center_code} · {i.quantity} {i.unit}
               </p>
             ))}
           </div>

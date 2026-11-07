@@ -37,6 +37,7 @@ class InventoryRow(_Contract):
     """Estoque autorizado. Preço e valor não entram na ficha, mesmo para quem pode vê-los."""
 
     center_code: str
+    center_name: str | None = None
     quantity: str
     unit: str
 
