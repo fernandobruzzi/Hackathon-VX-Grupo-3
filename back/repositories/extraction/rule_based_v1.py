@@ -260,21 +260,21 @@ class _Extraction:
         return False
 
 
-def _has_metric_gauge_evidence(work: "_Extraction", evidence: str, gauge: str) -> bool:
-    """Exige uma ocorrência física da bitola; REF/PN/MODELO não autorizam completar ROSCA."""
-    if not gauge.startswith("M"):
-        return False
+def _is_reference_context(work: _Extraction, prefix: str) -> bool:
+    """O último rótulo no segmento identifica a origem de uma ocorrência métrica."""
     reference_labels = _REFERENCE_LABELS | {"MODELO"}
     labels = sorted(reference_labels | KEY_ALIASES.keys() | work.by_name.keys(), key=len, reverse=True)
     pattern = re.compile(r"(?<![\w./\-])(" + "|".join(map(re.escape, labels)) + r")(?:\s*:\s*|\s+)")
-    for segment in _SEGMENTS.split(evidence):
-        for match in _POOL_METRIC.finditer(segment):
-            if f"M{match[1]}" != gauge.split("X", 1)[0]:
-                continue
-            preceding_labels = list(pattern.finditer(segment[: match.start()]))
-            if not preceding_labels or preceding_labels[-1][1] not in reference_labels:
-                return True
-    return False
+    preceding_labels = list(pattern.finditer(_SEGMENTS.split(prefix)[-1]))
+    return bool(preceding_labels and preceding_labels[-1][1] in reference_labels)
+
+
+def _has_metric_gauge_evidence(work: _Extraction, evidence: str, gauge: str) -> bool:
+    """Exige uma ocorrência física da bitola; REF/PN/MODELO não autorizam completar ROSCA."""
+    return gauge.startswith("M") and any(
+        f"M{match[1]}" == gauge.split("X", 1)[0] and not _is_reference_context(work, evidence[: match.start()])
+        for match in _POOL_METRIC.finditer(evidence)
+    )
 
 
 class RuleBasedV1ExtractionRepository:
@@ -378,6 +378,9 @@ class RuleBasedV1ExtractionRepository:
                 free = [tail] if tail else []
                 if key and work.fit_labeled(key, value):
                     return free
+                if value and key in _REFERENCE_LABELS | {"MODELO"}:
+                    # Manter a origem no pool impede que um código M12 vire medida física.
+                    value = segment.rstrip().removesuffix(tail).rstrip()
                 return [value, *free] if value else free
         labels = sorted({*KEY_ALIASES, *work.by_name}, key=len, reverse=True)
         spans = []
@@ -453,6 +456,8 @@ class RuleBasedV1ExtractionRepository:
             if attribute is None or name in work.found or not attribute.allowed_values:
                 continue
             for match in _POOL_METRIC.finditer(pool):
+                if _is_reference_context(work, pool[: match.start()]):
+                    continue
                 thread = f"M{match[1]}"
                 pitch = f"{thread}X{match[2].replace('.', ',')}" if match[2] else None
                 if pitch and pitch in attribute.allowed_values:
