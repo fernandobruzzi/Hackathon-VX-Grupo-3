@@ -236,7 +236,9 @@ Compose flow still require execution with the RDS certificate endpoint available
 published ports bind to loopback. CI also checks branch/commit policy and runs the
 installed migration command twice. An update to the same promotion PR cancels
 the older CI run, so the CI workflow must never deploy or migrate anything outside the
-runner; real deploys keep their own S3 lock. Operational limits, authenticated smoke usage
+runner. Deploys run only in `.github/workflows/deploy.yml`, on pushes to `main` or by
+manual dispatch from `main`, in their own concurrency group that is never cancelled,
+with the S3 deploy lock and an AWS role assumed through GitHub OIDC (#277). Operational limits, authenticated smoke usage
 and required GitHub admin settings are in [`docs/devops.md`](docs/devops.md).
 
 AWS preparation runs offline without credentials by default:
@@ -402,8 +404,9 @@ Never force-push `main` or a branch someone else is using.
 1. Freeze `homologacao`: ask the team not to merge into it until the promotion lands.
 2. Run the local checks on `homologacao` itself, including the database-backed suites, and `scripts/smoke_test.sh --mode flow` against a fresh `docker compose up --build`.
 3. Open the PR: `gh pr create --base main --head homologacao`, listing the issues it delivers.
-4. When the eight checks are green and the base is current, rebase-merge it. `homologacao` is protected from deletion, so it stays.
-5. Synchronize: the promoted commits get new hashes on `main`, so an administrator rebases `homologacao` onto `main` and force-pushes it. Commits already promoted drop out and later work is kept:
+4. When the eight checks are green and the base is current, rebase-merge it. `homologacao` is protected from deletion, so it stays. GitHub rebase-merges at most 100 commits: a larger promotion needs an administrator to fast-forward `main` to the tested `homologacao` commit instead, which keeps the hashes and makes step 5 unnecessary.
+5. The push to `main` starts the `Deploy` workflow, which publishes that commit to AWS. Follow the run and confirm the public origin and release in its summary; a failed run keeps the deploy lock, handled as in the runbook.
+6. Synchronize: the promoted commits get new hashes on `main`, so an administrator rebases `homologacao` onto `main` and force-pushes it. Commits already promoted drop out and later work is kept:
 
    ```bash
    git fetch origin && git switch homologacao && git reset --hard origin/homologacao
@@ -411,7 +414,7 @@ Never force-push `main` or a branch someone else is using.
    git push --force-with-lease=homologacao:<previous-homologacao-sha> origin homologacao
    ```
 
-6. Unfreeze `homologacao` and tell the team to rebase open work branches on it.
+7. Unfreeze `homologacao` and tell the team to rebase open work branches on it.
 
 ### After merging
 
