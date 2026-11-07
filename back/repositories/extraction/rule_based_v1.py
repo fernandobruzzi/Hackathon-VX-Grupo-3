@@ -79,13 +79,18 @@ _REFERENCE_LABELS = frozenset(
         "REF",
         "REFERENCIA",
         "REF FABRICANTE",
+        "REF DO FABRICANTE",
         "REFERENCIA FABRICANTE",
+        "REFERENCIA DO FABRICANTE",
         "PN",
         "P/N",
         "PART NUMBER",
         "COD",
         "COD FABRICANTE",
+        "COD DO FABRICANTE",
         "CODIGO",
+        "CODIGO FABRICANTE",
+        "CODIGO DO FABRICANTE",
     }
 )
 _REFERENCE_TAIL = re.compile(r"((?:\s+[A-Z][A-Z]{2,})+)$")
@@ -358,7 +363,7 @@ class RuleBasedV1ExtractionRepository:
         if ":" in segment:
             key, _, value = segment.partition(":")
             key, value = key.strip(), _CONNECTOR.sub("", value.strip())
-            labels = {*KEY_ALIASES, *work.by_name}
+            labels = {*KEY_ALIASES, *work.by_name, *_REFERENCE_LABELS}
             suffix = next(
                 (
                     label
@@ -382,7 +387,7 @@ class RuleBasedV1ExtractionRepository:
                     # Manter a origem no pool impede que um código M12 vire medida física.
                     value = segment.rstrip().removesuffix(tail).rstrip()
                 return [value, *free] if value else free
-        labels = sorted({*KEY_ALIASES, *work.by_name}, key=len, reverse=True)
+        labels = sorted({*KEY_ALIASES, *work.by_name, *_REFERENCE_LABELS}, key=len, reverse=True)
         spans = []
         for label in labels:
             guard = r"(?=\s*:)" if label in COLON_ONLY_KEYS else ""
