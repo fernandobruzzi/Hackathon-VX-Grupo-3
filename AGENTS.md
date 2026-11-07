@@ -554,8 +554,9 @@ unit and destination center, followed until delivery from stock, a purchasing re
 cancellation. Read [`docs/solicitacao-material.md`](docs/solicitacao-material.md) before
 working on #237 to #251. It defines quantities and invariants (reserved + delivered + referred
 never exceeds the request; delivery never deducts stock twice; imported snapshots never
-change), states, roles and the decisions still open with operations. Until #236 records those
-decisions, the document is a proposal and nothing in it is implemented.
+change), states and roles. Decisions D1–D8 were approved by the operational owner and recorded
+on #236. Follow that approved model for dependent issues; the document itself does not
+implement requests or stock movements.
 
 ## Chat order submission
 
