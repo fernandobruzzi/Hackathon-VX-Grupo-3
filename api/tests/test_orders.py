@@ -1,5 +1,6 @@
 """Pedidos de cadastro com sessão local real e banco real (#24)."""
 
+import copy
 import uuid
 from pathlib import Path
 
@@ -1311,3 +1312,48 @@ def test_published_supplement_evidence_remains_in_current_index_identity_lookup(
     state, candidates, reasons = _evaluate(db, TENANT_ID, catalog, plain, version)
     assert state == "READY_FOR_REVIEW" and candidates == [str(published.id)]
     assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in value for value in reasons)
+
+
+def test_legacy_registered_fiscal_assessment_is_projected_without_rewriting_history(imported):
+    from test_contracts import validator
+
+    client, db, _, _, _ = imported
+    row = next(
+        row
+        for row in read_orders((KIT / "02_pedidos_cadastro.csv").read_bytes())
+        if row.source_order_id == "SC-202600004"
+    )
+    import_orders(db, TENANT_ID, client.app.state.pdm_catalog, [row])
+    order = db.scalar(select(RegistrationOrder).where(RegistrationOrder.source_order_id == row.source_order_id))
+    assert decide(client, login(client, "GESTOR_CADASTRO"), order.id, 1).status_code == 200
+    assert decide(client, login(client, "AUDITOR_FISCAL"), order.id, 2).status_code == 200
+    db.refresh(order)
+    assert order.status == "REGISTERED"
+    history = copy.deepcopy(order.review_data)
+    assessment = history["fiscal"]["assessment"]
+    fields = ("ncm_version", "ncm_source_sha256", "ncm_snapshot_date", "ncm_source_kind")
+    for field in fields:
+        assessment.pop(field)
+    assessment["rules_version"] = "pdm-ncm-v1"
+    assessment["evaluation_hash"] = "1" * 64  # Hash histórico da fixture; não recalcular na leitura.
+    order.review_data = history
+    db.commit()
+    original_history = copy.deepcopy(order.review_data)
+    original_audit = {
+        event.id: copy.deepcopy(event.after_json)
+        for event in db.scalars(select(AuditLog).where(AuditLog.entity_id == str(order.id)))
+    }
+    response = client.get(f"{PATH}/{order.id}")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    validator({"$ref": "#/components/schemas/OrderReview"}).validate(body)
+    projected = body["fiscal_decision"]["assessment"]
+    assert all(projected[field] is None for field in fields)
+    assert projected["rules_version"] == "pdm-ncm-v1"
+    assert projected["evaluation_hash"] == assessment["evaluation_hash"]
+    assert body["review_data"] == original_history
+    db.expire_all()
+    assert order.review_data == original_history
+    assert {
+        event.id: event.after_json for event in db.scalars(select(AuditLog).where(AuditLog.entity_id == str(order.id)))
+    } == original_audit
