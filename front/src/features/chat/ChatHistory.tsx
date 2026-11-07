@@ -86,7 +86,7 @@ export function ChatHistory({
                 className={cn(
                   "w-full rounded-md px-3 py-3 text-left text-sm ring-1 transition-colors ring-inset",
                   item.id === selected
-                    ? "bg-apoio ring-verde"
+                    ? "bg-surface ring-verde"
                     : "bg-ink ring-surface-2 hover:ring-verde",
                 )}
               >
