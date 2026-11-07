@@ -66,6 +66,30 @@ class DeployWorkflowTests(unittest.TestCase):
                         grants[action].update([resources] if isinstance(resources, str) else resources)
         self.assertEqual(grants, expected)
 
+    def test_oidc_trust_accepts_the_immutable_repository_subject_for_main(self):
+        template = yaml.load((ROOT / "deployment" / "infra.yaml").read_text(), Loader=yaml.BaseLoader)
+        repository_pattern = template["Parameters"]["GitHubRepository"]["AllowedPattern"]
+        for repository in ("", "owner/repo", "owner@123456/repo@456789"):
+            with self.subTest(repository=repository):
+                self.assertIsNotNone(re.fullmatch(repository_pattern, repository))
+        for repository in ("owner@123456/repo", "owner/repo@456789", "owner/*", "owner/repo:pull_request"):
+            with self.subTest(repository=repository):
+                self.assertIsNone(re.fullmatch(repository_pattern, repository))
+
+        role = template["Resources"]["GitHubDeployRole"]["Properties"]
+        (trust,) = role["AssumeRolePolicyDocument"]["Statement"]
+        self.assertEqual(trust["Principal"], {"Federated": "GitHubOidcProvider"})
+        self.assertEqual(trust["Action"], "sts:AssumeRoleWithWebIdentity")
+        self.assertEqual(
+            trust["Condition"],
+            {
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                    "token.actions.githubusercontent.com:sub": "repo:${GitHubRepository}:ref:refs/heads/main",
+                }
+            },
+        )
+
     def config(self):
         return json.loads(EXAMPLE.read_text())
 
