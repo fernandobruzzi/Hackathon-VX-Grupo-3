@@ -128,6 +128,19 @@ def test_stock_points_to_its_source_line(loaded):
     assert all(line[0] == line[3] and line[2].isdigit() for line in lines)
 
 
+def test_center_names_preserve_the_original(loaded):
+    _, _, _, admin = loaded
+    assert scalar(admin, "SELECT count(*) FROM material_inventory_snapshots WHERE center_name IS NULL") == 0
+    assert (
+        scalar(
+            admin,
+            "SELECT count(*) FROM material_inventory_snapshots "
+            "WHERE center_code || ' - ' || center_name <> raw_record->>'CENTRO'",
+        )
+        == 0
+    )
+
+
 def test_redirects_are_linked_or_left_for_review(loaded):
     first, _, _, admin = loaded
     assert sum(first.redirects.values()) == 234

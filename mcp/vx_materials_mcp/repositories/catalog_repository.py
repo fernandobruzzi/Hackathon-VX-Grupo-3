@@ -128,7 +128,7 @@ class CatalogRepository:
             return {}
         extra = ", unit_price, total_value" if view == INVENTORY_FINANCIAL_VIEW else ""
         query = text(
-            f"SELECT material_id::text AS material_id, center_code, quantity, unit{extra} FROM {view} "
+            f"SELECT material_id::text AS material_id, center_code, center_name, quantity, unit{extra} FROM {view} "
             "WHERE tenant_id = CAST(:tenant_id AS uuid) AND material_id::text IN :ids "
             "AND center_code IN :centers ORDER BY center_code"
         ).bindparams(bindparam("ids", expanding=True), bindparam("centers", expanding=True))
@@ -138,6 +138,7 @@ class CatalogRepository:
             params = {"tenant_id": self._tenant_id, "ids": material_ids, "centers": sorted(center_codes)}
             for row in connection.execute(query, params).mappings():
                 item = {"center_code": row["center_code"], "quantity": str(row["quantity"]), "unit": row["unit"]}
+                item["center_name"] = row["center_name"]
                 if extra:
                     item |= {"unit_price": str(row["unit_price"]), "total_value": str(row["total_value"])}
                 result.setdefault(row["material_id"], []).append(item)

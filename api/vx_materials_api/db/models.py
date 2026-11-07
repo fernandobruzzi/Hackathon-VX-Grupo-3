@@ -230,6 +230,7 @@ class MaterialInventorySnapshot(Base):
     dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id"), nullable=False)
     material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
     center_code: Mapped[str] = mapped_column(Text, nullable=False)
+    center_name: Mapped[str | None] = mapped_column(Text)
     quantity: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     unit: Mapped[str | None] = mapped_column(Text)
     unit_price: Mapped[Decimal | None] = mapped_column(Numeric)

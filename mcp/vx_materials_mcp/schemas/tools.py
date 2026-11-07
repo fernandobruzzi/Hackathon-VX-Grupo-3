@@ -65,6 +65,7 @@ class PdmValidation(_Contract):
 
 class InventoryItem(BaseModel):
     center_code: str
+    center_name: str | None = None
     quantity: str
     unit: str | None
     unit_price: str | None = None

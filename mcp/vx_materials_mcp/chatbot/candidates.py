@@ -102,7 +102,12 @@ def existing_from(item: dict[str, Any], reason: str | None = None) -> ExistingMa
         match_type=item["match_type"],
         reason=reason,
         inventory=[
-            InventoryRow(center_code=row["center_code"], quantity=row["quantity"], unit=row["unit"] or "")
+            InventoryRow(
+                center_code=row["center_code"],
+                center_name=row.get("center_name"),
+                quantity=row["quantity"],
+                unit=row["unit"] or "",
+            )
             for row in item["inventory"]
         ],
     )

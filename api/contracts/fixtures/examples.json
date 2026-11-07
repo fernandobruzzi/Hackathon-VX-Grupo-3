@@ -52,7 +52,15 @@
           "2100",
           "2200",
           "9000"
-        ]
+        ],
+        "center_names": {
+          "1100": "MINA SERRA AZUL",
+          "1200": "USINA DE BENEFICIAMENTO",
+          "1300": "TERMINAL PORTUARIO",
+          "2100": "UTE SERRA AZUL",
+          "2200": "PCH RIO CLARO",
+          "9000": "CD CENTRAL"
+        }
       },
       "demo": {
         "enabled": true,
@@ -93,7 +101,15 @@
           "2100",
           "2200",
           "9000"
-        ]
+        ],
+        "center_names": {
+          "1100": "MINA SERRA AZUL",
+          "1200": "USINA DE BENEFICIAMENTO",
+          "1300": "TERMINAL PORTUARIO",
+          "2100": "UTE SERRA AZUL",
+          "2200": "PCH RIO CLARO",
+          "9000": "CD CENTRAL"
+        }
       },
       "demo": {
         "enabled": true,
@@ -367,7 +383,8 @@
             {
               "center_code": "1200",
               "quantity": "40",
-              "unit": "PC"
+              "unit": "PC",
+              "center_name": "USINA DE BENEFICIAMENTO"
             }
           ]
         }
@@ -1163,7 +1180,8 @@
             {
               "center_code": "1100",
               "quantity": "6",
-              "unit": "PC"
+              "unit": "PC",
+              "center_name": null
             }
           ],
           "flags": [
@@ -1556,7 +1574,15 @@
           "2100",
           "2200",
           "9000"
-        ]
+        ],
+        "center_names": {
+          "1100": "MINA SERRA AZUL",
+          "1200": "USINA DE BENEFICIAMENTO",
+          "1300": "TERMINAL PORTUARIO",
+          "2100": "UTE SERRA AZUL",
+          "2200": "PCH RIO CLARO",
+          "9000": "CD CENTRAL"
+        }
       },
       "demo": {
         "enabled": true,

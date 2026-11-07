@@ -145,6 +145,7 @@ def _inventory(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, l
         select(
             owner.label("material_id"),
             MaterialInventorySnapshot.center_code,
+            MaterialInventorySnapshot.center_name,
             MaterialInventorySnapshot.quantity,
             MaterialInventorySnapshot.unit,
             InventoryConsolidation.factor,
@@ -165,14 +166,25 @@ def _inventory(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, l
         )
     ).all()
     grouped: dict[tuple[UUID, str, str], Decimal] = defaultdict(lambda: Decimal(0))
+    names: dict[tuple[UUID, str, str], set[str]] = defaultdict(set)
     for row in rows:
         quantity = exact_product(row.quantity, row.factor) if row.factor is not None else row.quantity
         unit = row.consolidated_unit or row.unit or ""
         key = (row.material_id, row.center_code, unit)
+        if row.center_name:
+            names[key].add(row.center_name)
         grouped[key] = exact_sum(grouped[key], quantity)
     result: dict[UUID, list[InventoryRow]] = defaultdict(list)
     for (material_id, center, unit), quantity in sorted(grouped.items(), key=lambda item: (item[0][1], item[0][2])):
-        result[material_id].append(InventoryRow(center_code=center, quantity=_quantity(quantity), unit=unit))
+        labels = names[(material_id, center, unit)]
+        result[material_id].append(
+            InventoryRow(
+                center_code=center,
+                center_name=next(iter(labels)) if len(labels) == 1 else None,
+                quantity=_quantity(quantity),
+                unit=unit,
+            )
+        )
     return result
 
 

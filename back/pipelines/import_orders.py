@@ -9,6 +9,7 @@ import csv
 import io
 from dataclasses import dataclass, field
 
+from domain.centers import split_center
 from domain.contracts import ClassificationInput, ClassificationRepository, ExtractionRepository, PdmCatalog
 from domain.identity import resolve_item_name
 from domain.pdm_validator import validate_pdm
@@ -47,7 +48,7 @@ def read_orders(content: bytes) -> list[OrderRow]:
             source_order_id=row["ID_PEDIDO"],
             original_text=row["TEXTO_SOLICITACAO"],
             attachment_text=(row.get("CONTEUDO_ANEXO") or "").strip() or None,
-            center_code=(row.get("CENTRO") or "").split(" - ", 1)[0].strip() or None,
+            center_code=split_center(row.get("CENTRO"))[0] or None,
             urgency=(row.get("URGENCIA") or "").strip() or None,
         )
         for row in rows

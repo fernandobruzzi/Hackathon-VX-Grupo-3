@@ -186,7 +186,8 @@ def test_existing_item_is_shown_with_authorized_stock(db_client):
     assert card["existing"]["material_code"] == "16031971"
     assert card["can_submit"] is False
     assert {row["center_code"] for row in card["existing"]["inventory"]} <= {"1100", "1200"}
-    assert all(set(row) == {"center_code", "quantity", "unit"} for row in card["existing"]["inventory"])
+    assert all(set(row) == {"center_code", "center_name", "quantity", "unit"} for row in card["existing"]["inventory"])
+    assert all(row["center_name"] for row in card["existing"]["inventory"])
     assert "16031971" in body["assistant_message"]
 
 
