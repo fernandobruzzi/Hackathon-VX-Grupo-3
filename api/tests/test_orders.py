@@ -637,6 +637,8 @@ def test_complement_replay_rechecks_current_access(imported, revoked):
     db.refresh(order)
     assert order.version == 2 and len(order.supplements) == 1
     assert db.scalar(select(func.count()).select_from(AuditLog)) == count
+
+
 def test_review_exposes_technical_card_and_unknown_official_ncm_status(imported):
     client, db, _, _, orders = imported
     order = orders["SC-202600010"]
@@ -813,3 +815,22 @@ def test_governance_can_recover_legacy_pending_fiscal_orders(imported):
         ).status_code
         == 409
     )
+
+
+def test_order_review_and_reopened_result_preserve_current_actor_complement_permission(imported):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    me = login(client, "GESTOR_CADASTRO")
+    detail = client.get(f"{PATH}/{order.id}")
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["order"]["can_complement"] is True
+    order.status = "PENDING_FISCAL"
+    db.commit()
+    reopened = client.post(
+        f"{PATH}/{order.id}/reopen-technical-review",
+        json={"expected_version": 1, "reason": "Ficha incompleta precisa de complemento"},
+        headers=headers(me),
+    )
+    assert reopened.status_code == 200, reopened.text
+    assert reopened.json()["status"] == "INCOMPLETE"
+    assert reopened.json()["can_complement"] is True

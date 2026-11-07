@@ -110,3 +110,72 @@ for (const flow of ["technical", "fiscal", "reopen"] as const) {
     }
   });
 }
+
+for (const current of [true, false]) {
+  test(`permissões técnica e fiscal juntas preservam as ações com ficha atual=${current}`, async () => {
+    const previousFetch = globalThis.fetch;
+    const detail = structuredClone(
+      fixtures.find((row: { name: string }) => row.name === "order-review").response,
+    );
+    detail.order.status = "PENDING_FISCAL";
+    detail.technical_review_current = current;
+    const me = meFor("AUDITOR_FISCAL");
+    const governance = meFor("GESTOR_CADASTRO");
+    me.user.roles.push(...governance.user.roles);
+    me.permissions = [...new Set([...me.permissions, ...governance.permissions])];
+    const posts: { path: string; body: Record<string, unknown> }[] = [];
+    globalThis.fetch = async (url, init) => {
+      if (String(url).endsWith("/auth/config")) return Response.json({ mode: "local" });
+      if (String(url).endsWith("/auth/me")) return Response.json(me);
+      if (init?.method !== "POST") return Response.json(detail);
+      posts.push({ path: String(url), body: JSON.parse(String(init.body)) });
+      return Response.json(detail.order);
+    };
+    let view!: ReactTestRenderer;
+    try {
+      await act(async () => {
+        view = create(
+          React.createElement(
+            AuthProvider,
+            null,
+            React.createElement(OrderReviewPanel, {
+              id: detail.order.id,
+              onClose: () => {},
+              onDecided: () => {},
+            }),
+          ),
+        );
+      });
+      await act(async () => {
+        view.root.findByType("textarea").props.onChange({ target: { value: "Ficha conferida" } });
+        view.root.findByType("select").props.onChange({
+          target: { value: detail.ncm_assessment.suggested_ncm_codes[0] },
+        });
+        view.root.findByType("input").props.onChange({ target: { value: "Fabricante" } });
+      });
+      const button = (label: string) =>
+        view.root.findAllByType("button").find((node) => node.children.includes(label));
+      const publish = button("Aprovar NCM e publicar");
+      const reject = button("Rejeitar pedido");
+      const reopen = button("Reavaliar e devolver à revisão técnica");
+      assert.ok(publish, "Permissão fiscal deve oferecer publicação junto à reavaliação técnica");
+      assert.ok(reject, "Permissão fiscal deve oferecer rejeição");
+      assert.ok(reopen, "Permissão técnica deve preservar reavaliação");
+      assert.equal(publish.props.disabled, !current);
+      assert.equal(reject.props.disabled, false);
+      assert.equal(reopen.props.disabled, false);
+      await act(async () => {
+        await (current ? publish : reopen).props.onClick();
+      });
+      assert.ok(posts[0].path.endsWith(current ? "/decide" : "/reopen-technical-review"));
+      assert.equal(posts[0].body.expected_version, detail.order.version);
+      assert.equal(
+        posts[0].body.ncm_code,
+        current ? detail.ncm_assessment.suggested_ncm_codes[0] : undefined,
+      );
+    } finally {
+      await act(async () => view?.unmount());
+      globalThis.fetch = previousFetch;
+    }
+  });
+}

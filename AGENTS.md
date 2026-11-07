@@ -623,6 +623,7 @@ The API saves the last accepted duplicate check with the card's signature (class
 When changing registration-order supplements, read [`docs/pedidos.md`](docs/pedidos.md):
 owner/imported-order authorization, editable states, immutable originals, structured chat-card preservation,
 shared PDM reevaluation, and transactional source/actor/version audit are part of the contract.
+
 For registration-order technical/fiscal review, read [`docs/pedidos.md`](docs/pedidos.md):
 reviewers inspect the current card before deciding; fiscal choices use shared conditional PDM rules,
 keep official validity unknown, and bind publication to the approved technical snapshot.

@@ -227,11 +227,12 @@ export function OrderReviewPanel({
                 <Textarea value={reason} onChange={(event) => setReason(event.target.value)} />
               </Field>
               <div className="flex gap-2">
-                {canReopen ? (
+                {canReopen && (
                   <Button disabled={busy || !reason.trim()} onClick={reopen}>
                     Reavaliar e devolver à revisão técnica
                   </Button>
-                ) : (
+                )}
+                {(technical || fiscal) && (
                   <>
                     <Button
                       disabled={

@@ -614,7 +614,7 @@ def get_order_review(db, identity, catalog, order_id):
         existing_materials(db, identity.tenant_id, analysis.identity_key, version) if analysis.identity_key else []
     )
     return {
-        "order": to_contract(db, order),
+        "order": to_contract(db, order, identity),
         "attachment_text": order.attachment_text,
         "item_name": analysis.item_name,
         "attributes": analysis.attributes,
@@ -670,7 +670,7 @@ def reopen_technical_review(db, identity, catalog, order_id, payload, key, reque
     _audit(db, identity, role, order, "ORDER_TECHNICAL_REOPENED", payload.reason, before, request_id)
     db.flush()
     db.refresh(order)
-    body = to_contract(db, order)
+    body = to_contract(db, order, identity)
     _remember(db, identity, operation, key, payload_hash, order.id, body)
     db.commit()
     return body
