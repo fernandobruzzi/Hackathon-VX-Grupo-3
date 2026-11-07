@@ -52,7 +52,7 @@ from repositories.internal_enrichment_repository import run_internal_enrichment
 from repositories.manual_reviews import save_manual_reviews
 from repositories.normalization import get_normalization_repository
 
-PIPELINE_VERSION = "batch-v2-internal-enrichment"
+PIPELINE_VERSION = "batch-v3-enrichment-diagnostics"
 # Intervalo do sinal de vida entre checkpoints. Bem abaixo do prazo em que a API dá o job como parado.
 HEARTBEAT_SECONDS = 15
 ANALYSIS_CHUNK = 1000
@@ -248,8 +248,17 @@ def coverage(
     }
 
 
-def model_usage() -> dict:
-    """Esta versão não chama LLM nem embeddings. A estrutura soma chamadas futuras por modelo."""
+def model_usage(assisted=None) -> dict:
+    """O modo padrão não chama modelos; o piloto opcional registra uso observado."""
+    if assisted and assisted.get("calls"):
+        return {
+            "calls": {assisted["model_id"]: assisted["calls"]},
+            "input_tokens": assisted["input_tokens"],
+            "output_tokens": assisted["output_tokens"],
+            "cost_usd": None,
+            "note": "Leitura assistida opcional; preço não configurado",
+            "assisted_extraction": assisted,
+        }
     return {"calls": {}, "input_tokens": 0, "output_tokens": 0, "cost_usd": "0", "note": "sem chamadas de modelo"}
 
 
@@ -355,7 +364,7 @@ def run_full(
             "total_all_attempts": round(sum(a.get("seconds", 0) for a in attempts), 2),
             "attempts": len(attempts),
         },
-        "model_usage": model_usage(),
+        "model_usage": model_usage(internal.get("assisted_usage")),
     }
 
 

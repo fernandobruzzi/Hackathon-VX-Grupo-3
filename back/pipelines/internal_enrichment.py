@@ -19,7 +19,7 @@ from repositories.classification import get_classification_repository
 from repositories.extraction import get_extraction_repository
 from repositories.extraction.rule_based_v1 import _LINE_BREAK, _SEGMENTS, _clean_text, labeled_spans
 
-VERSION = "internal-enrichment-v1"
+VERSION = "internal-enrichment-v2"
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,16 @@ class InternalSource:
     filename: str
     sha256: str
     object_key: str
+    title: str | None = None
+
+
+def source_excerpt(record):
+    excerpt = record.description
+    if record.short_description:
+        excerpt += f"\nDESCRICAO_CURTA: {record.short_description}"
+    if record.manufacturer or record.reference:
+        excerpt += f"\nFABRICANTE: {record.manufacturer}\nREFERENCIA_FABRICANTE: {record.reference}"
+    return excerpt
 
 
 def read_sources(files, store, catalog):
@@ -108,10 +118,23 @@ def observation_conflicts(material, catalog):
         return {}
     extractor = get_extraction_repository()
     observed = defaultdict(set)
+    from repositories.extraction.material_fields import extract_material_fields
+
+    record = material.record
+    fields = extract_material_fields(
+        cls,
+        record.description,
+        record.short_description,
+        manufacturer=record.manufacturer,
+        reference=record.reference,
+        extractor=extractor,
+    )
+    for name, values in fields.conflicts.items():
+        observed[name].update(values)
     for name, value in material.attributes.items():
         observed[name].add(value)
-    record = material.record
     pieces = []
+    # A curta já foi lida pelo helper com a proteção contra a cauda truncada.
     for segment in _SEGMENTS.split(_clean_text(_LINE_BREAK.sub(" ; ", record.description))):
         starts = sorted({0, *(start for start, _, _ in labeled_spans(observed, segment)), len(segment)})
         pieces.extend(segment[start:stop] for start, stop in zip(starts, starts[1:], strict=False))
@@ -134,9 +157,20 @@ def observation_conflicts(material, catalog):
     }
 
 
-def internal_report(materials, sources, catalog, dataset_id):
+def internal_report(materials, sources, catalog, dataset_id, *, assistant=None):
+    from pipelines.enrichment_diagnostics import diagnose
+
     index = defaultdict(list)
+    unusable_sources = []
     for source in sources:
+        if source.material.review_reasons:
+            unusable_sources.append(
+                {
+                    "source": f"{source.filename}#{source.material.record.code}",
+                    "reasons": list(source.material.review_reasons),
+                    "conflicts": observation_conflicts(source.material, catalog),
+                }
+            )
         if source.material.identity_key and source.material.record.status == "ATIVO":
             index[source.material.identity_key].append(source)
     results, before_counts, after_counts, missing = [], Counter(), Counter(), Counter()
@@ -146,7 +180,7 @@ def internal_report(materials, sources, catalog, dataset_id):
         conflicts, candidates = defaultdict(set), defaultdict(set)
         before = completeness(target, catalog)
         cls = catalog.classes.get(target.pdm_class_id)
-        record_conflicts = observation_conflicts(target, catalog) if target.identity_key else {}
+        record_conflicts = observation_conflicts(target, catalog)
         if cls and target.identity_key and target.record.status == "ATIVO" and not record_conflicts:
             for source in index.get(target.identity_key, []):
                 donor = source.material
@@ -190,14 +224,12 @@ def internal_report(materials, sources, catalog, dataset_id):
                     candidates[name].add(value)
                     url = f"dataset://{dataset_id}/{source.filename}#{donor.record.code}"
                     record = donor.record
-                    excerpt = record.description
-                    if record.manufacturer or record.reference:
-                        excerpt += f"\nFABRICANTE: {record.manufacturer}\nREFERENCIA_FABRICANTE: {record.reference}"
+                    excerpt = source_excerpt(record)
                     fact = {
                         "attribute": name,
                         "proposed_value": value,
                         "source_url": url,
-                        "source_title": f"{source.filename} — {record.code}",
+                        "source_title": source.title or f"{source.filename} — {record.code}",
                         "source_excerpt": excerpt,
                         "source_sha256": source.sha256,
                         "object_key": source.object_key,
@@ -221,11 +253,37 @@ def internal_report(materials, sources, catalog, dataset_id):
         before_counts[before["status"]] += 1
         after_counts[after["status"]] += 1
         missing.update(f"{target.pdm_class_id}/{name}" for name in before["missing_required"])
+        diagnosis = diagnose(target, catalog, before, after, record_conflicts, conflicts)
+        assisted = None
+        if assistant is not None and cls and not record_conflicts:
+            missing_names = after["missing_required"] + after["optional_missing"]
+            assisted = assistant.suggest(
+                cls.id,
+                missing_names,
+                {
+                    field: text
+                    for field, text in {
+                        "description": target.record.description,
+                        "short_description": target.record.short_description,
+                    }.items()
+                    if text.strip()
+                },
+            )
         results.append(
             {
                 "material_code": target.record.code,
                 "pdm_class_id": target.pdm_class_id,
                 "item_name": target.item_name,
+                "original": {
+                    "description": target.record.description,
+                    "short_description": target.record.short_description,
+                    "manufacturer": target.record.manufacturer,
+                    "reference": target.record.reference,
+                    "attributes": dict(target.attributes),
+                },
+                **diagnosis,
+                "assisted_candidates": assisted["candidates"] if assisted else [],
+                "assisted_extraction": assisted,
                 "record_conflicts": record_conflicts,
                 "before": before,
                 "after_suggestions": after,
@@ -248,13 +306,19 @@ def internal_report(materials, sources, catalog, dataset_id):
             "materials_with_suggestions": sum(bool(r["suggestions"]) for r in results),
             "suggested_attributes": sum(len(r["suggestions"]) for r in results),
             "materials_with_conflicts": sum(bool(r["conflicts"]) for r in results),
+            "materials_with_source_conflicts": sum(bool(r["conflicts"]) for r in results),
+            "materials_with_record_conflicts": sum(bool(r["record_conflicts"]) for r in results),
+            "classification": dict(Counter(r["classification"]["status"] for r in results)),
+            "gap_reasons": dict(Counter(g["reason"] for r in results for g in r["gaps"])),
             "missing_required_by_attribute": dict(missing.most_common()),
         },
         "results": results,
+        "unusable_sources": unusable_sources,
+        "assisted_usage": assistant.usage if assistant is not None else None,
     }
 
 
-def report_kit(directory):
+def report_kit(directory, *, supplemental_path=None, assistant=None):
     """Diagnóstico local reproduzível; não publica propostas nem consulta fontes externas."""
     from pathlib import Path
 
@@ -269,7 +333,12 @@ def report_kit(directory):
     ]
     sources, unavailable = read_sources(files, LocalObjectStore(directory), catalog)
     materials = [s.material for s in sources if s.filename == "01_base_materiais.csv"]
-    return internal_report(materials, sources, catalog, "kit") | {
+    if supplemental_path is not None:
+        from enrichment.internal_documents import bundle_object_key, load_supplemental_sources
+
+        content = Path(supplemental_path).read_bytes()
+        sources += load_supplemental_sources(content, "kit", catalog, bundle_object_key(content, "kit"))
+    return internal_report(materials, sources, catalog, "kit", assistant=assistant) | {
         "source_files": files,
         "unavailable_sources": unavailable,
     }

@@ -715,7 +715,7 @@ def _decide_current(
                 for key, value in changed.items()
             ):
                 raise ApiError(422, "EVIDENCE_REQUIRED", "Enriquecimento exige evidencia por atributo.")
-            validate_internal_sources(changes, dataset, sources)
+            validate_internal_sources(changes, dataset, sources, primary, catalog)
             check_source_environment(sources)
             if partial_enrichment and any(
                 not source.source_excerpt

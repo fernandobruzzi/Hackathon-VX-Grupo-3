@@ -199,11 +199,10 @@ def test_missing_s3_source_is_pending_but_access_errors_propagate(catalog, error
 def test_contradictions_inside_a_single_source_cannot_supply_attributes(catalog, suffix):
     from pipelines.internal_enrichment import internal_report
 
-    item = internal_report([analyzed(catalog, "t", FILTER)], [source(catalog, "s", FILTER + suffix)], catalog, "d")[
-        "results"
-    ][0]
+    report = internal_report([analyzed(catalog, "t", FILTER)], [source(catalog, "s", FILTER + suffix)], catalog, "d")
+    item = report["results"][0]
     assert not item["suggestions"]
-    assert item["rejected_sources"]
+    assert item["rejected_sources"] or report["unusable_sources"]
 
 
 def test_ambiguous_target_cannot_receive_values(catalog):

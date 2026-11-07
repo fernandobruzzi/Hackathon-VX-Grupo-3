@@ -219,3 +219,33 @@ def test_context_rules_of_the_new_aliases():
     assert expand(("RET", "BASL"))[0] == ("RETENTOR", "BASL")
     assert expand(("ANEL", "O", "RING", "20X2")) == (("ANEL", "O", "RING", "20X2"), [])
     assert expand(("O", "RING", "20X2"))[0] == ("ANEL", "O", "RING", "20X2")
+
+
+@pytest.mark.parametrize(
+    ("description", "group", "class_id", "item_name"),
+    [
+        ("PARAF. SEXT, ROSCA:MA, BITOLA:M8, COMPRIMENTO:35MM", "FIX01", "PDM001", "PARAFUSO SEXTAVADO"),
+        ("PARAF SEXTAVADO METRICA GROSSA M12X50", "FIX01", "PDM001", "PARAFUSO SEXTAVADO"),
+        ("PARAFUSO SEXT. INTERNO, TIPO CABECA:ESCAREADA", "FIX01", "PDM002", "PARAFUSO SEXTAVADO INTERNO"),
+        ("COTOV 90 GRAUS DIAMETRO DE DN15 MAT DE A182 F316", "TUB01", "PDM050", "COTOVELO 90 GRAUS"),
+        ("FLG ENCAIXE SW 2 IN 300# RF A182 F316", "TUB01", "PDM050", "FLANGE"),
+        ("PLACA TRASERA BOMBA POLPA EQUIP MM400 METSO REF FABRICANTE MM4504436", "SOB01", "PDM110", "PLACA TRASEIRA"),
+        ("BUCHA GUIA MANCAL, FAB:KSB, PN:123456", "SOB01", "PDM110", "BUCHA MANCAL GUIA"),
+    ],
+)
+def test_pilot_aliases_recover_explicit_names(aliases, description, group, class_id, item_name):
+    result = aliases.classify(ClassificationInput(description, merchandise_group=group))
+    assert result.pdm_class_id == class_id
+    assert item_name in {e.matched_name for e in result.evidence}
+    assert alias_evidence(result)
+
+
+@pytest.mark.parametrize("text", ["PARAF SEXT ALLEN", "PARAF. SEXTAVADO ALLEN", "PARAFUSO SEXT INT"])
+def test_external_bolt_alias_does_not_erase_internal_hex_indicators(aliases, text):
+    result = aliases.classify(ClassificationInput(text))
+    assert result.pdm_class_id != "PDM001"
+
+
+def test_pilot_aliases_do_not_rewrite_application_words_into_product_names(aliases):
+    result = aliases.classify(ClassificationInput("VEDACAO PARA FLG", merchandise_group="TUB01"))
+    assert result.pdm_class_id != "PDM050"
