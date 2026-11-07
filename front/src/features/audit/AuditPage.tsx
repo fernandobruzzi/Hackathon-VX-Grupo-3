@@ -9,6 +9,7 @@ import { can } from "@/lib/permissions";
 import { fmtDate } from "@/lib/format";
 import { audit } from "@/mocks/data";
 import { AuditIdentity } from "./AuditIdentity";
+import { AuditAction, AuditChanges } from "./AuditPresentation";
 
 /** Escopo por papel: próprias ações (solicitante), técnico (governança), fiscal e financeiro (auditor). */
 export function AuditPage() {
@@ -66,7 +67,7 @@ export function AuditPage() {
         n="05"
         eyebrow="Auditoria"
         title="Quem mudou o quê, quando e por quê"
-        description="Registros só de inserção: cada alteração guarda usuário real, papel efetivo, antes/depois, justificativa e request_id."
+        description="Registros só de inserção: cada alteração guarda a pessoa ou sistema responsável, papel efetivo, antes/depois, justificativa e requisição."
       />
       {loading && (
         <p role="status" className="mb-4 text-sm text-muted">
@@ -90,7 +91,7 @@ export function AuditPage() {
             <Th>Ação</Th>
             <Th>Recurso</Th>
             <Th>Justificativa</Th>
-            <Th>request_id</Th>
+            <Th>Requisição</Th>
             {backend && <Th>Alterações</Th>}
           </tr>
         </thead>
@@ -102,21 +103,16 @@ export function AuditPage() {
               </Td>
               <AuditIdentity event={a} />
               <Td>
-                <Code className="text-verde">{a.action}</Code>
+                <AuditAction action={a.action} />
               </Td>
               <Td className="text-sm">{a.entity}</Td>
               <Td className="max-w-xs text-sm text-muted">{a.reason ?? "—"}</Td>
               <Td>
-                <Code className="text-muted">{a.request_id}</Code>
+                <Code className="text-muted">{a.request_id || "Não registrada"}</Code>
               </Td>
               {backend && (
                 <Td>
-                  <details>
-                    <summary className="cursor-pointer text-verde">Antes e depois</summary>
-                    <pre className="mt-2 max-w-lg overflow-auto text-xs">
-                      {JSON.stringify({ before: a.before, after: a.after }, null, 2)}
-                    </pre>
-                  </details>
+                  <AuditChanges event={a} />
                 </Td>
               )}
             </tr>
