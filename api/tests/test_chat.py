@@ -21,6 +21,7 @@ from vx_materials_api.services.agent_client import AgentClient
 
 SECRET = "test-only-internal-secret-with-32-bytes"
 SOLICITANTE = frozenset({"chat:use", "materials:read"})
+DEV_TI = frozenset({"chat:use", "materials:read", "chat:diagnostics"})
 CARD = {
     "pdm_class_id": "PDM001",
     "pdm_class_name": "PARAFUSO SEXTAVADO",
@@ -75,7 +76,7 @@ def factory(migrated_url):
     engine.dispose()
 
 
-def _new_identity(factory, permissions=SOLICITANTE) -> Identity:
+def _new_identity(factory, permissions=SOLICITANTE, roles=("ROLE_SOLICITANTE",)) -> Identity:
     tenant = uuid.uuid4()
     with factory() as db:
         user_id = db.execute(
@@ -86,7 +87,7 @@ def _new_identity(factory, permissions=SOLICITANTE) -> Identity:
     return Identity(
         user_id=user_id,
         tenant_id=tenant,
-        roles=("ROLE_SOLICITANTE",),
+        roles=roles,
         permissions=permissions,
         center_codes=frozenset({"1100", "1200"}),
         csrf_token="test-csrf",
@@ -153,11 +154,14 @@ def test_first_turn_creates_session_and_returns_agent_result(client, agent, fact
     assert body["session_version"] == 1
     assert body["status"] == "NEEDS_INPUT"
     assert body["order_id"] is None
-    assert body["tool_calls"] == AGENT_RESULT["tool_calls"]
+    # Perfil de negócio não recebe o diagnóstico técnico, mas a chamada fica persistida.
+    assert body["tool_calls"] == []
     assert body["material_card"] == {**CARD, "similar_candidates": []}
     validator({"$ref": "#/components/schemas/ChatTurnResponse"}).validate(body)
     messages = "SELECT count(*) FROM chat_messages WHERE session_id = :s"
     assert count(factory, messages, s=body["session_id"]) == 2
+    saved = "SELECT tool_calls FROM chat_messages WHERE session_id = :s AND author_type = 'ASSISTANT'"
+    assert count(factory, saved, s=body["session_id"]) == AGENT_RESULT["tool_calls"]
 
 
 def test_agent_receives_short_internal_token_and_no_identity_fields(client, agent, identity):
@@ -534,7 +538,7 @@ def test_read_saved_conversation_and_resume_without_agent_replay(client, agent):
     body = restored.json()
     assert body["session_version"] == 1
     assert body["material_card"] == first["material_card"]
-    assert body["calls"] == [{"turn": 1, "call": call} for call in first["tool_calls"]]
+    assert body["calls"] == []
     assert [m["content"] for m in body["messages"]] == ["parafuso M12", first["assistant_message"]]
     assert body["processing"] is False
     assert body["center_code"] == "1200"
@@ -891,3 +895,53 @@ def test_inventory_proof_is_tenant_scoped_and_uses_deterministic_latest_dataset(
             text("INSERT INTO datasets(tenant_id,imported_at) VALUES(:t,'2098-01-01')"), {"t": identity.tenant_id}
         )
         assert chat_service._catalog_proof(db, identity.tenant_id, "rules") == proof
+
+
+def _client_for(factory, agent, monkeypatch, caller):
+    monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
+    app = create_app(
+        session_factory=factory,
+        identity_provider=lambda db: caller,
+        agent_client=AgentClient("http://agent", transport=httpx.MockTransport(agent)),
+    )
+    return TestClient(app)
+
+
+def test_dev_ti_sees_mcp_calls_in_turn_and_saved_conversation(factory, agent, monkeypatch):
+    dev = _new_identity(factory, DEV_TI, ("ROLE_DEV_TI",))
+    client = _client_for(factory, agent, monkeypatch, dev)
+
+    first = send(client).json()
+    assert first["tool_calls"] == AGENT_RESULT["tool_calls"]
+    validator({"$ref": "#/components/schemas/ChatTurnResponse"}).validate(first)
+    restored = client.get(f"/api/v1/chat/sessions/{first['session_id']}").json()
+    assert restored["calls"] == [{"turn": 1, "call": call} for call in AGENT_RESULT["tool_calls"]]
+
+
+@pytest.mark.parametrize(
+    ("permissions", "roles"),
+    [
+        (SOLICITANTE, ("ROLE_SOLICITANTE",)),
+        # Permissão sem a role que a concede não vale: a matriz do servidor é a autoridade.
+        (DEV_TI, ("ROLE_SOLICITANTE",)),
+        (SOLICITANTE, ("ROLE_DEV_TI",)),
+    ],
+)
+def test_direct_requests_without_diagnostics_get_no_mcp_calls(factory, agent, monkeypatch, permissions, roles):
+    caller = _new_identity(factory, permissions, roles)
+    client = _client_for(factory, agent, monkeypatch, caller)
+
+    turn = send(client).json()
+    assert turn["tool_calls"] == []
+    assert client.get(f"/api/v1/chat/sessions/{turn['session_id']}").json()["calls"] == []
+
+
+def test_dev_ti_cannot_read_other_users_conversation(factory, agent, monkeypatch):
+    owner = _new_identity(factory)
+    turn = send(_client_for(factory, agent, monkeypatch, owner)).json()
+    from dataclasses import replace
+
+    dev = replace(_new_identity(factory, DEV_TI, ("ROLE_DEV_TI",)), tenant_id=owner.tenant_id)
+    response = _client_for(factory, agent, monkeypatch, dev).get(f"/api/v1/chat/sessions/{turn['session_id']}")
+    assert response.status_code == 404
+    assert "tool-call-001" not in response.text

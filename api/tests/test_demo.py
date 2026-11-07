@@ -54,7 +54,7 @@ def test_cli_refuses_outside_demo_before_touching_the_database(monkeypatch, caps
     assert "--confirm nao_existe" in capsys.readouterr().err
 
 
-def test_reset_prepares_proposals_orders_and_the_three_personas(prepared):
+def test_reset_prepares_proposals_orders_and_the_personas(prepared):
     _, _, summary, engine = prepared
     counts = summary["state"]["counts"]
     assert counts["materials"] == 23554
@@ -81,7 +81,7 @@ def test_reset_prepares_proposals_orders_and_the_three_personas(prepared):
         orders = connection.execute(
             text("SELECT DISTINCT origin, requester_user_id IS NULL FROM registration_orders")
         ).all()
-    assert {subject for subject, _ in users} == {"SOLICITANTE_OPERACAO", "GESTOR_CADASTRO", "AUDITOR_FISCAL"}
+    assert {subject for subject, _ in users} == {"SOLICITANTE_OPERACAO", "GESTOR_CADASTRO", "AUDITOR_FISCAL", "DEV_TI"}
     # Importados sem solicitante; o status vem da análise da #24 contra o PDM e o índice.
     assert orders == [("IMPORT", True)]
     assert sum(summary["orders_by_status"].values()) == 520

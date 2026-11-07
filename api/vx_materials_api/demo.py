@@ -104,7 +104,7 @@ def persona_user_id(persona: str) -> uuid.UUID:
 
 
 def ensure_personas(engine: Engine) -> dict[str, str]:
-    """Contas locais das três personas, ativas e com o papel fixo do servidor."""
+    """Contas locais das personas, ativas e com o papel fixo do servidor."""
     with engine.begin() as connection:
         for persona, role in PERSONA_ROLES.items():
             values = {

@@ -39,6 +39,15 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "metrics:financial",
     "audit:fiscal",
   ],
+  ROLE_DEV_TI: [
+    "chat:use",
+    "materials:read",
+    "inventory:read",
+    "orders:create",
+    "orders:read_own",
+    "orders:update_own",
+    "chat:diagnostics",
+  ],
 };
 
 export const PERSONAS: {
@@ -68,6 +77,13 @@ export const PERSONAS: {
     name: "Auditoria Fiscal",
     short: "Auditor fiscal",
     description: "Aprova alterações de NCM e vê o impacto financeiro.",
+  },
+  {
+    label: "DEV_TI",
+    role: "ROLE_DEV_TI",
+    name: "Dev/TI · Diagnóstico",
+    short: "Dev/TI",
+    description: "Usa o chat e consulta as chamadas MCP executadas; não aprova nem publica.",
   },
 ];
 

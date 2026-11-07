@@ -63,7 +63,7 @@ class DemoSwitchRequest(BaseModel):
 
 class LocalRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    persona: Literal["SOLICITANTE_OPERACAO", "GESTOR_CADASTRO", "AUDITOR_FISCAL"]
+    persona: Literal["SOLICITANTE_OPERACAO", "GESTOR_CADASTRO", "AUDITOR_FISCAL", "DEV_TI"]
 
 
 def same_origin(request):

@@ -4737,7 +4737,8 @@
         "enum": [
           "ROLE_SOLICITANTE",
           "ROLE_GOVERNANCA_PDM",
-          "ROLE_AUDITOR_FISCAL"
+          "ROLE_AUDITOR_FISCAL",
+          "ROLE_DEV_TI"
         ]
       },
       "PersonaLabel": {
@@ -4745,7 +4746,8 @@
         "enum": [
           "SOLICITANTE_OPERACAO",
           "GESTOR_CADASTRO",
-          "AUDITOR_FISCAL"
+          "AUDITOR_FISCAL",
+          "DEV_TI"
         ]
       },
       "Permission": {
@@ -4768,7 +4770,8 @@
           "metrics:financial",
           "audit:own",
           "audit:technical",
-          "audit:fiscal"
+          "audit:fiscal",
+          "chat:diagnostics"
         ]
       },
       "Me": {
@@ -5160,7 +5163,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ToolCall"
-            }
+            },
+            "description": "Chamadas MCP do turno. Diagnóstico técnico: vem vazio para quem não tem a permissão chat:diagnostics (role Dev/TI)."
           },
           "material_card": {
             "$ref": "#/components/schemas/MaterialCardData"
@@ -8090,7 +8094,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SavedToolCall"
-            }
+            },
+            "description": "Chamadas MCP salvas na conversa. Vazio sem a permissão chat:diagnostics (role Dev/TI)."
           },
           "material_card": {
             "anyOf": [
