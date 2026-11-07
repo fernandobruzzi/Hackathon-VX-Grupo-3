@@ -113,13 +113,15 @@ def client(factory, identity, agent, monkeypatch):
     return TestClient(app)
 
 
-def send(client, message="parafuso M12", session_id=None, version=0, client_message_id=None, action=None):
+def send(
+    client, message="parafuso M12", session_id=None, version=0, client_message_id=None, action=None, center="1200"
+):
     body = {
         "session_id": str(session_id) if session_id else None,
         "client_message_id": str(client_message_id or uuid.uuid4()),
         "expected_session_version": version,
         "message": message,
-        "center_code": "1200",
+        "center_code": center,
     }
     if action is not None:
         body["action"] = action
@@ -580,3 +582,122 @@ def test_list_conversations_paginates_and_processing_is_recoverable(client, fact
 def test_history_rejects_unbounded_cursor(client, cursor):
     response = client.get("/api/v1/chat/sessions", params={"cursor": cursor})
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("source", ["session", "inventory", "past_inventory", "legacy_past_inventory"])
+def test_history_and_resume_recheck_current_center_scope(factory, identity, agent, monkeypatch, source):
+    from dataclasses import replace
+
+    monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
+    current = identity
+    client = TestClient(
+        create_app(
+            session_factory=factory,
+            identity_provider=lambda db: current,
+            agent_client=AgentClient("http://agent", transport=httpx.MockTransport(agent)),
+        )
+    )
+    if source != "session":
+        # O centro do pedido segue permitido; o estoque mostrado vinha de outro centro autorizado.
+        agent.result = agent_result(
+            {**CARD, "existing": EXISTING}, search_call(similar(EXISTING["material_code"], verified=True))
+        )
+    if source == "legacy_past_inventory":
+        agent.result["assistant_message"] = (
+            "Esse item já existe: use o código 16031971. Mesmo item. Estoque nos seus centros: 4 PC no centro 1200."
+        )
+    first = send(client, center="1200" if source == "session" else "1100").json()
+    if source in {"past_inventory", "legacy_past_inventory"}:
+        agent.result = AGENT_RESULT
+        assert send(client, session_id=first["session_id"], version=1, center="1100").status_code == 200
+    if source in {"inventory", "legacy_past_inventory"}:
+        # Sessões já persistidas, antes do acumulador, ainda conferem os centros da ficha salva.
+        from vx_materials_api.db.models import ChatSession
+
+        with factory() as db:
+            session = db.get(ChatSession, first["session_id"])
+            session.context = {key: value for key, value in session.context.items() if key != "history_center_codes"}
+            db.commit()
+    current = replace(identity, center_codes=frozenset({"1100"}))
+    assert client.get("/api/v1/chat/sessions").json()["items"] == []
+    assert client.get(f"/api/v1/chat/sessions/{first['session_id']}").status_code == 404
+    calls_before = len(agent.requests)
+    response = client.post(
+        "/api/v1/chat/message",
+        json={
+            "session_id": first["session_id"],
+            "client_message_id": str(uuid.uuid4()),
+            "expected_session_version": 2 if source in {"past_inventory", "legacy_past_inventory"} else 1,
+            "message": "continuar",
+            "center_code": "1100",
+        },
+        headers={"Origin": "http://localhost:8000", "X-CSRF-Token": "test-csrf"},
+    )
+    assert response.status_code == 404
+    assert len(agent.requests) == calls_before
+
+
+def test_history_paginates_only_conversations_in_current_centers(factory, identity, agent, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
+    current = identity
+    client = TestClient(
+        create_app(
+            session_factory=factory,
+            identity_provider=lambda db: current,
+            agent_client=AgentClient("http://agent", transport=httpx.MockTransport(agent)),
+        )
+    )
+    visible = set()
+    for center in ["1100", "1200", "1100", "1200"]:
+        response = send(client, center=center)
+        assert response.status_code == 200
+        if center == "1100":
+            visible.add(response.json()["session_id"])
+    current = replace(identity, center_codes=frozenset({"1100"}))
+    first = client.get("/api/v1/chat/sessions", params={"limit": 1}).json()
+    second = client.get("/api/v1/chat/sessions", params={"limit": 1, "cursor": first["next_cursor"]}).json()
+    assert len(first["items"]) == len(second["items"]) == 1
+    assert {row["id"] for page in [first, second] for row in page["items"]} == visible
+    assert second["next_cursor"] is None
+
+
+@pytest.mark.parametrize(
+    "author,content,status",
+    [
+        ("ASSISTANT", "Esse item já existe: use o código 123. Motivo. Estoque nos seus centros: sem centro.", 404),
+        (
+            "ASSISTANT",
+            "Esse item já existe: use o código 123. Motivo. Estoque nos seus centros:4 PC no centro 9999.",
+            404,
+        ),
+        (
+            "ASSISTANT",
+            (
+                "Esse item já existe: use o código 123. Motivo. "
+                "Estoque nos seus centros: 4 PC no centro 9999 no centro 1200."
+            ),
+            404,
+        ),
+        ("ASSISTANT", "Produto para o centro 9999; confirme os dados de uso.", 200),
+        ("USER", "Esse item já existe: use o código 123. Motivo. Estoque nos seus centros: 4 PC no centro 9999.", 200),
+    ],
+)
+def test_legacy_history_scope_uses_only_unambiguous_assistant_stock(client, factory, author, content, status):
+    from sqlalchemy import select
+
+    from vx_materials_api.db.models import ChatMessage, ChatSession
+
+    first = send(client).json()
+    with factory() as db:
+        session = db.get(ChatSession, first["session_id"])
+        session.context = {key: value for key, value in session.context.items() if key != "history_center_codes"}
+        message = db.scalar(
+            select(ChatMessage).where(ChatMessage.session_id == session.id, ChatMessage.author_type == author)
+        )
+        message.content = content
+        db.commit()
+    assert client.get(f"/api/v1/chat/sessions/{first['session_id']}").status_code == status
+    visible = client.get("/api/v1/chat/sessions").json()["items"]
+    assert len(visible) == (1 if status == 200 else 0)

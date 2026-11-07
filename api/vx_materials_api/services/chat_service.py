@@ -9,6 +9,7 @@ Um turno passa por duas transações curtas, e o Agent é chamado entre elas, se
 Se o Agent falhar, a reserva é liberada sem mudar a versão, e nada da mensagem fica gravado.
 """
 
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -23,7 +24,7 @@ from vx_materials_api.db.models import ChatMessage, ChatSession, OperationReques
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
-from vx_materials_api.security.rbac import require_conversation_owner
+from vx_materials_api.security.rbac import require_conversation_owner, require_resource_scope
 
 NCM_VERSION = "ncm-demo-v1"
 # Reserva sem conclusão por mais que isso é tratada como abandonada (queda da API no meio do turno).
@@ -166,6 +167,53 @@ def _conflict(code: str, message: str) -> ApiProblem:
     return ApiProblem(409, code, message)
 
 
+def _exposed_centers(value) -> set[str]:
+    """Centros persistidos, inclusive estoque de turnos anteriores que pode aparecer no texto."""
+    if isinstance(value, list):
+        return set().union(*(_exposed_centers(item) for item in value))
+    if not isinstance(value, dict):
+        return set()
+    centers = set(value.get("history_center_codes", []))
+    if value.get("center_code"):
+        centers.add(value["center_code"])
+    return centers.union(*(_exposed_centers(item) for item in value.values()))
+
+
+def _session_centers(db: Session, session: ChatSession) -> set[str] | None:
+    context = session.context or {}
+    centers = _exposed_centers(context)
+    if "history_center_codes" in context:
+        return centers
+    # Antes do acumulador, o Agent já gravava estoque no texto determinístico de item existente.
+    # Só esse trecho do ASSISTANT é interpretado; mensagens do usuário e prosa livre não são escopo.
+    messages = db.scalars(
+        select(ChatMessage).where(ChatMessage.session_id == session.id, ChatMessage.author_type == "ASSISTANT")
+    )
+    for message in messages:
+        centers |= _exposed_centers(message.tool_calls)
+        section = "Estoque nos seus centros:"
+        marker = f" {section} "
+        if not message.content.startswith("Esse item já existe: use o código ") or section not in message.content:
+            continue
+        if message.content.count(section) != 1 or marker not in message.content or not message.content.endswith("."):
+            return None
+        stock = message.content.rsplit(marker, 1)[1][:-1]
+        for row in stock.split(", "):
+            match = re.fullmatch(r".+ no centro ([^,.\s]+)", row)
+            if match is None or row.count(" no centro ") != 1:
+                return None
+            centers.add(match[1])
+    return centers
+
+
+def _require_history_scope(db: Session, identity: Identity, session: ChatSession) -> set[str]:
+    centers = _session_centers(db, session)
+    if centers is None:
+        raise ApiProblem(404, "NOT_FOUND", "Conversa não encontrada no seu escopo.")
+    require_resource_scope(identity, session.tenant_id, centers)
+    return centers
+
+
 def _locked_session(db: Session, identity: Identity, session_id: uuid.UUID) -> ChatSession:
     session = db.scalar(
         select(ChatSession)
@@ -211,6 +259,7 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest) -
         db.flush()
     else:
         session = _locked_session(db, identity, request.session_id)
+        _require_history_scope(db, identity, session)
         if session.registration_order_id is not None:
             raise _conflict("CHAT_ALREADY_SUBMITTED", "Esta conversa já gerou um pedido. Inicie uma nova conversa.")
         abandoned = session.updated_at < datetime.now(UTC) - ABANDONED_TURN_AFTER
@@ -270,6 +319,7 @@ def complete_turn(
     request_id: str,
 ) -> ChatTurnResponse:
     session = _locked_session(db, identity, reservation.session_id)
+    _require_history_scope(db, identity, session)
     if session.active_turn_id != reservation.turn_id or session.version != reservation.session_version:
         raise _conflict("TURN_SUPERSEDED", "O turno foi substituído por outro.")
 
@@ -317,7 +367,18 @@ def complete_turn(
             "existing": card.get("existing") if status == "EXISTING" else None,
             "similar_candidates": card["similar_candidates"],
         }
-    session.context = {**context, **patch, "material_card": card, "center_code": request.center_code}
+    centers = (
+        _require_history_scope(db, identity, session)
+        | _exposed_centers(card)
+        | _exposed_centers([call.model_dump(mode="json") for call in result.tool_calls])
+    )
+    session.context = {
+        **context,
+        **patch,
+        "material_card": card,
+        "center_code": request.center_code,
+        "history_center_codes": sorted(centers | {request.center_code}),
+    }
     session.version += 1
     session.active_turn_id = None
     db.commit()
@@ -347,25 +408,32 @@ def list_sessions(db: Session, identity: Identity, *, limit: int, offset: int) -
         select(ChatSession, title)
         .where(ChatSession.tenant_id == identity.tenant_id, ChatSession.owner_user_id == identity.user_id)
         .order_by(ChatSession.updated_at.desc(), ChatSession.id)
-        .offset(offset)
-        .limit(limit + 1)
-    ).all()
-    return {
-        "items": [
+    )
+    items = []
+    visible = 0
+    for session, text in rows:
+        centers = _session_centers(db, session)
+        if centers is None or centers - identity.center_codes:
+            continue
+        if visible < offset:
+            visible += 1
+            continue
+        if len(items) == limit:
+            return {"items": items, "next_cursor": str(offset + limit)}
+        items.append(
             {
                 "id": session.id,
                 "title": (text or "Conversa sem mensagens")[:120],
                 "updated_at": session.updated_at.isoformat(),
             }
-            for session, text in rows[:limit]
-        ],
-        "next_cursor": str(offset + limit) if len(rows) > limit else None,
-    }
+        )
+    return {"items": items, "next_cursor": None}
 
 
 def read_session(db: Session, identity: Identity, session_id: uuid.UUID) -> dict:
     # Uma leitura usa o mesmo filtro de dono/tenant e snapshot do turno, sem chamar o Agent.
     session = _locked_session(db, identity, session_id)
+    _require_history_scope(db, identity, session)
     context = session.context or {}
     messages = db.scalars(
         select(ChatMessage).where(ChatMessage.session_id == session.id).order_by(ChatMessage.sequence)

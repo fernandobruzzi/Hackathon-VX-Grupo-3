@@ -527,6 +527,8 @@ A ready chat card creates no order until the user explicitly submits it through
 `POST /api/v1/chat/{session_id}/submit`. The API reads the saved card and center,
 checks ownership and version, revalidates the current PDM and duplicate identity,
 and creates one order with audit and idempotency in the same transaction.
+Persisted history and resumed turns also recheck current center access, including centers
+whose inventory appeared in earlier turns; hidden conversations are filtered before pagination.
 The original user messages stay separate from the confirmed class, item name and
 attributes. Order approvals revalidate that structured card rather than extracting
 superseded values from earlier messages. A submitted conversation accepts no new
