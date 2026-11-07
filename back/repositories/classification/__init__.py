@@ -5,12 +5,14 @@ from collections.abc import Callable
 
 from domain.contracts import ClassificationRepository, PdmCatalog
 from repositories.classification.aliases_v1 import AliasesV1ClassificationRepository
+from repositories.classification.aliases_v2 import AliasesV2ClassificationRepository
 from repositories.classification.rule_based_v1 import RuleBasedV1ClassificationRepository
 
 DEFAULT_REPOSITORY = AliasesV1ClassificationRepository.name
 
 REPOSITORIES: dict[str, Callable[[PdmCatalog], ClassificationRepository]] = {
     AliasesV1ClassificationRepository.name: AliasesV1ClassificationRepository,
+    AliasesV2ClassificationRepository.name: AliasesV2ClassificationRepository,
     RuleBasedV1ClassificationRepository.name: RuleBasedV1ClassificationRepository,
 }
 
