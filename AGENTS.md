@@ -701,6 +701,10 @@ savings or an independent accuracy measurement. See [`docs/dashboard.md`](docs/d
 
 ## Frontend
 
+Navigation badges must never use mock counts in API mode. Without a reliable,
+authorized total, omit the badge rather than showing zero or the first page size.
+Mock-mode badges identify their counts as simulated.
+
 The API serves the static build from the same origin, so there's no SSR, route handlers or middleware, and anything calling the API is a client component. Dynamic routes must keep working in the static export once ids are real.
 
 **Design tokens** live in `front/src/app/globals.css` (identity "Ascensão"), for light and dark through `data-theme`, and are exposed to Tailwind with `@theme inline`. Use tokens instead of raw colors.

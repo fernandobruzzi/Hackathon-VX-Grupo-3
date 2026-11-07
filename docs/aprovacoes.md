@@ -174,3 +174,14 @@ entrar na página. Eventos de sistema aparecem como `actor_type=SYSTEM`, ator
 `Sistema` e `effective_role=null`; a substituta está em `after.superseded_by`.
 Eventos do batch sem requisição HTTP mantêm `request_id` vazio, sem fabricar
 usuário ou requisição. Os estados financeiros continuam redigidos fora do Fiscal.
+
+
+## Contagens na navegação
+
+No modo API, o menu da fila de revisão não mostra um contador: ainda não há uma
+fonte de total autorizado por área para esse elemento. A quantidade da primeira
+página não representa o total, e ausência de total não significa zero.
+
+Com `NEXT_PUBLIC_DATA_SOURCE=mock`, o menu mantém os exemplos da demonstração;
+o contador tem o rótulo acessível de pendências simuladas e o título “Contagem
+simulada”. A consulta da fila e sua paginação continuam independentes do menu.
