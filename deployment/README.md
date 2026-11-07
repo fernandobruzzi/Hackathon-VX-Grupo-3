@@ -305,7 +305,7 @@ O recibo mantém a definição anterior do web. Rollback de imagem não reverte 
 conferir compatibilidade antes de atualizar o serviço para o ARN anterior. Não há
 downgrade automático nem exclusão automática de RDS/bucket.
 
-## O que continua dependendo da conta
+## Homologação no workshop
 
 Comprovado na conta do workshop (#6): roles e PassRole, Express com o Agent como
 sidecar, HTTPS público servindo o front pela API e Agent sem ingresso. Também
@@ -313,9 +313,23 @@ comprovados: RDS privado, `vector` 0.8.2, migração e senhas, e logins TLS
 `verify-full` de `api_user`, `batch_user` e `mcp_reader`. Na #91: login Cognito
 real com cookie `__Host-vx_session` Secure, HttpOnly, SameSite=Lax e host-only,
 `/auth/me` sem tokens, turno de chat pelo Agent, logout encerrando também a sessão
-do Hosted UI e domínio próprio pelo CloudFront. Ainda falta:
+do Hosted UI e domínio próprio pelo CloudFront. Uma sessão real de Solicitante
+com CSRF válido recebeu `403 FORBIDDEN` do controle de papéis ao tentar uma
+decisão técnica. O teste usou um UUID inexistente para evitar decidir uma
+proposta da fila.
 
-- Batch disparado pela API no ECS (`ecs:RunTask` da role web) e invocações reais do Bedrock.
+Com uma sessão real de Governança, as páginas
+`/saneamento/revisao/?id=<UUID>` e `/enriquecimento/revisao/?id=<UUID>`
+renderizaram os materiais das propostas persistidas. Um job de saneamento
+disparado pela API executou no Fargate e terminou com 13.144 propostas, com
+correções automáticas desativadas. Uma task avulsa publicou duas propostas de
+enriquecimento para revisão. Os registros estão nas issues
+[#6](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/6) e
+[#91](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/91).
+
+Validações pendentes:
+
+- Invocações reais do Bedrock.
 - Plano B EC2/Caddy preparado em [`docs/ec2.md`](../docs/ec2.md); validar na EC2 (#29).
 - Reset completo de propostas/pedidos/sessões da demo (#34).
 
