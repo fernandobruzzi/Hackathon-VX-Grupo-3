@@ -1,0 +1,172 @@
+"""Interpretação e entrevista com Bedrock; estados da ficha continuam nas tools e na API."""
+
+import json
+import os
+from dataclasses import asdict, replace
+
+import anyio
+import boto3
+from botocore.config import Config
+from botocore.exceptions import BotoCoreError, ClientError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from domain.contracts import ClassificationStatus, PdmCatalog
+from vx_materials_mcp.chatbot.prompts import MATERIAL_REGISTRATION_SYSTEM
+from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
+from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
+
+PLANNER = "bedrock_opus_5_5_v1"
+
+
+class BedrockError(Exception):
+    def __init__(self, code="BEDROCK_INVALID_RESPONSE"):
+        self.code = code
+        super().__init__("Não foi possível concluir o atendimento com o Bedrock. Tente novamente.")
+
+
+class _Attribute(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    name: str = Field(min_length=1, max_length=100)
+    value: str | None = Field(max_length=500)
+    source: str = Field(min_length=1, max_length=2000)
+
+
+class _Interpretation(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    pdm_class_id: str | None
+    item_name: str | None
+    attributes: list[_Attribute] = Field(max_length=100)
+
+
+class BedrockPlanner:
+    def __init__(self, model_id: str, client=None):
+        self.model_id, self._client = model_id, client
+
+    async def _converse(self, data: dict, *, interpret: bool = False) -> dict:
+        parameters = {
+            "modelId": self.model_id,
+            "system": [{"text": MATERIAL_REGISTRATION_SYSTEM}],
+            "messages": [{"role": "user", "content": [{"text": json.dumps(data, ensure_ascii=False)}]}],
+            "inferenceConfig": {"maxTokens": 2048},
+        }
+        if interpret:
+            parameters["toolConfig"] = {
+                "tools": [
+                    {
+                        "toolSpec": {
+                            "name": "interpret_material_request",
+                            "description": "Propõe classe e atributos explícitos do usuário, sujeitos à validação PDM.",
+                            "inputSchema": {"json": _Interpretation.model_json_schema()},
+                        }
+                    }
+                ],
+            }
+
+        def invoke():
+            # Sessão explícita por chamada: não compartilhar a sessão global do boto3 entre threads.
+            client = self._client or boto3.session.Session().client(
+                "bedrock-runtime",
+                region_name=os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION"),
+                config=Config(connect_timeout=2, read_timeout=8, retries={"total_max_attempts": 1}),
+            )
+            try:
+                return client.converse(**parameters)
+            finally:
+                if self._client is None:
+                    client.close()
+
+        try:
+            # A vaga fica ocupada até a chamada limitada do SDK terminar, inclusive no cancelamento.
+            response = await anyio.to_thread.run_sync(invoke)
+        except (BotoCoreError, ClientError, OSError) as error:
+            raise BedrockError("BEDROCK_UNAVAILABLE") from error
+        if not isinstance(response, dict):
+            raise BedrockError()
+        return response
+
+    async def interpret(self, request: AgentRunRequest, context: TurnContext, catalog: PdmCatalog) -> TurnContext:
+        response = await self._converse(
+            {
+                "task": "Interpretar o pedido com interpret_material_request; não responder ao usuário nesta etapa.",
+                "history": [message.model_dump(mode="json") for message in request.context.history],
+                "message": request.message if request.action is None else None,
+                "confirmed_attributes": request.context.confirmed_attributes,
+                "catalog": [
+                    {"pdm_class_id": c.id, "item_names": c.item_names, "attributes": [asdict(a) for a in c.attributes]}
+                    for c in catalog.classes.values()
+                ],
+            },
+            interpret=True,
+        )
+        try:
+            blocks = response["output"]["message"]["content"]
+            uses = [block["toolUse"] for block in blocks if "toolUse" in block]
+            if response["stopReason"] != "tool_use" or len(uses) != 1:
+                raise ValueError("Interpretação ausente ou truncada")
+            if uses[0]["name"] != "interpret_material_request":
+                raise ValueError("Ferramenta desconhecida")
+            proposal = _Interpretation.model_validate(uses[0]["input"])
+            if proposal.pdm_class_id is None:
+                if proposal.attributes or proposal.item_name is not None:
+                    raise ValueError("Atributos sem classe")
+                return context
+            pdm_class = catalog.classes[proposal.pdm_class_id]
+            if proposal.item_name not in pdm_class.item_names:
+                raise ValueError("Nome fora da classe")
+            same_class = context.pdm_class is not None and context.pdm_class.id == pdm_class.id
+            attributes = dict(context.attributes) if same_class else {}
+            known = {a.name for a in pdm_class.attributes}
+            if same_class:
+                # Valores já confirmados prevalecem sobre a reextração das mensagens antigas.
+                attributes.update({k: v for k, v in request.context.confirmed_attributes.items() if k in known})
+            messages = user_messages(request)
+            seen = set()
+            for attribute in proposal.attributes:
+                if attribute.name not in known or attribute.name in seen:
+                    raise ValueError("Atributo desconhecido ou duplicado")
+                seen.add(attribute.name)
+                # A saída do modelo é uma proposta. Exigir trecho literal, inclusive para apagar valores.
+                if not any(attribute.source in message for message in messages):
+                    raise ValueError("Fonte ausente no texto do usuário")
+                if attribute.value is not None and (
+                    not attribute.value.strip() or attribute.value.casefold() not in attribute.source.casefold()
+                ):
+                    raise ValueError("Valor sem evidência literal")
+                attributes[attribute.name] = attribute.value
+            classification = replace(
+                context.classification,
+                status=ClassificationStatus.CLASSIFIED,
+                pdm_class_id=pdm_class.id,
+                candidate_class_ids=(),
+                evidence=(),
+                rule=PLANNER,
+            )
+            return TurnContext(classification, pdm_class, proposal.item_name, attributes)
+        except (KeyError, TypeError, ValueError, ValidationError) as error:
+            raise BedrockError() from error
+
+    async def respond(self, request: AgentRunRequest, result: AgentRunResponse) -> AgentRunResponse:
+        response = await self._converse(
+            {
+                "task": "Redigir a próxima resposta de cadastro com base exclusiva na ficha validada abaixo.",
+                "history": [message.model_dump(mode="json") for message in request.context.history],
+                "message": request.message,
+                "material_card": result.material_card.model_dump(mode="json"),
+                "tool_calls": [call.model_dump(mode="json") for call in result.tool_calls],
+                "validated_guidance": result.assistant_message,
+            }
+        )
+        try:
+            if response["stopReason"] != "end_turn":
+                raise ValueError("Resposta recusada ou truncada")
+            text = "\n".join(block["text"] for block in response["output"]["message"]["content"] if "text" in block)
+            if not text.strip() or len(text) > 12000:
+                raise ValueError("Resposta vazia ou longa demais")
+        except (KeyError, TypeError, ValueError) as error:
+            raise BedrockError() from error
+        return result.model_copy(
+            update={
+                "assistant_message": text.strip(),
+                "context_patch": {**result.context_patch, "planner": PLANNER},
+            }
+        )

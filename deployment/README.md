@@ -230,10 +230,41 @@ Embeddings ficam desligados por padrão. `embedding_repository=bedrock_titan_v1`
 Não usar `simulated_v1`/Ollama no deploy. A configuração recusa esses nomes.
 API, Agent e CLI também recusam iniciar com `simulated_v1` fora de `APP_ENV=local`
 ou quando há marcadores de runtime AWS, mesmo que o ambiente se declare local.
-O planejador de chat atual continua determinístico: definir `BEDROCK_CHAT_MODEL_ID`
-não implementa um planejador LLM. A chamada curta do preflight só comprova acesso
-ao modelo. O repositório de embeddings atual fixa Titan V2; outros IDs exigem outra
-implementação e reindexação compatível.
+O chat usa Claude Opus 5.5 quando `BEDROCK_CHAT_MODEL_ID` estiver preenchido.
+O exemplo AWS configura `bedrock_chat_model=us.anthropic.claude-opus-5-5` em
+`us-east-1`; o render existente transmite isso ao Agent. O perfil encaminha a
+inferência entre regiões dos EUA. Para São Paulo, avaliar explicitamente o perfil
+global e seus destinos antes de alterar a configuração. O ID simples não funciona
+como inferência regional em `us-east-1`. Conferir a
+[ficha oficial do Opus 5.5](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-opus-5-5.html).
+
+Localmente, preencher `.env` com `AWS_REGION=us-east-1` e
+`BEDROCK_CHAT_MODEL_ID=us.anthropic.claude-opus-5-5` e recriar o Agent:
+`docker compose up -d --build agent`. Fornecer credenciais AWS válidas ao container
+pelos mecanismos usuais do SDK; um perfil no host não é montado automaticamente.
+No ECS/EC2 usar task role/instance profile, sem chave no frontend. A role do Agent
+precisa de `bedrock:InvokeModel` no perfil e nos modelos de destino; SCPs precisam
+permitir os destinos do perfil. A conta também precisa satisfazer os requisitos
+de acesso ao modelo/Anthropic e ter quota. Não é necessário `InvokeModelWithResponseStream`
+para este fluxo síncrono. A chamada do preflight comprova acesso, não a qualidade da entrevista.
+
+O system prompt `material_registration_system_v1` fica em
+`mcp/vx_materials_mcp/chatbot/prompts.py`. Por turno, o Agent interpreta o pedido
+com saída estruturada, exige trechos literais do usuário para atributos propostos,
+executa o ciclo MCP existente e pede ao modelo uma resposta baseada na ficha.
+São no máximo duas chamadas Converse e cinco tools. Classe/nome/atributos são
+validados; prontidão, duplicidade e aprovação continuam no domínio/API.
+Em botões de escolha/descarte, o modelo reconstrói a descrição pelo histórico;
+a mensagem do botão fica fora da interpretação e a ação estruturada permanece
+autoritativa no ciclo determinístico.
+Falhas AWS e respostas inválidas retornam 503 sanitizado, sem fallback silencioso.
+O SDK usa conexão de 2 s, leitura de 8 s e uma tentativa por chamada; o prazo global
+do Agent continua 20 s. Medir latência real de Opus na #107 antes da demo.
+
+Sem `BEDROCK_CHAT_MODEL_ID`, o fluxo local permanece por regras e não faz chamadas
+de modelo. Testes usam transporte simulado; acesso, custo e qualidade precisam ser
+validados com a conta real. O repositório de embeddings continua fixando Titan V2;
+outros IDs exigem outra implementação e reindexação compatível.
 
 ## Domínio próprio
 

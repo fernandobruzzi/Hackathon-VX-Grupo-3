@@ -13,7 +13,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
-| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat, five tools, scoped resources, versioned prompts and bounded enrichment preview and versioned NCM resource; official snapshot capture pending |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Optional Bedrock Opus 5.5 chat, local rules, five tools, scoped resources, versioned prompts and bounded enrichment preview; official NCM snapshot capture pending |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo reset implemented |
@@ -219,9 +219,13 @@ DEMO_MODE=true scripts/load_demo_data.sh
 scripts/smoke_test.sh http://localhost:8000 --mode flow
 ```
 
-Nothing in this flow calls Bedrock: chat plans with rules, the batch reports zero
-model usage and says so, and embeddings stay off. The only model-backed option,
-embeddings, has `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
+With `BEDROCK_CHAT_MODEL_ID` empty, this local flow makes no Bedrock calls: chat
+plans with rules, batch reports zero model usage, and embeddings stay off.
+Setting it enables the Bedrock chat interpreter and interview; AWS configuration
+selects `us.anthropic.claude-opus-5-5`. The versioned system prompt lives in
+`mcp/vx_materials_mcp/chatbot/prompts.py`; domain tools still determine readiness
+and identity. See `deployment/README.md` for IAM, timeouts and live validation.
+Embeddings have `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
 
 Promotion CI is configured to run the local smoke, reset the demo with the cached
 API image, run the complete flow, then measure Agent concurrency and cancellation
