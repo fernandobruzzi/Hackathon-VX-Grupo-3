@@ -442,3 +442,56 @@ def test_ncm_resource_authenticates_signed_tenant_before_loading_snapshot(resour
     caller = {**resource_data["caller"], "user_id": resource_data["foreign_user"]}
     with pytest.raises(McpToolError, match="nao autorizada"):
         protocol(lambda c: c.read_resource(f"ncm://{snapshot.version}/codes/73181500"), resource_data["reader"], caller)
+
+
+def test_all_15_bootstrapped_identities_use_scoped_cache_over_stdio(resource_data):
+    from enrichment.catalog import REAL_PRODUCTS
+
+    data = resource_data
+    source_ids = {code: uuid.uuid4() for code in REAL_PRODUCTS}
+    with data["admin"].begin() as connection:
+        for code, product in REAL_PRODUCTS.items():
+            material_id = connection.execute(
+                text("SELECT id FROM materials_master WHERE tenant_id=:tenant AND material_code=:code"),
+                {"tenant": data["caller"]["tenant_id"], "code": code},
+            ).scalar_one()
+            attribute = "REFERENCIA" if product.pdm_class_id == "PDM020" else "REFERENCIA FABRICANTE"
+            connection.execute(
+                text(
+                    "INSERT INTO enrichment_sources(id,tenant_id,material_id,attribute_name,proposed_value,"
+                    "source_url,source_title,source_excerpt,retrieved_at,confidence_level,confidence_basis,status) "
+                    "VALUES (:id,:tenant,:material,:attribute,CAST(:value AS jsonb),"
+                    "'https://example.invalid/protocol-fixture','SIMULACAO - teste de protocolo',"
+                    "'SIMULACAO: cache de teste, sem consulta externa',now(),'LOW',"
+                    "'[\"SIMULATED\",\"PROTOCOL_TEST_FIXTURE\"]'::jsonb,'PENDING')"
+                ),
+                {
+                    "id": source_ids[code],
+                    "tenant": data["caller"]["tenant_id"],
+                    "material": material_id,
+                    "attribute": attribute,
+                    "value": json.dumps(product.reference),
+                },
+            )
+    try:
+        for code, product in REAL_PRODUCTS.items():
+            attribute = "REFERENCIA" if product.pdm_class_id == "PDM020" else "REFERENCIA FABRICANTE"
+            result = protocol(
+                lambda client, code=code, attribute=attribute: client.call_tool(
+                    "enrich_from_trusted_source", {"material_code": code, "attributes_requested": [attribute]}
+                ),
+                data["reader"],
+                data["caller"],
+            )
+            assert result["status"] == "EVIDENCE_FOUND", code
+            assert result["pending_reason"] is None, code
+            assert len(result["attributes"]) == 1, code
+            cached = result["attributes"][0]
+            assert cached["fonte"]["source_id"] == str(source_ids[code]), code
+            assert cached["persisted"] is True and cached["approval_status"] == "PENDING", code
+            assert cached["confianca"]["level"] == "LOW", code
+            assert "SIMULATED" in cached["confianca"]["basis"], code
+    finally:
+        with data["admin"].begin() as connection:
+            for source_id in source_ids.values():
+                connection.execute(text("DELETE FROM enrichment_sources WHERE id=:id"), {"id": source_id})
