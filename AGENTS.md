@@ -811,7 +811,7 @@ The API serves the static build from the same origin, so there's no SSR, route h
 
 - `data/desafio01/` is original input. Never edit it.
 - `vx-bootstrap` loads values exactly as they came, and copies the original files to storage. Corrections only happen later, through approved proposals.
-- Files go through `clients/storage.py`, using a local folder by default and S3 with `STORAGE_BACKEND=s3`. Stored files are immutable, including concurrent writes: local files are published complete with an atomic hard link; S3 creates with `If-None-Match: *`. Repeating the same content reuses the winner and its version; different content raises a conflict.
+- Files go through `clients/storage.py`, using a local folder by default and S3 with `STORAGE_BACKEND=s3`. Stored files are immutable, including concurrent writes: local files are published complete with an atomic hard link after closing the temporary file, which is also removed on failure; S3 creates with `If-None-Match: *`. Repeating the same content reuses the winner and its version; different content raises a conflict.
 - Data stays in the repo so anyone, judges included, can run the project from a clone. Review this once the database exists.
 - Data is synthetic, except that the last 15 base records are real products. Those are the only ones to enrich from public sources, and each value must record its source.
 
