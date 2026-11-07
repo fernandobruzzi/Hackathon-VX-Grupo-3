@@ -61,6 +61,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
   const endRef = useRef<HTMLDivElement>(null);
   const pendingTurn = useRef<AbortController | null>(null);
   const draftRef = useRef<HTMLTextAreaElement>(null);
+  const composing = useRef(false);
   const draftGuardRef = useRef<HTMLDivElement>(null);
   // Troca que apagaria texto não enviado: espera a pessoa continuar editando ou descartar.
   const [pendingSwitch, setPendingSwitch] = useState<
@@ -467,7 +468,16 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               }
               value={text}
               onChange={(e) => setText(e.target.value)}
+              onCompositionStart={() => {
+                composing.current = true;
+              }}
+              onCompositionEnd={() => {
+                composing.current = false;
+              }}
               onKeyDown={(e) => {
+                // Safari pode encerrar a composição antes do Enter que confirma o candidato.
+                if (composing.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229)
+                  return;
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   send(text);
