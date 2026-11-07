@@ -1,5 +1,6 @@
 "use client";
 import { AutomaticDecision } from "./AutomaticDecision";
+import { belongsToQueue, useQueueNavigation } from "./QueueNavigation";
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
@@ -20,6 +21,7 @@ import type { Proposal, ReviewStatus } from "@/types/api";
 /** Integração: POST /api/v1/sanitization/{id}/decide { expected_version, review_area, decision, primary_material_code, reason }. */
 export function ProposalReview({ proposal }: { proposal: Proposal }) {
   const { me, backend, api } = useAuth();
+  const navigation = useQueueNavigation();
   const [p, setP] = useState(proposal);
   const [primary, setPrimary] = useState(p.suggested_primary_code);
   const [reason, setReason] = useState("");
@@ -96,6 +98,21 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
           body,
           idempotencyKey: operation.current.key,
         });
+        if (navigation.current) {
+          const context = navigation.current;
+          context.items = context.items.flatMap((item) => {
+            if (item.id !== p.id) return [item];
+            const updated = {
+              ...item,
+              version: result.version,
+              status: result.status,
+              technical_review_status: result.technical_review_status,
+              fiscal_review_status: result.fiscal_review_status,
+              allowed_actions: [],
+            };
+            return belongsToQueue(updated, context.area) ? [updated] : [];
+          });
+        }
         setP((previous) => ({
           ...previous,
           version: result.version,

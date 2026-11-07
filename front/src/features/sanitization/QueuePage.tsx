@@ -19,41 +19,75 @@ import { fmtDate } from "@/lib/format";
 import { needsFiscal, needsTechnical, proposals } from "@/mocks/queue";
 import type { ProposalType } from "@/types/api";
 
-type Area = "TECHNICAL" | "FISCAL" | "HISTORY";
+import { mergeQueueItems, useQueueNavigation, type Area } from "./QueueNavigation";
 
 /** Integração: GET /api/v1/sanitization/queue?review_area=…&status=PENDING&limit=20 (contrato 6.3). */
 export function QueuePage() {
   const { me, backend, api } = useAuth();
   const isFiscal = can(me, "ncm:decide");
-  const [area, setArea] = useState<Area>(isFiscal ? "FISCAL" : "TECHNICAL");
-  const [type, setType] = useState<ProposalType | "ALL">("ALL");
-  const [remote, setRemote] = useState<components["schemas"]["ProposalSummary"][]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const navigation = useQueueNavigation();
+  const [area, setArea] = useState<Area>(
+    navigation.current?.area ?? (isFiscal ? "FISCAL" : "TECHNICAL"),
+  );
+  const [type, setType] = useState<ProposalType | "ALL">(navigation.current?.type ?? "ALL");
+  const [remote, setRemote] = useState<components["schemas"]["ProposalSummary"][]>(
+    navigation.current?.items ?? [],
+  );
+  const [cursor, setCursor] = useState<string | null>(navigation.current?.cursor ?? null);
+  const [nextCursor, setNextCursor] = useState<string | null>(
+    navigation.current?.nextCursor ?? null,
+  );
   const [loading, setLoading] = useState(backend);
+  const [pageCount, setPageCount] = useState(navigation.current?.pageCount ?? 0);
+  const [hasLoaded, setHasLoaded] = useState(!backend || !!navigation.current?.loaded);
+  const [restoring, setRestoring] = useState(!!navigation.current?.loaded);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     if (!backend) return;
     const controller = new AbortController();
     setLoading(true);
-    if (!cursor) setRemote([]);
+    if (!cursor && !restoring) setRemote([]);
     setError(null);
-    api
-      .request("get", "/api/v1/sanitization/queue", {
+    const readPage = (pageCursor?: string) =>
+      api.request("get", "/api/v1/sanitization/queue", {
         query: {
           review_area: area === "HISTORY" ? undefined : area,
           status: area === "HISTORY" ? "DECIDED" : "PENDING",
           proposal_type: type === "ALL" ? undefined : type,
-          cursor: cursor ?? undefined,
+          cursor: pageCursor,
         },
         signal: controller.signal,
-      })
-      .then((result) => {
-        if (controller.signal.aborted) return;
-        setRemote((previous) => (cursor ? [...previous, ...result.items] : result.items));
-        setNextCursor(result.next_cursor);
-      })
+      });
+    const load = async () => {
+      if (restoring) {
+        // Repete só as páginas já carregadas e publica o resultado completo de uma vez.
+        // O cursor novo permite continuar mesmo quando surgiram propostas após a antiga última página.
+        let pageCursor: string | undefined;
+        let remaining: string | null = null;
+        let pages = 0;
+        let items: typeof remote = [];
+        do {
+          const page = await readPage(pageCursor);
+          if (controller.signal.aborted) return;
+          items = mergeQueueItems(items, page.items);
+          remaining = page.next_cursor;
+          pageCursor = remaining ?? undefined;
+          pages += 1;
+        } while (remaining && pages < (navigation.current?.pageCount ?? 1));
+        setRemote(items);
+        setNextCursor(remaining);
+        setPageCount(pages);
+        return;
+      }
+      const result = await readPage(cursor ?? undefined);
+      if (controller.signal.aborted) return;
+      setRemote((previous) => mergeQueueItems(cursor ? previous : [], result.items));
+      setNextCursor(result.next_cursor);
+      setHasLoaded(true);
+      setPageCount((previous) => (cursor ? previous + 1 : 1));
+    };
+    load()
       .catch((error: unknown) => {
         if (!controller.signal.aborted)
           setError(error instanceof ApiError ? error.message : "Não foi possível carregar a fila.");
@@ -62,7 +96,52 @@ export function QueuePage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [api, backend, area, type, cursor, retry]);
+  }, [api, backend, area, type, cursor, retry, restoring, navigation]);
+
+  useEffect(() => {
+    const previous = navigation.current;
+    navigation.current = {
+      area,
+      type,
+      items: remote,
+      cursor,
+      nextCursor,
+      loaded: hasLoaded,
+      pageCount,
+      anchor: previous?.anchor ?? null,
+      scrollY: previous?.scrollY ?? 0,
+    };
+  }, [navigation, area, type, remote, cursor, nextCursor, hasLoaded, pageCount]);
+
+  useEffect(() => {
+    if (loading || !restoring) return;
+    const frame = requestAnimationFrame(() => {
+      const saved = navigation.current;
+      const target = saved?.anchor && document.getElementById(`proposal-${saved.anchor}`);
+      if (target) target.scrollIntoView({ block: "center" });
+      else window.scrollTo(0, saved?.scrollY ?? 0);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [loading, restoring, navigation]);
+
+  const rememberPosition = (id: string) => {
+    if (navigation.current) {
+      navigation.current.anchor = id;
+      navigation.current.scrollY = window.scrollY;
+    }
+  };
+  const reset = () => {
+    setRestoring(false);
+    setHasLoaded(false);
+    setPageCount(0);
+    setRemote([]);
+    setNextCursor(null);
+    setCursor(null);
+    if (navigation.current) {
+      navigation.current.anchor = null;
+      navigation.current.scrollY = 0;
+    }
+  };
 
   const rows = useMemo(() => {
     if (backend) return remote;
@@ -102,7 +181,7 @@ export function QueuePage() {
           value={area}
           onChange={(value) => {
             setArea(value);
-            setCursor(null);
+            reset();
           }}
           items={[
             {
@@ -122,7 +201,7 @@ export function QueuePage() {
           value={type}
           onChange={(e) => {
             setType(e.target.value as ProposalType | "ALL");
-            setCursor(null);
+            reset();
           }}
           className="h-10 w-56 text-sm"
           aria-label="Tipo de proposta"
@@ -167,9 +246,10 @@ export function QueuePage() {
           </thead>
           <tbody>
             {rows.map((p) => (
-              <tr key={p.id} className="hover:bg-ink/60">
+              <tr key={p.id} id={`proposal-${p.id}`} className="hover:bg-ink/60">
                 <Td>
                   <Link
+                    onClick={() => rememberPosition(p.id)}
                     href={
                       backend
                         ? `/saneamento/revisao/?id=${encodeURIComponent(p.id)}`
@@ -214,6 +294,7 @@ export function QueuePage() {
                 </Td>
                 <Td>
                   <Link
+                    onClick={() => rememberPosition(p.id)}
                     href={
                       backend
                         ? `/saneamento/revisao/?id=${encodeURIComponent(p.id)}`
@@ -231,7 +312,13 @@ export function QueuePage() {
         </Table>
       )}
       {backend && nextCursor && (
-        <Button disabled={loading} onClick={() => setCursor(nextCursor)}>
+        <Button
+          disabled={loading}
+          onClick={() => {
+            setRestoring(false);
+            setCursor(nextCursor);
+          }}
+        >
           Carregar mais propostas
         </Button>
       )}
