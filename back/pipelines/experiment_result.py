@@ -6,6 +6,7 @@ maioria. Toda taxa traz numerador, denominador e intervalo de Wilson dos casos d
 """
 
 import json
+import unicodedata
 from datetime import datetime, time
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from pipelines.experiment import (
     SHEET_PAIRS,
     _pairs,
     package_id,
+    workbook,
 )
 
 YES, NO = "SIM", "NAO"
@@ -35,11 +37,62 @@ class ExperimentError(ValueError):
     """Chave e planilha não pertencem ao mesmo pacote, ou o preenchimento é inválido."""
 
 
-def _answer(value):
+def _answer(value, allowed=(YES, NO, "NAO SEI")):
     if value in (None, ""):
         return None
     text = str(value).strip().upper().replace("Ã", "A")
-    return {"SIM": YES, "NAO": NO, "NAO SEI": "NAO SEI"}.get(text, text)
+    if text not in allowed:
+        raise ExperimentError(f"Resposta inválida: {value}")
+    return text
+
+
+def _unsubstantiated(value, allowed=(YES, NO, "NAO SEI")):
+    _answer(value, allowed)  # Reject invalid labels even when evidence is absent.
+    return None
+
+
+def _reviewer_key(value):
+    return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+
+def _has_evidence(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _validate_workbook(wb, key):
+    expected = workbook(key)
+    if wb.sheetnames != expected.sheetnames:
+        raise ExperimentError("Abas diferentes do esquema congelado")
+    specs = {SHEET_PAIRS: (2, 0, 2), SHEET_CORRECTIONS: (2, 0, 4), SHEET_MANUAL: (4, 1, 4)}
+    for sheet in wb:
+        original = expected[sheet.title]
+        if (sheet.max_row, sheet.max_column) != (original.max_row, original.max_column):
+            raise ExperimentError("Linhas/colunas diferentes do pacote")
+        spec = specs.get(sheet.title)
+        first = spec[0] if spec else original.max_row + 1
+        for row in sheet.iter_rows():
+            for cell in row:
+                if cell.data_type == "f":
+                    raise ExperimentError("Fórmula não permitida na planilha")
+                if cell.row < first:
+                    editable = (sheet.title == SHEET_GUIDE and cell.coordinate == REVIEWER_CELL) or (
+                        sheet.title == SHEET_MANUAL and cell.coordinate in ("B1", "D1", "F1")
+                    )
+                    if not editable and cell.value != (original[cell.coordinate].value or None):
+                        raise ExperimentError(f"Conteúdo protegido alterado: {sheet.title}!{cell.coordinate}")
+        if spec:
+            first, id_column, protected = spec
+            expected_rows = {
+                row[id_column]: row[:protected] for row in original.iter_rows(min_row=first, values_only=True)
+            }
+            seen = set()
+            for row in sheet.iter_rows(min_row=first, values_only=True):
+                case = row[id_column]
+                if case in seen or case not in expected_rows or row[:protected] != expected_rows[case]:
+                    raise ExperimentError("Caso duplicado, desconhecido ou conteúdo protegido alterado")
+                seen.add(case)
+            if seen != set(expected_rows):
+                raise ExperimentError("Casos ausentes")
 
 
 def _clock(value):
@@ -54,20 +107,25 @@ def _clock(value):
 
 
 def read_sheet(path: str, key: dict) -> dict:
-    wb = load_workbook(path, data_only=True)
+    wb = load_workbook(path, data_only=False)
     guide = wb[SHEET_GUIDE]
     if guide[PACKAGE_CELL].value != key["package_id"]:
         raise ExperimentError(f"{path}: planilha do pacote {guide[PACKAGE_CELL].value}, chave {key['package_id']}")
+    _validate_workbook(wb, key)
     reviewer = str(guide[REVIEWER_CELL].value or "").strip()
     if not reviewer:
         raise ExperimentError(f"{path}: revisor sem nome na célula {REVIEWER_CELL}")
     pairs = {
-        row[0]: {"label": _answer(row[2]), "evidence": row[3]}
+        row[0]: {"label": _answer(row[2]) if _has_evidence(row[3]) else _unsubstantiated(row[2]), "evidence": row[3]}
         for row in wb[SHEET_PAIRS].iter_rows(min_row=2, values_only=True)
         if row[0]
     }
     corrections = {
-        row[0]: {"correct": _answer(row[4]), "lost": _answer(row[5]), "note": row[6]}
+        row[0]: {
+            "correct": _answer(row[4]) if _has_evidence(row[6]) else _unsubstantiated(row[4]),
+            "lost": _answer(row[5], (YES, NO)) if _has_evidence(row[6]) else _unsubstantiated(row[5], (YES, NO)),
+            "note": row[6],
+        }
         for row in wb[SHEET_CORRECTIONS].iter_rows(min_row=2, values_only=True)
         if row[0]
     }
@@ -75,7 +133,7 @@ def read_sheet(path: str, key: dict) -> dict:
     groups = {
         str(row[1]): str(row[4]).strip()
         for row in manual.iter_rows(min_row=4, values_only=True)
-        if row[1] and row[4] not in (None, "")
+        if row[1] and row[4] not in (None, "") and str(row[4]).strip()
     }
     if set(pairs) != set(key["pairs"]) or set(corrections) != set(key["corrections"]):
         raise ExperimentError(f"{path}: casos diferentes dos da chave")
@@ -91,7 +149,7 @@ def read_sheet(path: str, key: dict) -> dict:
 
 def combine(answers: list) -> tuple[str | None, str]:
     """Um revisor: o rótulo dele. Dois: só quando concordam; o resto fica inconclusivo."""
-    if any(answer in (None, "NAO SEI") for answer in answers):
+    if not answers or any(answer not in (YES, NO) for answer in answers):
         return None, "INCONCLUSIVE"
     if len(set(answers)) > 1:
         return None, "DISAGREEMENT"
@@ -109,7 +167,7 @@ def experiment_result(key_path: str, sheet_paths: list[str]) -> dict:
     if not 1 <= len(sheet_paths) <= 2:
         raise ExperimentError("Informe uma ou duas planilhas preenchidas")
     reviews = [read_sheet(path, key) for path in sheet_paths]
-    names = [review["reviewer"].casefold() for review in reviews]
+    names = [_reviewer_key(review["reviewer"]) for review in reviews]
     if len(set(names)) != len(names):
         raise ExperimentError("O mesmo revisor não conta como dois")
 
@@ -138,14 +196,10 @@ def experiment_result(key_path: str, sheet_paths: list[str]) -> dict:
     manual = []
     for review in reviews:
         people: dict[str, list[str]] = {}
-        system: dict[str, list[str]] = {}
         for code, group in review["groups"].items():
             people.setdefault(group, []).append(code)
-            identity = key["slice"][code]["identity_key"]
-            if identity:
-                system.setdefault(identity, []).append(code)
         person_pairs = set().union(*map(_pairs, people.values())) if people else set()
-        system_pairs = set().union(*map(_pairs, system.values())) if system else set()
+        system_pairs = {tuple(pair) for pair in key["system_merge_pairs"] if set(pair) <= set(review["groups"])}
         common = person_pairs & system_pairs
         minutes = review["minutes"]
         manual.append(
@@ -171,6 +225,8 @@ def experiment_result(key_path: str, sheet_paths: list[str]) -> dict:
 
     return {
         "schema": SCHEMA,
+        "independent_review_verified": False,
+        "system_decision_kind": key["system_decision_kind"],
         "evaluation_kind": "BLIND_REVIEW_EXPERIMENT",
         "package_id": key["package_id"],
         "analysis_signature": key["analysis_signature"],
