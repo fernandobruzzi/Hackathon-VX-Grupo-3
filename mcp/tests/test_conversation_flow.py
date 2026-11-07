@@ -4,6 +4,7 @@ import asyncio
 import time
 import uuid
 from contextlib import asynccontextmanager
+from decimal import Decimal
 from pathlib import Path
 
 import jwt
@@ -189,6 +190,9 @@ def test_existing_item_is_shown_with_authorized_stock(db_client):
     assert all(set(row) == {"center_code", "center_name", "quantity", "unit"} for row in card["existing"]["inventory"])
     assert all(row["center_name"] for row in card["existing"]["inventory"])
     assert "16031971" in body["assistant_message"]
+    for row in card["existing"]["inventory"]:
+        unit = ("peça" if Decimal(row["quantity"]) == 1 else "peças") if row["unit"] == "PC" else row["unit"]
+        assert f"{row['quantity']} {unit} no centro {row['center_name']}" in body["assistant_message"]
 
 
 NEW_BOLT = "Parafuso sextavado M36x333, classe A4-70, aço inox 316, oxidado preto, DIN 931"
