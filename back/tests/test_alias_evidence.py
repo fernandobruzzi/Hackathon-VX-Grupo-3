@@ -254,3 +254,29 @@ def test_part_number_label_keeps_its_bearing_reference_meaning(catalog, referenc
     result = extract(catalog, "PDM020", f"ROLAMENTO RIGIDO ESFERAS, {reference}")
     assert result.attributes["REFERENCIA"].value == "6004-ZZ"
     assert result.attributes["VEDACAO"].value == "METALICA AMBOS LADOS"
+
+
+COMPOUND_REFERENCE_LABELS = [
+    "CODIGO FABRICANTE",
+    "CODIGO DO FABRICANTE",
+    "REFERENCIA DO FABRICANTE",
+    "REF DO FABRICANTE",
+    "COD DO FABRICANTE",
+]
+
+
+@pytest.mark.parametrize("label", COMPOUND_REFERENCE_LABELS)
+@pytest.mark.parametrize("prefix", ["PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, ", "PARAFUSO SEXTAVADO ROSCA GROSSA "])
+def test_compound_reference_cannot_supply_physical_dimensions(catalog, label, prefix):
+    metadata = f"{label}:M12X50"
+    result = extract(catalog, "PDM001", prefix + metadata)
+    assert not {"BITOLA", "COMPRIMENTO", "ROSCA"} & result.attributes.keys()
+    assert any(label in part and "M12X50" in part for part in result.unresolved)
+
+
+@pytest.mark.parametrize("label", COMPOUND_REFERENCE_LABELS)
+def test_compound_reference_keeps_separate_physical_gauge(catalog, label):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {label}:M12X50, BITOLA:M12")
+    assert result.attributes["BITOLA"].value == "M12"
+    assert result.attributes["ROSCA"].value == "METRICA GROSSA"
+    assert "COMPRIMENTO" not in result.attributes
