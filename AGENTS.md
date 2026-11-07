@@ -223,12 +223,14 @@ Nothing in this flow calls Bedrock: chat plans with rules, the batch reports zer
 model usage and says so, and embeddings stay off. The only model-backed option,
 embeddings, has `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
 
-CI runs the same flow in an isolated Compose project, with cached images that
-include the original data kit. The promotion's image job runs the local smoke,
-resets the demo with the cached API image, then runs the complete flow. Its project
-name includes the run ID and attempt, and cleanup runs after failures or cancellation.
-Only same-repository `homologacao` promotions to `main` run the complete CI jobs;
-work PRs to `homologacao` keep their local verification gate.
+Promotion CI is configured to run the local smoke, reset the demo with the cached
+API image, run the complete flow, then measure Agent concurrency and cancellation
+cleanup in an isolated Compose project. Its project name includes the run ID and
+attempt, and cleanup is configured after failures or cancellation. Only
+same-repository `homologacao` promotions to `main` run the eight complete CI checks;
+work PRs to `homologacao` keep their local verification gate. This is configuration
+preparation for #157, which remains open: a fresh image build and the complete
+Compose flow still require execution with the RDS certificate endpoint available.
 `DB_PORT` and `API_BIND_PORT` choose local ports;
 published ports bind to loopback. CI also checks branch/commit policy and runs the
 installed migration command twice. An update to the same promotion PR cancels
