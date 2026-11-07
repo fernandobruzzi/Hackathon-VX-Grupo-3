@@ -4,7 +4,18 @@ import { AutomaticDecision } from "./AutomaticDecision";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { Button, Code, PageHeader, Select, Table, Tabs, Td, Th, EmptyState } from "@/components/ui";
+import {
+  Button,
+  Code,
+  PageHeader,
+  Select,
+  Table,
+  Tabs,
+  TabPanels,
+  Td,
+  Th,
+  EmptyState,
+} from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import type { components } from "@/types/api.generated";
 import {
@@ -178,6 +189,8 @@ export function QueuePage() {
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Tabs
+          id="sanitization"
+          label="Fila de saneamento"
           value={area}
           onChange={(value) => {
             setArea(value);
@@ -215,116 +228,121 @@ export function QueuePage() {
         </Select>
       </div>
 
-      {loading && (
-        <p role="status" className="mb-4 text-sm text-muted">
-          Carregando propostas…
-        </p>
-      )}
-      {error && (
-        <div role="alert" className="mb-4 text-alerta">
-          {error}{" "}
-          <Button variant="ghost" onClick={() => setRetry((value) => value + 1)}>
-            Tentar novamente
-          </Button>
-        </div>
-      )}
-      {!loading && !error && rows.length === 0 ? (
-        <EmptyState title="Fila vazia">Nada pendente nesta área com esse filtro.</EmptyState>
-      ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th>Proposta</Th>
-              <Th>Tipo</Th>
-              <Th>Códigos</Th>
-              <Th>Técnica</Th>
-              <Th>Fiscal</Th>
-              <Th>Status</Th>
-              <Th className="text-right">Score</Th>
-              <Th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.id} id={`proposal-${p.id}`} className="hover:bg-ink/60">
-                <Td>
-                  <Link
-                    onClick={() => rememberPosition(p.id)}
-                    href={
-                      backend
-                        ? `/saneamento/revisao/?id=${encodeURIComponent(p.id)}`
-                        : `/saneamento/${p.id}/`
-                    }
-                    className="font-semibold hover:text-verde"
-                  >
-                    {p.title ?? p.material_codes.join(" / ")}
-                  </Link>
-                  <p className="mt-0.5 text-xs text-muted">{p.identity.summary}</p>
-                  {p.conflicts.length > 0 && (
-                    <p className="mt-1 text-xs font-semibold text-aviso">
-                      {p.conflicts.length} conflito(s)
-                    </p>
-                  )}
-                </Td>
-                <Td>
-                  <ProposalTypeBadge value={p.proposal_type} />
-                </Td>
-                <Td>
-                  <Code>{p.material_codes.join(" · ")}</Code>
-                </Td>
-                <Td>
-                  <ReviewBadge value={p.technical_review_status} />
-                </Td>
-                <Td>
-                  <ReviewBadge value={p.fiscal_review_status} />
-                </Td>
-                <Td>
-                  <ProposalStatusBadge value={p.status} />
-                  <AutomaticDecision
-                    status={p.status}
-                    mode={"application_mode" in p ? p.application_mode : undefined}
-                    automation={"automation" in p ? p.automation : undefined}
-                  />
-                  {p.created_at && (
-                    <p className="mt-1 font-mono text-[11px] text-muted">{fmtDate(p.created_at)}</p>
-                  )}
-                </Td>
-                <Td className="text-right">
-                  <Code>{p.ranking_score?.toFixed(2) ?? "—"}</Code>
-                </Td>
-                <Td>
-                  <Link
-                    onClick={() => rememberPosition(p.id)}
-                    href={
-                      backend
-                        ? `/saneamento/revisao/?id=${encodeURIComponent(p.id)}`
-                        : `/saneamento/${p.id}/`
-                    }
-                    aria-label={`Revisar ${p.title}`}
-                    className="grid size-9 place-items-center rounded-md hover:bg-ink"
-                  >
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Td>
+      <TabPanels id="sanitization" values={["TECHNICAL", "FISCAL", "HISTORY"]} active={area}>
+        {loading && (
+          <p role="status" className="mb-4 text-sm text-muted">
+            Carregando propostas…
+          </p>
+        )}
+        {error && (
+          <div role="alert" className="mb-4 text-alerta">
+            {error}{" "}
+            <Button variant="ghost" onClick={() => setRetry((value) => value + 1)}>
+              Tentar novamente
+            </Button>
+          </div>
+        )}
+        {!loading && !error && rows.length === 0 ? (
+          <EmptyState title="Fila vazia">Nada pendente nesta área com esse filtro.</EmptyState>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <Th>Proposta</Th>
+                <Th>Tipo</Th>
+                <Th>Códigos</Th>
+                <Th>Técnica</Th>
+                <Th>Fiscal</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Score</Th>
+                <Th />
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-      {backend && nextCursor && (
-        <Button
-          disabled={loading}
-          onClick={() => {
-            setRestoring(false);
-            setCursor(nextCursor);
-          }}
-        >
-          Carregar mais propostas
-        </Button>
-      )}
-      <p className="mt-3 text-xs text-muted">
-        O score só ordena a fila. Ele não é probabilidade de equivalência e não aprova nada sozinho.
-      </p>
+            </thead>
+            <tbody>
+              {rows.map((p) => (
+                <tr key={p.id} id={`proposal-${p.id}`} className="hover:bg-ink/60">
+                  <Td>
+                    <Link
+                      onClick={() => rememberPosition(p.id)}
+                      href={
+                        backend
+                          ? `/saneamento/revisao/?id=${encodeURIComponent(p.id)}`
+                          : `/saneamento/${p.id}/`
+                      }
+                      className="font-semibold hover:text-verde"
+                    >
+                      {p.title ?? p.material_codes.join(" / ")}
+                    </Link>
+                    <p className="mt-0.5 text-xs text-muted">{p.identity.summary}</p>
+                    {p.conflicts.length > 0 && (
+                      <p className="mt-1 text-xs font-semibold text-aviso">
+                        {p.conflicts.length} conflito(s)
+                      </p>
+                    )}
+                  </Td>
+                  <Td>
+                    <ProposalTypeBadge value={p.proposal_type} />
+                  </Td>
+                  <Td>
+                    <Code>{p.material_codes.join(" · ")}</Code>
+                  </Td>
+                  <Td>
+                    <ReviewBadge value={p.technical_review_status} />
+                  </Td>
+                  <Td>
+                    <ReviewBadge value={p.fiscal_review_status} />
+                  </Td>
+                  <Td>
+                    <ProposalStatusBadge value={p.status} />
+                    <AutomaticDecision
+                      status={p.status}
+                      mode={"application_mode" in p ? p.application_mode : undefined}
+                      automation={"automation" in p ? p.automation : undefined}
+                    />
+                    {p.created_at && (
+                      <p className="mt-1 font-mono text-[11px] text-muted">
+                        {fmtDate(p.created_at)}
+                      </p>
+                    )}
+                  </Td>
+                  <Td className="text-right">
+                    <Code>{p.ranking_score?.toFixed(2) ?? "—"}</Code>
+                  </Td>
+                  <Td>
+                    <Link
+                      onClick={() => rememberPosition(p.id)}
+                      href={
+                        backend
+                          ? `/saneamento/revisao/?id=${encodeURIComponent(p.id)}`
+                          : `/saneamento/${p.id}/`
+                      }
+                      aria-label={`Revisar ${p.title}`}
+                      className="grid size-9 place-items-center rounded-md hover:bg-ink"
+                    >
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+        {backend && nextCursor && (
+          <Button
+            disabled={loading}
+            onClick={() => {
+              setRestoring(false);
+              setCursor(nextCursor);
+            }}
+          >
+            Carregar mais propostas
+          </Button>
+        )}
+        <p className="mt-3 text-xs text-muted">
+          O score só ordena a fila. Ele não é probabilidade de equivalência e não aprova nada
+          sozinho.
+        </p>
+      </TabPanels>
     </>
   );
 }

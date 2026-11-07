@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { cn } from "@/lib/format";
 import type {
   ButtonHTMLAttributes,
@@ -197,20 +198,56 @@ export function Tabs<T extends string>({
   value,
   onChange,
   items,
+  id,
+  label,
 }: {
+  id: string;
+  label: string;
   value: T;
   onChange: (v: T) => void;
   items: { value: T; label: string; count?: number }[];
 }) {
+  const buttons = useRef(new Map<T, HTMLButtonElement>());
+  const [focused, setFocused] = useState<T | null>(null);
   return (
     <div
       role="tablist"
+      aria-label={label}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(null);
+      }}
       className="inline-flex gap-1 rounded-md bg-surface p-1 ring-1 ring-surface-2 ring-inset"
     >
       {items.map((it) => (
         <button
           key={it.value}
+          type="button"
           role="tab"
+          id={`${id}-tab-${it.value}`}
+          aria-controls={`${id}-panel-${it.value}`}
+          tabIndex={(focused ?? value) === it.value ? 0 : -1}
+          ref={(element) => {
+            if (element) buttons.current.set(it.value, element);
+            else buttons.current.delete(it.value);
+          }}
+          onFocus={() => setFocused(it.value)}
+          onKeyDown={(event) => {
+            const index = items.findIndex((item) => item.value === it.value);
+            const next =
+              event.key === "ArrowRight"
+                ? (index + 1) % items.length
+                : event.key === "ArrowLeft"
+                  ? (index - 1 + items.length) % items.length
+                  : event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? items.length - 1
+                      : null;
+            if (next === null) return;
+            event.preventDefault();
+            setFocused(items[next].value);
+            buttons.current.get(items[next].value)?.focus();
+          }}
           aria-selected={value === it.value}
           onClick={() => onChange(it.value)}
           className={cn(
@@ -223,6 +260,39 @@ export function Tabs<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+/** Mantém os IDs de todos os painéis sem montar conteúdo inativo. */
+export function TabPanels({
+  id,
+  values,
+  active,
+  enabled = true,
+  children,
+}: {
+  id: string;
+  values: string[];
+  active: string;
+  enabled?: boolean;
+  children: ReactNode;
+}) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <>
+      {values.map((value) => (
+        <div
+          key={value}
+          role="tabpanel"
+          id={`${id}-panel-${value}`}
+          aria-labelledby={`${id}-tab-${value}`}
+          hidden={value !== active}
+          tabIndex={0}
+        >
+          {value === active ? children : null}
+        </div>
+      ))}
+    </>
   );
 }
 
