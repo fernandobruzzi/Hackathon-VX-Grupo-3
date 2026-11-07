@@ -1,0 +1,4534 @@
+{
+  "authorizes_material_merge": false,
+  "classifier": {
+    "after": ["aliases_v1", "2"],
+    "before": ["aliases_v1", "1"]
+  },
+  "code": {
+    "after": "f0481fc8c6ada92f610b27d3df88695e85705f29",
+    "before": "5f6074b130a08888c9cac53e0de6c38abc6fcf0a",
+    "hashes": {
+      "after": {
+        "back/repositories/classification/aliases_v1.py": "9edadb79386d4417b37e7d9794feec50ea9d2ebae17f21aa30bc024af0580c7b",
+        "back/repositories/classification/aliases_v1_tables.py": "549a038bfbb1ea7de3527469e79f4e1477c3012f57cd74f9e10b07c6df119063",
+        "back/repositories/extraction/rule_based_v1.py": "ef885e035ce67dea28d9aebfb92b23237129709aae3e599d1ee0eb971abf8386",
+        "back/repositories/extraction/rule_based_v1_tables.py": "9fc0b8d6112eb4b6adbac29a92cf88dfbace718a2627e6a5d794f89f38644503"
+      },
+      "before": {
+        "back/repositories/classification/aliases_v1.py": "eec2b2a3ca3107844f7c3233a59f4d7e2f7c244c601a36551462d9ba2cc281e6",
+        "back/repositories/classification/aliases_v1_tables.py": "8605256323e0f797bcada5c7df52eb43caa2f3956d9492e258c00b87102c7c43",
+        "back/repositories/extraction/rule_based_v1.py": "ef885e035ce67dea28d9aebfb92b23237129709aae3e599d1ee0eb971abf8386",
+        "back/repositories/extraction/rule_based_v1_tables.py": "9fc0b8d6112eb4b6adbac29a92cf88dfbace718a2627e6a5d794f89f38644503"
+      }
+    }
+  },
+  "evaluation": {
+    "after": {
+      "classified": 43,
+      "correct_out_of_scope": 4,
+      "correctly_classified": 43,
+      "coverage": 0.7818181818181819,
+      "false_out_of_scope": 1,
+      "in_scope_recall": 0.86,
+      "label_method": "Rotulacao por inspecao das descricoes originais e dos nomes do PDM; rotulos independentes das previsoes. Nao e validacao de especialista nem estimativa de acuracia da base inteira.",
+      "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+      "pdm_version": "pdm-kit-v1",
+      "precision": 1.0,
+      "repository": "aliases_v1",
+      "reviewed_items": 55,
+      "sample_sha256": "60dac1c7e2b2837908fbf481b1733e3b9645d6031ddb660bc64c4af7dad80858"
+    },
+    "before": {
+      "classified": 36,
+      "correct_out_of_scope": 4,
+      "correctly_classified": 36,
+      "coverage": 0.6545454545454545,
+      "false_out_of_scope": 8,
+      "in_scope_recall": 0.72,
+      "label_method": "Rotulacao por inspecao das descricoes originais e dos nomes do PDM; rotulos independentes das previsoes. Nao e validacao de especialista nem estimativa de acuracia da base inteira.",
+      "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+      "pdm_version": "pdm-kit-v1",
+      "precision": 1.0,
+      "repository": "aliases_v1",
+      "reviewed_items": 55,
+      "sample_sha256": "60dac1c7e2b2837908fbf481b1733e3b9645d6031ddb660bc64c4af7dad80858"
+    }
+  },
+  "extractor_preserved": ["rule_based_v1", "8"],
+  "independent_review": false,
+  "input_hashes": {
+    "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+    "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+    "classification_review.json": "60dac1c7e2b2837908fbf481b1733e3b9645d6031ddb660bc64c4af7dad80858"
+  },
+  "kind": "DEVELOPMENT_COMPARISON",
+  "materials": {
+    "after": {
+      "CLASSIFIED": 17929,
+      "OUT_OF_SCOPE": 2141,
+      "UNRESOLVED": 3484
+    },
+    "before": {
+      "CLASSIFIED": 17698,
+      "OUT_OF_SCOPE": 2376,
+      "UNRESOLVED": 3480
+    },
+    "candidates_only": 11,
+    "changed_decision": 290,
+    "changes": [
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10040229",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10264058",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10439970",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10501505",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10508618",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10517794",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10533162",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10561692",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "10586103",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10609604",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10720505",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10765043",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10810817",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10837819",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "10892504",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10923838",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "10963865",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11036452",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11112280",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11158163",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11208726",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "11215566",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11238339",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "11277364",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11287821",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11345429",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11528139",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11544445",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "11587517",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11587877",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11603027",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11667142",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11811920",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "11816798",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12019896",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12045245",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12059511",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12086831",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12232423",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12288727",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12328134",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12337424",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12356658",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12389340",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12403895",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12421352",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12466541",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12552339",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12598998",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "12657821",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12662286",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12675138",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12711820",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "12800607",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13031016",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "13124279",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13304081",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "13309834",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13446140",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13461243",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "13525238",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13546621",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13574470",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13695729",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13779169",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13838767",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13939935",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "13943544",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "14018574",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "14070814",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14141830",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14224689",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14240849",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14264127",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "14320473",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14449312",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14472355",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14491798",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14597686",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14613896",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14646174",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14764434",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14794865",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14803668",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "14955642",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "15096524",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15197238",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15243594",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15368602",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15460788",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15515323",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15541993",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15545592",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15635074",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15734553",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "15846721",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16128515",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "16145732",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "16177747",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "16282653",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16308193",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16340954",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16344534",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16477257",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16806767",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16857659",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16866767",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "16907220",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17046277",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "17056955",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17059222",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17071343",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17078568",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "17114120",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17173663",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17321551",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17493371",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17521288",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17592635",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "17592730",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17634206",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "17687330",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "17754898",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17781684",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17824772",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17834180",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17909714",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "17909905",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "17916939",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18007272",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "18025211",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18074373",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18118286",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18155483",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "18200157",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "18247036",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18299283",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18419810",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "18455912",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18461637",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18566665",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18569211",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18574691",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18636270",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "18813395",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "18902072",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "19047658",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19076688",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "19168647",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19176796",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19178463",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "19264528",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19478241",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19494081",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "19536892",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19592218",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "19718722",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19750639",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19775832",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19805718",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "19893911",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "19898187",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20019238",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "20033954",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20140285",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20293499",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "20367784",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20656132",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20681520",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20770740",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20840116",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20866306",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "20964719",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "20998775",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21119625",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21141448",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21143330",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21172321",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21654823",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21655348",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21690929",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "21700873",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21720146",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21721903",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "21875657",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21910968",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "21993617",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22044205",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22071112",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "22084347",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "22288590",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22292377",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22371484",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22390948",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22405966",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22416762",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22501660",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22544322",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22577897",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22578168",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22619075",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22657509",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22775516",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "22979262",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "22986894",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23025882",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "23030821",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23114172",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23248976",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23310678",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23479739",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23497124",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23530591",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "23555225",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23652128",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "23697144",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "23952420",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24060790",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24299335",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24481366",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24496679",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "24628532",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM050", "PDM065"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM050"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "24723071",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24799994",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24891517",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "24943184",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "24985065",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25045314",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25122010",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25140881",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25201148",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25336244",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25349029",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25409391",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25549850",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "25615481",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25683836",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25832519",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "25872336",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "25983998",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "26112127",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26123158",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "26215579",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "26298902",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "26315425",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26407160",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26470867",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26490702",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26671430",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26706264",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26718967",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "26747870",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "26757551",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "26791772",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26856343",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "26856939",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM090", "PDM100"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "27018559",
+        "decision_changed": false
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "27052467",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27098386",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27171168",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "27171253",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "27198998",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27214130",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27328715",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27424990",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27432396",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27445264",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "27485977",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27555574",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27656497",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27707513",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "27759455",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27771953",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "27785721",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28065879",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28186121",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28188660",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28236435",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM090"],
+          "pdm_class_id": "PDM090",
+          "status": "CLASSIFIED"
+        },
+        "code": "28343560",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28347429",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28357220",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28371399",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28419745",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28437677",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28504018",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28551009",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28590761",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM065"],
+          "pdm_class_id": "PDM065",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28630965",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "28798754",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032", "PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": "PDM110",
+          "status": "CLASSIFIED"
+        },
+        "code": "28845043",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "28919602",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM100"],
+          "pdm_class_id": "PDM100",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29063270",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29131070",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM032"],
+          "pdm_class_id": "PDM032",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": ["PDM110"],
+          "pdm_class_id": null,
+          "status": "UNRESOLVED"
+        },
+        "code": "29145694",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29444881",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29471410",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29492903",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29679670",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM063"],
+          "pdm_class_id": "PDM063",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29693163",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29789525",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "29790855",
+        "decision_changed": true
+      }
+    ],
+    "rows": 23554
+  },
+  "merges": {
+    "after": 998,
+    "before": 976,
+    "changes": [
+      {
+        "codes": ["10185053", "23652128"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["10439970", "24065219"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["10810817", "18167844"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["10860647", "19076688", "21440355"],
+        "identity_verified": true,
+        "previous_groups": [["10860647", "21440355"]]
+      },
+      {
+        "codes": ["11173543", "12800607"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["11215566", "13388009"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["11385486", "15545592", "26860719"],
+        "identity_verified": true,
+        "previous_groups": [["11385486", "26860719"]]
+      },
+      {
+        "codes": ["11740710", "23310678"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["12045245", "26316966"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["12403895", "20004810"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["12466541", "14539039"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["12552339", "15020197"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["12734640", "29063270"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["13021120", "16145732"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["13387222", "28186121"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["13478731", "19753099", "22979262"],
+        "identity_verified": true,
+        "previous_groups": [["13478731", "19753099"]]
+      },
+      {
+        "codes": ["13543278", "25122010"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["13778007", "28630965"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["14224689", "21941564"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["15381881", "18299283", "21488129", "23415580"],
+        "identity_verified": true,
+        "previous_groups": [["15381881", "21488129", "23415580"]]
+      },
+      {
+        "codes": ["15541993", "20417992"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["16111454", "17781684", "23021294"],
+        "identity_verified": true,
+        "previous_groups": [["16111454", "23021294"]]
+      },
+      {
+        "codes": ["16340954", "24222680"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["18461637", "29819998"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["18566665", "29693163"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["20019238", "26965232"],
+        "identity_verified": true,
+        "previous_groups": []
+      },
+      {
+        "codes": ["21143330", "21385075", "24528491"],
+        "identity_verified": true,
+        "previous_groups": [["21385075", "24528491"]]
+      },
+      {
+        "codes": ["21655348", "28347429"],
+        "identity_verified": true,
+        "previous_groups": []
+      }
+    ],
+    "enlarged_groups": 6,
+    "new_compositions": 28,
+    "new_groups": 22,
+    "replaced_groups": 6
+  },
+  "orders": {
+    "after": {
+      "CLASSIFIED": 439,
+      "OUT_OF_SCOPE": 57,
+      "UNRESOLVED": 24
+    },
+    "before": {
+      "CLASSIFIED": 434,
+      "OUT_OF_SCOPE": 62,
+      "UNRESOLVED": 24
+    },
+    "candidates_only": 0,
+    "changed_decision": 5,
+    "changes": [
+      {
+        "after": {
+          "candidate_class_ids": ["PDM040"],
+          "pdm_class_id": "PDM040",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "SC-202600016",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "SC-202600050",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "SC-202600386",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM040"],
+          "pdm_class_id": "PDM040",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "SC-202600463",
+        "decision_changed": true
+      },
+      {
+        "after": {
+          "candidate_class_ids": ["PDM031"],
+          "pdm_class_id": "PDM031",
+          "status": "CLASSIFIED"
+        },
+        "before": {
+          "candidate_class_ids": [],
+          "pdm_class_id": null,
+          "status": "OUT_OF_SCOPE"
+        },
+        "code": "SC-202600520",
+        "decision_changed": true
+      }
+    ],
+    "rows": 520
+  }
+}
