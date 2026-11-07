@@ -236,6 +236,90 @@ class AwsTests(unittest.TestCase):
             self.assertEqual(ecs.list_service_deployments.call_args_list[2].kwargs.get("nextToken"), "page-2")
             self.assertEqual(json.loads(receipt.read_text())["public_origin"], "https://example.com")
 
+    def test_custom_public_origin_must_answer_like_the_express_endpoint(self):
+        ecs, ecr = Mock(), Mock()
+        web_arn = "arn:aws:ecs:us-east-1:123456789012:task-definition/vx-grupo3-web:1"
+        ecs.describe_services.side_effect = [
+            {"services": []},
+            {
+                "services": [
+                    {
+                        "runningCount": 1,
+                        "pendingCount": 0,
+                        "currentServiceRevisions": [{"arn": "new", "runningTaskCount": 1}],
+                    }
+                ]
+            },
+        ]
+        ecs.list_service_deployments.return_value = {
+            "serviceDeployments": [{"targetServiceRevisionArn": "new", "status": "SUCCESSFUL"}]
+        }
+        ecs.describe_service_revisions.return_value = {
+            "serviceRevisions": [{"serviceRevisionArn": "new", "taskDefinition": web_arn}]
+        }
+        ecs.create_express_gateway_service.return_value = {"service": {"serviceArn": "arn:service"}}
+        ecs.describe_express_gateway_service.return_value = {
+            "service": {
+                "activeConfigurations": [
+                    {
+                        "taskDefinitionArn": web_arn,
+                        "ingressPaths": [{"accessType": "PUBLIC", "endpoint": "https://express.example"}],
+                    }
+                ]
+            }
+        }
+        config = {**self.config, "public_origin": "https://vx.example.com"}
+
+        def responder(healthy):
+            def answer(url, timeout):
+                response = io.BytesIO(b'{"status":"ok"}' if url.startswith(healthy) else b'{"status":"down"}')
+                response.status = 200
+                return response
+
+            return answer
+
+        for healthy, should_pass in (("https://", True), ("https://express.example", False)):
+            with (
+                self.subTest(should_pass=should_pass),
+                tempfile.TemporaryDirectory() as directory,
+                patch("aws_deploy.client", side_effect=lambda session, name: ecs if name == "ecs" else ecr),
+                patch("aws_deploy.validate_secrets"),
+                patch("aws_deploy.deployment_lock", return_value=nullcontext()),
+                patch(
+                    "aws_deploy.register",
+                    side_effect=lambda c, d: f"arn:aws:ecs:us-east-1:123456789012:task-definition/{d['family']}:1",
+                ),
+                patch("aws_deploy.one_off", return_value="arn:task"),
+                patch("aws_deploy.time.sleep"),
+                patch("aws_deploy.urlopen", side_effect=responder(healthy)) as opened,
+                redirect_stdout(io.StringIO()),
+            ):
+                ecs.describe_services.side_effect = [
+                    {"services": []},
+                    {
+                        "services": [
+                            {
+                                "runningCount": 1,
+                                "pendingCount": 0,
+                                "currentServiceRevisions": [{"arn": "new", "runningTaskCount": 1}],
+                            }
+                        ]
+                    },
+                ]
+                receipt = Path(directory) / "receipt.json"
+                if should_pass:
+                    deploy(config, Mock(), "release", receipt)
+                    saved = json.loads(receipt.read_text())
+                    self.assertEqual(saved["public_origin"], "https://vx.example.com")
+                    self.assertEqual(saved["express_origin"], "https://express.example")
+                    self.assertEqual(
+                        [c.args[0] for c in opened.call_args_list],
+                        ["https://express.example/api/v1/healthz", "https://vx.example.com/api/v1/healthz"],
+                    )
+                else:
+                    with self.assertRaises(ConfigurationError):
+                        deploy(config, Mock(), "release", receipt)
+
     def test_redeploy_reads_previous_revision_from_express_not_describe_services(self):
         ecs, ecr = Mock(), Mock()
         web_arn = "arn:aws:ecs:us-east-1:123456789012:task-definition/vx-grupo3-web:2"

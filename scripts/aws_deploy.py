@@ -368,14 +368,17 @@ def deploy(config, session, release, receipt_path):
         ]
         if not endpoints:
             raise ConfigurationError("Endpoint público da revisão nova ainda indisponível; consulte o recibo")
-        origin = endpoints[0].rstrip("/")
-        if not origin.startswith("https://"):
-            origin = "https://" + origin
-        if config["public_origin"] and config["public_origin"] != origin:
-            raise ConfigurationError("Origem configurada diverge do endpoint HTTPS observado")
-        with urlopen(origin + "/api/v1/healthz", timeout=30) as response:
-            if response.status != 200 or json.load(response).get("status") != "ok":
-                raise ConfigurationError("Liveness HTTPS falhou")
+        express = endpoints[0].rstrip("/")
+        if not express.startswith("https://"):
+            express = "https://" + express
+        # Um domínio próprio (CloudFront na frente do Express) pode ser a origem pública.
+        # Ele precisa responder como o Express, senão cookies e callback apontariam para outro lugar.
+        origin = config["public_origin"] or express
+        for url in dict.fromkeys((express, origin)):
+            with urlopen(url + "/api/v1/healthz", timeout=30) as response:
+                if response.status != 200 or json.load(response).get("status") != "ok":
+                    raise ConfigurationError(f"Liveness HTTPS falhou em {url}")
+        receipt["express_origin"] = express
         receipt["public_origin"] = origin
         save()
         print(

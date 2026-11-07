@@ -33,8 +33,23 @@ Parameters:
       Origem HTTPS observada no primeiro deploy, sem barra final. Vazio mantem o
       Cognito desligado; preenchida, cria User Pool, grupos, dominio e app client.
 
+  CustomDomain:
+    Type: String
+    Default: ""
+    AllowedPattern: "^([a-z0-9-]+\\.)*[a-z0-9-]*$"
+    Description: >-
+      Dominio proprio (ex. vx.cerne.pro). Preenchido junto com ExpressEndpoint,
+      cria certificado ACM validado por DNS e CloudFront na frente do Express.
+  ExpressEndpoint:
+    Type: String
+    Default: ""
+    Description: Host do endpoint HTTPS do Express, sem https:// (origem do CloudFront).
+
 Conditions:
   HasPublicOrigin: !Not [!Equals [!Ref PublicOrigin, ""]]
+  HasCustomDomain: !And
+    - !Not [!Equals [!Ref CustomDomain, ""]]
+    - !Not [!Equals [!Ref ExpressEndpoint, ""]]
 
 Resources:
   TaskSecurityGroup:
@@ -319,7 +334,56 @@ Resources:
       UserPoolId: !Ref UserPool
       GroupName: ROLE_AUDITOR_FISCAL
 
+  # O Express nao aceita dominio proprio e reverte mudancas no balanceador que gerencia.
+  # O CloudFront termina o TLS do dominio e repassa tudo ao Express sem cache.
+  CustomDomainCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasCustomDomain
+    Properties:
+      DomainName: !Ref CustomDomain
+      ValidationMethod: DNS
+      Tags:
+        - { Key: vx-project, Value: !Ref Name }
+
+  CustomDomainDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: HasCustomDomain
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub "${Name} ${CustomDomain} -> Express"
+        Aliases: [!Ref CustomDomain]
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CustomDomainCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Origins:
+          - Id: express
+            DomainName: !Ref ExpressEndpoint
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+              OriginReadTimeout: 60
+        DefaultCacheBehavior:
+          TargetOriginId: express
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          # CachingDisabled: respostas autenticadas e cookies nunca ficam em cache.
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          # AllViewerExceptHostHeader: repassa cookies, query e Origin; o Host vira o do Express.
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+      Tags:
+        - { Key: vx-project, Value: !Ref Name }
+
 Outputs:
+  CustomDomainTarget:
+    Condition: HasCustomDomain
+    Description: Valor do CNAME do dominio proprio.
+    Value: !GetAtt CustomDomainDistribution.DomainName
   CognitoUserPoolId:
     Condition: HasPublicOrigin
     Value: !Ref UserPool
