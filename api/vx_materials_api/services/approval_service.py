@@ -194,7 +194,9 @@ def inventory_rows(db: Session, snapshots, target_unit: str | None, changes: Pro
         factor = link.factor if link else Decimal(1)
         source = link.conversion_source if link else "mesma unidade"
         if target_unit is not None and current_unit != target_unit:
-            conversion = conversions.get((current_unit, target_unit))
+            # O importador conserva ausência como NULL; o contrato representa a origem ausente por "".
+            # A correspondência ainda exige fator e fonte explícitos; o snapshot original não muda.
+            conversion = conversions.get((current_unit or "", target_unit))
             if conversion is None:
                 raise ApiError(
                     422, "UNIT_FACTOR_REQUIRED", "Unidade de embalagem sem fator conhecido impede consolidacao."

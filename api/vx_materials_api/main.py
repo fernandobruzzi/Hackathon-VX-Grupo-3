@@ -20,8 +20,6 @@ from vx_materials_api.routes import (
     chat,
     dashboard,
     enrichment,
-
-
     manual_reviews,
     materials,
     registration_orders,

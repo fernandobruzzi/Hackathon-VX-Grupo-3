@@ -472,3 +472,53 @@ def test_manual_factor_cannot_inflate_quantities_for_a_known_unit_alias(pending_
     assert response.json()["error"]["code"] == "UNIT_ALIAS_FACTOR"
     case["session"].expire_all()
     assert case["reviews"][0].proposal_id is None and snapshot.unit == "UN"
+
+
+@pytest.mark.parametrize("factor", ["1", "10"])
+def test_missing_inventory_unit_requires_evidenced_conversion_and_normal_approval(pending_case, factor):
+    from decimal import Decimal
+
+    from vx_materials_api.db.models import InventoryConsolidation
+
+    case = pending_case
+    db = case["session"]
+    review = case["reviews"][0]
+    material = next(m for m in case["materials"] if m.id == review.material_id)
+    snapshots = [s for s in case["snapshots"] if s.material_id == material.id]
+    material.unit = None
+    for snapshot in snapshots:
+        snapshot.unit = None
+    review.observation = {**review.observation, "unit": ""}
+    review.reasons = ["UNIDADE_AUSENTE"]
+    db.commit()
+    original = [(s.id, s.quantity, s.total_value, dict(s.raw_record)) for s in snapshots]
+    missing = propose(case)
+    assert missing.status_code == 422 and missing.json()["error"]["code"] == "UNIT_FACTOR_REQUIRED"
+    conversion = {
+        "from_unit": "",
+        "to_unit": "PC",
+        "factor": factor,
+        "source": "Inventário conferido pelo responsável: saldo original convertido em peças.",
+    }
+    no_source = propose(case, case["resolution"] | {"conversions": [{**conversion, "source": ""}]})
+    assert no_source.status_code == 422
+    accepted = propose(case, case["resolution"] | {"conversions": [conversion]})
+    assert accepted.status_code == 202, accepted.text
+    db.expire_all()
+    assert material.unit is None and material.version == 1
+    assert all(s.unit is None for s in snapshots)
+    proposal = db.get(SanitizationProposal, uuid.UUID(accepted.json()["proposal_id"]))
+    assert proposal.changeset["conversions"] == [conversion]
+    approved = case["client"].post(
+        f"/api/v1/sanitization/{proposal.id}/decide",
+        json={"expected_version": 1, "review_area": "TECHNICAL", "decision": "APPROVE", "reason": "Fonte conferida."},
+        headers=case["headers"] | {"Idempotency-Key": str(uuid.uuid4())},
+    )
+    assert approved.status_code == 200 and approved.json()["status"] == "APPLIED", approved.text
+    db.expire_all()
+    assert material.unit == "PC" and material.version == 2
+    assert [(s.id, s.quantity, s.total_value, dict(s.raw_record)) for s in snapshots] == original
+    assert all(s.unit is None for s in snapshots)
+    links = [db.get(InventoryConsolidation, s.id) for s in snapshots]
+    assert all(link.factor == Decimal(factor) and link.unit == "PC" for link in links)
+    assert all(link.conversion_source == conversion["source"] for link in links)
