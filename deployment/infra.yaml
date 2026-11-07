@@ -48,10 +48,11 @@ Parameters:
   GitHubRepository:
     Type: String
     Default: ""
-    AllowedPattern: "^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)?$"
+    AllowedPattern: "^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|[A-Za-z0-9_.-]+@[0-9]+/[A-Za-z0-9_.-]+@[0-9]+)?$"
     Description: >-
-      owner/repo autorizado a publicar por OIDC a partir de main. Vazio mantem o
-      deploy somente manual.
+      Identidade do repositorio autorizada a publicar por OIDC a partir de main.
+      Usar owner@owner-id/repo@repo-id para subject imutavel ou owner/repo para o
+      formato anterior. Vazio mantem o deploy somente manual.
 
 Conditions:
   HasGitHubDeploy: !Not [!Equals [!Ref GitHubRepository, ""]]
@@ -406,7 +407,7 @@ Resources:
         - { Key: vx-project, Value: !Ref Name }
 
   # Deploy automatico: o GitHub troca o token OIDC do workflow por esta role. Sem chaves
-  # de longa duracao, e somente pushes em main deste repositorio podem assumi-la.
+  # de longa duracao, e somente tokens de main deste repositorio podem assumi-la.
   GitHubOidcProvider:
     Type: AWS::IAM::OIDCProvider
     Condition: HasGitHubDeploy
