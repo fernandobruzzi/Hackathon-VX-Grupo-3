@@ -21,7 +21,7 @@ MAX_TEXT_CHARS = 20_000
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\Z")
 _BUNDLE_FIELDS = {"schema_version", "dataset_id", "documents"}
 _REQUIRED_DOCUMENT_FIELDS = {"id", "title", "text", "kind"}
-_OPTIONAL_DOCUMENT_FIELDS = {"short_description", "manufacturer", "manufacturer_reference"}
+_OPTIONAL_DOCUMENT_FIELDS = {"short_description", "manufacturer", "manufacturer_reference", "merchandise_group"}
 
 
 def _identifier(value):
@@ -119,6 +119,7 @@ def load_supplemental_sources(
             "ATIVO",
             document["text"],
             short_description=document.get("short_description", ""),
+            group=document.get("merchandise_group", ""),
             manufacturer=document.get("manufacturer", ""),
             reference=document.get("manufacturer_reference", ""),
         )
