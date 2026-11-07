@@ -333,7 +333,7 @@ Finish `P0` issues first. If scope changes or an issue is blocked, comment on it
 
 ## Branches
 
-- Branch from an up-to-date `main`, one branch per issue: `<type>/<issue>-<slug>`.
+- Branch from an up-to-date `homologacao`, one branch per issue: `<type>/<issue>-<slug>`.
 - `<type>` is a Conventional Commit type. Example: `feat/13-pdm-validator`.
 - Never commit directly to `main`.
 - Never put an AI agent's name in a branch name. Rename any tool-generated branch, such as `claude/*`, before pushing.
@@ -415,7 +415,7 @@ Never force-push `main` or a branch someone else is using.
 **Required for people and agents. Branch cleanup is part of completing the work.**
 
 1. Confirm the PR is `MERGED` into its intended base. A closed PR alone is not proof of integration.
-2. Run `git fetch origin --prune` and check each remaining issue branch individually. Its current tip must match the merged PR head, with no later work to preserve. Keep `main`, `homologacao`, and branches serving as the head or base of an open PR.
+2. Run `git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'` and check each remaining issue branch individually. The explicit refspec also refreshes `homologacao` in clones configured to fetch only `main`. Its current tip must match the merged PR head, with no later work to preserve. Keep `main`, `homologacao`, and branches serving as the head or base of an open PR.
 3. If the remote branch still exists, delete only the verified tip, so a concurrent push cancels the deletion:
 
    ```bash
@@ -423,7 +423,7 @@ Never force-push `main` or a branch someone else is using.
    ```
 
 4. Check `git worktree list` before local cleanup. From a clean checkout on another branch, delete the completed local branch with `git branch -d <branch>`. After a rebase or squash merge, Git may not recognize it as merged: use `-D` only after verifying that all changes are integrated and no local work remains. Preserve branches checked out in another worktree and report the pending cleanup.
-5. Run `git fetch origin --prune` again and verify the remote branch and any removable local copy are gone. Report which branches were deleted and why any were kept; cleanup is complete only after this check or an explicit explanation of what remains blocked.
+5. Repeat the fetch with the explicit refspec and verify the remote branch and any removable local copy are gone. Report which branches were deleted and why any were kept; cleanup is complete only after this check or an explicit explanation of what remains blocked.
 
 ## Code style and avoiding conflicts
 
@@ -436,22 +436,22 @@ Formatting is automatic, so style never causes a conflict. CI rejects unformatte
 
 To keep conflicts rare:
 
-- Keep PRs small and rebase on `main` often, at least before you start each day and before merging.
+- Keep PRs small and rebase on `homologacao` often, at least before you start each day and before merging.
 - Check who is assigned to neighbouring issues before touching shared files.
 - Add new behavior in new modules, and keep registration lists sorted, one entry per line.
 - Never mix reformatting or unrelated renames into a feature PR.
 
-Lockfiles are generated, so never merge them by hand. On conflict, take `main`'s version and regenerate:
+Lockfiles are generated, so never merge them by hand. On conflict in a work PR, take `homologacao`'s version and regenerate:
 
 ```bash
-git checkout origin/main -- uv.lock && uv lock
+git checkout origin/homologacao -- uv.lock && uv lock
 ```
 
 ```bash
-git checkout origin/main -- front/package-lock.json && (cd front && npm install)
+git checkout origin/homologacao -- front/package-lock.json && (cd front && npm install)
 ```
 
-During a rebase, `origin/main` is still the right source, then continue with `git add` and `git rebase --continue`.
+During a work-branch rebase, `origin/homologacao` is still the right source, then continue with `git add` and `git rebase --continue`.
 
 ## Language
 
