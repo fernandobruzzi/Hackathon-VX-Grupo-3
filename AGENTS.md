@@ -537,6 +537,16 @@ the approval payload pins the before/after assessments. The API recomputes the
 assessment before each approval, refuses changed fiscal bases and enforces all
 required technical/fiscal reviews. See `docs/ncm.md` for behavior and verification.
 
+## Material requests (M7)
+
+The requester journey (M7) treats a material request as the main object: material, quantity,
+unit and destination center, followed until delivery from stock, a purchasing referral or
+cancellation. Read [`docs/solicitacao-material.md`](docs/solicitacao-material.md) before
+working on #237 to #251. It defines quantities and invariants (reserved + delivered + referred
+never exceeds the request; delivery never deducts stock twice; imported snapshots never
+change), states, roles and the decisions still open with operations. Until #236 records those
+decisions, the document is a proposal and nothing in it is implemented.
+
 ## Chat order submission
 
 A ready chat card creates no order until the user explicitly submits it through
