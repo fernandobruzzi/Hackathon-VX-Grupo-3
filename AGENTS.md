@@ -510,6 +510,7 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - Test sessions exist only in local environments.
 - Persona switching (`DEMO_MODE`) only moves between real Cognito sessions already signed in on the same browser, for accounts listed in `DEMO_ACCOUNTS` whose token has the persona's role. Choosing a persona never grants a role.
 - MCP inventory and the materials API select only the latest dataset per tenant, ordered by `imported_at DESC, id DESC`; historical observations never add to current stock. Approved conversions still follow the original snapshots within that selected dataset.
+- MCP tool calls in chat are diagnostics for `chat:diagnostics`, granted only by `ROLE_DEV_TI` (persona `DEV_TI`). The API persists them but returns empty `tool_calls` and `calls` to everyone else; the role grants no approval, publication, batch, metrics or audit power. See [`docs/autorizacao.md`](docs/autorizacao.md).
 - Stock price and value are for `metrics:financial` only. MCP tools get the inventory view from `inventory_view(caller)` and never name it directly. The database can't enforce this per user, because MCP has one credential.
 
 ## Database on AWS
