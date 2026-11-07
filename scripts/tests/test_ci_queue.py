@@ -10,7 +10,9 @@ from ci_queue_report import timing  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 CI = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+DATABASE_TESTS = (ROOT / ".github" / "workflows" / "database-tests.yml").read_text(encoding="utf-8")
 REQUIRED_JOBS = ("style", "python", "database", "front", "images")
+DATABASE_JOBS = ("database-api-demo", "database-api-batch", "database-api-main", "database-mcp")
 
 
 def job(start, end):
@@ -43,9 +45,16 @@ class WorkflowTests(unittest.TestCase):
             "${{ github.event.pull_request.head.ref == 'homologacao' && "
             "github.event.pull_request.head.repo.full_name == github.repository }}"
         )
-        for name in REQUIRED_JOBS:
+        for name in (*REQUIRED_JOBS, *DATABASE_JOBS):
             with self.subTest(job=name):
-                self.assertIn(f"  {name}:\n    if: {guard}\n", CI)
+                expected = guard.replace("${{ ", "${{ always() && ") if name == "database" else guard
+                self.assertIn(f"  {name}:\n    if: {expected}\n", CI)
+
+    def test_required_database_check_requires_all_suites(self):
+        job = CI.split("\n  database:\n", 1)[1].split("\n  front:\n", 1)[0]
+        self.assertIn(f"needs: [{', '.join(DATABASE_JOBS)}]", job)
+        self.assertIn("join(needs.*.result, ' ')", job)
+        self.assertIn('test "$RESULTS" = "success success success success"', job)
 
     def test_isolated_images_run_both_smokes_and_reset_before_the_full_flow(self):
         self.assertIn("COMPOSE_PROJECT_NAME: vx-ci-${{ github.run_id }}-${{ github.run_attempt }}", CI)
@@ -83,8 +92,8 @@ class WorkflowTests(unittest.TestCase):
     def test_cancellable_workflow_never_deploys_or_migrates_outside_the_runner(self):
         # Cancelar no meio de um deploy deixaria lock e revisão pela metade.
         for command in ("deploy_ecs", "deploy_ec2", "bootstrap_aws", "--apply", "aws ", "secrets."):
-            self.assertNotIn(command, CI)
-        migrations = re.findall(r"MIGRATION_DATABASE_URL: (\S+)", CI)
+            self.assertNotIn(command, CI + DATABASE_TESTS)
+        migrations = re.findall(r"MIGRATION_DATABASE_URL: (\S+)", CI + DATABASE_TESTS)
         self.assertTrue(migrations)
         self.assertTrue(all("@localhost:5432/" in url for url in migrations))
 

@@ -76,48 +76,39 @@ jobs:
           uv run --package vx-materials-back python scripts/ec2_deploy.py --config deployment/aws.example.json --host 203.0.113.10.nip.io --render-dir "$RUNNER_TEMP/vx-ec2"
           docker compose -f "$RUNNER_TEMP/vx-ec2/compose.json" config --no-env-resolution --quiet
 
-  database:
+  database-api-demo:
     if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      suite: api-demo
+
+  database-api-batch:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      suite: api-batch
+
+  database-api-main:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      suite: api-main
+
+  database-mcp:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      suite: mcp
+
+  database:
+    if: ${{ always() && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: [database-api-demo, database-api-batch, database-api-main, database-mcp]
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_DB: vx_migration_check
-          POSTGRES_USER: migration_user
-          POSTGRES_PASSWORD: ci_only
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U migration_user"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 30
-    defaults:
-      run:
-        working-directory: api
-    env:
-      TEST_DATABASE_URL: postgresql+psycopg://migration_user:ci_only@localhost:5432/vx_materials_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.11.16"
-          python-version: "3.12"
-          enable-cache: true
-          cache-dependency-glob: |
-            uv.lock
-            **/pyproject.toml
-      - run: uv sync --locked
-      - name: Check installed migration command twice
+      - name: Require every PostgreSQL suite to succeed
         env:
-          MIGRATION_DATABASE_URL: postgresql+psycopg://migration_user:ci_only@localhost:5432/vx_migration_check
-        run: |
-          uv run --locked vx-db upgrade
-          uv run --locked vx-db upgrade
-      - run: uv run pytest
-      - run: uv run pytest
-        working-directory: mcp
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: test "$RESULTS" = "success success success success"
 
   front:
     if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}

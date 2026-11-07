@@ -1,0 +1,72 @@
+name: PostgreSQL tests
+
+on:
+  workflow_call:
+    inputs:
+      suite:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: vx_migration_check
+          POSTGRES_USER: migration_user
+          POSTGRES_PASSWORD: ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U migration_user"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://migration_user:ci_only@localhost:5432/vx_materials_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.16"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            **/pyproject.toml
+      - run: uv sync --locked
+      - name: Check installed migration command twice
+        if: inputs.suite == 'api-demo'
+        working-directory: api
+        env:
+          MIGRATION_DATABASE_URL: postgresql+psycopg://migration_user:ci_only@localhost:5432/vx_migration_check
+        run: |
+          uv run --locked vx-db upgrade
+          uv run --locked vx-db upgrade
+      - name: Run PostgreSQL suite
+        shell: bash
+        env:
+          SUITE: ${{ inputs.suite }}
+        run: |
+          # Separa os módulos mais lentos medidos no run 42302580502.
+          demo=(tests/test_demo.py)
+          batch=(tests/test_batch_api.py tests/test_superseded_proposals.py)
+          args=()
+          case "$SUITE" in
+            api-demo) cd api; args=("${demo[@]}") ;;
+            api-batch) cd api; args=("${batch[@]}") ;;
+            api-main)
+              cd api
+              for file in "${demo[@]}" "${batch[@]}"; do
+                args+=(--ignore "$file")
+              done
+              ;;
+            mcp) cd mcp ;;
+            *) echo "Suíte PostgreSQL inválida: $SUITE" >&2; exit 1 ;;
+          esac
+          uv run --locked pytest --durations=10 "${args[@]}"
