@@ -560,6 +560,12 @@ stays inaccessible. See [`docs/autenticacao.md`](docs/autenticacao.md).
 
 Extraction prefers leaving a field empty to guessing, because a wrong value can cause a wrong merge. Add an alias to its tables only when it's unambiguous. For example, `INOX 316` doesn't map to `ACO INOX FORJADO A182 F316`, since text alone can't say forged or cast. PSI converts to BAR only when it is a whole bar written the kit's way, rounded to 5 PSI (`145PSI` is `10BAR`). Other PSI values, like `150PSI`, stay empty instead of rounding into another item's pressure. Tests hold real base rows with results checked by hand, so add one with each new rule.
 
+Requested quantities, such as `preciso de 20 unidades`, cannot supply an unlabeled
+manufacturer reference or replace one confirmed in chat. Explicit and structured
+references keep their evidence; discarding quantity never resolves other ambiguous
+candidates. Extraction revision `11-quantity-reference-199` requires an index-only
+rebuild. See [the measured scope and regression cases](docs/quantity-reference.md).
+
 Orders and chat messages arrive as sentences and lines. A value followed by sentence punctuation is read without it (`DIN 933.` is `DIN 933`), while a period followed by a letter or digit stays part of the value (`8.8`, `ASME B18.2.1`, and `DIN 931.1` doesn't match `DIN 931`). A line break, with its bullet, separates items, and so does a period before a new `LABEL:`. A period followed by a space alone doesn't, since `REF. 123` is an abbreviation. Base descriptions have no line breaks or trailing periods, so these rules change orders and chat only.
 
 Reordered words may match a PDM value only when all its words are present; an incomplete value is never completed just because only one PDM option contains it. `FERRO FUNDIDO` does not establish `FERRO FUNDIDO NODULAR`, and `FEMEA BSP` does not establish a straight fitting. Explicit aliases and complete values still work. With shared identity-v3 and sentence/line parsing, #133 uses extraction revision `5`: rebuild the search index through `docker compose up --build` or `docker compose run --rm --build batch` after updating. Development counts, coverage held for review and the unchanged historical labels are recorded in [the extraction measurement](docs/extracao-valores-explicitos.md).
