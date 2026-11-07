@@ -25,6 +25,16 @@ Parameters:
   DbAllocatedStorage:
     Type: Number
     Default: 20
+  PublicOrigin:
+    Type: String
+    Default: ""
+    AllowedPattern: "^(https://[a-z0-9.-]+)?$"
+    Description: >-
+      Origem HTTPS observada no primeiro deploy, sem barra final. Vazio mantem o
+      Cognito desligado; preenchida, cria User Pool, grupos, dominio e app client.
+
+Conditions:
+  HasPublicOrigin: !Not [!Equals [!Ref PublicOrigin, ""]]
 
 Resources:
   TaskSecurityGroup:
@@ -236,7 +246,87 @@ Resources:
       Tags:
         - { Key: vx-project, Value: !Ref Name }
 
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Condition: HasPublicOrigin
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Ref Name
+      # Contas criadas por administrador; ninguem se cadastra sozinho.
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          TemporaryPasswordValidityDays: 3
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - { Name: verified_email, Priority: 1 }
+      UserPoolTags:
+        vx-project: !Ref Name
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Condition: HasPublicOrigin
+    Properties:
+      UserPoolId: !Ref UserPool
+      Domain: !Sub "${Name}-${AWS::AccountId}"
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Condition: HasPublicOrigin
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub "${Name}-web"
+      # Cliente publico com PKCE S256 no BFF; sem segredo para nao duplicar configuracao.
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [code]
+      AllowedOAuthScopes: [openid, email, profile]
+      CallbackURLs: [!Sub "${PublicOrigin}/auth/callback/"]
+      SupportedIdentityProviders: [COGNITO]
+      ExplicitAuthFlows: [ALLOW_REFRESH_TOKEN_AUTH]
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+
+  SolicitanteGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Condition: HasPublicOrigin
+    Properties:
+      UserPoolId: !Ref UserPool
+      GroupName: ROLE_SOLICITANTE
+
+  GovernancaGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Condition: HasPublicOrigin
+    Properties:
+      UserPoolId: !Ref UserPool
+      GroupName: ROLE_GOVERNANCA_PDM
+
+  FiscalGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Condition: HasPublicOrigin
+    Properties:
+      UserPoolId: !Ref UserPool
+      GroupName: ROLE_AUDITOR_FISCAL
+
 Outputs:
+  CognitoUserPoolId:
+    Condition: HasPublicOrigin
+    Value: !Ref UserPool
+  CognitoAppClientId:
+    Condition: HasPublicOrigin
+    Value: !Ref UserPoolClient
+  CognitoDomain:
+    Condition: HasPublicOrigin
+    Value: !Sub "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
   TaskSecurityGroupId:
     Value: !Ref TaskSecurityGroup
   DatabaseSecurityGroupId:
