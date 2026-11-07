@@ -73,7 +73,7 @@ class ReviewLane(StrictModel):
 
 
 class EnrichmentContext(StrictModel):
-    schema_version: Literal["enrichment-v1"]
+    schema_version: Literal["enrichment-v1", "internal-enrichment-v1"]
     report_key: str = Field(min_length=1, max_length=1024)
     manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     original_hash: str = Field(pattern=r"^[0-9a-f]{64}$")

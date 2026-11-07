@@ -1,6 +1,6 @@
 """Contratos do dominio compartilhados por batch e MCP."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
 
@@ -225,6 +225,7 @@ class MaterialRecord:
     total_value: str = "0"
     inventory: tuple[dict, ...] = ()
     database_id: str | None = None
+    attributes: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

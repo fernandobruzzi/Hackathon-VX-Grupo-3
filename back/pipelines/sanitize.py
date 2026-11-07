@@ -70,6 +70,7 @@ def analysis_signature(
             f"classifier:{classifier.name}@{classifier.revision}",
             f"extractor:{extractor.name}@{extractor.revision}",
             IDENTITY_RULES_VERSION,
+            "approved-attributes-v1",
         ]
     )
 
@@ -97,11 +98,17 @@ def analyze_material(
         manufacturer_reference=record.reference or None,
     )
     attributes = {name: value.value for name, value in extraction.attributes.items()}
+    persisted_conflicts = tuple(
+        f"PERSISTED_ATTRIBUTE_CONFLICT:{name}"
+        for name, value in record.attributes.items()
+        if value and attributes.get(name) and attributes[name] != value
+    )
+    attributes.update({name: value for name, value in record.attributes.items() if value})
     validation = validate_pdm(catalog, class_id, attributes, item_name=item_name)
     identity_key = validation.identity_key or partial_identity_key(pdm_class, attributes)
-    review = item_name_review_reasons(pdm_class, matched_names)
+    review = item_name_review_reasons(pdm_class, matched_names) + persisted_conflicts
     material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key, review)
-    if material_review_reasons(material, pdm_class):
+    if review or material_review_reasons(material, pdm_class):
         return AnalyzedMaterial(record, class_id, item_name, attributes, None, review)
     return material
 

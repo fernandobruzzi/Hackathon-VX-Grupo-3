@@ -1,0 +1,465 @@
+{
+  "pipeline_version": "internal-enrichment-v1",
+  "pdm_version": "pdm-kit-v1",
+  "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+  "source_files": [
+    {
+      "name": "01_base_materiais.csv",
+      "object_key": "01_base_materiais.csv",
+      "sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8"
+    },
+    {
+      "name": "02_pedidos_cadastro.csv",
+      "object_key": "02_pedidos_cadastro.csv",
+      "sha256": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a"
+    }
+  ],
+  "unavailable_sources": [],
+  "summary": {
+    "materials_total": 23554,
+    "before": {
+      "OUT_OF_SCOPE": 5625,
+      "VALID": 10928,
+      "INCOMPLETE": 7001
+    },
+    "after_suggestions": {
+      "OUT_OF_SCOPE": 5625,
+      "VALID": 11160,
+      "INCOMPLETE": 6769
+    },
+    "sources_total": 24074,
+    "materials_with_suggestions": 337,
+    "suggested_attributes": 402,
+    "materials_with_conflicts": 0,
+    "missing_required_by_attribute": {
+      "PDM110/APLICACAO": 926,
+      "PDM110/MODELO EQUIPAMENTO": 875,
+      "PDM050/MATERIAL": 641,
+      "PDM001/ACABAMENTO": 457,
+      "PDM001/MATERIAL": 314,
+      "PDM050/CONEXAO": 264,
+      "PDM011/TERMINAL A": 249,
+      "PDM011/TERMINAL B": 245,
+      "PDM110/FABRICANTE": 222,
+      "PDM040/CONEXAO": 206,
+      "PDM110/REFERENCIA FABRICANTE": 198,
+      "PDM040/ACIONAMENTO": 197,
+      "PDM011/MATERIAL TERMINAIS": 195,
+      "PDM040/MATERIAL CORPO": 183,
+      "PDM001/NORMA": 164,
+      "PDM050/FACE": 154,
+      "PDM033/ANEL INTERNO": 148,
+      "PDM003/ACABAMENTO": 144,
+      "PDM001/COMPRIMENTO": 139,
+      "PDM010/REFORCO": 135,
+      "PDM003/CLASSE RESISTENCIA": 134,
+      "PDM001/BITOLA": 130,
+      "PDM067/FAIXA": 129,
+      "PDM010/MATERIAL COBERTURA": 129,
+      "PDM001/CLASSE RESISTENCIA": 124,
+      "PDM032/TIPO": 121,
+      "PDM062/POLOS": 117,
+      "PDM050/CLASSE PRESSAO": 112,
+      "PDM051/COSTURA": 103,
+      "PDM060/NUMERO CONDUTORES": 99,
+      "PDM044/MATERIAL CORPO": 95,
+      "PDM003/MATERIAL": 93,
+      "PDM033/ENCHIMENTO": 93,
+      "PDM071/TAMANHO": 90,
+      "PDM030/REFERENCIA": 88,
+      "PDM041/CONEXAO": 86,
+      "PDM040/PASSAGEM": 86,
+      "PDM002/ACABAMENTO": 84,
+      "PDM032/DIAMETRO ALOJAMENTO": 83,
+      "PDM050/DIAMETRO NOMINAL": 83,
+      "PDM041/MATERIAL CORPO": 81,
+      "PDM032/LARGURA": 78,
+      "PDM032/DIAMETRO EIXO": 75,
+      "PDM062/CURVA": 74,
+      "PDM050/TIPO": 68,
+      "PDM071/CA": 66,
+      "PDM001/ROSCA": 64,
+      "PDM050/DIAMETRO REDUZIDO": 64,
+      "PDM002/MATERIAL": 62,
+      "PDM030/PERFIL": 60,
+      "PDM031/DIAMETRO INTERNO": 60,
+      "PDM031/SECAO": 60,
+      "PDM042/CONEXAO": 60,
+      "PDM041/ACIONAMENTO": 59,
+      "PDM004/ACABAMENTO": 57,
+      "PDM011/DIAMETRO INTERNO": 56,
+      "PDM044/ACIONAMENTO": 56,
+      "PDM043/CONEXAO": 54,
+      "PDM062/TIPO": 52,
+      "PDM071/SOLADO": 50,
+      "PDM043/MATERIAL CORPO": 48,
+      "PDM031/MATERIAL": 47,
+      "PDM042/MATERIAL CORPO": 47,
+      "PDM082/TIPO": 46,
+      "PDM044/MATERIAL DISCO": 46,
+      "PDM042/ACIONAMENTO": 46,
+      "PDM033/MATERIAL FITA": 46,
+      "PDM034/TIPO FACE": 45,
+      "PDM031/DUREZA": 45,
+      "PDM010/PRESSAO TRABALHO": 38,
+      "PDM065/POTENCIA": 37,
+      "PDM067/MATERIAL CAIXA": 36,
+      "PDM003/BITOLA": 34,
+      "PDM060/TIPO": 34,
+      "PDM071/BIQUEIRA": 34,
+      "PDM100/REFERENCIA FABRICANTE": 30,
+      "PDM040/DIAMETRO NOMINAL": 30,
+      "PDM004/MATERIAL": 30,
+      "PDM040/VEDACAO SEDE": 29,
+      "PDM060/SECAO": 28,
+      "PDM040/CLASSE PRESSAO": 27,
+      "PDM003/TIPO": 26,
+      "PDM003/ROSCA": 24,
+      "PDM064/TIPO": 22,
+      "PDM081/DIAMETRO": 21,
+      "PDM072/CA": 20,
+      "PDM011/NORMA": 20,
+      "PDM060/ISOLACAO": 20,
+      "PDM011/COMPRIMENTO": 19,
+      "PDM010/DIAMETRO INTERNO": 19,
+      "PDM006/COMPRIMENTO": 18,
+      "PDM023/TIPO": 18,
+      "PDM023/REFERENCIA": 18,
+      "PDM023/DIAMETRO EIXO": 18,
+      "PDM044/VEDACAO SEDE": 18,
+      "PDM033/CLASSE PRESSAO": 17,
+      "PDM032/MATERIAL": 17,
+      "PDM063/CONTATOS AUXILIARES": 16,
+      "PDM002/COMPRIMENTO": 15,
+      "PDM100/FABRICANTE": 15,
+      "PDM033/DIAMETRO NOMINAL": 15,
+      "PDM062/CAPACIDADE INTERRUPCAO": 14,
+      "PDM005/MATERIAL": 14,
+      "PDM065/TEMPERATURA COR": 14,
+      "PDM041/DIAMETRO NOMINAL": 13,
+      "PDM034/MATERIAL": 13,
+      "PDM067/ENCHIMENTO": 13,
+      "PDM004/PARA PARAFUSO": 13,
+      "PDM071/TIPO": 13,
+      "PDM064/CORRENTE NOMINAL": 13,
+      "PDM002/TIPO CABECA": 13,
+      "PDM051/MATERIAL": 12,
+      "PDM060/TENSAO ISOLAMENTO": 12,
+      "PDM062/CORRENTE NOMINAL": 12,
+      "PDM051/DIAMETRO NOMINAL": 12,
+      "PDM006/ACABAMENTO": 11,
+      "PDM005/ACABAMENTO": 11,
+      "PDM065/TENSAO": 11,
+      "PDM010/NORMA": 11,
+      "PDM042/DIAMETRO NOMINAL": 11,
+      "PDM051/SCHEDULE": 11,
+      "PDM063/TENSAO BOBINA": 11,
+      "PDM043/TIPO": 10,
+      "PDM034/CLASSE PRESSAO": 10,
+      "PDM021/REFERENCIA": 10,
+      "PDM012/PRESSAO TRABALHO": 10,
+      "PDM013/DIAMETRO EXTERNO": 10,
+      "PDM044/DIAMETRO NOMINAL": 10,
+      "PDM065/TIPO": 10,
+      "PDM065/BASE": 9,
+      "PDM013/MATERIAL": 9,
+      "PDM004/NORMA": 9,
+      "PDM034/ESPESSURA": 9,
+      "PDM051/EXTREMIDADES": 9,
+      "PDM082/DIAMETRO": 8,
+      "PDM082/NORMA": 8,
+      "PDM041/CLASSE PRESSAO": 8,
+      "PDM044/TIPO CORPO": 8,
+      "PDM002/BITOLA": 8,
+      "PDM067/CONEXAO": 8,
+      "PDM042/CLASSE PRESSAO": 8,
+      "PDM006/BITOLA": 7,
+      "PDM043/CLASSE PRESSAO": 7,
+      "PDM041/CASTELO": 7,
+      "PDM081/ESPESSURA": 7,
+      "PDM060/COR": 7,
+      "PDM063/CORRENTE AC3": 7,
+      "PDM043/DIAMETRO NOMINAL": 7,
+      "PDM090/APLICACAO": 7,
+      "PDM002/CLASSE RESISTENCIA": 7,
+      "PDM012/APLICACAO": 7,
+      "PDM082/HASTE": 6,
+      "PDM064/TAMANHO": 6,
+      "PDM081/GRAO": 6,
+      "PDM061/TIPO": 5,
+      "PDM066/SAIDA": 5,
+      "PDM021/FOLGA": 5,
+      "PDM014/PRESSAO TRABALHO": 5,
+      "PDM020/REFERENCIA": 5,
+      "PDM066/DISTANCIA SENSORA": 4,
+      "PDM090/EMBALAGEM": 4,
+      "PDM021/FURO": 4,
+      "PDM067/DIAMETRO VISOR": 4,
+      "PDM066/ROSCA CORPO": 4,
+      "PDM012/REFORCO": 4,
+      "PDM050/SCHEDULE": 4,
+      "PDM006/MATERIAL": 4,
+      "PDM012/MATERIAL": 4,
+      "PDM006/CLASSE RESISTENCIA": 3,
+      "PDM061/SECAO CABO": 3,
+      "PDM014/DIAMETRO INTERNO": 3,
+      "PDM020/FOLGA": 3,
+      "PDM066/CONEXAO": 2,
+      "PDM061/FURO": 2,
+      "PDM090/VISCOSIDADE": 2,
+      "PDM066/MONTAGEM": 2,
+      "PDM034/DIAMETRO NOMINAL": 2,
+      "PDM020/VEDACAO": 2,
+      "PDM013/COR": 2,
+      "PDM014/APLICACAO": 1,
+      "PDM013/PRESSAO TRABALHO": 1,
+      "PDM080/CLASSIFICACAO AWS": 1,
+      "PDM014/MATERIAL": 1,
+      "PDM081/TIPO": 1,
+      "PDM081/APLICACAO": 1,
+      "PDM005/PARA PARAFUSO": 1,
+      "PDM072/TRATAMENTO": 1,
+      "PDM022/REFERENCIA": 1,
+      "PDM072/LENTE": 1,
+      "PDM012/DIAMETRO INTERNO": 1
+    }
+  },
+  "kind": "development_coverage_not_accuracy",
+  "applied_changes": 0,
+  "materials_with_conflicting_observations": 502,
+  "materials_with_suggestions_by_class": {
+    "PDM110": 283,
+    "PDM100": 34,
+    "PDM050": 9,
+    "PDM064": 1,
+    "PDM020": 7,
+    "PDM013": 1,
+    "PDM030": 1,
+    "PDM061": 1
+  },
+  "suggested_fields": {
+    "APLICACAO": 168,
+    "MATERIAL": 70,
+    "MODELO EQUIPAMENTO": 135,
+    "NORMA": 9,
+    "CLASSE": 1,
+    "DIAMETRO EXTERNO": 6,
+    "DIAMETRO INTERNO": 6,
+    "LARGURA": 6,
+    "COMPRIMENTO EXTERNO": 1
+  },
+  "evidence_by_file": {
+    "01_base_materiais.csv": 530,
+    "02_pedidos_cadastro.csv": 19
+  },
+  "examples": [
+    {
+      "material_code": "21736289",
+      "pdm_class_id": "PDM110",
+      "suggestions": {
+        "APLICACAO": "BOMBA CENTRIFUGA"
+      },
+      "before": {
+        "status": "INCOMPLETE",
+        "missing_required": [
+          "APLICACAO"
+        ],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "MATERIAL"
+        ]
+      },
+      "after_suggestions": {
+        "status": "VALID",
+        "missing_required": [],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "MATERIAL"
+        ]
+      },
+      "evidence": [
+        {
+          "id": "6a8fa714b3602bd362647e3b58d3e1f4677a5cd69081d92759f4b72994c17e3e",
+          "attribute": "APLICACAO",
+          "proposed_value": "BOMBA CENTRIFUGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#26961217",
+          "source_title": "01_base_materiais.csv — 26961217",
+          "source_excerpt": "CARCACA COM PARA BOMBA CENTRIFUGA, EQUIP ETANORM 65 200, KSB, P/N 14343752\nFABRICANTE: KSB\nREFERENCIA_FABRICANTE: ",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        },
+        {
+          "id": "e56b3373c4ff2dfa10e5562bcff5ff07047a1e7eb0d262d77ef06225c3f9a0e2",
+          "attribute": "APLICACAO",
+          "proposed_value": "BOMBA CENTRIFUGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#15744106",
+          "source_title": "01_base_materiais.csv — 15744106",
+          "source_excerpt": "CARCACA COM PARA BOMBA CENTRIFUGA, EQUIP ETANORM 65 200, KSB, P/N 14343752",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        }
+      ]
+    },
+    {
+      "material_code": "14047476",
+      "pdm_class_id": "PDM110",
+      "suggestions": {
+        "MATERIAL": "ACO LIGA"
+      },
+      "before": {
+        "status": "VALID",
+        "missing_required": [],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "MATERIAL"
+        ]
+      },
+      "after_suggestions": {
+        "status": "VALID",
+        "missing_required": [],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": []
+      },
+      "evidence": [
+        {
+          "id": "460fba61a80b5aae48c5b7174ddf6d70a1668fe79407151612ac8ae14b632d30",
+          "attribute": "MATERIAL",
+          "proposed_value": "ACO LIGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#23553154",
+          "source_title": "01_base_materiais.csv — 23553154",
+          "source_excerpt": "BRACO SUSPENSAO USO CAMINHAO FORA DE ESTRADA, MODELO DE 830E, COM FABRICANTE KOMATSU, REFERENCIA FABRICANTE 936-75-19734, COM MAT ACO LIGA\nFABRICANTE: KOMATSU\nREFERENCIA_FABRICANTE: 936-75-19734",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        },
+        {
+          "id": "c180e7ec9486f53a30cff662e36606a0b29677783ee6b63c127a855145b0f308",
+          "attribute": "MATERIAL",
+          "proposed_value": "ACO LIGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#20700454",
+          "source_title": "01_base_materiais.csv — 20700454",
+          "source_excerpt": "BRACO SUSPENSAO USO CAMINHAO FORA DE ESTRADA, MODELO DE 830E, COM FABRICANTE KOMATSU, REFERENCIA FABRICANTE 936-75-19734, COM MAT ACO LIGA\nFABRICANTE: KOMATSU\nREFERENCIA_FABRICANTE: 936-75-19734",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        }
+      ]
+    },
+    {
+      "material_code": "26020193",
+      "pdm_class_id": "PDM110",
+      "suggestions": {
+        "APLICACAO": "BOMBA CENTRIFUGA"
+      },
+      "before": {
+        "status": "INCOMPLETE",
+        "missing_required": [
+          "APLICACAO"
+        ],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "MATERIAL"
+        ]
+      },
+      "after_suggestions": {
+        "status": "VALID",
+        "missing_required": [],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "MATERIAL"
+        ]
+      },
+      "evidence": [
+        {
+          "id": "06b1597bc1a048329e9abf9cbfb2614f917081f055b7bb6582a813775430d3e6",
+          "attribute": "APLICACAO",
+          "proposed_value": "BOMBA CENTRIFUGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#16019890",
+          "source_title": "01_base_materiais.csv — 16019890",
+          "source_excerpt": "EIXO COM USO BOMBA CENTRIFUGA, MODELO AHLSTAR A31-100, SULZER, REFERENCIA FABRICANTE 840131-105\nFABRICANTE: \nREFERENCIA_FABRICANTE: 840131-105",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        },
+        {
+          "id": "3bbb0171633c276b61f95cba6c3b45a03ae2299e83c697da8725139a49484883",
+          "attribute": "APLICACAO",
+          "proposed_value": "BOMBA CENTRIFUGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#26910202",
+          "source_title": "01_base_materiais.csv — 26910202",
+          "source_excerpt": "EIXO; APLICACAO: BOMBA CENTRIFUGA; MODELO EQUIPAMENTO: AHLSTAR A31-100; FABRICANTE: SULZER; REFERENCIA FABRICANTE: 840131-105\nFABRICANTE: SULZER\nREFERENCIA_FABRICANTE: 840131-105",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        },
+        {
+          "id": "999846d74ae3d2ae1437618686efc819a24d8a4a1f733720063502f64b48ae0d",
+          "attribute": "APLICACAO",
+          "proposed_value": "BOMBA CENTRIFUGA",
+          "source_url": "dataset://kit/01_base_materiais.csv#27244053",
+          "source_title": "01_base_materiais.csv — 27244053",
+          "source_excerpt": "EIXO; APLICACAO: BOMBA CENTRIFUGA; MODELO EQUIPAMENTO: AHLSTAR A31-100; FABRICANTE: SULZER; REFERENCIA FABRICANTE: 840131-105\nFABRICANTE: SULZER\nREFERENCIA_FABRICANTE: 840131105",
+          "source_sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+          "object_key": "01_base_materiais.csv",
+          "source_page": null,
+          "confidence_level": "MEDIUM",
+          "confidence_basis": [
+            "INTERNAL_DATASET",
+            "SHARED_IDENTITY_CONFIRMED"
+          ],
+          "extraction_rule": "shared-extraction-and-identity"
+        }
+      ]
+    }
+  ]
+}

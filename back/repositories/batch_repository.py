@@ -17,6 +17,7 @@ _READ_MATERIALS = text(
     """
     SELECT m.id::text AS id, m.material_code, m.status, m.original_description_short,
            m.original_description_long, m.manufacturer, m.manufacturer_reference, m.unit, m.ncm, m.version,
+           m.attributes,
            s.center_code, s.quantity, s.unit AS stock_unit, s.total_value, s.raw_record->>'GRUPO_MERCADORIA' AS grupo
     FROM materials_master m
     LEFT JOIN material_inventory_snapshots s ON s.material_id = m.id
@@ -90,6 +91,7 @@ def _record(row, inventory: list[dict], total: Decimal) -> MaterialRecord:
         total_value=str(total),
         inventory=tuple(inventory),
         database_id=row["id"],
+        attributes=row["attributes"] or {},
     )
 
 
