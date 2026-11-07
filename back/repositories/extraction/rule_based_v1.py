@@ -258,7 +258,7 @@ class _Extraction:
 
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
-    revision = "8"
+    revision = "9-inline-label-prefix-198"
 
     def extract(
         self,
@@ -336,17 +336,32 @@ class RuleBasedV1ExtractionRepository:
         if ":" in segment:
             key, _, value = segment.partition(":")
             key, value = key.strip(), _CONNECTOR.sub("", value.strip())
-            value, tail = self._split_reference_tail(key, value)
-            free = [tail] if tail else []
-            if key and work.fit_labeled(key, value):
-                return free
-            return [value, *free] if value else free
+            labels = {*KEY_ALIASES, *work.by_name}
+            suffix = next(
+                (
+                    label
+                    for label in sorted(labels, key=len, reverse=True)
+                    if re.search(rf"(?<![\w./\-]){re.escape(label)}$", key)
+                ),
+                None,
+            )
+            prefix = key[: -len(suffix)].strip() if suffix else ""
+            # `CODIGO DO FABRICANTE` é um cabeçalho composto, não `CODIGO: DO` seguido de outro atributo.
+            header = re.sub(r"(?:\s+(?:DE|DO|DA|DOS|DAS))+$", "", prefix)
+            inline = key not in labels and bool(prefix) and header not in labels
+            # O prefixo de `M12 x 50 CLASSE: 8.8` é texto do item, não parte do nome do rótulo.
+            # A leitura por spans abaixo conserva esse texto e a cauda para os demais atributos.
+            if not inline:
+                value, tail = self._split_reference_tail(key, value)
+                free = [tail] if tail else []
+                if key and work.fit_labeled(key, value):
+                    return free
+                return [value, *free] if value else free
         labels = sorted({*KEY_ALIASES, *work.by_name}, key=len, reverse=True)
         spans = []
         for label in labels:
-            if label in COLON_ONLY_KEYS:
-                continue
-            guard = r"(?=\s*\d)" if label in DIGIT_ONLY_KEYS else ""
+            guard = r"(?=\s*:)" if label in COLON_ONLY_KEYS else ""
+            guard += r"(?=\s*:?\s*\d)" if label in DIGIT_ONLY_KEYS else ""
             for match in re.finditer(rf"(?<![\w./\-]){re.escape(label)}(?![\w./\-]){guard}", segment):
                 if not any(start < match.end() and match.start() < end for start, end, _ in spans):
                     spans.append((match.start(), match.end(), label))
