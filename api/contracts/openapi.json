@@ -5300,7 +5300,9 @@
           "ROLE_SOLICITANTE",
           "ROLE_GOVERNANCA_PDM",
           "ROLE_AUDITOR_FISCAL",
-          "ROLE_DEV_TI"
+          "ROLE_DEV_TI",
+          "ROLE_ALMOXARIFADO",
+          "ROLE_COMPRAS"
         ]
       },
       "PersonaLabel": {
@@ -5309,7 +5311,9 @@
           "SOLICITANTE_OPERACAO",
           "GESTOR_CADASTRO",
           "AUDITOR_FISCAL",
-          "DEV_TI"
+          "DEV_TI",
+          "ALMOXARIFADO",
+          "COMPRAS"
         ]
       },
       "Permission": {
@@ -5338,7 +5342,12 @@
           "requests:read_own",
           "requests:cancel_own",
           "requests:read_queue",
-          "requests:read_fiscal"
+          "requests:read_fiscal",
+          "stock:reserve",
+          "stock:deliver",
+          "stock:reverse",
+          "purchasing:read",
+          "purchasing:handle"
         ]
       },
       "Me": {

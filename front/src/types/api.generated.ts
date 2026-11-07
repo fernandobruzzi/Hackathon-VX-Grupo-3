@@ -755,9 +755,21 @@ export interface components {
       ncm_source_kind: ("OFFICIAL_DOWNLOAD" | "IMPORTED_UNVERIFIED" | "SIMULATED") | null;
     };
     /** @enum {string} */
-    Role: "ROLE_SOLICITANTE" | "ROLE_GOVERNANCA_PDM" | "ROLE_AUDITOR_FISCAL" | "ROLE_DEV_TI";
+    Role:
+      | "ROLE_SOLICITANTE"
+      | "ROLE_GOVERNANCA_PDM"
+      | "ROLE_AUDITOR_FISCAL"
+      | "ROLE_DEV_TI"
+      | "ROLE_ALMOXARIFADO"
+      | "ROLE_COMPRAS";
     /** @enum {string} */
-    PersonaLabel: "SOLICITANTE_OPERACAO" | "GESTOR_CADASTRO" | "AUDITOR_FISCAL" | "DEV_TI";
+    PersonaLabel:
+      | "SOLICITANTE_OPERACAO"
+      | "GESTOR_CADASTRO"
+      | "AUDITOR_FISCAL"
+      | "DEV_TI"
+      | "ALMOXARIFADO"
+      | "COMPRAS";
     /** @enum {string} */
     Permission:
       | "chat:use"
@@ -783,7 +795,12 @@ export interface components {
       | "requests:read_own"
       | "requests:cancel_own"
       | "requests:read_queue"
-      | "requests:read_fiscal";
+      | "requests:read_fiscal"
+      | "stock:reserve"
+      | "stock:deliver"
+      | "stock:reverse"
+      | "purchasing:read"
+      | "purchasing:handle";
     Me: {
       user: {
         /** Format: uuid */

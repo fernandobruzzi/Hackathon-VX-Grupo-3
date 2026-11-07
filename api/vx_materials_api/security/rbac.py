@@ -33,6 +33,29 @@ def require_center(identity, center: str):
         raise ApiProblem(403, "FORBIDDEN", "Centro fora do escopo do usuário.")
 
 
+# Filas operacionais: cada papel só lê e trata a própria, e só nos centros autorizados.
+STOCK_ACTIONS = ("stock:reserve", "stock:deliver", "stock:reverse")
+PURCHASING_ACTIONS = ("purchasing:read", "purchasing:handle")
+
+
+def require_stock_action(identity, action: str, center: str) -> str:
+    """Reserva, entrega ou reversão num centro: papel com a ação e centro no escopo."""
+    if action not in STOCK_ACTIONS:
+        raise ValueError(f"Ação de estoque desconhecida: {action}")
+    role = require_permission(identity, action)
+    require_center(identity, center)
+    return role
+
+
+def require_purchasing_action(identity, action: str, center: str) -> str:
+    """Leitura ou tratamento de encaminhamento para compras de um centro autorizado."""
+    if action not in PURCHASING_ACTIONS:
+        raise ValueError(f"Ação de compras desconhecida: {action}")
+    role = require_permission(identity, action)
+    require_center(identity, center)
+    return role
+
+
 def require_resource_scope(identity, tenant_id, center_codes=()):
     if tenant_id != identity.tenant_id or set(center_codes) - set(identity.center_codes):
         raise ApiProblem(404, "NOT_FOUND", "Recurso não encontrado no seu escopo.")

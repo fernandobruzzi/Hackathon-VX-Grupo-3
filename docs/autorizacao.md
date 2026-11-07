@@ -10,17 +10,19 @@ do grupo. Um grupo desconhecido ou uma lista de permissões sem grupo autorizado
 não concede acesso. O guard devolve o papel efetivo, para registrar a ação correta
 na auditoria de aprovação.
 
-| Ação | Solicitante | Governança | Fiscal | Dev/TI |
-|---|---|---|---|---|
-| Chat e pedido próprio | Sim | Sim | Sim | Sim |
-| Chamadas MCP do chat (`chat:diagnostics`) | Não | Não | Não | Sim |
-| Unificação técnica | Não | Sim | Não | Não |
-| Revisão de NCM | Não | Não | Sim | Não |
-| Enriquecimento técnico | Não | Sim | Não | Não |
-| Iniciar batch | Não | Sim | Não | Não |
-| Métricas de qualidade | Não | Sim | Sim | Não |
-| Métricas financeiras | Não | Não | Sim | Não |
-| Auditoria | Própria | Técnica | Fiscal | Não |
+| Ação | Solicitante | Governança | Fiscal | Dev/TI | Almoxarifado | Compras |
+|---|---|---|---|---|---|---|
+| Chat e pedido próprio | Sim | Sim | Sim | Sim | Sim | Sim |
+| Chamadas MCP do chat (`chat:diagnostics`) | Não | Não | Não | Sim | Não | Não |
+| Unificação técnica | Não | Sim | Não | Não | Não | Não |
+| Revisão de NCM | Não | Não | Sim | Não | Não | Não |
+| Enriquecimento técnico | Não | Sim | Não | Não | Não | Não |
+| Iniciar batch | Não | Sim | Não | Não | Não | Não |
+| Reservar, entregar, reverter entrega (`stock:*`) | Não | Não | Não | Não | Sim | Não |
+| Ler e tratar encaminhamentos (`purchasing:*`) | Não | Não | Não | Não | Não | Sim |
+| Métricas de qualidade | Não | Sim | Sim | Não | Não | Não |
+| Métricas financeiras | Não | Não | Sim | Não | Não | Não |
+| Auditoria | Própria | Técnica | Fiscal | Não | Não | Não |
 
 ## Diagnóstico Dev/TI
 
@@ -38,6 +40,30 @@ Para atribuir a role:
 - **Cognito:** criar o grupo `ROLE_DEV_TI` no User Pool e adicionar a conta a ele.
   Na troca de persona da demo, listar a conta em `DEMO_ACCOUNTS` como `DEV_TI=<email>`.
 - **Sessão local:** entrar com a conta `DEV_TI` na tela de login local.
+
+## Almoxarifado e Compras
+
+Os papéis operacionais da solicitação de material
+([solicitacao-material.md](solicitacao-material.md#9-papéis-e-permissões)) somam ao
+básico de Dev/TI, sem o diagnóstico, só as ações da própria fila:
+
+- **`ROLE_ALMOXARIFADO`:** `stock:reserve`, `stock:deliver` e `stock:reverse`.
+- **`ROLE_COMPRAS`:** `purchasing:read` e `purchasing:handle`.
+
+Nenhum dos dois aprova cadastro, decide NCM, unifica, enriquece, roda batch, lê a fila
+de saneamento, vê métricas ou auditoria. As rotas de reserva, entrega e encaminhamento
+(#239, #240 e #241) usam `require_stock_action` e `require_purchasing_action` de
+`security/rbac.py`. Os guards exigem a ação do papel e o centro dentro do escopo, então
+cada papel só age na própria fila e nos centros autorizados. Os pedidos e as filas
+nascem nessas issues. As permissões `requests:*` de criar e acompanhar a própria
+solicitação entram com as rotas da #237.
+
+Para atribuir os papéis:
+
+- **Cognito:** criar os grupos `ROLE_ALMOXARIFADO` e `ROLE_COMPRAS` no User Pool e
+  adicionar as contas. Na troca de persona da demo, listar as contas em
+  `DEMO_ACCOUNTS` como `ALMOXARIFADO=<email>` e `COMPRAS=<email>`.
+- **Sessão local:** entrar com as contas `ALMOXARIFADO` ou `COMPRAS` na tela de login local.
 
 O papel certo não dispensa o escopo: o tenant precisa corresponder e todos os
 centros envolvidos precisam estar autorizados. Um centro solicitado fora do

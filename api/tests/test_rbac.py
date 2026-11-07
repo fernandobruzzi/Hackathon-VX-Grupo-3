@@ -17,10 +17,14 @@ from vx_materials_api.main import create_app
 from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.permissions import ROLE_PERMISSIONS, permissions_for
 from vx_materials_api.security.rbac import (
+    PURCHASING_ACTIONS,
+    STOCK_ACTIONS,
     effective_permissions,
     has_permission,
     require_permission,
+    require_purchasing_action,
     require_resource_scope,
+    require_stock_action,
 )
 from vx_materials_api.services.agent_client import AgentClient
 
@@ -71,6 +75,27 @@ EXPECTED = {
         "orders:update_own",
         "chat:diagnostics",
     },
+    "ROLE_ALMOXARIFADO": {
+        "chat:use",
+        "materials:read",
+        "inventory:read",
+        "orders:create",
+        "orders:read_own",
+        "orders:update_own",
+        "stock:reserve",
+        "stock:deliver",
+        "stock:reverse",
+    },
+    "ROLE_COMPRAS": {
+        "chat:use",
+        "materials:read",
+        "inventory:read",
+        "orders:create",
+        "orders:read_own",
+        "orders:update_own",
+        "purchasing:read",
+        "purchasing:handle",
+    },
 }
 
 
@@ -96,6 +121,65 @@ def test_dev_ti_only_adds_diagnostics_to_the_requester_basics():
     # Diagnóstico não concede aprovação, publicação, auditoria, métricas ou execução de batch.
     assert ROLE_PERMISSIONS["ROLE_DEV_TI"] - ROLE_PERMISSIONS["ROLE_SOLICITANTE"] == {"chat:diagnostics"}
     assert all("chat:diagnostics" not in perms for role, perms in ROLE_PERMISSIONS.items() if role != "ROLE_DEV_TI")
+
+
+DECISIONS = {
+    "orders:decide",
+    "merge:decide",
+    "enrichment:decide",
+    "ncm:decide",
+    "batch:run",
+    "queue:read",
+    "queue:read_audit",
+}
+
+
+def test_operational_roles_only_add_their_own_queue_actions():
+    # Nenhum dos dois aprova cadastro, decide NCM, unifica, roda batch ou lê a fila de saneamento.
+    assert ROLE_PERMISSIONS["ROLE_ALMOXARIFADO"] - ROLE_PERMISSIONS["ROLE_DEV_TI"] == set(STOCK_ACTIONS)
+    assert ROLE_PERMISSIONS["ROLE_COMPRAS"] - ROLE_PERMISSIONS["ROLE_DEV_TI"] == set(PURCHASING_ACTIONS)
+    for role in ("ROLE_ALMOXARIFADO", "ROLE_COMPRAS"):
+        assert not ROLE_PERMISSIONS[role] & DECISIONS
+    operational = set(STOCK_ACTIONS) | set(PURCHASING_ACTIONS)
+    others = {r: p for r, p in ROLE_PERMISSIONS.items() if r not in ("ROLE_ALMOXARIFADO", "ROLE_COMPRAS")}
+    assert all(not perms & operational for perms in others.values())
+
+
+def _operator(role, centers=("1200",)):
+    return Identity(uuid4(), uuid4(), (role,), permissions_for((role,)), center_codes=frozenset(centers))
+
+
+@pytest.mark.parametrize("action", STOCK_ACTIONS)
+def test_warehouse_acts_only_on_its_queue_and_centers(action):
+    warehouse = _operator("ROLE_ALMOXARIFADO")
+    assert require_stock_action(warehouse, action, "1200") == "ROLE_ALMOXARIFADO"
+    with pytest.raises(ApiProblem) as outside:
+        require_stock_action(warehouse, action, "1100")
+    assert outside.value.status == 403
+    for role in ("ROLE_COMPRAS", "ROLE_SOLICITANTE", "ROLE_GOVERNANCA_PDM", "ROLE_AUDITOR_FISCAL"):
+        with pytest.raises(ApiProblem) as denied:
+            require_stock_action(_operator(role), action, "1200")
+        assert denied.value.status == 403
+
+
+@pytest.mark.parametrize("action", PURCHASING_ACTIONS)
+def test_purchasing_acts_only_on_its_queue_and_centers(action):
+    purchasing = _operator("ROLE_COMPRAS")
+    assert require_purchasing_action(purchasing, action, "1200") == "ROLE_COMPRAS"
+    with pytest.raises(ApiProblem) as outside:
+        require_purchasing_action(purchasing, action, "1100")
+    assert outside.value.status == 403
+    for role in ("ROLE_ALMOXARIFADO", "ROLE_SOLICITANTE", "ROLE_GOVERNANCA_PDM", "ROLE_AUDITOR_FISCAL"):
+        with pytest.raises(ApiProblem) as denied:
+            require_purchasing_action(_operator(role), action, "1200")
+        assert denied.value.status == 403
+
+
+def test_operational_guards_refuse_unknown_actions():
+    with pytest.raises(ValueError):
+        require_stock_action(_operator("ROLE_ALMOXARIFADO"), "merge:decide", "1200")
+    with pytest.raises(ValueError):
+        require_purchasing_action(_operator("ROLE_COMPRAS"), "stock:reserve", "1200")
 
 
 def test_permission_claim_without_authorized_role_is_insufficient():
