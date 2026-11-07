@@ -250,8 +250,22 @@ permitir os destinos do perfil. A conta também precisa satisfazer os requisitos
 de acesso ao modelo/Anthropic e ter quota. Não é necessário `InvokeModelWithResponseStream`
 para este fluxo síncrono. A chamada do preflight comprova acesso, não a qualidade da entrevista.
 O template `infra.yaml` concede esse acesso na role web compartilhada pelo Agent,
-restrito ao perfil US do Sonnet 5 e aos destinos `us-east-1`, `us-east-2` e `us-west-2`;
-os destinos só podem ser invocados por esse perfil. A alteração precisa ser aplicada
+restrito ao perfil US do modelo do parâmetro `ChatModel` (padrão
+`anthropic.claude-sonnet-5`) e aos destinos `us-east-1`, `us-east-2` e `us-west-2`;
+os destinos só podem ser invocados por esse perfil. `bedrock_chat_model` precisa
+ser `us.<ChatModel>`.
+
+Modelos Anthropic exigem assinatura do AWS Marketplace na conta. A primeira chamada
+só cria a assinatura se quem chama tiver `aws-marketplace:Subscribe`, e a role do
+Agent não tem. Sem assinatura, cada turno recebe `AccessDeniedException` e o chat
+responde 503. Para conferir, use
+`aws bedrock get-foundation-model-availability --model-id <modelo>`: o
+`agreementAvailability` precisa ser `AVAILABLE`. Na conta do workshop (#300), o
+Sonnet 5 está sem assinatura e o chat usa Haiku 4.5, já assinado:
+`ChatModel=anthropic.claude-haiku-4-5-20251001-v1:0` e
+`bedrock_chat_model=us.anthropic.claude-haiku-4-5-20251001-v1:0`. Para voltar ao
+Sonnet 5, assine o modelo com um usuário autorizado, atualize os dois valores e
+publique de novo. A alteração precisa ser aplicada
 à stack existente antes de ativar o chat. Não acrescenta acesso ao Sonnet 5 na role do batch.
 
 O system prompt `material_registration_system_v1` fica em
