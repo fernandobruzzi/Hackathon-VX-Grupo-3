@@ -1,7 +1,8 @@
 # Plano B: EC2, Compose e HTTPS
 
-Preparação local da #29. A execução em EC2, permissões e login real continuam
-dependendo da conta do workshop; este documento não registra uma homologação AWS.
+Preparação local da #29. A homologação ao vivo aguarda uma EC2 autorizada
+para o plano B, com instance profile próprio, acesso privado ao RDS e um
+hostname para validar HTTPS e o callback do Cognito.
 Utiliza a configuração e os segredos de [`deployment/README.md`](../deployment/README.md).
 
 ## Preparar sem conta AWS
@@ -9,7 +10,14 @@ Utiliza a configuração e os segredos de [`deployment/README.md`](../deployment
 ```bash
 scripts/deploy_ec2.sh --config deployment/aws.example.json --host 203.0.113.10.nip.io --render-dir deployment/generated/ec2
 docker compose -f deployment/generated/ec2/compose.json config --no-env-resolution --quiet
+uv run --locked --package vx-materials-back pytest -q scripts/tests/test_ec2.py
 ```
+
+Na revisão `58f1b69` de `homologacao`, o render e a validação do Compose
+passaram com Python 3.12 e Docker Compose 2.40.3. A suíte focada passou com
+11 testes e 6 subtestes. A verificação de permissões, conectividade com o RDS,
+certificado HTTPS e login fica na
+[#29](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/29#issuecomment-6712491160).
 
 O IP acima é apenas exemplo reservado para documentação. O render escreve
 `compose.json` e `Caddyfile`, não consulta AWS nem cria arquivos com segredos.
