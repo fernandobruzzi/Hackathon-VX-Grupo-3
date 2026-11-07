@@ -197,9 +197,9 @@ def test_physical_metric_gauge_stays_available_with_explicit_thread(catalog, gau
         "MODELO",
     ],
 )
-@pytest.mark.parametrize("space", ["", " "])
-def test_dotted_reference_label_cannot_supply_metric_dimensions(catalog, label, space):
-    metadata = f"{label}.{space}M12X50"
+@pytest.mark.parametrize("separator", [".", ". ", "-", "- ", "/", "/ "])
+def test_reference_punctuation_cannot_supply_metric_dimensions(catalog, label, separator):
+    metadata = f"{label}{separator}M12X50"
     result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {metadata}")
     assert "BITOLA" not in result.attributes
     assert "COMPRIMENTO" not in result.attributes
@@ -230,3 +230,27 @@ def test_actual_thread_marker_after_a_reference_field_is_kept(catalog, tag, thre
     result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, REF:M12, ROSCA:ROSCA {thread} {tag}")
     assert result.attributes["ROSCA"].value == f"METRICA {thread}"
     assert "BITOLA" not in result.attributes
+
+
+@pytest.mark.parametrize("separator", [":", ".", " = ", " ", "-", "/"])
+def test_reference_separator_probe_never_supplies_physical_dimensions(catalog, separator):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, REF{separator}M12X50")
+    assert "BITOLA" not in result.attributes
+    assert "COMPRIMENTO" not in result.attributes
+    assert "ROSCA" not in result.attributes
+
+
+@pytest.mark.parametrize("gauge", ["P/N-M12X50, M12", "P/N/M12X50, BITOLA:M12", "P/N/M12X50 BITOLA M12"])
+def test_reference_slash_and_hyphen_preserve_the_physical_gauge(catalog, gauge):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {gauge}")
+    assert result.attributes["BITOLA"].value == "M12"
+    assert result.attributes["ROSCA"].value == "METRICA GROSSA"
+    assert "COMPRIMENTO" not in result.attributes
+    assert any("P/N" in part and "M12X50" in part for part in result.unresolved)
+
+
+@pytest.mark.parametrize("reference", ["P/N:6004ZZ", "P/N 6004ZZ"])
+def test_part_number_label_keeps_its_bearing_reference_meaning(catalog, reference):
+    result = extract(catalog, "PDM020", f"ROLAMENTO RIGIDO ESFERAS, {reference}")
+    assert result.attributes["REFERENCIA"].value == "6004-ZZ"
+    assert result.attributes["VEDACAO"].value == "METALICA AMBOS LADOS"

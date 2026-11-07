@@ -264,7 +264,7 @@ def _is_reference_context(work: _Extraction, prefix: str) -> bool:
     """O último rótulo no segmento identifica a origem de uma ocorrência métrica."""
     reference_labels = _REFERENCE_LABELS | {"MODELO"}
     labels = sorted(reference_labels | KEY_ALIASES.keys() | work.by_name.keys(), key=len, reverse=True)
-    pattern = re.compile(r"(?<![\w./\-])(" + "|".join(map(re.escape, labels)) + r")(?:\s*:\s*|\s+|\.\s*)")
+    pattern = re.compile(r"(?<![\w./\-])(" + "|".join(map(re.escape, labels)) + r")(?:\s*[:.=/\-]\s*|\s+)")
     preceding_labels = list(pattern.finditer(_SEGMENTS.split(prefix)[-1]))
     return bool(preceding_labels and preceding_labels[-1][1] in reference_labels)
 
