@@ -179,3 +179,54 @@ def test_physical_metric_gauge_stays_available_with_explicit_thread(catalog, gau
     assert "COMPRIMENTO" not in result.attributes
     if gauge.startswith("REF:"):
         assert any("REF" in part and "M12" in part for part in result.unresolved)
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "REF",
+        "REFERENCIA",
+        "REF FABRICANTE",
+        "REFERENCIA FABRICANTE",
+        "PN",
+        "P/N",
+        "PART NUMBER",
+        "COD",
+        "COD FABRICANTE",
+        "CODIGO",
+        "MODELO",
+    ],
+)
+@pytest.mark.parametrize("space", ["", " "])
+def test_dotted_reference_label_cannot_supply_metric_dimensions(catalog, label, space):
+    metadata = f"{label}.{space}M12X50"
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {metadata}")
+    assert "BITOLA" not in result.attributes
+    assert "COMPRIMENTO" not in result.attributes
+    assert "ROSCA" not in result.attributes
+    assert metadata in result.unresolved
+
+
+@pytest.mark.parametrize("gauge", ["REF. M12X50, M12", "REF.M12X50, BITOLA:M12", "REF.M12X50 BITOLA M12"])
+def test_dotted_reference_preserves_the_separate_physical_gauge(catalog, gauge):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA GROSSA, {gauge}")
+    assert result.attributes["BITOLA"].value == "M12"
+    assert result.attributes["ROSCA"].value == "METRICA GROSSA"
+    assert "COMPRIMENTO" not in result.attributes
+    assert any("REF." in part and "M12X50" in part for part in result.unresolved)
+
+
+@pytest.mark.parametrize("prefix", ["REF:", "REF: ", "REF "])
+@pytest.mark.parametrize(("tag", "thread"), [("MA", "GROSSA"), ("MF", "FINA")])
+def test_nested_reference_marker_cannot_authorize_thread_alias(catalog, prefix, tag, thread):
+    metadata = f"{prefix}ROSCA:ROSCA {thread} {tag}"
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, ROSCA:ROSCA {thread}, {metadata}")
+    assert "ROSCA" not in result.attributes
+    assert "BITOLA" not in result.attributes
+
+
+@pytest.mark.parametrize(("tag", "thread"), [("MA", "GROSSA"), ("MF", "FINA")])
+def test_actual_thread_marker_after_a_reference_field_is_kept(catalog, tag, thread):
+    result = extract(catalog, "PDM001", f"PARAFUSO SEXTAVADO, REF:M12, ROSCA:ROSCA {thread} {tag}")
+    assert result.attributes["ROSCA"].value == f"METRICA {thread}"
+    assert "BITOLA" not in result.attributes

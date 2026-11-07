@@ -264,7 +264,7 @@ def _is_reference_context(work: _Extraction, prefix: str) -> bool:
     """O último rótulo no segmento identifica a origem de uma ocorrência métrica."""
     reference_labels = _REFERENCE_LABELS | {"MODELO"}
     labels = sorted(reference_labels | KEY_ALIASES.keys() | work.by_name.keys(), key=len, reverse=True)
-    pattern = re.compile(r"(?<![\w./\-])(" + "|".join(map(re.escape, labels)) + r")(?:\s*:\s*|\s+)")
+    pattern = re.compile(r"(?<![\w./\-])(" + "|".join(map(re.escape, labels)) + r")(?:\s*:\s*|\s+|\.\s*)")
     preceding_labels = list(pattern.finditer(_SEGMENTS.split(prefix)[-1]))
     return bool(preceding_labels and preceding_labels[-1][1] in reference_labels)
 
@@ -590,7 +590,10 @@ class RuleBasedV1ExtractionRepository:
             if found.value in _METRIC_THREADS and "METRICA" not in original and imperial:
                 gauge = work.found.get("BITOLA")
                 # A bitola em polegadas prevalece; códigos de referência não confirmam a rosca.
-                metric = _THREAD_METRIC_MARKER.search(evidence)
+                metric = any(
+                    not _is_reference_context(work, evidence[: match.start()])
+                    for match in _THREAD_METRIC_MARKER.finditer(evidence)
+                )
                 if gauge:
                     metric = gauge.value.startswith("M") and (
                         _has_metric_gauge_evidence(work, evidence, gauge.value) or metric
