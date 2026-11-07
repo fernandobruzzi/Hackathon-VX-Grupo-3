@@ -538,13 +538,16 @@ def _decide_current(
         if changes.pdm_version != catalog.version or changes.pdm_source_sha256 != catalog.source_sha256:
             raise ApiError(409, "REFERENCE_CHANGED", "A referencia PDM mudou. Gere uma nova proposta.")
         partial_enrichment = proposal.proposal_type == "ENRICHMENT" and changes.enrichment_context is not None
+        # Correção fiscal grava só o NCM: o código precisa estar resolvido pela classe e pelos
+        # atributos que o decidem, mas lacunas do PDM e a unidade não são publicadas por ela.
+        ncm_only = proposal.proposal_type == "NCM_CORRECTION"
         validation = _validation(
             catalog,
             changes.after,
             changes.after.unit
-            if proposal.technical_review_status != "NOT_REQUIRED" and not partial_enrichment
+            if proposal.technical_review_status != "NOT_REQUIRED" and not partial_enrichment and not ncm_only
             else None,
-            allow_incomplete=partial_enrichment,
+            allow_incomplete=partial_enrichment or ncm_only,
         )
         group = _check_group(catalog, proposal, changes, materials)
         # Enriquecimento parcial reavalia, mas preserva o NCM original sem certificá-lo.
@@ -679,7 +682,8 @@ def _decide_current(
             primary = next((m for m in materials if m.material_code == decision.primary_material_code), None)
         else:
             primary = next((m for m in materials if m.id == proposal.primary_material_id), None)
-        if primary is None or primary.status != "ATIVO":
+        # NCM é dado fiscal do item em qualquer status; as demais propostas exigem principal ativo.
+        if primary is None or (primary.status != "ATIVO" and not (ncm_only and len(materials) == 1)):
             raise ApiError(422, "INVALID_PRIMARY", "O principal deve ser um membro ativo da proposta.")
         for field in ("pdm_class_id", "attributes", "unit", "ncm"):
             if getattr(primary, field) != getattr(changes.after, field) and not changes.sources.get(field, "").strip():
@@ -734,7 +738,7 @@ def _decide_current(
             ]
             if any(source.status == "REJECTED" for source in verified_sources):
                 raise ApiError(422, "EVIDENCE_REJECTED", "Evidencia rejeitada exige nova proposta com outra evidencia.")
-        if any(m.status == "OBSOLETO" for m in materials):
+        if not ncm_only and any(m.status == "OBSOLETO" for m in materials):
             raise ApiError(422, "OBSOLETE_MEMBER", "Material obsoleto exige revisao separada.")
         ids = {m.id for m in materials}
         dependents = list(
@@ -772,7 +776,7 @@ def _decide_current(
                     material.is_canonical = False
                     material.version += 1
             db.flush()
-            if proposal.technical_review_status == "APPROVED":
+            if proposal.technical_review_status == "APPROVED" and not ncm_only:
                 primary.pdm_class_id = changes.after.pdm_class_id
                 primary.pdm_version = changes.pdm_version
                 primary.attributes = changes.after.attributes

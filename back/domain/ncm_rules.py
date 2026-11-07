@@ -12,6 +12,8 @@ from domain.ncm_snapshot import NcmSnapshot, check_snapshot_ncm
 from repositories.normalization import get_normalization_repository
 
 RULES_VERSION = "pdm-ncm-v2"
+# Política do batch para propor, mais restrita que a coerência: ver `ncm_proposal_blockers`.
+PROPOSAL_POLICY_VERSION = "ncm-proposal-v1"
 REFERENCE_SOURCE = "03_padrao_cadastro_PDM.xlsx#NCM_REFERENCIA"
 
 # Texto condicional novo exige conferir a implementação, sem interpretar texto livre.
@@ -135,6 +137,33 @@ def check_ncm_consistency(
         pending_checks=tuple(pending),
         **reference,
     )
+
+
+# Anel ou vedação de sobressalente pode ser junta (8484), artefato de borracha (4016) ou parte de
+# máquina: o equipamento de aplicação não decide sem material, construção e desenho.
+_SEAL_HEADS = frozenset({"ANEL", "VEDACAO"})
+# Atributos que provam a matéria do item. Classe de resistência de fixador (ISO 898-1, SAE J429,
+# ISO 3506: 8.8, SAE GRAU 5, A2-70...) só é definida para aço carbono, liga ou inoxidável.
+_MATTER_EVIDENCE = frozenset({"MATERIAL", "CLASSE RESISTENCIA"})
+
+
+def ncm_proposal_blockers(cls: PdmClass, attrs: Mapping[str, str | None], item: str | None) -> tuple[str, ...]:
+    """Motivos para o batch não propor um NCM que a coerência do PDM aceitaria.
+
+    A coerência segue o PDM ao pé da letra e continua igual para chat e aprovação. Propor um código
+    exige mais: a posição do NCM depende da matéria (cap. 73 é ferro/aço; 4016, borracha
+    vulcanizada), então o código único da classe só vale com a matéria provada por um atributo
+    admitido. Anéis e vedações de sobressalente vão para revisão manual.
+    """
+    reasons = []
+    evidence = [a for a in cls.attributes if a.name in _MATTER_EVIDENCE]
+    if evidence and not any(
+        attrs.get(a.name) and (not a.allowed_values or attrs[a.name] in a.allowed_values) for a in evidence
+    ):
+        reasons.append("NCM_MATTER_UNPROVEN")
+    if cls.id == "PDM110" and item and item.split()[0] in _SEAL_HEADS:
+        reasons.append("NCM_SEAL_FUNCTION_UNRESOLVED")
+    return tuple(reasons)
 
 
 def requires_snapshot_fiscal_review(assessment: Mapping[str, object]) -> bool:

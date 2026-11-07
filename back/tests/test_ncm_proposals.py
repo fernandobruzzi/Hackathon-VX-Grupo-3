@@ -53,16 +53,24 @@ def test_approval_payload_binds_assessment_and_does_not_treat_ncm_as_unsupported
     assert len(digest) == 64
 
 
-@pytest.mark.parametrize("change", ["inactive", "incomplete", "already_correct", "class_not_confirmed"])
+@pytest.mark.parametrize("change", ["incomplete", "already_correct", "class_not_confirmed"])
 def test_unsafe_or_unnecessary_ncm_changes_are_not_proposed(context, change):
     catalog, original = context
     material = original
-    if change == "inactive":
-        material = replace(original, record=replace(original.record, status="OBSOLETO"))
-    elif change == "incomplete":
+    if change == "incomplete":
         material = replace(original, attributes={})
     elif change == "already_correct":
         material = replace(original, record=replace(original.record, ncm="7318.16.00"))
     else:
         material = replace(original, record=replace(original.record, description="FILTRO COM PORCA"))
     assert propose_ncm_corrections([material], catalog) == []
+
+
+@pytest.mark.parametrize("status", ["BLOQUEADO", "OBSOLETO"])
+def test_ncm_is_proposed_in_any_status_with_fiscal_review(context, status):
+    # NCM é dado fiscal do item; bloqueado e obsoleto também precisam do código certo.
+    catalog, original = context
+    material = replace(original, record=replace(original.record, status=status))
+    proposal = propose_ncm_corrections([material], catalog)[0]
+    assert proposal.changeset["after"]["ncm"] == "7318.16.00"
+    assert proposal.fiscal_review_required

@@ -106,6 +106,9 @@ def _decode(data: dict) -> AnalyzedMaterial:
         data["attributes"],
         data["identity_key"],
         tuple(data.get("review_reasons", ())),
+        # A regra da classe decide a confiança do nome inicial (NCM e correções): sem ela, a
+        # retomada geraria menos propostas que uma execução limpa.
+        data.get("classification_rule"),
     )
 
 

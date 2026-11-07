@@ -5,11 +5,13 @@ from collections.abc import Callable
 
 from domain.contracts import CorrectionRepository
 from repositories.corrections.head_noun_v1 import HeadNounV1CorrectionRepository
+from repositories.corrections.head_noun_v2 import HeadNounV2CorrectionRepository
 
 DEFAULT_REPOSITORY = HeadNounV1CorrectionRepository.name
 
 REPOSITORIES: dict[str, Callable[[], CorrectionRepository]] = {
     HeadNounV1CorrectionRepository.name: HeadNounV1CorrectionRepository,
+    HeadNounV2CorrectionRepository.name: HeadNounV2CorrectionRepository,
 }
 
 

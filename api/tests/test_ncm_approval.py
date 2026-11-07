@@ -278,3 +278,47 @@ def test_approved_configured_snapshot_metadata_reaches_transactional_audit(appro
         assert assessment["ncm_source_sha256"] == configured_snapshot.source_sha256
         assert assessment["ncm_snapshot_date"] == "2026-11-06"
         assert assessment["ncm_source_kind"] == "SIMULATED"
+
+
+@pytest.mark.parametrize("status", ["BLOQUEADO", "OBSOLETO"])
+def test_ncm_with_incomplete_pdm_applies_only_the_code_in_any_status(approval_case, status):
+    # Porca só com o material: o código da classe é único e a matéria está provada. A correção
+    # fiscal grava só o NCM; classe, atributos, descrição, identidade e canonicidade não mudam.
+    case = approval_case
+    catalog = case["catalog"]
+    material = case["materials"][0]
+    material.status = status
+    before = (material.pdm_class_id, dict(material.attributes), material.pdm_description, material.identity_key)
+    before_canonical = material.is_canonical
+    material.ncm = "7318.15.00"
+    attributes = {"MATERIAL": "ACO CARBONO"}
+    record = MaterialRecord(material.material_code, status, "PORCA SEXTAVADA ACO CARBONO", unit="PC", ncm=material.ncm)
+    analyzed = AnalyzedMaterial(record, "PDM003", "PORCA", attributes, None)
+    generated = propose_ncm_corrections([analyzed], catalog)[0]
+    members, changes, digest = approval_payload(
+        generated, {material.material_code: str(material.id)}, str(case["dataset"].id)
+    )
+    proposal = case["proposal"]
+    proposal.proposal_type = "NCM_CORRECTION"
+    proposal.members, proposal.changeset, proposal.changeset_hash = members, json.loads(json.dumps(changes)), digest
+    proposal.fiscal_review_status = "PENDING"
+    case["session"].commit()
+
+    version = 1
+    for area in ["TECHNICAL", "FISCAL"]:
+        case["app"].state.test_principal = case["principals"][0 if area == "TECHNICAL" else 1]
+        payload = {
+            "expected_version": version,
+            "review_area": area,
+            "decision": "APPROVE",
+            "reason": "Classe e material conferidos; NCM da classe.",
+        }
+        response = decide(case, payload=payload, key=str(uuid.uuid4()))
+        assert response.status_code == 200, response.text
+        version = response.json()["version"]
+    assert response.json()["status"] == "APPLIED"
+    case["session"].expire_all()
+    assert material.ncm == "7318.16.00"
+    assert material.status == status
+    assert (material.pdm_class_id, material.attributes, material.pdm_description, material.identity_key) == before
+    assert material.is_canonical == before_canonical

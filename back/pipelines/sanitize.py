@@ -115,9 +115,10 @@ def analyze_material(
         + persisted_conflicts
         + tuple(f"OBSERVATION_CONFLICT:{name}" for name in sorted(extraction.conflicts))
     )
-    material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key, review)
+    rule = classification.rule
+    material = AnalyzedMaterial(record, class_id, item_name, attributes, identity_key, review, rule)
     if review or material_review_reasons(material, pdm_class):
-        return AnalyzedMaterial(record, class_id, item_name, attributes, None, review)
+        return AnalyzedMaterial(record, class_id, item_name, attributes, None, review, rule)
     return material
 
 
