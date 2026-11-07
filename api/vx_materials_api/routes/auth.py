@@ -195,8 +195,18 @@ def demo_switch(payload: DemoSwitchRequest, request: Request, response: Response
 
 
 @router.post("/logout")
-def logout(payload: EmptyRequest, request: Request, response: Response, caller: Caller, db: Db):
-    verify_write(request, caller)
+def logout(payload: EmptyRequest, request: Request, response: Response, db: Db):
+    try:
+        caller = current_identity(request, db)
+    except ApiProblem as problem:
+        if problem.status != 401:
+            raise
+        # Sessão expirada ou revogada: não há o que revogar nem CSRF para conferir, mas a
+        # aba ainda precisa sair do provedor. A origem continua obrigatória.
+        caller = None
+        same_origin(request)
+    if caller is not None:
+        verify_write(request, caller)
     cookie = LOCAL_COOKIE if request.app.state.auth_mode == "local" else SESSION_COOKIE
     session = db.scalar(
         select(AuthSession).where(AuthSession.session_token_hash == digest(request.cookies.get(cookie, "")))

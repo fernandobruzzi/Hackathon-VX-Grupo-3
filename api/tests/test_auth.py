@@ -249,6 +249,25 @@ def test_expiry_revocation_context_and_disabled_user_are_enforced(browser):
     assert client.get("/api/v1/auth/me").status_code == 401
 
 
+def test_logout_after_expiry_still_ends_the_provider_session(browser):
+    # Uma aba aberta além da validade da sessão precisa conseguir sair; senão o
+    # Hosted UI continua logado e o próximo login volta à mesma conta.
+    client, _, factory, _, _, _ = browser
+    assert finish(browser).status_code == 200
+    with factory() as db:
+        session = db.scalar(
+            select(AuthSession).where(AuthSession.session_token_hash == digest(client.cookies[SESSION_COOKIE]))
+        )
+        session.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        db.commit()
+    assert client.post("/api/v1/auth/logout", json={}, headers={"Origin": "https://evil.test"}).status_code == 403
+    result = client.post("/api/v1/auth/logout", json={}, headers={"Origin": "https://app.test"})
+    assert result.status_code == 200, result.text
+    assert urlsplit(result.json()["provider_logout_url"]).path == "/logout"
+    assert SESSION_COOKIE not in client.cookies
+    assert client.get("/api/v1/auth/me").status_code == 401
+
+
 @pytest.mark.parametrize("persona,role", PERSONA_ROLES.items())
 def test_local_accounts_have_server_roles_and_revocable_sessions(connection, monkeypatch, persona, role):
     monkeypatch.setenv("APP_ENV", "local")
