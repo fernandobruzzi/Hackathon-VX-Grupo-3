@@ -4,7 +4,7 @@ import io
 import re
 from html.parser import HTMLParser
 
-from pypdf import PdfReader
+from pypdf import PdfReader, apply_configuration
 
 from enrichment.trusted_sources import SourceDocument, SourceError
 
@@ -46,16 +46,25 @@ def document_pages(document: SourceDocument) -> tuple[str, ...]:
         raise SourceError("Documento excede o limite de tamanho")
     if document.content_type == "application/pdf":
         try:
-            reader = PdfReader(io.BytesIO(document.content))
-            if reader.is_encrypted or len(reader.pages) > 10:
-                raise SourceError("PDF protegido ou com mais de dez páginas")
-            pages = []
-            for page in reader.pages:
-                stream = page.get_contents()
-                if stream is not None and len(stream.get_data()) > 2_000_000:
-                    raise SourceError("Página PDF excede o limite de conteúdo")
-                pages.append(page.extract_text() or "")
-            return tuple(pages)
+            with apply_configuration(
+                maximum_declared_stream_length=2_000_000,
+                array_based_stream_maximum_output_length=2_000_000,
+                zlib_maximum_output_length=2_000_000,
+                lzw_maximum_output_length=2_000_000,
+                run_length_maximum_output_length=2_000_000,
+                brotli_maximum_output_length=2_000_000,
+                stream_decoding_work_maximum_length=20_000_000,
+            ):
+                reader = PdfReader(io.BytesIO(document.content))
+                if reader.is_encrypted or len(reader.pages) > 10:
+                    raise SourceError("PDF protegido ou com mais de dez páginas")
+                pages = []
+                for page in reader.pages:
+                    stream = page.get_contents()
+                    if stream is not None and len(stream.get_data()) > 2_000_000:
+                        raise SourceError("Página PDF excede o limite de conteúdo")
+                    pages.append(page.extract_text() or "")
+                return tuple(pages)
         except SourceError:
             raise
         except Exception as error:

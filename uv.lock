@@ -1899,7 +1899,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.35" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "pypdf", specifier = ">=6" },
+    { name = "pypdf", specifier = ">=6.21.4" },
     { name = "sqlalchemy", specifier = ">=2.0" },
 ]
 

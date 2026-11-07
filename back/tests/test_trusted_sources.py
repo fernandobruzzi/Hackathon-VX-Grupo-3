@@ -82,6 +82,9 @@ class Response:
     def read1(self, size):
         return self.stream.read(size)
 
+    def close(self):
+        self.stream.close()
+
 
 @pytest.fixture
 def transport(monkeypatch):
@@ -204,3 +207,155 @@ def test_network_failures_are_explicit_pending_errors(transport):
         assert connections[0].closed
     finally:
         trusted_sources._PinnedHTTPSConnection = original
+
+
+@pytest.mark.parametrize("slow_part", ["status", "headers", "chunk_extension", "chunk_trailer"])
+def test_trickled_http_parsing_cannot_extend_elapsed_deadline(monkeypatch, slow_part):
+    """Usa o parser HTTP real; cada byte chega antes do timeout de inatividade."""
+    import http.client
+
+    clock = [0.0]
+    headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 1\r\n\r\n"
+    body = b"x"
+    slow_from = 0 if slow_part == "status" else len(b"HTTP/1.1 200 OK\r\n")
+    if slow_part.startswith("chunk_"):
+        headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n"
+        body = b"1;extension=" + b"x" * 100 + b"\r\nx\r\n0\r\n\r\n"
+        slow_from = len(headers)
+        if slow_part == "chunk_trailer":
+            body = b"1\r\nx\r\n0\r\nX-Trailer: " + b"x" * 100 + b"\r\n\r\n"
+            slow_from += len(b"1\r\nx\r\n0\r\n")
+
+    class Stream(io.RawIOBase):
+        def __init__(self, transport):
+            self.transport = transport
+
+        def readable(self):
+            return True
+
+        def readinto(self, buffer):
+            transport = self.transport
+            if transport.offset == len(transport.content):
+                return 0
+            if transport.offset >= slow_from:
+                delay = 0.01
+                if transport.timeout < delay:
+                    clock[0] += transport.timeout
+                    raise TimeoutError("Leitura atingiu o prazo")
+                clock[0] += delay
+            buffer[0] = transport.content[transport.offset]
+            transport.offset += 1
+            return 1
+
+    class Socket:
+        def __init__(self):
+            self.content, self.offset = headers + body, 0
+            self.timeout, self.closed, self.streams = 0.05, False, []
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def sendall(self, data):
+            pass
+
+        def makefile(self, mode):
+            stream = Stream(self)
+            self.streams.append(stream)
+            return io.BufferedReader(stream)
+
+        def close(self):
+            self.closed = True
+
+    transport = Socket()
+
+    class Connection(http.client.HTTPConnection):
+        def __init__(self, host, ip, timeout):
+            super().__init__(host, timeout=timeout)
+
+        def connect(self):
+            self.sock = transport
+
+    monkeypatch.setattr(trusted_sources.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(trusted_sources, "resolve_public", lambda *_: "93.184.216.34")
+    monkeypatch.setattr(trusted_sources, "_PinnedHTTPSConnection", Connection)
+    with pytest.raises(SourceError, match="tempo|Tempo"):
+        TrustedSourceClient(FetchLimits(io_timeout=0.05, total_timeout=0.1)).fetch(SOURCE)
+    assert clock[0] <= 0.100001, "Bytes sucessivos não podem renovar o prazo total"
+    assert transport.closed
+    assert transport.streams and all(stream.closed for stream in transport.streams)
+
+
+@pytest.mark.parametrize("content_type", [b"text/plain", b"application/octet-stream"])
+def test_connection_close_response_releases_its_real_socket_file(monkeypatch, content_type):
+    import http.client
+
+    client_socket, peer = socket.socketpair()
+
+    class Connection(http.client.HTTPConnection):
+        def __init__(self, host, ip, timeout):
+            super().__init__(host, timeout=timeout)
+
+        def connect(self):
+            self.sock = client_socket
+
+    monkeypatch.setattr(trusted_sources, "resolve_public", lambda *_: "93.184.216.34")
+    monkeypatch.setattr(trusted_sources, "_PinnedHTTPSConnection", Connection)
+    try:
+        peer.sendall(
+            b"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 1\r\nContent-Type: " + content_type + b"\r\n\r\nx"
+        )
+        if content_type == b"text/plain":
+            assert TrustedSourceClient().fetch(SOURCE).content == b"x"
+        else:
+            with pytest.raises(SourceError, match="conteúdo"):
+                TrustedSourceClient().fetch(SOURCE)
+        assert client_socket.fileno() == -1, "O arquivo da resposta não pode manter o descritor aberto"
+    finally:
+        client_socket.close()
+        peer.close()
+
+
+@pytest.mark.parametrize("overrun", [False, True])
+def test_connect_and_tls_share_the_elapsed_budget(monkeypatch, overrun):
+    from types import SimpleNamespace
+
+    clock, observed = [0.0], {}
+
+    class Socket:
+        closed = False
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def close(self):
+            self.closed = True
+
+    transport = Socket()
+
+    def connect(address, *, timeout):
+        observed["connect"] = timeout
+        clock[0] += 0.08
+        return transport
+
+    def handshake(sock, *, server_hostname):
+        observed["tls"] = sock.timeout
+        clock[0] += 0.03 if overrun else 0.01
+        return sock
+
+    connection = trusted_sources._PinnedHTTPSConnection("catalog.example", "93.184.216.34", 1)
+    connection._deadline = 0.1
+    connection._context = SimpleNamespace(wrap_socket=handshake)
+    monkeypatch.setattr(trusted_sources.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(trusted_sources.socket, "create_connection", connect)
+    try:
+        if overrun:
+            with pytest.raises(TimeoutError):
+                connection.connect()
+            assert transport.closed
+        else:
+            connection.connect()
+            assert transport.timeout == pytest.approx(0.01)
+        assert observed["connect"] == pytest.approx(0.1)
+        assert observed["tls"] == pytest.approx(0.02)
+    finally:
+        connection.close()
