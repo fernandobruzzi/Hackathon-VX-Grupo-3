@@ -15,3 +15,5 @@ Os `.xlsx` de 01 e 02 ficaram de fora porque têm o mesmo conteúdo dos `.csv`. 
 ## Benchmark de NCM
 
 [`benchmark_ncm/v1/`](benchmark_ncm/v1/README.md) contém as bases com e sem gabarito documental de parafusos, válvulas e anéis: 6.271 cadastros pareados, 5.908 pontuáveis e 363 pendentes de revisão técnica. O manifesto registra versão, fontes, limites e hashes. Esses derivados não alteram o kit original do desafio.
+
+[`benchmark_ncm/v2/`](benchmark_ncm/v2/README.md) amplia a referência documental para todos os 23.554 cadastros dos 15 grupos e 80 famílias, com bases pareadas, gabaritos por grupo, resumos e pendências técnicas explícitas. São 13.932 NCMs pontuáveis e 9.622 casos para revisão. A v1 permanece congelada.

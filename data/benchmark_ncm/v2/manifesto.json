@@ -1,0 +1,217 @@
+{
+  "versao": "ncm-todos-grupos-documental-v2.0-2026-11-07",
+  "data": "2026-11-07",
+  "tipo": "gabarito_documental_NCM_com_revisao_manual_explicita",
+  "arquivo_original": "Parafuso_classificao_groundtruth.xlsx",
+  "sha256_original": "21f9493ba58e415079ea0b28a36c841362432640524a462bc66c5ee516ae9579",
+  "aba_original": "BASE_MATERIAIS",
+  "contagens": {
+    "ESCOPO": "TOTAL",
+    "REGISTROS": 23554,
+    "PONTUAVEIS": 13932,
+    "PENDENTES": 9622,
+    "CORRETOS": 12090,
+    "INCORRETOS": 1148,
+    "AUSENTES": 694,
+    "ERROS_E_AUSENTES": 1842,
+    "COBERTURA_PCT": 59.1492,
+    "ERROS_E_AUSENTES_PCT_PONTUAVEIS": 13.2214,
+    "ERROS_E_AUSENTES_PCT_TOTAL": 7.8203
+  },
+  "grupos_cadastrados": 15,
+  "familias_descritivas": 80,
+  "colunas_originais": [
+    "CODIGO_MATERIAL",
+    "DESCRICAO_CURTA",
+    "DESCRICAO_LONGA",
+    "UNIDADE_MEDIDA",
+    "NCM",
+    "GRUPO_MERCADORIA",
+    "FABRICANTE",
+    "REFERENCIA_FABRICANTE",
+    "CENTRO",
+    "STATUS",
+    "DATA_CRIACAO",
+    "USUARIO_CRIACAO",
+    "DATA_ULTIMA_MOVIMENTACAO",
+    "ESTOQUE_ATUAL",
+    "PRECO_MEDIO_UNITARIO"
+  ],
+  "colunas_entrada": [
+    "CODIGO_MATERIAL",
+    "DESCRICAO_CURTA",
+    "DESCRICAO_LONGA",
+    "UNIDADE_MEDIDA",
+    "NCM",
+    "GRUPO_MERCADORIA",
+    "FABRICANTE",
+    "REFERENCIA_FABRICANTE",
+    "CENTRO",
+    "STATUS",
+    "DATA_CRIACAO",
+    "USUARIO_CRIACAO",
+    "DATA_ULTIMA_MOVIMENTACAO",
+    "ESTOQUE_ATUAL",
+    "PRECO_MEDIO_UNITARIO",
+    "ID_BENCHMARK",
+    "GRUPO_PARTICAO",
+    "LINHA_ORIGEM"
+  ],
+  "compatibilidade_v1": {
+    "registros_preservados": 6271,
+    "ids_alvos_elegibilidade_situacoes_preservados": true,
+    "arquivos_v1_inalterados": true,
+    "grupos_particao_recalculados_no_universo_completo": true,
+    "ids_grupo_alterados": 4
+  },
+  "grupos_particao": {
+    "quantidade": 22651,
+    "grupos_com_alvos_distintos": 0,
+    "descricao_identica_com_alvos_conflitantes": 0,
+    "criterios": [
+      "descrição longa igual após normalizar acento/caixa/espaços",
+      "mesmo código de material",
+      "mesmo fabricante e referência preenchidos e não genéricos"
+    ],
+    "particao_treino_teste_criada": false
+  },
+  "normalizacao_ncm": "Remover somente pontos/espaços de valores numéricos ou texto composto de dígitos ASCII, pontos e espaços; exigir oito dígitos. Não truncar, completar ou extrair de letras. Valor inválido preenchido difere do alvo; ausência é null/vazio.",
+  "escopo": "Somente NCM: não há gabarito de outros campos ou de GRUPO_MERCADORIA. Grupo cadastrado apenas organiza a sequência; família é descritiva.",
+  "alvos": "Rótulos derivados de descrição/características; NCM atual, grupo ERP e moda não determinam o alvo. As 6.271 decisões da v1 foram preservadas. Pendentes exigem REVISAO_MANUAL, nunca igualdade com NCM vazio.",
+  "candidatos": "Hipóteses condicionais não exaustivas; não são alvos aceitos. Prefixo sustentado é auxiliar e não define acerto de oito dígitos. Compatibilidade no prefixo não significa NCM correto.",
+  "fontes": {
+    "origem_oficial": "https://portalunico.siscomex.gov.br/classif/api/publico/nomenclatura/download/json",
+    "reproducao_consultada": "https://github.com/iricardofernandes/horizon/blob/d2e511ed405cffe4e9364ba831d55f34c6345135/knowledge/data/ncm-table.json.gz",
+    "referencia_auxiliar": "https://github.com/ptkm1/PedixPro/blob/3601a63c6664254a4969eae885d0baf00a127e09/apps/api/data/fiscal-catalog/ncm.json",
+    "vigencia_declarada": "Vigente em 29/09/2026",
+    "ato": "Resolução Gecex nº 926/2026",
+    "acesso_oficial_direto": "bloqueado pela rede (403)",
+    "vigencia_posterior_confirmada": false
+  },
+  "limites": "Sem inspeção física, certificados completos, revisão fiscal independente ou confirmação de vigência posterior à cópia. Benchmark documental das descrições, não certificação aduaneira. Não avaliar método com as mesmas regras como se fosse validação independente.",
+  "valor_estoque": "Soma de ESTOQUE_ATUAL × PRECO_MEDIO_UNITARIO por registro incorreto/ausente pontuável, sem arredondar preços intermediários. Estoque é a quantidade cadastrada, não o número de registros; não agregar unidades heterogêneas como unidades físicas equivalentes. Valor representa estoque afetado, não prejuízo tributário nem saving realizado.",
+  "hashes_entradas_repositorio": {
+    "data/desafio01/01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "data/desafio01/02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+    "data/desafio01/03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+    "data/desafio01/LEIA-ME.md": "600b036c4a9264d94d75b50eb79aa9537c59767040aa82267862d9d8af86a998"
+  },
+  "hashes_v1": {
+    "README.md": "2d78f04d350756e90c802462d5edc59393c44589dbddab64780aeaaa79662912",
+    "base_com_gabarito.csv": "d90e8c013a663d21380e6c249a7419f2e73945f14ef4007ca87d6e6e6d78e13a",
+    "base_sem_gabarito.csv": "30cbc59a3c119f7b4f0f536c65f197fc78dbcebff8b0e0ac370cfae9b338161d",
+    "manifesto.json": "56c2205538fbc605197c2a33837b7e3549a8f028166f657a895c94e68721481b"
+  },
+  "verificacoes": [
+    "23.554 registros cobertos uma vez, em ordem original",
+    "15 colunas comparadas célula a célula com Excel de origem",
+    "entradas pareadas por ID e ordem, sem colunas de alvo",
+    "6.271 IDs, alvos, situações e ações da v1 preservados",
+    "todos os alvos/candidatos existem na referência",
+    "evidência é trecho literal da descrição",
+    "pendência preenchida em todos os não pontuáveis",
+    "nenhuma descrição idêntica com alvos divergentes"
+  ],
+  "arquivos": {
+    "PLANO_REVISAO.md": {
+      "sha256": "0efd3920d13973d9911f59ac7ceb305b010b24604b953ce9b857d1c7b8fd7e68",
+      "bytes": 2841
+    },
+    "README.md": {
+      "sha256": "42860e03b387186911ef91bf75b1f432ee545e2d10dca1f46ad9e96ffde38811",
+      "bytes": 9208
+    },
+    "base_com_gabarito.csv": {
+      "sha256": "eed6cbe4c81da7ef46eb185e87f753d4da4ce01fa03fb7b76ac77b7e99f9d5ed",
+      "bytes": 22158016
+    },
+    "base_sem_gabarito.csv": {
+      "sha256": "2d95512d27ca453b659f2337d454c5cfdf6f90ccafabc27f8fd62e8d5c16547b",
+      "bytes": 6954832
+    },
+    "criterios_documentais.json": {
+      "sha256": "b995fe0f2ce802e2abf5d3d8d8d6790383145c3eaebd9c5a0a1c31f5e100959d",
+      "bytes": 23684
+    },
+    "grupos/01_FIX01.csv": {
+      "sha256": "4fb67c952633dcc9d7fc8f117b9a103a834f3e2862266a8d361d7738f754adf8",
+      "bytes": 3600062
+    },
+    "grupos/02_MAN01.csv": {
+      "sha256": "7d15a8dc4c87558db5c41fdbe86433a037710d2b910f289033c4ee3ad1d01e55",
+      "bytes": 1156622
+    },
+    "grupos/03_ROL01.csv": {
+      "sha256": "3386df104432244eb43db09b5248d187dc82390befdf688a54e6e6e1e508d633",
+      "bytes": 281190
+    },
+    "grupos/04_VED01.csv": {
+      "sha256": "4e4ab156d50daaf2b99c4bb7f06dae639aa57987fbe96ec9ab81ef80aeb75ac8",
+      "bytes": 1165736
+    },
+    "grupos/05_TRA01.csv": {
+      "sha256": "0ed740a33f216a657ddf062e521782ee38c70f775cdd67f70829035f54f38b8e",
+      "bytes": 248379
+    },
+    "grupos/06_VAL01.csv": {
+      "sha256": "0682868933cde9d3b99ef2ecc6973108eb61a3a5c311a18e83fa58a516a822f3",
+      "bytes": 925676
+    },
+    "grupos/07_TUB01.csv": {
+      "sha256": "cf898f4daae58f7895499a129678b2f5f86fec87ba22020568fc94e4c72416db",
+      "bytes": 954372
+    },
+    "grupos/08_ELE01.csv": {
+      "sha256": "0225c4adbe2c5e5dd3fbe13b3504d79a78aaa77f76ee8ae2c300978fa2358744",
+      "bytes": 891889
+    },
+    "grupos/09_INS01.csv": {
+      "sha256": "a8a83f9604a4545867040b47937ae3d6750ef1d93a6ded33dcc08585d66ddbd2",
+      "bytes": 270272
+    },
+    "grupos/10_EPI01.csv": {
+      "sha256": "b707b495d570be639025c00bd1301945399ea5fe78e790f54792391565bb00aa",
+      "bytes": 339767
+    },
+    "grupos/11_SOL01.csv": {
+      "sha256": "1bdf236c6843f4a0a39030eabe0c9a0e97a6481d8cb6139ffcde197b6ad75a4b",
+      "bytes": 123525
+    },
+    "grupos/12_FER01.csv": {
+      "sha256": "8b76f422c1e78adccc4130804e35f8ccfb974691ca40b9e7a1fc1c31b2d9622a",
+      "bytes": 202939
+    },
+    "grupos/13_LUB01.csv": {
+      "sha256": "56900c2b6c4f8dcbd584805866fb2264d141c29938b1a35665576b7d3d8d5512",
+      "bytes": 97818
+    },
+    "grupos/14_FIL01.csv": {
+      "sha256": "092a39ae3ae11f515fa79b4adab641399929f55591981419f7710b6d858e53e8",
+      "bytes": 567045
+    },
+    "grupos/15_SOB01.csv": {
+      "sha256": "c3882d4cfd89310d0a91f3ddc36ada32cc51843249bccfe3ba0aae6d4b228931",
+      "bytes": 5113911
+    },
+    "referencia_ncm.csv": {
+      "sha256": "8f9ab448571278abd609280fd70fbb0479427ea2b0e34d7903fada65e6df5163",
+      "bytes": 39617
+    },
+    "resumo_familias.csv": {
+      "sha256": "3a5d48135c6fb2cd1250ab656f4bf65a2aeb689c98bfc1376d6bea966c235467",
+      "bytes": 6133
+    },
+    "resumo_grupos.csv": {
+      "sha256": "c7cbca3ab43e08e2020c594c4d307c12f3b41dced6800c0845c9bc677b54f56d",
+      "bytes": 1749
+    },
+    "sequencia_revisao.json": {
+      "sha256": "34cf2afad601c5f34896dbf570e9ef8f319cda16eeaadbb84edb16089d4583ee",
+      "bytes": 12464
+    },
+    "validacao_integridade.json": {
+      "sha256": "2d687bbf93bbaad6afd6d578737bec05a8813261b0a6e6576dcf876967ac52b7",
+      "bytes": 1056
+    }
+  }
+}
