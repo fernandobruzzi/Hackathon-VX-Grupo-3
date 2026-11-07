@@ -1,9 +1,10 @@
 # Solicitação de material: modelo e regras de atendimento
 
 Modelo operacional da jornada do solicitante (M7, #236). Este documento é a referência para
-as issues #237 a #251. Ele é uma **proposta pendente de validação com a operação**: as decisões
-marcadas como abertas na seção 10 precisam de resposta registrada na #236 antes de virarem
-código. Nada aqui está implementado.
+as issues #237 a #251. As decisões D1–D8 foram **aprovadas por Bernardo Pozzato (@bepo7) em 07/11/2026**,
+com [validação registrada na #236](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/236#issuecomment-6713442484).
+Este é o modelo aprovado para as implementações dependentes. O documento, por si só, não
+implementa solicitações nem movimentações de estoque.
 
 ## 1. Objetivo
 
@@ -90,7 +91,20 @@ Centro 1200, caneta X, `S = 6`, sem reservas. A solicitação pede `Q = 10`.
 
 Uma segunda solicitação no mesmo centro, durante a reserva, vê `D = 0`.
 
-### 4.4 Unidades
+### 4.4 Troca de dataset de estoque (D4)
+
+O snapshot novo já incorpora as saídas anteriores. Uma entrega registrada contra o dataset
+anterior não pode ser descontada novamente do saldo novo. Isso é uma premissa operacional
+aprovada, não algo que o sistema pode presumir de qualquer arquivo importado.
+
+As reservas ativas não desaparecem com a seleção do dataset mais recente. Na troca, é
+necessário reconciliá-las com o saldo novo, preservando quantidade, solicitação, centro e
+rastreabilidade do dataset anterior. Até concluir essa revisão, novas reservas dos materiais
+e centros afetados ficam bloqueadas. Saldo insuficiente ou origem não confirmada fica para
+revisão, sem liberar reservas silenciosamente nem produzir disponibilidade negativa. Os
+snapshots originais permanecem imutáveis.
+
+### 4.5 Unidades
 
 A quantidade é registrada na unidade do material. Unidades de embalagem sem fator conhecido
 (`CX`, `CT`, `JG`) bloqueiam conversão, como no saneamento: a solicitação pede a unidade do
@@ -121,8 +135,10 @@ Motivos de encerramento: `ATENDIDA_ESTOQUE` (`e = Q`), `ATENDIDA_PARCIAL_COMPRAS
 | `AGUARDANDO_CADASTRO` | `EM_ATENDIMENTO` | Pedido `REGISTERED` (usa o novo código) ou `EXISTING` (usa o código ativo encontrado) |
 | `AGUARDANDO_CADASTRO` | `ENCERRADA` | Pedido `REJECTED` (`CADASTRO_REJEITADO`, com o motivo) |
 | `EM_ATENDIMENTO` | `ENCERRADA` | `p = 0` e `r = 0` |
-| qualquer não encerrado | `ENCERRADA` | Cancelamento pelo solicitante ou responsável (`CANCELADA`) |
+| qualquer não encerrado | `ENCERRADA` | Cancelamento pelo solicitante (`CANCELADA`, D8) |
 
+Somente o solicitante cancela a solicitação inteira. Almoxarifado e Compras podem
+devolver suas próprias parcelas com motivo, sem cancelar a solicitação inteira.
 Ao cancelar, reservas ativas são canceladas e encaminhamentos `ENCAMINHADO` são cancelados.
 Entregas já feitas permanecem; revertê-las é uma operação separada. Uma solicitação encerrada
 não reabre: o solicitante cria outra.
@@ -132,9 +148,12 @@ não reabre: o solicitante cria outra.
 1. **Identificado com saldo suficiente:** reserva de `Q`, depois entrega.
 2. **Identificado sem saldo:** encaminhamento de `Q` para compras com o código existente; nenhum
    pedido de cadastro.
-3. **Atendimento parcial:** reserva de `D` e encaminhamento de `Q − D`. Se `D` mudar entre a
-   consulta e a reserva, a divisão é recalculada na transação; nunca se reserva mais que o
-   disponível nem se encaminha uma quantidade já reservada.
+3. **Atendimento parcial (D1):** o solicitante escolhe entre reservar o disponível e encaminhar
+   o restante para compras, ou encaminhar toda a quantidade para compras. A opção padrão é
+   parcial; consultar o saldo ou selecionar o padrão não executa a operação. Ao confirmar
+   parcial, reserva-se até `D` e encaminha-se o restante. Se `D` mudar entre a consulta e a
+   reserva, a divisão é recalculada na transação; nunca se reserva mais que o disponível nem
+   se encaminha uma quantidade já reservada. Na opção integral por compras, não há reserva.
 4. **Inexistente:** pedido de cadastro vinculado; após `REGISTERED`, segue para o caminho 2
    (o material novo não tem saldo).
 5. **Inconclusivo:** revisão pelo Cadastro. O sistema não presume inexistência, não cria
@@ -185,29 +204,29 @@ Permissões propostas: `requests:create`, `requests:read_own`, `requests:cancel_
 `requests:identify`, `stock:reserve`, `stock:deliver`, `stock:reverse`, `purchasing:read`,
 `purchasing:handle`. Papéis novos: `ROLE_ALMOXARIFADO` e `ROLE_COMPRAS` (#244).
 
-## 10. Decisões abertas com a operação
+## 10. Decisões aprovadas com a operação
 
-Cada item precisa de resposta registrada na #236, com quem decidiu. A proposta indica o padrão
-que será implementado se a operação concordar.
+**Responsável:** Bernardo Pozzato (@bepo7). **Data:** 07/11/2026. Após receber as propostas
+D1–D8, inclusive o destaque sobre a premissa dos snapshots, confirmou: “Aprovo tudo, mas faz
+com cuidado”. O [registro de validação na #236](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/236#issuecomment-6713442484)
+identifica quem decidiu e as oito decisões aprovadas.
 
-- [ ] **D1. Atendimento parcial:** automático (reserva o disponível e encaminha o resto) ou por
-  escolha do solicitante? *Proposta:* o solicitante escolhe entre parcial ou aguardar tudo por
-  compras; padrão parcial.
-- [ ] **D2. Expiração de reserva:** reserva expira? *Proposta:* sem expiração automática no MVP;
-  Almoxarifado cancela manualmente.
-- [ ] **D3. Quem confirma a entrega:** Almoxarifado ou o solicitante ao receber? *Proposta:*
-  Almoxarifado confirma; o solicitante só acompanha.
-- [ ] **D4. Novo dataset de estoque:** ao importar um snapshot mais recente, as saídas anteriores
-  já estão refletidas nele? *Proposta:* sim; saídas e reservas contam contra o dataset em que
-  foram criadas, e reservas ativas são revisadas na troca de dataset.
-- [ ] **D5. Janela de reversão:** há prazo para reverter uma entrega? *Proposta:* sem prazo,
-  sempre com motivo.
-- [ ] **D6. Transferência entre centros:** saldo em outro centro pode atender? *Proposta:* só
-  informativo no MVP (#251); transferência é decisão do Almoxarifado, fora deste modelo.
-- [ ] **D7. Acompanhamento de compras:** registrar pedido ao fornecedor e recebimento?
-  *Proposta:* fora do MVP; o encaminhamento termina em `ACEITO` ou `DEVOLVIDO`.
-- [ ] **D8. Quem pode cancelar:** só o solicitante, ou também Almoxarifado e Compras?
-  *Proposta:* o solicitante; responsáveis apenas devolvem a própria parcela com motivo.
+- [x] **D1. Atendimento parcial:** o solicitante escolhe entre parcial ou encaminhar tudo para
+      compras; padrão parcial.
+- [x] **D2. Expiração de reserva:** sem expiração automática no MVP; Almoxarifado cancela
+      manualmente.
+- [x] **D3. Quem confirma a entrega:** Almoxarifado confirma; o solicitante acompanha.
+- [x] **D4. Novo dataset de estoque:** o snapshot mais recente já inclui as saídas anteriores;
+      saídas são vinculadas ao dataset de origem e reservas ativas são revisadas na troca de
+      dataset, sem desconto duplicado nem perda de reservas (seção 4.4).
+- [x] **D5. Janela de reversão:** sem prazo limite, sempre com motivo e movimento compensatório
+      auditado.
+- [x] **D6. Transferência entre centros:** saldo em outro centro é informativo no MVP (#251);
+      transferências ficam fora deste modelo.
+- [x] **D7. Acompanhamento de compras:** pedido ao fornecedor e recebimento fora do MVP;
+      o encaminhamento termina em `ACEITO` ou `DEVOLVIDO`, este último com motivo.
+- [x] **D8. Quem pode cancelar:** somente o solicitante cancela a solicitação inteira;
+      responsáveis devolvem suas próprias parcelas com motivo.
 
 ## 11. Invariantes para os testes
 
@@ -222,6 +241,10 @@ Toda implementação da M7 deve manter, com testes no PostgreSQL:
 7. Toda transição tem auditoria com ator, papel efetivo, antes e depois.
 8. Repetir uma operação com a mesma `Idempotency-Key` não duplica efeito nem auditoria.
 9. Semelhança sem identidade comprovada nunca define o material da solicitação.
+10. Trocar o dataset não desconta saídas anteriores novamente nem descarta reservas ativas;
+    sem reconciliação concluída, novas reservas dos materiais e centros afetados são bloqueadas.
+11. Somente o solicitante cancela a solicitação inteira; tratar uma parcela não concede essa
+    permissão ao Almoxarifado ou a Compras.
 
 ## 12. Issues da M7
 
