@@ -3,8 +3,10 @@
 import csv
 import hashlib
 import importlib
+import io
 import json
 import platform
+import tempfile
 from importlib.metadata import version
 from pathlib import Path
 
@@ -61,15 +63,20 @@ def review_handoff(
     for name in historical_paths or []:
         raw = Path(name).read_bytes()
         historical.append({"path": name, "sha256": hashlib.sha256(raw).hexdigest(), "document": json.loads(raw)})
-    with open(csv_path, encoding="utf-8-sig", newline="") as stream:
-        rows = list(csv.DictReader(stream))
+    dataset = Path(csv_path).read_bytes()
+    rows = list(csv.DictReader(io.StringIO(dataset.decode("utf-8-sig"), newline="")))
     originals = {row["CODIGO_MATERIAL"]: row for row in rows}
     if len(originals) != len(rows):
         raise ValueError("Código de material repetido no CSV")
     catalog = _catalog(pdm_workbook)
     classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
     candidates, normalizer = get_candidate_repository(repository_name), get_normalization_repository()
-    analyzed = [analyze_material(record, catalog, classifier, extractor) for record in read_csv_records(csv_path)]
+    # O parser compartilhado lê os mesmos bytes dos originais e do hash, mesmo se a fonte mudar.
+    with tempfile.NamedTemporaryFile() as snapshot:
+        snapshot.write(dataset)
+        snapshot.flush()
+        records = read_csv_records(snapshot.name)
+    analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
     proposals = merge_proposals(analyzed, catalog, candidates, normalizer)
     frame = [
         {"id": p.id, "codes": list(p.material_codes), "changeset_sha256": p.changeset_hash}
@@ -102,7 +109,7 @@ def review_handoff(
         "authorizes_publication": False,
         "authorizes_merge": False,
         "sources": {
-            "dataset_sha256": hashlib.sha256(Path(csv_path).read_bytes()).hexdigest(),
+            "dataset_sha256": hashlib.sha256(dataset).hexdigest(),
             "pdm_sha256": catalog.source_sha256,
             "pdm_version": catalog.version,
         },

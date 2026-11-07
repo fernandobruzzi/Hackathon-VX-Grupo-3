@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from cli import main
+from pipelines import review_handoff as handoff_pipeline
 from pipelines.review_handoff import review_handoff
 
 KIT = Path(__file__).parents[2] / "data/desafio01"
@@ -121,3 +122,19 @@ def test_duplicate_material_codes_are_refused(source):
         csv.DictWriter(stream, fieldnames=rows[0]).writerow(rows[0])
     with pytest.raises(ValueError, match="repetido"):
         review_handoff(str(path), str(PDM))
+
+
+def test_handoff_uses_one_dataset_snapshot_when_source_changes(source, monkeypatch):
+    path, rows = source
+    expected = review_handoff(str(path), str(PDM), size=1, seed=113)
+    original_candidates = handoff_pipeline.get_candidate_repository
+
+    def change_source(repository_name):
+        with path.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=rows[0])
+            writer.writeheader()
+            writer.writerows({**row, "DESCRICAO_LONGA": "SEM CLASSIFICACAO"} for row in rows)
+        return original_candidates(repository_name)
+
+    monkeypatch.setattr(handoff_pipeline, "get_candidate_repository", change_source)
+    assert review_handoff(str(path), str(PDM), size=1, seed=113) == expected

@@ -636,6 +636,9 @@ uv run vx-back sanitization-evaluate data/desafio01/01_base_materiais.csv --pdm-
 The dashboard must not publish development precision as an independent product
 metric. Technical corpus labels cover only the explicitly reviewed fields;
 PDM-valid values are not necessarily correct values for a product.
+For a frozen preparation packet with original records and blank review forms,
+use `vx-back review-handoff` as described in [revisao-independente.md](docs/revisao-independente.md).
+Independent technical review and dashboard/pitch acceptance remain separate human decisions.
 
 ## Local first
 
