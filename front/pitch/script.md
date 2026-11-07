@@ -57,7 +57,7 @@ encerrar e abrir para perguntas. Não preencher a margem com novas promessas.
 
 ### 02:15 — Resultado local, sem transformar proposta em economia
 
-> Na rodada local preliminar, analisamos os 23.554 registros do kit. O algoritmo
+> Na rodada local preliminar de 5 de novembro, analisamos os 23.554 registros do kit. O algoritmo
 > gerou 1.147 propostas de unificação, envolvendo 2.629 materiais: 11,2% da entrada.
 > Também propôs 7.202 correções de descrição ou grupo e 887 de unidade.
 > São propostas, com possíveis sobreposições de materiais. Não são registros

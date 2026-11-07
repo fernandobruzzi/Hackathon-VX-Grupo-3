@@ -1,6 +1,6 @@
 # Ensaio e congelamento da demo
 
-Estado em 5/11/2026: **plano preparado; ensaios integrados não realizados**.
+Plano original de 5/11/2026; escopo local atualizado em 7/11/2026: **plano preparado; ensaios integrados não realizados**.
 A #27 está concluída; a preparação local da #34 já entrega reset protegido,
 mas seu ensaio remoto, o aceite da #26 e o Plano B #29 permanecem pendentes. A parte documental pode
 avançar, mas a #28 não deve ser encerrada por conter um roteiro escrito.
@@ -15,9 +15,9 @@ Se passar de cinco minutos, cortar explicações e anexos, sem acelerar a revis�
 O pitch usa apenas a medição e a versão aprovadas no congelamento. Não anunciar
 que um roteiro coube em cinco minutos com base apenas em contagem de palavras.
 
-A checagem textual atual contou 371 palavras na fala principal (palavras
+A checagem textual atual contou 375 palavras na fala principal (palavras
 separadas por espaço nas linhas de citação). Com hipóteses de 120 palavras
-por minuto e 45 segundos de interação, são 230.5 segundos estimados, abaixo dos
+por minuto e 45 segundos de interação, são 232.5 segundos estimados, abaixo dos
 270 planejados. Essa conta verifica folga textual; não mede o ritmo de uma pessoa
 nem a latência dos ambientes e não substitui as duas passagens cronometradas.
 
