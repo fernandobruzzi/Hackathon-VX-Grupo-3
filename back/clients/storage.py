@@ -50,19 +50,21 @@ class LocalObjectStore:
             return StoredObject(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         # O hard link publica o inode completo e nunca substitui uma chave existente.
-        with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as staged:
-            temporary = Path(staged.name)
-            try:
+        staged = tempfile.NamedTemporaryFile(dir=path.parent, delete=False)
+        temporary = Path(staged.name)
+        try:
+            with staged:
                 staged.write(content)
                 staged.flush()
                 os.fsync(staged.fileno())
-                try:
-                    os.link(temporary, path)
-                except FileExistsError:
-                    if path.read_bytes() != content:
-                        raise ObjectConflictError(f"Conteudo diferente em {key}") from None
-            finally:
-                temporary.unlink()
+            # Fecha antes de publicar e remover o temporário, inclusive no Windows.
+            try:
+                os.link(temporary, path)
+            except FileExistsError:
+                if path.read_bytes() != content:
+                    raise ObjectConflictError(f"Conteudo diferente em {key}") from None
+        finally:
+            temporary.unlink()
         return StoredObject(key)
 
     def get(self, key: str) -> bytes:
