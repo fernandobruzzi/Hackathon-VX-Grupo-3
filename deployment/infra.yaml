@@ -201,6 +201,23 @@ Resources:
               - Effect: Allow
                 Action: bedrock:InvokeModel
                 Resource: !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-text-v2:0"
+        - PolicyName: chat
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-opus-5-5"
+              # O perfil US exige os destinos; a condicao impede invocacao direta.
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-opus-5-5
+                  - arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-opus-5-5
+                  - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-opus-5-5
+                Condition:
+                  StringEquals:
+                    bedrock:InferenceProfileArn: !Sub "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-opus-5-5"
       Tags:
         - { Key: vx-project, Value: !Ref Name }
 
