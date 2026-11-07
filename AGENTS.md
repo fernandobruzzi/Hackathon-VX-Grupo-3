@@ -791,6 +791,12 @@ Any algorithm whose results may disappoint, such as preprocessing, extraction, c
 
 `back/repositories/normalization/` and `back/repositories/extraction/` are reference examples. Deterministic parsing with one correct answer, like the PDM loader, doesn't need this.
 
+## LLM client
+
+`back/repositories/llm/` holds the swappable language-model client, selected by `LLM_REPOSITORY`. Empty means no model is called. `bedrock_v1` calls the Bedrock Converse API with `BEDROCK_LLM_MODEL_ID` (default `us.anthropic.claude-sonnet-5`, the US inference profile, with `AWS_REGION=us-east-1`); change the model in `.env`, never in code. `simulated_v1` returns the minimal schema-valid answer, is labeled simulated and is refused outside `APP_ENV=local`.
+
+Every call asks for a JSON schema and returns only data that passed it. Invalid, truncated or refused answers, rejected requests and an exhausted budget raise `LlmError` with a stable code, so callers keep the case pending instead of inventing a result. Each attempt counts against `LLM_MAX_CALLS_PER_RUN`; create one repository per run. Logs record model, prompt version, tokens, latency and attempts, never prompts, answers or credentials. Details and verification: [`docs/llm.md`](docs/llm.md).
+
 ## Dashboard
 
 `GET /api/v1/dashboard/metrics` reads the original inventory snapshots and the
