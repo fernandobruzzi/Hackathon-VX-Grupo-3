@@ -1,0 +1,108 @@
+name: Deploy
+
+# Separado do CI: o CI é cancelável e nunca publica. Este workflow publica na AWS a
+# cada promoção para main e nunca é cancelado no meio, porque isso deixaria o lock
+# do deploy e uma revisão pela metade.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    # Sem a role configurada (fork, conta ainda não preparada), não há o que publicar.
+    if: github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      RELEASE: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-duration-seconds: 7200
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      - id: api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api
+          platforms: linux/amd64
+          provenance: false
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ vars.AWS_DEPLOY_NAME }}-api:${{ env.RELEASE }}
+          cache-from: type=gha,scope=deploy-api
+          cache-to: type=gha,mode=max,scope=deploy-api
+
+      - id: agent
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: agent
+          platforms: linux/amd64
+          provenance: false
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ vars.AWS_DEPLOY_NAME }}-agent:${{ env.RELEASE }}
+          cache-from: type=gha,scope=deploy-agent
+          cache-to: type=gha,mode=max,scope=deploy-agent
+
+      - id: batch
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: batch
+          platforms: linux/amd64
+          provenance: false
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ vars.AWS_DEPLOY_NAME }}-batch:${{ env.RELEASE }}
+          cache-from: type=gha,scope=deploy-batch
+          cache-to: type=gha,mode=max,scope=deploy-batch
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Configuração do deploy
+        env:
+          AWS_DEPLOY_CONFIG: ${{ vars.AWS_DEPLOY_CONFIG }}
+          IMAGE_API: ${{ steps.ecr.outputs.registry }}/${{ vars.AWS_DEPLOY_NAME }}-api@${{ steps.api.outputs.digest }}
+          IMAGE_AGENT: ${{ steps.ecr.outputs.registry }}/${{ vars.AWS_DEPLOY_NAME }}-agent@${{ steps.agent.outputs.digest }}
+          IMAGE_BATCH: ${{ steps.ecr.outputs.registry }}/${{ vars.AWS_DEPLOY_NAME }}-batch@${{ steps.batch.outputs.digest }}
+        run: uv run --locked --package vx-materials-back python scripts/aws_ci_config.py --output deployment/generated/aws.ci.json
+
+      - name: Publicar
+        run: >-
+          uv run --locked --package vx-materials-back python scripts/aws_deploy.py deploy
+          --config deployment/generated/aws.ci.json
+          --render-dir deployment/generated
+          --release "$RELEASE"
+          --apply
+
+      - name: Resumo
+        if: always()
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          receipt = pathlib.Path("deployment/generated/receipt.json")
+          if not receipt.exists():
+              print("Deploy não chegou a gravar o recibo; confira o log desta execução.")
+          else:
+              data = json.loads(receipt.read_text())
+              print(f"Release `{data['release']}`")
+              print(f"\nOrigem pública: {data.get('public_origin', 'não confirmada')}")
+              print(f"\nTask definition web: `{data['task_definitions'].get('web', '-').rsplit('/', 1)[-1]}`")
+          EOF
