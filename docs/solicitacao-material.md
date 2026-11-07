@@ -261,3 +261,36 @@ Toda implementação da M7 deve manter, com testes no PostgreSQL:
 | #245 | Estados e quantidades visíveis ao solicitante |
 | #246 | Caminho 6, equivalentes autorizados |
 | #248 a #251 | Avisos, notificações, indicadores e decisão D6 |
+
+## 13. Base persistida da solicitação (#237)
+
+A API implementa a criação e a leitura em `/api/v1/material-requests`, o detalhe por UUID e
+`POST /api/v1/material-requests/{id}/cancel`. A criação recebe `original_text`, `quantity`
+(string decimal positiva, até 18 casas inteiras e seis decimais), `unit`, `center_code` e,
+opcionalmente, `material_id`, `chat_session_id` e `registration_order_id`. Preserva o texto
+original e não arredonda quantidades. O protocolo `SM-00000001` vem de uma sequência do banco:
+lacunas por rollback são possíveis, duplicação de protocolo não.
+
+O servidor deriva solicitante, tenant e estado: material ativo identificado leva a
+`EM_ATENDIMENTO`; pedido de cadastro próprio em andamento leva a `AGUARDANDO_CADASTRO`;
+sem identificação nem pedido, fica `EM_IDENTIFICACAO`. Uma referência a material de outro
+tenant, uma conversa de outra pessoa ou um pedido de outro dono/centro não é aceito.
+A unidade precisa coincidir com a do material; não há conversão presumida de embalagens.
+
+Todas as leituras exigem tenant e centro autorizados. O solicitante vê somente as próprias
+solicitações; Governança também vê pendências de identificação/cadastro nos seus centros,
+por `requests:read_queue`. Fiscal vê apenas as solicitações vinculadas a pedidos em
+`PENDING_FISCAL`, por `requests:read_fiscal`. `mine=true` restringe a listagem ao próprio usuário. Os novos papéis
+e filas de Almoxarifado e Compras continuam na #244.
+
+Criação e cancelamento exigem autenticação, Origin/CSRF nas sessões de navegador e
+`Idempotency-Key`. A mesma chave e conteúdo recuperam a resposta; conteúdo diferente recebe
+`409`. O cancelamento exige `expected_version` e motivo, e somente o dono pode executá-lo.
+Cada criação/transição gera auditoria na mesma transação; o detalhe expõe o histórico em
+ordem de versão. Replay não cria outro evento e revalida o escopo atual.
+
+Esta base não reserva, entrega ou encaminha para compras. Os vínculos de conversa e pedido
+já possuem chaves estrangeiras; reservas, movimentos e encaminhamentos passarão a referenciar
+a solicitação nas respectivas issues, sem inventar identificadores de entidades inexistentes.
+A #240 deve integrar a liberação de reservas e o tratamento das parcelas ao cancelamento antes
+de habilitar essas operações. O reset explícito da demo inclui as solicitações operacionais.

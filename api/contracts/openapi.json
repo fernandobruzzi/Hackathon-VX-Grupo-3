@@ -4615,6 +4615,517 @@
         },
         "description": "Exige Idempotency-Key UUID. A mesma chave, usuário, tenant, recurso e corpo recuperam o mesmo job e seu estado atual, inclusive após conclusão ou falha de disparo, sem novo manifesto ou lançamento. Reuso em outro comando recebe 409 IDEMPOTENCY_CONFLICT. Acesso é revalidado em cada tentativa. Novos comandos de processamento suportam exatamente um dataset por empresa no MVP; múltiplas importações recebem 422 MULTIPLE_DATASETS_NOT_SUPPORTED antes de criar job, manifesto ou task. A retomada verifica a mesma condição. Repetir um comando já aceito somente recupera seu job, sem iniciar processamento."
       }
+    },
+    "/api/v1/material-requests": {
+      "post": {
+        "operationId": "createMaterialRequest",
+        "summary": "Criar solicitação sem movimentar estoque; estado derivado no servidor.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Solicitação de material no escopo autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequestDetail"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaterialRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listMaterialRequests",
+        "summary": "Listar solicitações próprias e pendências da fila autorizada, limitadas aos centros.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "EM_IDENTIFICACAO",
+                "AGUARDANDO_CADASTRO",
+                "EM_ATENDIMENTO",
+                "ENCERRADA"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Solicitação de material no escopo autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequestList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/material-requests/{id}": {
+      "get": {
+        "operationId": "getMaterialRequest",
+        "summary": "Consultar solicitação e histórico de transições no próprio escopo.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Solicitação de material no escopo autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/material-requests/{id}/cancel": {
+      "post": {
+        "operationId": "cancelMaterialRequest",
+        "summary": "Cancelar solicitação própria sem reserva; versão e motivo obrigatórios.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Solicitação de material no escopo autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequestDetail"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelMaterialRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4822,7 +5333,12 @@
           "audit:own",
           "audit:technical",
           "audit:fiscal",
-          "chat:diagnostics"
+          "chat:diagnostics",
+          "requests:create",
+          "requests:read_own",
+          "requests:cancel_own",
+          "requests:read_queue",
+          "requests:read_fiscal"
         ]
       },
       "Me": {
@@ -7187,11 +7703,17 @@
                 }
               },
               "pdm_class_id": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Classe da última ficha persistida pela API; não é a classificação da mensagem atual."
               },
               "item_name": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Nome do item da última ficha persistida pela API, para separar materiais da mesma classe."
               },
               "offered_material_codes": {
@@ -9370,6 +9892,476 @@
             "const": true
           }
         }
+      },
+      "CreateMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "original_text": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Original Text",
+            "type": "string"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Unit",
+            "type": "string"
+          },
+          "center_code": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Center Code",
+            "type": "string"
+          },
+          "material_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Material Id"
+          },
+          "chat_session_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Chat Session Id"
+          },
+          "registration_order_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Registration Order Id"
+          }
+        },
+        "required": [
+          "original_text",
+          "quantity",
+          "unit",
+          "center_code"
+        ],
+        "title": "CreateMaterialRequest",
+        "type": "object"
+      },
+      "CancelMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "reason"
+        ],
+        "title": "CancelMaterialRequest",
+        "type": "object"
+      },
+      "MaterialRequestSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "requester_user_id": {
+            "format": "uuid",
+            "title": "Requester User Id",
+            "type": "string"
+          },
+          "original_text": {
+            "title": "Original Text",
+            "type": "string"
+          },
+          "material_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Id"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "center_code": {
+            "title": "Center Code",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "EM_IDENTIFICACAO",
+              "AGUARDANDO_CADASTRO",
+              "EM_ATENDIMENTO",
+              "ENCERRADA"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "closure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closure Reason"
+          },
+          "chat_session_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Session Id"
+          },
+          "registration_order_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Order Id"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "can_cancel": {
+            "title": "Can Cancel",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "protocol",
+          "requester_user_id",
+          "original_text",
+          "material_id",
+          "quantity",
+          "unit",
+          "center_code",
+          "status",
+          "closure_reason",
+          "chat_session_id",
+          "registration_order_id",
+          "version",
+          "created_at",
+          "updated_at",
+          "can_cancel"
+        ],
+        "title": "MaterialRequestSummary",
+        "type": "object"
+      },
+      "MaterialRequestTransition": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "actor_user_id": {
+            "format": "uuid",
+            "title": "Actor User Id",
+            "type": "string"
+          },
+          "before_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "EM_IDENTIFICACAO",
+                  "AGUARDANDO_CADASTRO",
+                  "EM_ATENDIMENTO",
+                  "ENCERRADA"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Status"
+          },
+          "after_status": {
+            "enum": [
+              "EM_IDENTIFICACAO",
+              "AGUARDANDO_CADASTRO",
+              "EM_ATENDIMENTO",
+              "ENCERRADA"
+            ],
+            "title": "After Status",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "actor_user_id",
+          "before_status",
+          "after_status",
+          "reason",
+          "created_at"
+        ],
+        "title": "MaterialRequestTransition",
+        "type": "object"
+      },
+      "MaterialRequestDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "requester_user_id": {
+            "format": "uuid",
+            "title": "Requester User Id",
+            "type": "string"
+          },
+          "original_text": {
+            "title": "Original Text",
+            "type": "string"
+          },
+          "material_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Id"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "center_code": {
+            "title": "Center Code",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "EM_IDENTIFICACAO",
+              "AGUARDANDO_CADASTRO",
+              "EM_ATENDIMENTO",
+              "ENCERRADA"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "closure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closure Reason"
+          },
+          "chat_session_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Session Id"
+          },
+          "registration_order_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Order Id"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "can_cancel": {
+            "title": "Can Cancel",
+            "type": "boolean"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialRequestTransition"
+            },
+            "title": "History",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "protocol",
+          "requester_user_id",
+          "original_text",
+          "material_id",
+          "quantity",
+          "unit",
+          "center_code",
+          "status",
+          "closure_reason",
+          "chat_session_id",
+          "registration_order_id",
+          "version",
+          "created_at",
+          "updated_at",
+          "can_cancel",
+          "history"
+        ],
+        "title": "MaterialRequestDetail",
+        "type": "object"
+      },
+      "MaterialRequestList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialRequestSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "MaterialRequestList",
+        "type": "object"
       }
     },
     "parameters": {
