@@ -30,12 +30,25 @@ PDF conserva os limites existentes de bytes, páginas e trabalho de descompress�
 Esse orçamento **não** é uma garantia de três segundos de CPU para analisar PDF.
 
 `SOURCE_QUERY_TIMEOUT`, `SOURCE_UNAVAILABLE`, `EVIDENCE_NOT_FOUND` e
-`NO_REVIEWED_EXACT_PRODUCT_SOURCE` distinguem as pendências reais. Não há job,
+`NO_REVIEWED_EXACT_PRODUCT_SOURCE` distinguem as pendências de pesquisa;
+`CURRENT_PRODUCT_IDENTITY_CHANGED` exige conferir a identidade atual. Não há job,
 polling, escrita no banco ou ObjectStore pelo MCP. Preview não vira cache
 persistido e seu identificador não garante um resource `evidence://` disponível.
 A publicação continua no fluxo separado de enriquecimento com revisão. Bytes
 simulados só são aceitos no ambiente local, ficam explícitos na confiança e são
 recusados em runtime implantado.
+
+Antes de declarar evidência atual ou consultar a rede, a tool confere o produto
+atual de `material://`: classe, fabricante e referência conhecidos precisam
+concordar com o produto revisado. A normalização compartilhada aceita diferenças
+de caixa/separadores e preserva sufixos. Quando campos canônicos ainda faltam,
+usa o classificador/extrator compartilhados e exige evidência do PN completo
+revisado no texto original; o código do manifesto sozinho não comprova identidade.
+Nomes de fabricante usados nessa verificação textual são limitados ao catálogo
+revisado. Campos atuais explícitos não são substituídos pelo texto original.
+Mudança ou contradição retorna `PENDING/CURRENT_PRODUCT_IDENTITY_CHANGED`, sem
+consulta externa. O cache antigo permanece visível como proveniência persistida,
+mas não recebe um novo `EVIDENCE_FOUND` para outro produto.
 
 Somente evidências `PENDING` e `APPROVED` participam do cache; `REJECTED` não volta
 como sugestão. Valores diferentes do mesmo atributo aparecem em `conflicts`; o
@@ -54,12 +67,23 @@ Os resources disponíveis são:
 - `evidence://{source_id}` exige o mesmo escopo, inclusive quando alguém conhece o
   UUID de uma evidência de outro tenant. Retorna origem, trecho, valor proposto,
   confiança e situação; não expõe arquivo bruto ou chave de armazenamento.
-- `ncm://{ncm_version}/codes/{code}` está registrado, mas retorna erro explícito de
-  referência oficial indisponível. Não há registro fiscal nem vigência inventados
-  a partir do NCM de um material ou de uma referência PDM. Depende da integração
-  do snapshot versionado (#30) e regras fiscais (#22).
+- `ncm://{ncm_version}/codes/{code}` exige `materials:read`, usuário ativo e vínculo
+  com o tenant assinado antes de ler o snapshot. Usa o mesmo carregador versionado
+  e `check_snapshot_ncm` de batch/API/tool; a versão da URI precisa ser a selecionada
+  pelo servidor. Retorna registro quando existente, formato/existência/vigência na
+  data do snapshot, hash dos bytes, versão, data e procedência. `SIMULATED` e
+  `IMPORTED_UNVERIFIED` continuam exigindo revisão e trazem `NCM_SOURCE_UNVERIFIED`.
+  Sem referência configurada, versão diferente ou bytes divergentes do hash, retorna
+  erro explícito, sem preencher dados a partir do NCM de materiais ou do PDM.
+  A tool de consistência continua com existência/vigência desconhecidas nesse caso.
 
-A migração `0014_mcp_resource_scope` acrescenta apenas as views de identidade ativa e manifesto, com
+O resource fiscal está operacional para o snapshot configurado. Os testes usam
+somente a fixture marcada `SIMULATED`, copiada para armazenamento temporário;
+não são bytes fiscais oficiais. A captura oficial do Siscomex continua bloqueada
+por HTTP403 nesta integração. Uma tabela simulada/unverificada não comprova
+classificação fiscal do produto nem autoriza publicação ou aprovação.
+
+A migração `0016_mcp_resource_scope`, após `0015_order_fiscal_review`, acrescenta apenas as views de identidade ativa e manifesto, com
 `SELECT` para `mcp_reader`; não concede acesso às tabelas nem escrita. O MCP confere
 o tenant assinado contra o usuário ativo em cada consulta sensível; mudança de
 tenant ou desativação do usuário retira o acesso mesmo se o token interno ainda estiver no prazo.
@@ -82,4 +106,6 @@ A suíte cobre descoberta, leitura real por stdio, versão do PDM, prompts,
 manifesto vigente dos 15, cache/refresh/conflitos, preview com extrator real e bytes
 simulados, orçamento compartilhado entre fontes, dataset mais recente por tenant,
 centros, campos financeiros, usuário inexistente/desativado/reassociado e
-material/evidência conhecidos de outro tenant.
+material/evidência conhecidos de outro tenant. O resource NCM cobre autenticidade
+do contexto, vínculo de versão/hash, códigos válidos/expirados/futuros/ausentes,
+formato inválido, bytes adulterados e ausência de configuração.

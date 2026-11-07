@@ -1,9 +1,12 @@
 """Resources MCP: referências versionadas e fichas limitadas ao escopo autenticado."""
 
 import json
+from dataclasses import asdict
 
 from mcp.server.mcpserver.exceptions import ResourceError, ToolError
 
+from clients.ncm_snapshot_store import load_configured_ncm_snapshot
+from domain.ncm_snapshot import OFFICIAL_NCM_URL, NcmSourceKind, check_snapshot_ncm
 from vx_materials_mcp.tools.get_pdm_template import run as pdm_template
 
 
@@ -22,8 +25,23 @@ def register_resources(server, catalog, repository):
 
     @server.resource("ncm://{ncm_version}/codes/{code}", mime_type="application/json")
     def ncm(ncm_version: str, code: str) -> str:
-        """Registro fiscal versionado; indisponível até integrar snapshot oficial validado (#22/#30)."""
-        raise ResourceError("Referencia NCM oficial indisponivel; vigencia e classificacao exigem revisao fiscal")
+        """Registro do snapshot selecionado no servidor, com escopo ativo e procedência explícita."""
+        _read(repository.require_read_access)
+        snapshot = _read(load_configured_ncm_snapshot, ncm_version)
+        if snapshot is None:
+            raise ResourceError("Snapshot NCM indisponível; existência e vigência desconhecidas")
+        check = check_snapshot_ncm(snapshot, code)
+        record = snapshot.records.get(check.normalized_ncm)
+        return json.dumps(
+            {
+                **asdict(check),
+                "record": asdict(record) if record else None,
+                "source_last_update": snapshot.source_last_update,
+                "source_url": OFFICIAL_NCM_URL if snapshot.source_kind == NcmSourceKind.OFFICIAL_DOWNLOAD else None,
+            },
+            ensure_ascii=False,
+            default=str,
+        )
 
     @server.resource("material://{material_code}", mime_type="application/json")
     def material(material_code: str) -> str:

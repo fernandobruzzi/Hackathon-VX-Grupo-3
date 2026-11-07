@@ -56,8 +56,8 @@ def test_sensitive_resources_require_an_authorized_identity(uri):
         protocol(lambda c: c.read_resource(uri))
 
 
-def test_ncm_resource_never_invents_existence_or_validity():
-    with pytest.raises(McpToolError, match="oficial indisponivel"):
+def test_ncm_resource_requires_authenticated_scope():
+    with pytest.raises(McpToolError, match="nao autorizada"):
         protocol(lambda c: c.read_resource("ncm://ncm-demo-v1/codes/84821010"))
 
 
@@ -347,3 +347,98 @@ def test_stale_signed_tenant_cannot_start_research_after_user_reassignment(resou
                 text("UPDATE users_sso SET tenant_id=:tenant WHERE id=:id"),
                 {"tenant": caller.tenant_id, "id": caller.user_id},
             )
+
+
+@pytest.fixture
+def configured_ncm(tmp_path, monkeypatch):
+    from datetime import date
+    from pathlib import Path
+
+    from clients.ncm_snapshot_store import NcmSnapshotStore
+    from clients.storage import LocalObjectStore
+    from domain.ncm_snapshot import NcmSourceKind, load_ncm_snapshot
+
+    raw = (Path(__file__).parents[2] / "back/tests/fixtures/ncm_simulated.json").read_bytes()
+    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 6), source_kind=NcmSourceKind.SIMULATED)
+    NcmSnapshotStore(LocalObjectStore(tmp_path)).register(snapshot, raw)
+    monkeypatch.setenv("STORAGE_BACKEND", "local")
+    monkeypatch.setenv("STORAGE_LOCAL_DIR", str(tmp_path))
+    monkeypatch.setenv("NCM_SNAPSHOT_VERSION", snapshot.version)
+    return snapshot, raw, tmp_path
+
+
+@pytest.mark.parametrize("code", ["73181500", "73181600", "84821010", "01012100", "00000000", "invalid"])
+def test_ncm_resource_uses_shared_versioned_snapshot_rules(resource_data, configured_ncm, code):
+    import hashlib
+    from dataclasses import asdict
+
+    from domain.ncm_snapshot import check_snapshot_ncm
+
+    snapshot, raw, _ = configured_ncm
+    expected = json.loads(json.dumps(asdict(check_snapshot_ncm(snapshot, code)), default=str))
+    result = protocol(
+        lambda c: c.read_resource(f"ncm://{snapshot.version}/codes/{code}"),
+        resource_data["reader"],
+        resource_data["caller"],
+    )
+    assert {name: result[name] for name in expected} == expected
+    assert result["source_kind"] == "SIMULATED"
+    assert result["source_url"] is None
+    assert result["source_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert result["requires_fiscal_review"] is True
+    assert "NCM_SOURCE_UNVERIFIED" in result["reasons"]
+    record = snapshot.records.get(expected["normalized_ncm"])
+    assert result["record"] == (json.loads(json.dumps(asdict(record), default=str)) if record else None)
+
+
+def test_ncm_resource_rejects_other_versions(resource_data, configured_ncm):
+    with pytest.raises(McpToolError, match="indisponível"):
+        protocol(
+            lambda c: c.read_resource("ncm://another-version/codes/73181500"),
+            resource_data["reader"],
+            resource_data["caller"],
+        )
+
+
+def test_ncm_resource_rejects_tampered_snapshot_bytes(resource_data, configured_ncm):
+    snapshot, raw, root = configured_ncm
+    (root / f"references/ncm/raw/{snapshot.source_sha256}.json").write_bytes(raw + b"\n")
+    with pytest.raises(McpToolError, match="indisponível"):
+        protocol(
+            lambda c: c.read_resource(f"ncm://{snapshot.version}/codes/73181500"),
+            resource_data["reader"],
+            resource_data["caller"],
+        )
+
+
+def test_unconfigured_ncm_resource_never_falls_back_to_pdm_or_material_ncm(resource_data, monkeypatch):
+    monkeypatch.delenv("NCM_SNAPSHOT_VERSION", raising=False)
+    with pytest.raises(McpToolError, match="indisponível"):
+        protocol(
+            lambda c: c.read_resource("ncm://not-configured/codes/73181500"),
+            resource_data["reader"],
+            resource_data["caller"],
+        )
+    result = protocol(
+        lambda c: c.call_tool(
+            "check_ncm_consistency", {"pdm_class_id": "PDM003", "attributes": {}, "ncm": "7318.16.00"}
+        ),
+        resource_data["reader"],
+        resource_data["caller"],
+    )
+    assert result["exists_in_snapshot"] is None
+    assert result["valid_in_snapshot"] is None
+    assert result["ncm_source_sha256"] is None
+    from domain.ncm_rules import check_ncm_consistency
+    from domain.pdm_loader import load_pdm
+
+    expected = check_ncm_consistency(load_pdm(PDM), "PDM003", {}, "7318.16.00")
+    assert result["requires_fiscal_review"] is expected.requires_fiscal_review
+
+
+def test_ncm_resource_authenticates_signed_tenant_before_loading_snapshot(resource_data, configured_ncm):
+    snapshot, _, root = configured_ncm
+    (root / f"references/ncm/raw/{snapshot.source_sha256}.json").unlink()
+    caller = {**resource_data["caller"], "user_id": resource_data["foreign_user"]}
+    with pytest.raises(McpToolError, match="nao autorizada"):
+        protocol(lambda c: c.read_resource(f"ncm://{snapshot.version}/codes/73181500"), resource_data["reader"], caller)

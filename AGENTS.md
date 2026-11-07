@@ -13,7 +13,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
 | `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
-| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat, five tools, scoped resources, versioned prompts and bounded enrichment preview; official NCM resource pending |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Rule-based chat, five tools, scoped resources, versioned prompts and bounded enrichment preview and versioned NCM resource; official snapshot capture pending |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo reset implemented |

@@ -1,13 +1,13 @@
 """Views mínimas para escopo de recursos e elegibilidade do enriquecimento MCP.
 
-Revision ID: 0014_mcp_resource_scope
-Revises: 0013_manual_reviews
+Revision ID: 0016_mcp_resource_scope
+Revises: 0015_order_fiscal_review
 """
 
 from alembic import op
 
-revision = "0014_mcp_resource_scope"
-down_revision = "0013_manual_reviews"
+revision = "0016_mcp_resource_scope"
+down_revision = "0015_order_fiscal_review"
 branch_labels = None
 depends_on = None
 
