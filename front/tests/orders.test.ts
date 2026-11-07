@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
@@ -17,29 +18,26 @@ Object.assign(globalThis, {
 for (const pending of [false, true]) {
   test(`identidade pendente bloqueia aprovação, preserva rejeição: ${pending}`, async () => {
     const previousFetch = globalThis.fetch;
+    const detail = structuredClone(
+      JSON.parse(
+        readFileSync(
+          new URL("../../api/contracts/fixtures/examples.json", import.meta.url),
+          "utf8",
+        ),
+      ).find((row: { name: string }) => row.name === "order-review").response,
+    );
+    detail.order = {
+      ...detail.order,
+      id: "identity-review",
+      status: "READY_FOR_REVIEW",
+      missing_attributes: pending ? ["REVISAO DE IDENTIDADE: REVISAO_DE_PECA_NAO_CONFIRMADA"] : [],
+    };
     globalThis.fetch = async (url) => {
       if (String(url).endsWith("/auth/config")) return Response.json({ mode: "local" });
       if (String(url).endsWith("/auth/me")) return Response.json(meFor("GESTOR_CADASTRO"));
-      return Response.json({
-        items: [
-          {
-            id: "identity-review",
-            origin: "CHAT",
-            requester: "Solicitante",
-            original_text: "MANTO METSO N1234567",
-            center_code: "1300",
-            pdm_class_id: "PDM110",
-            status: "READY_FOR_REVIEW",
-            missing_attributes: pending
-              ? ["REVISAO DE IDENTIDADE: REVISAO_DE_PECA_NAO_CONFIRMADA"]
-              : [],
-            material_code: null,
-            updated_at: "2026-11-06T00:00:00Z",
-            version: 1,
-          },
-        ],
-        next_cursor: null,
-      });
+      if (String(url).endsWith("/registration-orders/identity-review"))
+        return Response.json(detail);
+      return Response.json({ items: [detail.order], next_cursor: null });
     };
     let view!: ReactTestRenderer;
     try {
@@ -52,6 +50,12 @@ for (const pending of [false, true]) {
           .find((item) =>
             item.children.some((child) => typeof child === "string" && child.includes(label)),
           );
+      await act(async () => button("Revisar pedido")!.props.onClick());
+      await act(async () => {
+        view.root
+          .findByType("textarea")
+          .props.onChange({ target: { value: "Evidência conferida" } });
+      });
       assert.equal(button("Aprovar parte técnica")?.props.disabled, pending);
       assert.equal(button("Rejeitar")?.props.disabled, false);
     } finally {

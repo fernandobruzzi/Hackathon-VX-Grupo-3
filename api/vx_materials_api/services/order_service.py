@@ -15,16 +15,16 @@ import json
 import re
 import uuid
 from collections import Counter
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 
 from sqlalchemy import BigInteger, cast, func, or_, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
-from domain.ncm_rules import check_ncm_consistency
 from domain.contracts import AnalyzedMaterial, MaterialRecord
 from domain.identity_decision import decide_identity
+from domain.ncm_rules import check_ncm_consistency
 from domain.pdm_validator import validate_pdm
 from pipelines.import_orders import STATUS_READY, OrderAnalysis, OrderRow, analyze_order
 from pipelines.search_index import analyze_search_candidate, index_version
@@ -415,6 +415,10 @@ def ncm_for(pdm_class, attributes: dict, item_name: str | None) -> str | None:
 
 
 def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
+    supplements = order.supplements or []
+    source_text = "\n".join(
+        part for part in (order.original_text, order.attachment_text, *(item["text"] for item in supplements)) if part
+    )
     # A ficha confirmada no chat é estruturada: não reextraímos mensagens antigas que foram corrigidas.
     if order.origin == "CHAT" and order.item_name is not None:
         attributes = dict(order.attributes)
@@ -435,17 +439,8 @@ def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
             tuple(attribute.name for attribute in validation.missing_attributes),
             validation.identity_key,
             validation.formatted_description,
-            source_text="\n".join(
-                part
-                for part in (
-                    order.original_text,
-                    order.attachment_text,
-                    *(item["text"] for item in getattr(order, "supplements", None) or []),
-                )
-                if part
-            ),
+            source_text=source_text,
         )
-    supplements = order.supplements or []
     # Separadores mantêm os rótulos dos complementos independentes do texto original.
     original = order.original_text + ";" if supplements else order.original_text
     attachment = (
@@ -453,7 +448,7 @@ def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
     )
     row = OrderRow(order.source_order_id or str(order.id), original, attachment, None, None)
 
-    return analyze_order(row, catalog, classifier, extractor)
+    return replace(analyze_order(row, catalog, classifier, extractor), source_text=source_text)
 
 
 def _publish(db, order, catalog, analysis: OrderAnalysis) -> MaterialMaster:
@@ -465,7 +460,9 @@ def _publish(db, order, catalog, analysis: OrderAnalysis) -> MaterialMaster:
         source_system=SOURCE_SYSTEM,
         material_code=_next_code(db, order.tenant_id),
         status="ATIVO",
-        original_description_long=order.original_text,
+        # Evidência derivada da concatenação ordenada: original, anexo e complementos.
+        # Os registros separados permanecem no pedido e na auditoria; isto não é texto corrigido.
+        original_description_long=analysis.source_text,
         pdm_description=analysis.formatted_description,
         pdm_class_id=order.pdm_class_id,
         pdm_version=catalog.version,
@@ -656,9 +653,9 @@ def complement_order(db, identity, catalog, order_id, payload, key, request_id=N
     ]
     classifier, extractor, version = _rules(catalog)
     analysis = _analysis(order, catalog, classifier, extractor)
-    order.status, order.candidate_material_ids = _evaluate(db, identity.tenant_id, analysis, version)
+    order.status, order.candidate_material_ids, missing = _evaluate(db, identity.tenant_id, catalog, analysis, version)
     order.pdm_class_id, order.attributes = analysis.pdm_class_id, analysis.attributes
-    order.missing_attributes = list(analysis.missing_attributes)
+    order.missing_attributes = list(missing)
     order.version += 1
     db.flush()
     _audit(db, identity, role, order, "ORDER_COMPLEMENTED", payload.reason, before, request_id, after=snapshot())
@@ -675,6 +672,7 @@ def _review_signature(catalog, analysis, version):
         "class": analysis.pdm_class_id,
         "item": analysis.item_name,
         "attributes": analysis.attributes,
+        "source_text": analysis.source_text,
         "pdm_sha256": catalog.source_sha256,
         "rules": version,
     }
@@ -691,11 +689,10 @@ def get_order_review(db, identity, catalog, order_id):
     ncm = check_ncm_consistency(
         catalog, analysis.pdm_class_id or "", analysis.attributes, None, item_name=analysis.item_name
     )
-    candidates = (
-        existing_materials(db, identity.tenant_id, analysis.identity_key, version) if analysis.identity_key else []
-    )
+    _, candidates, missing = _evaluate(db, identity.tenant_id, catalog, analysis, version)
+    current_order = {**to_contract(db, order, identity), "missing_attributes": list(missing)}
     return {
-        "order": to_contract(db, order, identity),
+        "order": current_order,
         "attachment_text": order.attachment_text,
         "item_name": analysis.item_name,
         "attributes": analysis.attributes,
@@ -742,9 +739,9 @@ def reopen_technical_review(db, identity, catalog, order_id, payload, key, reque
     }
     classifier, extractor, version = _rules(catalog)
     analysis = _analysis(order, catalog, classifier, extractor)
-    order.status, order.candidate_material_ids = _evaluate(db, identity.tenant_id, analysis, version)
+    order.status, order.candidate_material_ids, missing = _evaluate(db, identity.tenant_id, catalog, analysis, version)
     order.pdm_class_id, order.attributes = analysis.pdm_class_id, analysis.attributes
-    order.missing_attributes = list(analysis.missing_attributes)
+    order.missing_attributes = list(missing)
     order.review_data = {}
     order.version += 1
     db.flush()

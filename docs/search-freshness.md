@@ -104,8 +104,9 @@ permanece pendente de forma segura após alterações, até uma indexação comp
 
 ## Estado da integração
 
-A migração `0014_search_content_version` sucede `0013_manual_reviews`; as migrações
-já aplicadas de lotes, estoque vigente e revisão manual permanecem intactas.
+A migração `0016_search_content_version` sucede `0015_order_fiscal_review`; as migrações
+0011 a 0015 de lotes, estoque vigente, revisão manual, complementos e revisão fiscal
+permanecem intactas.
 Os testes de busca e API verificam essa cadeia única, a correspondência com os
 modelos e a convivência com a revisão manual e o histórico de conversas.
 
@@ -114,3 +115,23 @@ A aceitação de `docker compose up --build`, incluindo o ciclo de publicação,
 atualização e busca, continua pendente nesta preparação. O PR permanece em
 rascunho até essa verificação; resultados de testes em PostgreSQL descartável
 não comprovam esse critério operacional nem a homologação na AWS.
+
+
+Complementos também passam pela avaliação de identidade atual. O texto bruto original,
+o anexo e os complementos ficam em `OrderAnalysis.source_text`, separados dos delimitadores
+usados para extrair atributos. Na ficha do chat, os valores confirmados continuam
+prevalecendo. A assinatura técnica inclui essa evidência bruta; mudá-la exige nova
+revisão antes da publicação fiscal, mesmo quando os atributos extraídos continuam iguais.
+
+Complemento, detalhe e reabertura usam a mesma avaliação de três resultados: estado,
+candidatos e pendências. Uma chave coincidente com evidência inconclusiva continua como
+revisão de identidade, inclusive na ficha de revisão; a interface bloqueia aprovação,
+mas conserva rejeição e reabertura conforme as permissões atuais.
+
+
+Ao publicar um pedido, `original_description_long` do novo material recebe a concatenação
+ordenada, separada por quebras de linha, do texto original, anexo e complementos presentes.
+É evidência derivada de múltiplos registros brutos, não uma cópia exata de um único campo nem
+uma descrição corrigida. Os campos originais do pedido e cada complemento com origem, autor e
+data continuam separados e preservados, com auditoria da operação. Isso mantém contradições
+como `REV A` acessíveis à indexação e à decisão compartilhada depois da publicação.

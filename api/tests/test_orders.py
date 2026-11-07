@@ -534,6 +534,10 @@ def test_complement_finds_existing_identity_and_does_not_publish(imported):
     analysis = _analysis(order, client.app.state.pdm_catalog, classifier, extractor)
     order.supplements = []
     existing = material(db, "90000003", identity=analysis.identity_key, canonical=True)
+    existing.pdm_class_id = analysis.pdm_class_id
+    existing.attributes = dict(analysis.attributes)
+    existing.pdm_description = analysis.formatted_description
+    existing.original_description_long = analysis.source_text
     db.commit()
     result = complement(client, login(client, "GESTOR_CADASTRO"), order)
     assert result.status_code == 200 and result.json()["status"] == "EXISTING"
@@ -1107,3 +1111,203 @@ def test_requested_original_revision_cannot_become_plain_existing_material(case,
     status, candidates, reasons = _evaluate(db, TENANT_ID, catalog, analysis, version)
     assert status == "READY_FOR_REVIEW" and candidates == [str(candidate.id)]
     assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in reason for reason in reasons)
+
+
+@pytest.mark.parametrize("origin", ["IMPORT", "CHAT"])
+def test_combined_analysis_keeps_raw_original_attachment_and_supplement(catalog, origin):
+    from types import SimpleNamespace
+
+    from vx_materials_api.services.order_service import _analysis
+
+    plain = complete_part_analysis(catalog)
+    original = plain.formatted_description + "\nVER DESENHO"
+    attachment = "Fonte original: fabricante"
+    supplement = "REV A"
+    order = SimpleNamespace(
+        origin=origin,
+        source_order_id="COMBINED",
+        item_name=plain.item_name,
+        pdm_class_id=plain.pdm_class_id,
+        attributes=plain.attributes,
+        original_text=original,
+        attachment_text=attachment,
+        supplements=[{"text": supplement}],
+    )
+    analyzed = _analysis(order, catalog, *get_repositories(catalog))
+    assert analyzed.source_text == "\n".join((original, attachment, supplement))
+    assert order.original_text == original and order.attachment_text == attachment
+    if origin == "CHAT":
+        assert analyzed.attributes == plain.attributes
+
+
+def test_technical_signature_binds_raw_source_evidence(catalog):
+    from dataclasses import replace
+
+    from vx_materials_api.services.order_service import _review_signature
+
+    plain = complete_part_analysis(catalog)
+    original = replace(plain, source_text="MANTO METSO N1234567")
+    revised = replace(original, source_text=original.source_text + "\nREV A")
+    assert _review_signature(catalog, original, "current-rules") != _review_signature(catalog, revised, "current-rules")
+
+
+def test_supplement_identity_review_survives_detail_and_reopen(case):
+    client, db, version = case
+    catalog = client.app.state.pdm_catalog
+    plain = complete_part_analysis(catalog)
+    candidate = current_part(db, version, plain)
+    me = login(client, "SOLICITANTE_OPERACAO")
+    owner = db.scalar(select(UserSso.id).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    order = RegistrationOrder(
+        tenant_id=TENANT_ID,
+        origin="CHAT",
+        requester_user_id=owner,
+        original_text="MANTO METSO, APLICACAO: BRITADOR CONICO, MODELO EQUIPAMENTO: HP400",
+        center_code="1100",
+        status="INCOMPLETE",
+        pdm_class_id=plain.pdm_class_id,
+        item_name=plain.item_name,
+        attributes={name: value for name, value in plain.attributes.items() if name != "REFERENCIA FABRICANTE"},
+        missing_attributes=["REFERENCIA FABRICANTE"],
+    )
+    db.add(order)
+    db.commit()
+    source = (order.original_text, order.attachment_text)
+    result = complement(client, me, order, "REFERENCIA FABRICANTE: N1234567; REV A")
+    assert result.status_code == 200, result.text
+    assert result.json()["status"] == "READY_FOR_REVIEW"
+    assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in value for value in result.json()["missing_attributes"])
+    db.refresh(order)
+    assert (order.original_text, order.attachment_text) == source
+    me = login(client, "GESTOR_CADASTRO")
+    detail = client.get(f"{PATH}/{order.id}")
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["candidate_material_ids"] == [str(candidate.id)]
+    assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in value for value in detail.json()["order"]["missing_attributes"])
+    refused = decide(client, me, order.id, 2)
+    assert refused.status_code == 409 and refused.json()["error"]["code"] == "IDENTITY_REVIEW_REQUIRED"
+    # A pending fiscal record must return through current identity evaluation, never a fabricated approval.
+    order.status = "PENDING_FISCAL"
+    db.commit()
+    reopened = client.post(
+        f"{PATH}/{order.id}/reopen-technical-review",
+        json={"expected_version": 2, "reason": "Reavaliar evidência da revisão de peça"},
+        headers=headers(me),
+    )
+    assert reopened.status_code == 200, reopened.text
+    assert reopened.json()["status"] == "READY_FOR_REVIEW"
+    assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in value for value in reopened.json()["missing_attributes"])
+    db.refresh(order)
+    assert order.review_data == {} and order.material_id is None
+
+
+@pytest.mark.parametrize("source_changed", [False, True])
+def test_supplement_to_fiscal_cycle_binds_current_source_and_rules(imported, source_changed):
+    client, db, _, _, orders = imported
+    order = orders["SC-202600011"]
+    original = (order.original_text, order.attachment_text)
+    governance = login(client, "GESTOR_CADASTRO")
+    completed = complement(client, governance, order)
+    assert completed.status_code == 200 and completed.json()["status"] == "READY_FOR_REVIEW"
+    technical = decide(client, governance, order.id, 2)
+    assert technical.status_code == 200 and technical.json()["status"] == "PENDING_FISCAL"
+    db.refresh(order)
+    signature = order.review_data["technical"]["signature"]
+    if source_changed:
+        # Simulate a concurrent source correction without changing the extracted technical attributes.
+        order.supplements = [{**order.supplements[0], "text": order.supplements[0]["text"] + "; REV A"}]
+        db.commit()
+    fiscal = login(client, "AUDITOR_FISCAL")
+    detail = client.get(f"{PATH}/{order.id}")
+    assert detail.status_code == 200, detail.text
+    review = detail.json()
+    assert review["technical_review_current"] is (not source_changed)
+    code = review["ncm_assessment"]["suggested_ncm_codes"][0]
+    payload = {
+        "expected_version": 3,
+        "decision": "APPROVE",
+        "reason": "Conferência fiscal da ficha complementada",
+        "ncm_code": code,
+        "ncm_source": "Referência PDM e documento do fornecedor",
+        "ncm_evaluation_hash": review["ncm_assessment"]["evaluation_hash"],
+    }
+    key = str(uuid.uuid4())
+    response = client.post(f"{PATH}/{order.id}/decide", json=payload, headers=headers(fiscal, key))
+    db.refresh(order)
+    assert (order.original_text, order.attachment_text) == original
+    assert order.review_data["technical"]["signature"] == signature
+    if source_changed:
+        assert response.status_code == 422 and response.json()["error"]["code"] == "TECHNICAL_REVIEW_CHANGED"
+        assert order.status == "PENDING_FISCAL" and order.material_id is None and order.version == 3
+        assert "fiscal" not in order.review_data
+    else:
+        assert response.status_code == 200 and response.json()["status"] == "REGISTERED", response.text
+        assert db.get(MaterialMaster, order.material_id).ncm == order.review_data["fiscal"]["ncm_code"] == code
+        assert (
+            client.post(f"{PATH}/{order.id}/decide", json=payload, headers=headers(fiscal, key)).json()
+            == response.json()
+        )
+        actions = list(db.scalars(select(AuditLog.action).where(AuditLog.entity_id == str(order.id))))
+        assert sorted(actions) == sorted(["ORDER_COMPLEMENTED", "ORDER_APPROVED_TECHNICAL", "ORDER_REGISTERED"])
+
+
+def test_published_supplement_evidence_remains_in_current_index_identity_lookup(imported):
+    from dataclasses import replace
+
+    from vx_materials_api.services.order_service import IdentityReviewRequired, _evaluate, existing_materials
+
+    client, db, version, _, _ = imported
+    catalog = client.app.state.pdm_catalog
+    plain = complete_part_analysis(catalog)
+    plain = replace(plain, source_text=plain.formatted_description)
+    me = login(client, "SOLICITANTE_OPERACAO")
+    owner = db.scalar(select(UserSso.id).where(UserSso.subject == "SOLICITANTE_OPERACAO"))
+    original = "MANTO METSO; APLICACAO: BRITADOR CONICO; MODELO EQUIPAMENTO: HP400"
+    attachment = "Documento original do fornecedor"
+    order = RegistrationOrder(
+        tenant_id=TENANT_ID,
+        origin="CHAT",
+        requester_user_id=owner,
+        original_text=original,
+        attachment_text=attachment,
+        center_code="1100",
+        status="INCOMPLETE",
+        pdm_class_id=plain.pdm_class_id,
+        item_name=plain.item_name,
+        attributes={k: v for k, v in plain.attributes.items() if k != "REFERENCIA FABRICANTE"},
+        missing_attributes=["REFERENCIA FABRICANTE"],
+    )
+    db.add(order)
+    db.commit()
+    raw_supplement = "REFERENCIA FABRICANTE: N1234567; REV A"
+    filled = complement(client, me, order, raw_supplement)
+    assert filled.status_code == 200 and filled.json()["status"] == "READY_FOR_REVIEW"
+    assert decide(client, login(client, "GESTOR_CADASTRO"), order.id, 2).status_code == 200
+    fiscal = login(client, "AUDITOR_FISCAL")
+    review = client.get(f"{PATH}/{order.id}").json()
+    response = client.post(
+        f"{PATH}/{order.id}/decide",
+        json={
+            "expected_version": 3,
+            "decision": "APPROVE",
+            "reason": "Referência fiscal conferida",
+            "ncm_code": review["ncm_assessment"]["suggested_ncm_codes"][0],
+            "ncm_source": "Documento fiscal do fornecedor",
+            "ncm_evaluation_hash": review["ncm_assessment"]["evaluation_hash"],
+        },
+        headers=headers(fiscal),
+    )
+    assert response.status_code == 200 and response.json()["status"] == "REGISTERED", response.text
+    db.refresh(order)
+    published = db.get(MaterialMaster, order.material_id)
+    assert (order.original_text, order.attachment_text) == (original, attachment)
+    assert order.supplements[0]["text"] == raw_supplement
+    # This is a derived, ordered concatenation of separately retained source records, not a corrected description.
+    assert published.original_description_long == "\n".join((original, attachment, raw_supplement))
+    index(db, version, published, published.identity_key)
+    # Query the actual current SQL index/master join and shared identity decision after publication.
+    with pytest.raises(IdentityReviewRequired):
+        existing_materials(db, TENANT_ID, catalog, plain, version)
+    state, candidates, reasons = _evaluate(db, TENANT_ID, catalog, plain, version)
+    assert state == "READY_FOR_REVIEW" and candidates == [str(published.id)]
+    assert any("REVISAO_DE_PECA_NAO_CONFIRMADA" in value for value in reasons)
