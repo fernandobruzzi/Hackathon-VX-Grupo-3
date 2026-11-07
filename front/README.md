@@ -23,6 +23,12 @@ No Compose local, entre pela tela de login e troque de conta no canto superior d
 (Solicitante, Governança PDM, Auditor fiscal). A navegação, os botões de
 decisão e as telas mudam com o papel.
 
+No chat, “Copiar código” copia somente o código ERP ativo apresentado na ficha de
+item existente, preservando zeros à esquerda. A confirmação aparece após a cópia;
+se o navegador recusar ou não oferecer a área de transferência, a tela orienta
+a selecionar o código e copiá-lo manualmente. Essa ação não chama a API nem cria
+pedido ou material.
+
 ## Por que static export
 
 A arquitetura serve o front pela API (FastAPI) na mesma origem HTTPS, com cookie
