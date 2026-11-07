@@ -371,3 +371,42 @@ test("botão de saída permite repetir após falha com identidade reconciliada",
   assert.equal(h.auth.me, null);
   assert.deepEqual(h.navigations, ["/login/"]);
 });
+
+test("logout Cognito encerra também a sessão do provedor e segura a tela até sair", async (t) => {
+  const h = await setup(t, { mode: "cognito" });
+  const providerLogout =
+    "https://pool.auth.us-east-1.amazoncognito.com/logout?client_id=c&logout_uri=https%3A%2F%2Fapp%2Flogin%2F";
+  let leaving!: Promise<boolean>;
+  await act(async () => {
+    leaving = h.auth.signOut();
+  });
+  assert.equal(h.requests[0].path, "/api/v1/auth/logout");
+  await h.respond(h.requests[0], { logged_out: true, provider_logout_url: providerLogout });
+  assert.equal(await leaving, true);
+  assert.deepEqual(h.navigations, [providerLogout]);
+  assert.equal(h.auth.me, null);
+  assert.equal(h.auth.sessionBusy, true);
+});
+
+test("logout local continua na aplicação", async (t) => {
+  const h = await setup(t);
+  let leaving!: Promise<boolean>;
+  await act(async () => {
+    leaving = h.auth.signOut();
+  });
+  await h.respond(h.requests[0], { logged_out: true });
+  assert.equal(await leaving, false);
+  assert.deepEqual(h.navigations, []);
+  assert.equal(h.auth.sessionBusy, false);
+});
+
+test("botão de saída não sobrepõe /login/ ao logout do provedor", async (t) => {
+  const h = await setup(t, { mode: "cognito" });
+  const providerLogout =
+    "https://pool.auth.us-east-1.amazoncognito.com/logout?client_id=c&logout_uri=https%3A%2F%2Fapp%2Flogin%2F";
+  await act(async () => {
+    void h.view.root.findByProps({ "aria-label": "Sair da conta" }).props.onClick();
+  });
+  await h.respond(h.requests[0], { logged_out: true, provider_logout_url: providerLogout });
+  assert.deepEqual(h.navigations, [providerLogout]);
+});

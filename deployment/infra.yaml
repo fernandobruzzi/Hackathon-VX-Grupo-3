@@ -291,6 +291,8 @@ Resources:
       AllowedOAuthFlows: [code]
       AllowedOAuthScopes: [openid, email, profile]
       CallbackURLs: [!Sub "${PublicOrigin}/auth/callback/"]
+      # Destino do /logout do Hosted UI depois que a API revoga a sessao.
+      LogoutURLs: [!Sub "${PublicOrigin}/login/"]
       SupportedIdentityProviders: [COGNITO]
       ExplicitAuthFlows: [ALLOW_REFRESH_TOKEN_AUTH]
       PreventUserExistenceErrors: ENABLED
