@@ -1,6 +1,8 @@
 """A avaliação distingue incerteza de rótulo, abstenção e unidade estatística."""
 
 import json
+from collections import Counter
+from contextlib import nullcontext
 from types import SimpleNamespace
 
 import pytest
@@ -206,11 +208,29 @@ def test_real_report_exposes_denominators_and_development_provenance(tmp_path, m
         captured["batch"] = proposals
         return len(proposals)
 
+    connection = object()
+    records = read_csv_records(DATA / "01_base_materiais.csv")
+    catalog = load_pdm(DATA / "03_padrao_cadastro_PDM.xlsx")
+    context = full_run.RunContext(engine=SimpleNamespace(begin=lambda: nullcontext(connection)), tenant_id="test")
+
+    def save_reviews(connection_arg, records_arg, analyzed, pending_by_code, context_arg, catalog_arg, corrector_name):
+        assert connection_arg is connection
+        assert records_arg is records
+        assert [material.record for material in analyzed] == records
+        assert context_arg is context
+        assert catalog_arg is catalog
+        assert corrector_name == "head_noun_v1"
+        captured["manual_pending"] = pending_by_code
+        return "test-manual-review-run"
+
     monkeypatch.setattr(full_run, "save_all", save)
-    metrics = full_run.run_full(
-        read_csv_records(DATA / "01_base_materiais.csv"),
-        load_pdm(DATA / "03_padrao_cadastro_PDM.xlsx"),
-        full_run.RunContext(engine=None, tenant_id="test"),
+    monkeypatch.setattr(full_run, "save_manual_reviews", save_reviews)
+    metrics = full_run.run_full(records, catalog, context)
+    assert metrics["manual_review_run_id"] == "test-manual-review-run"
+    assert set(captured["manual_pending"]) <= {record.code for record in records}
+    assert (
+        Counter(reason for reasons in captured["manual_pending"].values() for reason in reasons)
+        == metrics["corrections"]["pending"]
     )
     evaluation_members = {c for p in captured["evaluation"] for c in p.material_codes}
     batch_members = {c for p in captured["batch"] for c in p.material_codes}
