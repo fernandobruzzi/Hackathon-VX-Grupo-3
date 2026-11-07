@@ -1,0 +1,754 @@
+{
+  "schema_version": "automatic-corrections-measurement-v2",
+  "command": "UV_CACHE_DIR=/tmp/vx-uv-cache uv run --locked --directory back python -m pipelines.measure_automatic_corrections ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx",
+  "command_cwd": "repository-root",
+  "raw_output_sha256": "b372b24663239178224b35697220367af5627d69d2d984a7128840084229cf84",
+  "implementation_matches_commit": true,
+  "source_sha256": {
+    "back/pipelines/measure_automatic_corrections.py": "9e0e4713a63a897ff67486c7a07ec993a0d25c67dafd8e827c9b7a4641c0bac4",
+    "back/pipelines/automatic_corrections.py": "b4c2cf5718d0d2c5a1275678c058241a1eb5d7f23d16b4e14f1dba487b929e98",
+    "back/domain/automatic_corrections.py": "89d0e784eb03bc85a3a8db2225e03176acec34e75340bbb52d9165ecda8aa34a",
+    "back/pipelines/sanitize.py": "f5baa2e707030b813cf9a9503a97897d1989a65cb66f60e66b089bc56179276b",
+    "back/pipelines/corrections.py": "0ef7689d39ad223963df4a6fa2ad7739db916d12563df596f31a7e9c403696b1",
+    "back/repositories/extraction/material_fields.py": "f8df1830ab78487c2f004c66c906fe7ec5f971e3a536e3f532e904ae58856777",
+    "back/repositories/extraction/rule_based_v1.py": "2adc53cbec7d8be882edf452a069b2cb5ae5d58ec958aced5c497087cfb8e64c",
+    "back/repositories/extraction/rule_based_v1_tables.py": "369f8d4701186f5c645f0a0e7af99d0a4eaeb4df32cb32f3827cda9085d25604",
+    "back/repositories/classification/aliases_v1.py": "d0f6b5e566be24b7a4747fc64b6d960d8d65dc182a8364d21f42e04f4f6a82b5",
+    "back/repositories/classification/aliases_v1_tables.py": "f0e1591f802365ad0480fb8b1b981058a8ca53b963b0d3ea73b2f10622a525dc",
+    "back/repositories/classification/rule_based_v1.py": "4445ed984dbbfd53d6bc8c62dc2a11e9456a1f12993bbe41e0b4c2a676ca1fa6",
+    "back/repositories/corrections/head_noun_v1.py": "c40f859362107dd4b6740fb56c94a6030855b89a96f6368dc2b7578574c7b204",
+    "back/repositories/normalization/rule_based_v1.py": "7e3ec2f86f8e4e8eed761b33ea1fb3548c65729fb8cfcac16c72d213449335c8",
+    "back/repositories/text_loss/unresolved_terms_v1.py": "53e6d4adbedc9b3740dc74f3f6efbb10f44d5d0c60855c5ea739157bb85fd4b7",
+    "back/repositories/proposal_payload.py": "e0ad79e8bf8187db36bff4b0156b22834879edbb27fb038adcf763908606ad66",
+    "back/domain/identity.py": "175426f29abf4d4041759c651d82c392e24f5194523895fafebf220ac4da9d12",
+    "back/domain/pdm_validator.py": "8fe707cb0c1bb2c5212356931365334d57aaefe2611952b58c9ac6354d89fce6",
+    "back/domain/pdm_formatter.py": "f1e1769901a1623d1fc92c36edfc88f46cb4a7a20bb7c786f3c7c81442d72294",
+    "data/desafio01/01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "data/desafio01/03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+  },
+  "model_calls": 0,
+  "independent_review": false,
+  "authorizes_apply": false,
+  "commit": "807c6615394aba80889ca49df2ae46dd2f176f7c",
+  "policy": "safe-corrections-v1",
+  "rules": "pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v1@3-pilot-families-263|extractor:rule_based_v1@11-quantity-reference-199|identity-v3|approved-attributes-v1|independent-fields-v2",
+  "pdm_version": "pdm-kit-v1",
+  "pdm_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+  "records": 23554,
+  "counts": {
+    "PDM_CORRECTION:REVIEW": 5077,
+    "UNIT_CORRECTION:ELIGIBLE": 584,
+    "PDM_CORRECTION:ELIGIBLE": 1652,
+    "UNIT_CORRECTION:REVIEW": 303
+  },
+  "reasons": {
+    "OUT_OF_SCOPE_CHANGE": 4777,
+    "CONFLICT": 886,
+    "REVIEW_REASONS_PRESENT": 1333,
+    "PDM_INCOMPLETE_OR_INVALID": 1243,
+    "ALREADY_STANDARDIZED": 867,
+    "SAFE_CORRECTION": 2236,
+    "UNTRUSTED_CLASS": 590,
+    "UNIT_NOT_SAFE_ALIAS": 276,
+    "TEXT_LOSS": 208
+  },
+  "examples": {
+    "PDM_CORRECTION:REVIEW:OUT_OF_SCOPE_CHANGE": [
+      {
+        "code": "27827726",
+        "original": "ANEL EXPULSOR, APLIC: BOMBA POLPA, MODELO EQUIPAMENTO: MM400, FABRICANTE: METSO, COD FABRICANTE: MM2905816",
+        "changes": [
+          {
+            "field": "description",
+            "before": "ANEL EXPULSOR, APLIC: BOMBA POLPA, MODELO EQUIPAMENTO: MM400, FABRICANTE: METSO, COD FABRICANTE: MM2905816",
+            "after": "ANEL EXPULSOR; APLICACAO: BOMBA POLPA; MODELO EQUIPAMENTO: MM400; FABRICANTE: METSO; REFERENCIA FABRICANTE: MM2905816",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BOMBA POLPA",
+          "MODELO EQUIPAMENTO": "MM400",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM2905816"
+        }
+      },
+      {
+        "code": "24794045",
+        "original": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "changes": [
+          {
+            "field": "description",
+            "before": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+            "after": "AMORTECEDOR; APLICACAO: PENEIRA VIBRATORIA; MODELO EQUIPAMENTO: TS 3.6X7.3; FABRICANTE: METSO; REFERENCIA FABRICANTE: MM7843033",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "TS 3.6X7.3",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM7843033"
+        }
+      },
+      {
+        "code": "28321977",
+        "original": "VIGA, APLICACAO:PENEIRA VIBRATORIA, MODELO:F-CLASS 2.4X6.1, REF:HB-627417, FAB:HAVER",
+        "changes": [
+          {
+            "field": "description",
+            "before": "VIGA, APLICACAO:PENEIRA VIBRATORIA, MODELO:F-CLASS 2.4X6.1, REF:HB-627417, FAB:HAVER",
+            "after": "VIGA; APLICACAO: PENEIRA VIBRATORIA; MODELO EQUIPAMENTO: F-CLASS 2.4X6.1; FABRICANTE: HAVER; REFERENCIA FABRICANTE: HB-627417",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "F-CLASS 2.4X6.1",
+          "FABRICANTE": "HAVER",
+          "REFERENCIA FABRICANTE": "HB-627417"
+        }
+      }
+    ],
+    "PDM_CORRECTION:REVIEW:CONFLICT": [
+      {
+        "code": "24794045",
+        "original": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "changes": [
+          {
+            "field": "description",
+            "before": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+            "after": "AMORTECEDOR; APLICACAO: PENEIRA VIBRATORIA; MODELO EQUIPAMENTO: TS 3.6X7.3; FABRICANTE: METSO; REFERENCIA FABRICANTE: MM7843033",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "TS 3.6X7.3",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM7843033"
+        }
+      },
+      {
+        "code": "22976650",
+        "original": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+        "changes": [
+          {
+            "field": "description",
+            "before": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+            "after": "CUNHA; APLICACAO: BRITADOR MANDIBULA; MODELO EQUIPAMENTO: CJ412; FABRICANTE: SANDVIK; REFERENCIA FABRICANTE: 6967305-88",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BRITADOR MANDIBULA",
+          "MODELO EQUIPAMENTO": "CJ412",
+          "FABRICANTE": "SANDVIK",
+          "REFERENCIA FABRICANTE": "6967305-88"
+        }
+      },
+      {
+        "code": "27475738",
+        "original": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+        "changes": [
+          {
+            "field": "description",
+            "before": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+            "after": "ANEL LABIRINTO; APLICACAO: TURBINA HIDRAULICA; MODELO EQUIPAMENTO: FRANCIS 6MW; FABRICANTE: WEG; REFERENCIA FABRICANTE: 17217053",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "TURBINA HIDRAULICA",
+          "MODELO EQUIPAMENTO": "FRANCIS 6MW",
+          "FABRICANTE": "WEG",
+          "REFERENCIA FABRICANTE": "17217053"
+        }
+      }
+    ],
+    "PDM_CORRECTION:REVIEW:REVIEW_REASONS_PRESENT": [
+      {
+        "code": "24794045",
+        "original": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "changes": [
+          {
+            "field": "description",
+            "before": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+            "after": "AMORTECEDOR; APLICACAO: PENEIRA VIBRATORIA; MODELO EQUIPAMENTO: TS 3.6X7.3; FABRICANTE: METSO; REFERENCIA FABRICANTE: MM7843033",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "TS 3.6X7.3",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM7843033"
+        }
+      },
+      {
+        "code": "22976650",
+        "original": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+        "changes": [
+          {
+            "field": "description",
+            "before": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+            "after": "CUNHA; APLICACAO: BRITADOR MANDIBULA; MODELO EQUIPAMENTO: CJ412; FABRICANTE: SANDVIK; REFERENCIA FABRICANTE: 6967305-88",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BRITADOR MANDIBULA",
+          "MODELO EQUIPAMENTO": "CJ412",
+          "FABRICANTE": "SANDVIK",
+          "REFERENCIA FABRICANTE": "6967305-88"
+        }
+      },
+      {
+        "code": "27475738",
+        "original": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+        "changes": [
+          {
+            "field": "description",
+            "before": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+            "after": "ANEL LABIRINTO; APLICACAO: TURBINA HIDRAULICA; MODELO EQUIPAMENTO: FRANCIS 6MW; FABRICANTE: WEG; REFERENCIA FABRICANTE: 17217053",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "TURBINA HIDRAULICA",
+          "MODELO EQUIPAMENTO": "FRANCIS 6MW",
+          "FABRICANTE": "WEG",
+          "REFERENCIA FABRICANTE": "17217053"
+        }
+      }
+    ],
+    "PDM_CORRECTION:REVIEW:PDM_INCOMPLETE_OR_INVALID": [
+      {
+        "code": "24794045",
+        "original": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "changes": [
+          {
+            "field": "description",
+            "before": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+            "after": "AMORTECEDOR; APLICACAO: PENEIRA VIBRATORIA; MODELO EQUIPAMENTO: TS 3.6X7.3; FABRICANTE: METSO; REFERENCIA FABRICANTE: MM7843033",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "TS 3.6X7.3",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM7843033"
+        }
+      },
+      {
+        "code": "22976650",
+        "original": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+        "changes": [
+          {
+            "field": "description",
+            "before": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+            "after": "CUNHA; APLICACAO: BRITADOR MANDIBULA; MODELO EQUIPAMENTO: CJ412; FABRICANTE: SANDVIK; REFERENCIA FABRICANTE: 6967305-88",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BRITADOR MANDIBULA",
+          "MODELO EQUIPAMENTO": "CJ412",
+          "FABRICANTE": "SANDVIK",
+          "REFERENCIA FABRICANTE": "6967305-88"
+        }
+      },
+      {
+        "code": "27475738",
+        "original": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+        "changes": [
+          {
+            "field": "description",
+            "before": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+            "after": "ANEL LABIRINTO; APLICACAO: TURBINA HIDRAULICA; MODELO EQUIPAMENTO: FRANCIS 6MW; FABRICANTE: WEG; REFERENCIA FABRICANTE: 17217053",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "TURBINA HIDRAULICA",
+          "MODELO EQUIPAMENTO": "FRANCIS 6MW",
+          "FABRICANTE": "WEG",
+          "REFERENCIA FABRICANTE": "17217053"
+        }
+      }
+    ],
+    "PDM_CORRECTION:REVIEW:ALREADY_STANDARDIZED": [
+      {
+        "code": "24794045",
+        "original": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "changes": [
+          {
+            "field": "description",
+            "before": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+            "after": "AMORTECEDOR; APLICACAO: PENEIRA VIBRATORIA; MODELO EQUIPAMENTO: TS 3.6X7.3; FABRICANTE: METSO; REFERENCIA FABRICANTE: MM7843033",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "TS 3.6X7.3",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM7843033"
+        }
+      },
+      {
+        "code": "22976650",
+        "original": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+        "changes": [
+          {
+            "field": "description",
+            "before": "CUNHA, PARA:BRITADOR MANDIBULA, MOD:CJ412, FABR:SANDVIK, P/N:6967305-88 ITEM CRITICO",
+            "after": "CUNHA; APLICACAO: BRITADOR MANDIBULA; MODELO EQUIPAMENTO: CJ412; FABRICANTE: SANDVIK; REFERENCIA FABRICANTE: 6967305-88",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BRITADOR MANDIBULA",
+          "MODELO EQUIPAMENTO": "CJ412",
+          "FABRICANTE": "SANDVIK",
+          "REFERENCIA FABRICANTE": "6967305-88"
+        }
+      },
+      {
+        "code": "27475738",
+        "original": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+        "changes": [
+          {
+            "field": "description",
+            "before": "ANEL LABIRINTO - TURBINA HIDRAULICA - MOD:FRANCIS 6MW - MARCA:WEG - REFERENCIA FABRICANTE:17217053",
+            "after": "ANEL LABIRINTO; APLICACAO: TURBINA HIDRAULICA; MODELO EQUIPAMENTO: FRANCIS 6MW; FABRICANTE: WEG; REFERENCIA FABRICANTE: 17217053",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "TURBINA HIDRAULICA",
+          "MODELO EQUIPAMENTO": "FRANCIS 6MW",
+          "FABRICANTE": "WEG",
+          "REFERENCIA FABRICANTE": "17217053"
+        }
+      }
+    ],
+    "UNIT_CORRECTION:ELIGIBLE:SAFE_CORRECTION": [
+      {
+        "code": "24794045",
+        "original": "AMORTECEDOR, PART NUMBER:MM7843033, MODELO EQUIPAMENTO:TS 3.6X7.3, METSO, PARA:PENEIRA VIBRATORIA",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "PCA",
+            "after": "PC",
+            "source": "rule_based_v1/unit.alias"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "PENEIRA VIBRATORIA",
+          "MODELO EQUIPAMENTO": "TS 3.6X7.3",
+          "FABRICANTE": "METSO",
+          "REFERENCIA FABRICANTE": "MM7843033"
+        }
+      },
+      {
+        "code": "28696124",
+        "original": "TE REDUCAO, BITOLA:1.1/4 IN, DIAMETRO REDUZIDO:3/4POL, RATING:3000#, MAT:INOX 316, LIGACAO:NPT, NORMA:ASME B16.11",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "PCA",
+            "after": "PC",
+            "source": "rule_based_v1/unit.alias"
+          }
+        ],
+        "attributes": {
+          "DIAMETRO NOMINAL": "1.1/4POL",
+          "DIAMETRO REDUZIDO": "3/4POL",
+          "CLASSE PRESSAO": "3000#",
+          "CONEXAO": "ROSCA NPT",
+          "NORMA": "ASME B16.11"
+        }
+      },
+      {
+        "code": "22635568",
+        "original": "ARRUELA LISA;PARA PARAFUSO:M24;DIAMETRO:26 MM;ESP:5 MM;MAT:AC CARBONO;TRATAMENTO:PRETO;PADRAO:DIN 9021 P/ MANUTENCAO",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "rule_based_v1/unit.alias"
+          }
+        ],
+        "attributes": {
+          "PARA PARAFUSO": "M24",
+          "DIAMETRO INTERNO": "26MM",
+          "MATERIAL": "ACO CARBONO",
+          "NORMA": "DIN 9021"
+        }
+      }
+    ],
+    "PDM_CORRECTION:ELIGIBLE:SAFE_CORRECTION": [
+      {
+        "code": "11127626",
+        "original": "OLEO LUBRIFICANTE;APLIC:HIDRAULICO;ISO VG:ISO VG 46;EMB:CONTAINER 1000L",
+        "changes": [
+          {
+            "field": "description",
+            "before": "OLEO LUBRIFICANTE;APLIC:HIDRAULICO;ISO VG:ISO VG 46;EMB:CONTAINER 1000L",
+            "after": "OLEO LUBRIFICANTE; APLICACAO: HIDRAULICO; VISCOSIDADE: ISO VG 46; EMBALAGEM: CONTAINER 1000L",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "HIDRAULICO",
+          "VISCOSIDADE": "ISO VG 46",
+          "EMBALAGEM": "CONTAINER 1000L"
+        }
+      },
+      {
+        "code": "15261413",
+        "original": "VALVULA GLOBO, DIAM: 1 1/2 POL, CLASSE PRESSAO: 600#, MATERIAL: ACO CARBONO FUNDIDO A216 WCB, PONTAS CHANFRADAS, ACIONAMENTO: VOLANTE",
+        "changes": [
+          {
+            "field": "description",
+            "before": "VALVULA GLOBO, DIAM: 1 1/2 POL, CLASSE PRESSAO: 600#, MATERIAL: ACO CARBONO FUNDIDO A216 WCB, PONTAS CHANFRADAS, ACIONAMENTO: VOLANTE",
+            "after": "VALVULA GLOBO; DIAMETRO NOMINAL: 1.1/2POL; CLASSE PRESSAO: 600#; MATERIAL CORPO: ACO CARBONO FUNDIDO A216 WCB; CONEXAO: SOLDA TOPO BW; ACIONAMENTO: VOLANTE",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "DIAMETRO NOMINAL": "1.1/2POL",
+          "CLASSE PRESSAO": "600#",
+          "MATERIAL CORPO": "ACO CARBONO FUNDIDO A216 WCB",
+          "CONEXAO": "SOLDA TOPO BW",
+          "ACIONAMENTO": "VOLANTE"
+        }
+      },
+      {
+        "code": "20804270",
+        "original": "PARAFUSO SEXTAVADO ROSCA METRICA GROSSA M10 120,0MM COM GRAU 8.8 MAT DE ACO CARBONO NATURAL COM PADRAO DIN 931",
+        "changes": [
+          {
+            "field": "description",
+            "before": "PARAFUSO SEXTAVADO ROSCA METRICA GROSSA M10 120,0MM COM GRAU 8.8 MAT DE ACO CARBONO NATURAL COM PADRAO DIN 931",
+            "after": "PARAFUSO SEXTAVADO; ROSCA: METRICA GROSSA; BITOLA: M10; COMPRIMENTO: 120MM; CLASSE RESISTENCIA: 8.8; MATERIAL: ACO CARBONO; ACABAMENTO: NATURAL; NORMA: DIN 931",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M10",
+          "COMPRIMENTO": "120MM",
+          "CLASSE RESISTENCIA": "8.8",
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "NATURAL",
+          "NORMA": "DIN 931"
+        }
+      }
+    ],
+    "UNIT_CORRECTION:REVIEW:UNTRUSTED_CLASS": [
+      {
+        "code": "28280948",
+        "original": "MANG SUCCAO USO SUCCAO E DESCARGA MAT PVC COM ESPIRAL PVC RIGIDO 6\" PRESS TRAB 10BAR",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "MT",
+            "after": "M",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {}
+      },
+      {
+        "code": "24071713",
+        "original": "PARAF. HEXAGONAL ROSCA DE METRICA FINA COM DIAMETRO M 14X1,5 COMPRIMENTO 80MM RESISTENCIA DE 8.8 MATERIAL AC CARBONO COM REVESTIMENTO ZB DIN 931",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {
+          "REFERENCIA FABRICANTE": "80MM"
+        }
+      },
+      {
+        "code": "21117304",
+        "original": "FILTRO OLEO LUBRIF MANN W 669/07",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "PCA",
+            "after": "PC",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {}
+      }
+    ],
+    "UNIT_CORRECTION:REVIEW:REVIEW_REASONS_PRESENT": [
+      {
+        "code": "28280948",
+        "original": "MANG SUCCAO USO SUCCAO E DESCARGA MAT PVC COM ESPIRAL PVC RIGIDO 6\" PRESS TRAB 10BAR",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "MT",
+            "after": "M",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {}
+      },
+      {
+        "code": "24071713",
+        "original": "PARAF. HEXAGONAL ROSCA DE METRICA FINA COM DIAMETRO M 14X1,5 COMPRIMENTO 80MM RESISTENCIA DE 8.8 MATERIAL AC CARBONO COM REVESTIMENTO ZB DIN 931",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {
+          "REFERENCIA FABRICANTE": "80MM"
+        }
+      },
+      {
+        "code": "21117304",
+        "original": "FILTRO OLEO LUBRIF MANN W 669/07",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "PCA",
+            "after": "PC",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {}
+      }
+    ],
+    "UNIT_CORRECTION:REVIEW:UNIT_NOT_SAFE_ALIAS": [
+      {
+        "code": "28280948",
+        "original": "MANG SUCCAO USO SUCCAO E DESCARGA MAT PVC COM ESPIRAL PVC RIGIDO 6\" PRESS TRAB 10BAR",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "MT",
+            "after": "M",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {}
+      },
+      {
+        "code": "24071713",
+        "original": "PARAF. HEXAGONAL ROSCA DE METRICA FINA COM DIAMETRO M 14X1,5 COMPRIMENTO 80MM RESISTENCIA DE 8.8 MATERIAL AC CARBONO COM REVESTIMENTO ZB DIN 931",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {
+          "REFERENCIA FABRICANTE": "80MM"
+        }
+      },
+      {
+        "code": "21117304",
+        "original": "FILTRO OLEO LUBRIF MANN W 669/07",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "PCA",
+            "after": "PC",
+            "source": "head_noun_v1/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "attributes": {}
+      }
+    ],
+    "PDM_CORRECTION:REVIEW:TEXT_LOSS": [
+      {
+        "code": "29936075",
+        "original": "CABO ELETRICO, N VIAS 1, SECAO NOMINAL 10MM², MODELO RIGIDO, TESNAO 450/750V, ISOLACAO PVC, COR VERDE/AMARELO",
+        "changes": [
+          {
+            "field": "description",
+            "before": "CABO ELETRICO, N VIAS 1, SECAO NOMINAL 10MM², MODELO RIGIDO, TESNAO 450/750V, ISOLACAO PVC, COR VERDE/AMARELO",
+            "after": "CABO ELETRICO; TIPO: RIGIDO; SECAO: 10MM2; NUMERO CONDUTORES: 1; TENSAO ISOLAMENTO: 450/750V; ISOLACAO: PVC; COR: VERDE/AMARELO",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "TIPO": "RIGIDO",
+          "SECAO": "10MM2",
+          "NUMERO CONDUTORES": "1",
+          "TENSAO ISOLAMENTO": "450/750V",
+          "ISOLACAO": "PVC",
+          "COR": "VERDE/AMARELO"
+        }
+      },
+      {
+        "code": "20990794",
+        "original": "ENGRENAGEM - PARA:REDUTOR - MODELO:X3FS170 - FABRICANTE:SEW - REFEERNCIA FABRICANTE:29370939 - MATERIAL:ACO CROMO-MOLIBDENIO",
+        "changes": [
+          {
+            "field": "description",
+            "before": "ENGRENAGEM - PARA:REDUTOR - MODELO:X3FS170 - FABRICANTE:SEW - REFEERNCIA FABRICANTE:29370939 - MATERIAL:ACO CROMO-MOLIBDENIO",
+            "after": "ENGRENAGEM; APLICACAO: REDUTOR; MODELO EQUIPAMENTO: X3FS170; FABRICANTE: SEW; REFERENCIA FABRICANTE: 29370939; MATERIAL: ACO CROMO-MOLIBDENIO",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "REDUTOR",
+          "MODELO EQUIPAMENTO": "X3FS170",
+          "FABRICANTE": "SEW",
+          "REFERENCIA FABRICANTE": "29370939",
+          "MATERIAL": "ACO CROMO-MOLIBDENIO"
+        }
+      },
+      {
+        "code": "12773226",
+        "original": "BUCHA CABECOTE, APLICACAO:BRITADOR CONICO, MODELO:RAPTOR 450, FAB:FLSMIDTH, MATERIAL:ACO ESPECIAL, COD FABRICANTE:576286183",
+        "changes": [
+          {
+            "field": "description",
+            "before": "BUCHA CABECOTE, APLICACAO:BRITADOR CONICO, MODELO:RAPTOR 450, FAB:FLSMIDTH, MATERIAL:ACO ESPECIAL, COD FABRICANTE:576286183",
+            "after": "BUCHA CABECOTE; APLICACAO: BRITADOR CONICO; MODELO EQUIPAMENTO: RAPTOR 450; FABRICANTE: FLSMIDTH; REFERENCIA FABRICANTE: 576286183",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BRITADOR CONICO",
+          "MODELO EQUIPAMENTO": "RAPTOR 450",
+          "FABRICANTE": "FLSMIDTH",
+          "REFERENCIA FABRICANTE": "576286183"
+        }
+      }
+    ],
+    "PDM_CORRECTION:REVIEW:UNTRUSTED_CLASS": [
+      {
+        "code": "13574247",
+        "original": "LEVANTADOR COD 8094592777 FLSMIDTH",
+        "changes": [
+          {
+            "field": "merchandise_group",
+            "before": "FIX01",
+            "after": "SOB01",
+            "source": "head_noun_v1/group.from_pdm_class"
+          }
+        ],
+        "attributes": {
+          "FABRICANTE": "FLSMIDTH"
+        }
+      },
+      {
+        "code": "17430518",
+        "original": "BROCA HELICOIDAL, TIPO:ACO RAPIDO, D:5MM, HASTE:CILINDRICA, PADRAO:DIN 338",
+        "changes": [
+          {
+            "field": "merchandise_group",
+            "before": "SOB01",
+            "after": "FER01",
+            "source": "head_noun_v1/group.from_pdm_class"
+          }
+        ],
+        "attributes": {
+          "DIAMETRO": "5MM",
+          "HASTE": "CILINDRICA",
+          "NORMA": "DIN 338"
+        }
+      },
+      {
+        "code": "18399996",
+        "original": "REVESTIMENTO VOLUTA, MOD:WARMAN 10 8 F AH, APLICACAO:BOMBA POLPA, FAB:WEIR, REF FABRICANTE:K4317E56 REV A, ACO LIGA",
+        "changes": [
+          {
+            "field": "description",
+            "before": "REVESTIMENTO VOLUTA, MOD:WARMAN 10 8 F AH, APLICACAO:BOMBA POLPA, FAB:WEIR, REF FABRICANTE:K4317E56 REV A, ACO LIGA",
+            "after": "REVESTIMENTO VOLUTA; APLICACAO: BOMBA POLPA; MODELO EQUIPAMENTO: WARMAN 10/8 F AH; FABRICANTE: WEIR; REFERENCIA FABRICANTE: K4317E56 REV A; MATERIAL: ACO LIGA",
+            "source": "head_noun_v1/description.pdm_format"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "BOMBA POLPA",
+          "MODELO EQUIPAMENTO": "WARMAN 10/8 F AH",
+          "FABRICANTE": "WEIR",
+          "REFERENCIA FABRICANTE": "K4317E56 REV A",
+          "MATERIAL": "ACO LIGA"
+        }
+      }
+    ],
+    "UNIT_CORRECTION:REVIEW:CONFLICT": [
+      {
+        "code": "11472033",
+        "original": "OLEO LUBRIFICANTE, VISCOSIDADE:ISO VG 68, APLIC:COMPRESSOR, EMBALAGEM:TAMBOR 200L",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "rule_based_v1/unit.alias"
+          }
+        ],
+        "attributes": {
+          "APLICACAO": "COMPRESSOR",
+          "VISCOSIDADE": "ISO VG 68",
+          "EMBALAGEM": "TAMBOR 200L"
+        }
+      },
+      {
+        "code": "18271535",
+        "original": "CABO ELETRICO, TIPO: FLEXIVEL, SECAO: 6 MM2, N VIAS: 1, TENSAO ISOLAMENTO: 0,6/1KV, ISOLACAO: PVC, COR: VERDE/AMARELO",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "rule_based_v1/unit.alias"
+          }
+        ],
+        "attributes": {
+          "TIPO": "FLEXIVEL",
+          "SECAO": "6MM2",
+          "NUMERO CONDUTORES": "1",
+          "TENSAO ISOLAMENTO": "0,6/1KV",
+          "ISOLACAO": "PVC",
+          "COR": "VERDE/AMARELO"
+        }
+      },
+      {
+        "code": "14207277",
+        "original": "CALCADO SEGURANCA TIPO BOTINA CADARCO, COM TAM. 39, BIQ DE ACO, SOLADO PU MONODENSIDADE, COR PRETA, C.A. DE 39361",
+        "changes": [
+          {
+            "field": "unit",
+            "before": "UN",
+            "after": "PC",
+            "source": "rule_based_v1/unit.alias"
+          }
+        ],
+        "attributes": {
+          "TIPO": "BOTINA CADARCO",
+          "TAMANHO": "39",
+          "BIQUEIRA": "ACO",
+          "SOLADO": "PU MONODENSIDADE",
+          "COR": "PRETA",
+          "CA": "39361"
+        }
+      }
+    ]
+  },
+  "limits": "Elegibilidade de domínio; a API valida estado, escopo, colisões e efeitos em transação. Contagens não medem precisão; exemplos exigem revisão humana."
+}

@@ -23,36 +23,46 @@
 
 ### 1. Recuperação determinística
 
-- [ ] Testes RED/GREEN para aliases inequívocos e leitura independente de descrição longa/curta/estruturados.
-- [ ] Compartilhar `extract_material_fields` entre saneamento e validação da origem; conflitos não confirmam identidade.
-- [ ] Regressões nas classes PDM110, PDM050 e PDM001 e famílias reconhecíveis sem inventar liga/acabamento/conexão.
+- [x] Testes RED/GREEN para aliases inequívocos e leitura independente de descrição longa/curta/estruturados.
+- [x] Compartilhar `extract_material_fields` entre saneamento e validação da origem; conflitos não confirmam identidade.
+- [x] Regressões nas classes PDM110, PDM050 e PDM001 e famílias reconhecíveis sem inventar liga/acabamento/conexão.
 
 ### 2. Fontes documentais internas
 
-- [ ] Loader versionado de bundle `internal-documents-v1`, dataset_id e documentos com id/título/texto.
-- [ ] Rejeitar identificadores duplicados, escopos inválidos, tipos externos e campos desconhecidos; não buscar URLs.
-- [ ] CLI arquiva bytes em `references/internal-sources/<dataset>/<sha256>.json`; relatório e aprovação vinculam chave/hash.
-- [ ] Fontes novas não alteram os originais, não atestam aprovação por autodeclaração e não usam propostas como evidência.
+- [x] Loader versionado de bundle `internal-documents-v1`, dataset_id e documentos com id/título/texto.
+- [x] Rejeitar identificadores duplicados, escopos inválidos, tipos externos e campos desconhecidos; não buscar URLs.
+- [x] CLI arquiva bytes em `references/internal-sources/<dataset>/<sha256>.json`; relatório e aprovação vinculam chave/hash.
+- [x] Fontes novas não alteram os originais, não atestam aprovação por autodeclaração e não usam propostas como evidência.
 
 ### 3. Leitura assistida opcional
 
-- [ ] Cliente Bedrock Converse com injeção do cliente para testes, limites de entrada/saída e validação de resposta.
-- [ ] Candidato informa atributo, valor, campo de origem e trecho literal; valor deve ser sustentado pela leitura PDM do trecho.
-- [ ] Orçamento de chamadas explícito, uso registrado e nenhuma chamada padrão; candidatos seguem para complemento humano.
+- [x] Cliente Bedrock Converse com injeção do cliente para testes, limites de entrada/saída e validação de resposta.
+- [x] Candidato informa atributo, valor, campo de origem e trecho literal; valor deve ser sustentado pela leitura PDM do trecho.
+- [x] Orçamento de chamadas explícito, uso registrado e nenhuma chamada padrão; candidatos seguem para complemento humano.
 
 ### 4. Diagnóstico, tratamento e revisão
 
-- [ ] Separar status do classificador, conflitos dentro do registro/entre fontes e causas por atributo.
-- [ ] Gerar perguntas direcionadas e mostrar causas/candidatos na pendência, com contrato/tipos atualizados.
-- [ ] Integrar documentos novos e IA limitada ao batch/relatório sem publicação automática de candidatos de IA.
-- [ ] Pacote congelado de revisão por atributo e avaliação SUPPORTED/UNSUPPORTED/INCONCLUSIVE com identidade/evidência vinculadas.
+- [x] Separar status do classificador, conflitos dentro do registro/entre fontes e causas por atributo.
+- [x] Gerar perguntas direcionadas e mostrar causas/candidatos na pendência, com contrato/tipos atualizados.
+- [x] Integrar documentos novos e IA limitada ao batch/relatório sem publicação automática de candidatos de IA.
+- [x] Pacote congelado de revisão por atributo e avaliação SUPPORTED/UNSUPPORTED/INCONCLUSIVE com identidade/evidência vinculadas.
 
 ### 5. Verificação e publicação
 
-- [ ] Medição integral comparada ao artefato anterior, com modelo desligado e amostras inspecionadas.
-- [ ] Back, MCP e API completos; PostgreSQL para API/MCP; contratos, tipos, front, build e estilo.
-- [ ] Revisão independente, correções verificadas, commit e push na branch do PR #272; atualizar descrição. Sem merge.
+- [x] Medição integral comparada ao artefato anterior, com modelo desligado e amostras inspecionadas.
+- [x] Back, MCP e API completos; PostgreSQL para API/MCP; contratos, tipos, front, build e estilo.
+- [x] Revisão independente, correções verificadas, commit e push na branch do PR #272; atualizar descrição. Sem merge.
 
 ## Foco da revisão
 
 Descrição curta contraditória/truncada; alias ambíguo; documento de outro dataset ou bytes alterados; trecho de IA ausente/não comprovante; propagação circular; fonte externa em material fictício; mudança de referência durante aprovação; pacote de avaliação alterado ou revisão inconclusiva.
+
+## Verificação registrada
+
+- Back completo: 1.215 testes passaram.
+- API completa com PostgreSQL: 749 passaram. MCP completo com PostgreSQL: 378 passaram. Sem skips.
+- Front: 89 testes, typecheck, contrato, build e formato passaram.
+- Após os ajustes de grupo original/documental, módulos afetados reexecutados: 99 back e 30 API/PostgreSQL passaram.
+- Ruff, formato Python, diff e política de branch/commits passaram.
+- Medição final: 401 sugestões em 336 materiais; 232 potencialmente completos após aprovação. Amostra congelada de 100 candidatos sem rótulos.
+- Entrega no PR #272, preservando a decisão de não fazer merge.

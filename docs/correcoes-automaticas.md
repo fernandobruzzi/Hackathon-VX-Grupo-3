@@ -8,7 +8,9 @@ A #224 substitui parcialmente a decisão da #36: a API pode aplicar **aliases da
 
 O Compose inclui o worker `vx-auto-correct`, da imagem API, que consulta jobs concluídos a cada cinco segundos (`AUTOMATIC_CORRECTION_POLL_SECONDS`). `vx-auto-correct --once` executa uma passagem. Ele usa `DATABASE_URL` com `api_user` para aplicar e auditar; somente a atualização de índice usa `BATCH_DATABASE_URL` com `batch_user`. O batch não pode editar a autorização automática do job. Em AWS execute esse mesmo comando como serviço interno, com segredos separados, sem porta pública, PDM montado e `AUTHORIZED_CENTER_CODES` explícito; não habilite execução automática somente no container de análise. Desligar o modo pausa aplicações, sem desfazer correções confirmadas. A recuperação do índice de correções já aplicadas continua possível com o modo desligado.
 
-O solicitante do job deve continuar ativo, no mesmo tenant e com papel de Governança. Os centros capturados são intersectados com a autorização atual do servidor. A política `safe-corrections-v1` refaz classificação, extração, correção e comparação do conteúdo persistido. A política admite somente as revisões medidas (`aliases_v1@2`, `rule_based_v1@11-quantity-reference-199`); revisar a política e repetir a medição antes de autorizar outra revisão. O hash da proposta, versões do material/PDM e assinatura das regras são revalidados sob a mesma trava por tenant usada pela decisão humana. Mudanças exigem nova análise (`STALE`). Propostas decididas ou em lotes `OPEN`/`RETURNED` não são tomadas pela automação.
+O solicitante do job deve continuar ativo, no mesmo tenant e com papel de Governança. Os centros capturados são intersectados com a autorização atual do servidor. A política `safe-corrections-v1` refaz classificação, extração, correção e comparação do conteúdo persistido. A política admite somente as revisões medidas (`aliases_v1@3-pilot-families-263`, `rule_based_v1@11-quantity-reference-199` e leitura independente dos campos `independent-fields-v2`); revisar a política e repetir a medição antes de autorizar outra revisão. Revisões desconhecidas continuam recusadas. O hash da proposta, versões do material/PDM e assinatura das regras são revalidados sob a mesma trava por tenant usada pela decisão humana. Mudanças exigem nova análise (`STALE`). Propostas decididas ou em lotes `OPEN`/`RETURNED` não são tomadas pela automação.
+
+As evidências de atributo registram a regra, o trecho e `source_field` (descrição longa, curta ou campo estruturado). A descrição curta original também fica no relatório. Recuperar valores exclusivos da curta não amplia a autorização de publicação PDM: `SHORT_DESCRIPTION_REQUIRES_REVIEW` mantém essa correção humana. O nome canônico do item ainda precisa abrir a descrição longa; os aliases novos de parafusos, conexões e sobressalentes não autorizam aplicação automática por si. Divergências entre os campos bloqueiam identidade e não escolhem um valor por precedência. Um PN da curta que termine em cauda aberta e seja prefixo estrito de uma única referência corroborada na longa/coluna é tratado como trecho possivelmente cortado; o atributo conserva o valor e a origem da fonte completa. PN completo divergente, campo explicitamente encerrado e diferenças de sufixo na longa/coluna continuam bloqueados.
 
 ## Escrita, simulação e recuperação
 
@@ -25,15 +27,24 @@ Após o commit, o índice é atualizado com as credenciais batch. O resultado du
 Na pasta `back`, execute:
 
 ```bash
-uv run python -m pipelines.measure_automatic_corrections ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+UV_CACHE_DIR=/tmp/vx-uv-cache uv run --locked python -m pipelines.measure_automatic_corrections ../data/desafio01/01_base_materiais.csv --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
 ```
 
-O JSON registra commit, política, assinatura das regras, versão/hash PDM, 23.554 linhas, contagens por tipo/motivo e exemplos. Mede elegibilidade de domínio: estado, autorização, colisões e efeitos transacionais ainda são verificados na API. Contagem elegível/aplicada não prova precisão. Consulte [a medição registrada](medicao-correcoes-automaticas.json) e os exemplos revisados abaixo; não houve validação independente por especialista de materiais.
+O JSON registra commit, política, assinatura das regras, versão/hash PDM, 23.554 linhas, contagens por tipo/motivo e exemplos. Mede elegibilidade de domínio: estado, autorização, colisões e efeitos transacionais ainda são verificados na API. Contagem elegível/aplicada não prova precisão. A [medição histórica](medicao-correcoes-automaticas.json) permanece preservada. A [medição da revisão atual](measurements/correcoes-automaticas-263-v2.json) registra também o comando e os hashes dos arquivos medidos. As 20 fontes conferem com o commit `807c6615394aba80889ca49df2ae46dd2f176f7c`. Não houve chamadas de modelo nem validação independente por especialista de materiais.
+
+A repetição integral avaliou 7.616 propostas nos 23.554 registros: 2.236 elegíveis e 5.380 encaminhadas à revisão. Comparação com o registro histórico:
+
+| Tipo | Histórico: elegíveis | Atual: elegíveis | Histórico: revisão | Atual: revisão |
+| --- | ---: | ---: | ---: | ---: |
+| Unidade | 611 | 584 | 276 | 303 |
+| Descrição PDM | 1.654 | 1.652 | 5.596 | 5.077 |
+
+A população de propostas muda com a análise: contradições podem impedir a própria geração de uma correção, como no caso `15452229`. A automação continua desligada por padrão, e a elegibilidade ainda passa pelas verificações transacionais da API.
 
 Exemplos conferidos pela descrição original e pelos atributos extraídos:
 
 - `24794045`: amortecedor em `PCA`; a classe confiável usa `PC`. Somente a grafia muda, com fator 1; estoque original permanece em `PCA`.
 - `16454102`: anel O-ring com diâmetro interno 15 mm, seção 2 mm, NBR e dureza 70 Shore A. A descrição formatada conserva as quatro informações; o teste PostgreSQL confirma publicação sem alterações de estoque.
 - `24477027`: parafuso Allen sem classe confirmada. Mesmo com alias de unidade conhecido, continua humano.
-- `15452229`: mandíbula SANDVIK com referência `458.6479-93 REV A`. O formatador omite `REV A`; a revisão não confirmada pode distinguir peças e deve permanecer para análise humana (`TEXT_LOSS`).
+- `15452229`: mandíbula SANDVIK com `458.6479-93 REV A` no texto e `458.6479-93` no campo estruturado. A leitura independente registra `OBSERVATION_CONFLICT:REFERENCIA FABRICANTE`, não confirma identidade e não gera proposta `PDM_CORRECTION`. A referência e sua revisão precisam de confirmação humana. Revisão em um trecho separado continua coberta pelo bloqueio de perda de texto (`TEXT_LOSS`).
 - `29936075`: cabo com a grafia `TESNAO` na origem. Embora a descrição formatada conserve os valores, a regra conservadora sinaliza texto não resolvido e recusa automatizar. Isso ilustra uma recusa adicional, não uma medição de precisão.

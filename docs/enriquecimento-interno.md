@@ -36,6 +36,14 @@ Descrição longa, curta e campos estruturados são lidos separadamente. A curta
 com 40 ou mais caracteres perde a cauda possivelmente cortada e não comprova
 referências livres. Valores discordantes ficam para revisão, sem precedência
 silenciosa de um campo. As novas regras têm revisão própria nas assinaturas.
+Uma referência que termina aberta na curta, como `PSL`, não é tratada como outro
+part number quando é prefixo estrito de uma única referência completa comprovada
+na longa ou no campo estruturado, como `PSL194`. Não se completa o prefixo por
+inferência; conserva-se a fonte do valor completo. Códigos distintos, campos
+explicitamente encerrados e divergências de sufixo continuam para revisão.
+Nomes ambíguos, como `BUCHA` e `CAP`, usam o grupo de mercadoria original tanto
+no planejamento quanto na aprovação. Grupo ausente ou alterado exige nova
+análise; um grupo revisado não substitui essa evidência original.
 
 Cada evidência registra arquivo, identificador, trecho, SHA-256 do original, chave
 no armazenamento, data da primeira observação dos mesmos arquivos e fundamento
@@ -62,7 +70,7 @@ O diagnóstico distingue `UNRESOLVED` de `OUT_OF_SCOPE`, candidatos de classe,
 conflitos no próprio registro e entre fontes. Cada lacuna informa uma pergunta
 PDM e sua causa: identidade não confirmada, rótulo não interpretado, evidência
 insuficiente, condição desconhecida ou valor inválido. Evidência insuficiente
-não afirma que o atributo inexiste no mundo real. Fontes sem identidade utilizável
+não afirma que o atributo inexiste no mundo real. Fontes com motivos de revisão
 continuam rastreáveis em `unusable_sources`. As pendências exibem essas questões.
 
 ### Acrescentar documentos internos
@@ -83,7 +91,9 @@ Use um bundle JSON, fornecido pela equipe responsável pelos dados. Exemplo:
 ```
 
 Campos opcionais do documento: `short_description`, `manufacturer` e
-`manufacturer_reference`. Não são aceitos campos desconhecidos, IDs duplicados,
+`manufacturer_reference`, além de `merchandise_group` quando a própria fonte
+informa o grupo necessário para desambiguar nomes como BUCHA, CAP ou TE.
+O grupo da fonte é explícito; ele não é copiado do alvo. Não são aceitos campos desconhecidos, IDs duplicados,
 outro dataset, fonte externa, proposta pendente ou autodeclaração de aprovação.
 Limites: 2 MB, 500 documentos e 20 mil caracteres por texto. Não há busca de URLs.
 
@@ -177,7 +187,7 @@ Repetir o mesmo conteúdo não duplica evidências nem propostas. Depois da apro
 os atributos persistidos entram na análise seguinte, evitando reapresentar o mesmo
 preenchimento. Uma contradição com a descrição original permanece para revisão.
 
-## Medição do kit em 7 de novembro de 2026
+## Medição inicial do kit em 7 de novembro de 2026
 
 A medição de desenvolvimento, sem aplicações, está em
 [`measurements/enriquecimento-interno-263.json`](measurements/enriquecimento-interno-263.json).
@@ -193,10 +203,37 @@ Foram encontrados 402 preenchimentos em 337 materiais, dos quais 232 passam de
 incompletos a completos em atributos. É cobertura das regras, não validação
 independente de precisão. O relatório detalha cada fonte para revisão técnica.
 
+### Piloto ampliado
+
+A [comparação v2](measurements/enriquecimento-interno-263-v2.json) preserva a
+medição inicial e registra as transições. Os aliases recuperam classe em 1.093
+itens (865 PDM001, 151 PDM002, 73 PDM050 e 4 PDM110). Outros 44 passam da classe
+PDM110 para revisão: o nome abreviado de parafuso no início e `REVESTIMENTO` no
+meio agora expõem a ambiguidade. O saldo é 1.049 itens a menos sem classe.
+
+| Indicador v2 | Antes das sugestões | Após sugestões, se aprovadas |
+|---|---:|---:|
+| Atributos PDM completos | 10.641 | 10.873 |
+| Obrigatórios ausentes | 8.337 | 8.105 |
+| Classe não confirmada | 4.576 | 4.576 |
+
+Há 401 sugestões em 336 materiais; 232 passam de incompletos a completos caso
+aprovadas. A queda na contagem `VALID` frente à medição inicial inclui 614 itens
+antes completos cujos valores discordam entre campos independentes e ficam
+retidos. Não é uma perda de dados originais: a precedência deixou de esconder a
+contradição. Foram identificados 887 registros com observações conflitantes e
+nenhum conflito entre valores candidatos de fontes aceitas. São diagnósticos
+das regras, sem confirmação técnica independente de que todo conflito é erro.
+
+O [pacote de revisão](measurements/enriquecimento-interno-263-v2-review-packet.json)
+congela 100 dos 401 candidatos, seed 263, com originais e evidências. Os rótulos
+estão vazios: a precisão permanece desconhecida. A medição usa os arquivos
+originais, com modelos desativados.
+
 ## O que ainda é necessário para completar a base
 
-As fontes atuais não comprovam todos os valores: 6.769 materiais ainda ficariam
-incompletos e 5.625 exigem revisão de classificação/extração. Melhorar o extrator
+As fontes atuais não comprovam todos os valores: no piloto ampliado, 8.105 materiais
+ainda ficariam incompletos e 4.576 exigem revisão de classificação/extração. Melhorar o extrator
 nas famílias com mais lacunas pode recuperar valores já escritos; quando o valor
 não está nos documentos, a complementação precisa do solicitante ou de nova fonte.
 

@@ -1,0 +1,532 @@
+{
+  "schema_version": "internal-enrichment-measurement-v2",
+  "measured_commit": "807c6615394aba80889ca49df2ae46dd2f176f7c",
+  "command": "UV_CACHE_DIR=/tmp/vx-uv-cache uv run --locked vx-back enrichment-report --data-dir data/desafio01",
+  "pipeline_version": "internal-enrichment-v2",
+  "extraction_signature": "rule_based_v1@11-quantity-reference-199|aliases_v1@3-pilot-families-263|identity-v3|independent-fields-v2",
+  "pdm_version": "pdm-kit-v1",
+  "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+  "source_files": [
+    {
+      "name": "01_base_materiais.csv",
+      "object_key": "01_base_materiais.csv",
+      "sha256": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8"
+    },
+    {
+      "name": "02_pedidos_cadastro.csv",
+      "object_key": "02_pedidos_cadastro.csv",
+      "sha256": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a"
+    }
+  ],
+  "report_bytes_sha256": "09e28000dbac83dbe31d475b2da0f1a7f151cb14f31250de22dd82ae8a841eed",
+  "supplemental_sources": 0,
+  "model_calls": 0,
+  "summary": {
+    "materials_total": 23554,
+    "before": {
+      "OUT_OF_SCOPE": 4576,
+      "VALID": 10641,
+      "INCOMPLETE": 8337
+    },
+    "after_suggestions": {
+      "OUT_OF_SCOPE": 4576,
+      "VALID": 10873,
+      "INCOMPLETE": 8105
+    },
+    "sources_total": 24074,
+    "materials_with_suggestions": 336,
+    "suggested_attributes": 401,
+    "materials_with_conflicts": 0,
+    "materials_with_source_conflicts": 0,
+    "materials_with_record_conflicts": 887,
+    "classification": {
+      "UNRESOLVED": 3099,
+      "CLASSIFIED": 18978,
+      "OUT_OF_SCOPE": 1477
+    },
+    "gap_reasons": {
+      "CLASS_UNRESOLVED": 3099,
+      "NO_SUPPORTED_EVIDENCE": 9595,
+      "TEXT_NOT_RECOGNIZED": 3377,
+      "IDENTITY_NOT_CONFIRMED": 9790,
+      "CONDITION_UNRESOLVED": 854,
+      "CLASS_OUT_OF_SCOPE": 1477,
+      "CONTRADICTORY_OBSERVATIONS": 888
+    },
+    "missing_required_by_attribute": {
+      "PDM110/REFERENCIA FABRICANTE": 883,
+      "PDM110/APLICACAO": 882,
+      "PDM001/ACABAMENTO": 851,
+      "PDM110/MODELO EQUIPAMENTO": 831,
+      "PDM050/MATERIAL": 670,
+      "PDM001/MATERIAL": 561,
+      "PDM050/CONEXAO": 270,
+      "PDM011/TERMINAL A": 249,
+      "PDM011/TERMINAL B": 245,
+      "PDM001/COMPRIMENTO": 240,
+      "PDM001/BITOLA": 238,
+      "PDM001/NORMA": 224,
+      "PDM040/CONEXAO": 206,
+      "PDM040/ACIONAMENTO": 197,
+      "PDM011/MATERIAL TERMINAIS": 195,
+      "PDM040/MATERIAL CORPO": 183,
+      "PDM001/CLASSE RESISTENCIA": 182,
+      "PDM110/FABRICANTE": 178,
+      "PDM050/FACE": 178,
+      "PDM033/ANEL INTERNO": 148,
+      "PDM003/ACABAMENTO": 144,
+      "PDM010/REFORCO": 135,
+      "PDM003/CLASSE RESISTENCIA": 134,
+      "PDM002/ACABAMENTO": 132,
+      "PDM010/MATERIAL COBERTURA": 130,
+      "PDM067/FAIXA": 129,
+      "PDM032/TIPO": 121,
+      "PDM050/CLASSE PRESSAO": 119,
+      "PDM062/POLOS": 117,
+      "PDM001/ROSCA": 114,
+      "PDM002/MATERIAL": 108,
+      "PDM051/COSTURA": 103,
+      "PDM100/REFERENCIA FABRICANTE": 100,
+      "PDM060/NUMERO CONDUTORES": 99,
+      "PDM044/MATERIAL CORPO": 95,
+      "PDM003/MATERIAL": 93,
+      "PDM033/ENCHIMENTO": 93,
+      "PDM071/TAMANHO": 90,
+      "PDM030/REFERENCIA": 88,
+      "PDM041/CONEXAO": 86,
+      "PDM040/PASSAGEM": 86,
+      "PDM032/DIAMETRO ALOJAMENTO": 83,
+      "PDM050/DIAMETRO NOMINAL": 83,
+      "PDM041/MATERIAL CORPO": 81,
+      "PDM032/LARGURA": 78,
+      "PDM032/DIAMETRO EIXO": 75,
+      "PDM062/CURVA": 74,
+      "PDM050/TIPO": 71,
+      "PDM071/CA": 66,
+      "PDM050/DIAMETRO REDUZIDO": 64,
+      "PDM030/PERFIL": 62,
+      "PDM031/DIAMETRO INTERNO": 60,
+      "PDM031/SECAO": 60,
+      "PDM042/CONEXAO": 60,
+      "PDM041/ACIONAMENTO": 59,
+      "PDM004/ACABAMENTO": 57,
+      "PDM011/DIAMETRO INTERNO": 56,
+      "PDM044/ACIONAMENTO": 56,
+      "PDM043/CONEXAO": 54,
+      "PDM062/TIPO": 52,
+      "PDM071/SOLADO": 50,
+      "PDM043/MATERIAL CORPO": 48,
+      "PDM031/MATERIAL": 47,
+      "PDM042/MATERIAL CORPO": 47,
+      "PDM082/TIPO": 46,
+      "PDM044/MATERIAL DISCO": 46,
+      "PDM042/ACIONAMENTO": 46,
+      "PDM033/MATERIAL FITA": 46,
+      "PDM034/TIPO FACE": 45,
+      "PDM031/DUREZA": 45,
+      "PDM010/PRESSAO TRABALHO": 38,
+      "PDM065/POTENCIA": 37,
+      "PDM067/MATERIAL CAIXA": 36,
+      "PDM040/VEDACAO SEDE": 35,
+      "PDM003/BITOLA": 34,
+      "PDM060/TIPO": 34,
+      "PDM071/BIQUEIRA": 34,
+      "PDM040/DIAMETRO NOMINAL": 30,
+      "PDM004/MATERIAL": 30,
+      "PDM060/SECAO": 28,
+      "PDM040/CLASSE PRESSAO": 27,
+      "PDM003/TIPO": 26,
+      "PDM003/ROSCA": 24,
+      "PDM002/COMPRIMENTO": 24,
+      "PDM064/TIPO": 22,
+      "PDM002/TIPO CABECA": 22,
+      "PDM081/DIAMETRO": 21,
+      "PDM072/CA": 20,
+      "PDM011/NORMA": 20,
+      "PDM060/ISOLACAO": 20,
+      "PDM002/BITOLA": 19,
+      "PDM011/COMPRIMENTO": 19,
+      "PDM010/DIAMETRO INTERNO": 19,
+      "PDM006/COMPRIMENTO": 18,
+      "PDM023/TIPO": 18,
+      "PDM023/REFERENCIA": 18,
+      "PDM023/DIAMETRO EIXO": 18,
+      "PDM044/VEDACAO SEDE": 18,
+      "PDM002/CLASSE RESISTENCIA": 17,
+      "PDM033/CLASSE PRESSAO": 17,
+      "PDM032/MATERIAL": 17,
+      "PDM063/CONTATOS AUXILIARES": 16,
+      "PDM100/FABRICANTE": 15,
+      "PDM033/DIAMETRO NOMINAL": 15,
+      "PDM062/CAPACIDADE INTERRUPCAO": 14,
+      "PDM005/MATERIAL": 14,
+      "PDM065/TEMPERATURA COR": 14,
+      "PDM041/DIAMETRO NOMINAL": 13,
+      "PDM034/MATERIAL": 13,
+      "PDM067/ENCHIMENTO": 13,
+      "PDM004/PARA PARAFUSO": 13,
+      "PDM071/TIPO": 13,
+      "PDM064/CORRENTE NOMINAL": 13,
+      "PDM051/MATERIAL": 12,
+      "PDM060/TENSAO ISOLAMENTO": 12,
+      "PDM062/CORRENTE NOMINAL": 12,
+      "PDM051/DIAMETRO NOMINAL": 12,
+      "PDM006/ACABAMENTO": 11,
+      "PDM005/ACABAMENTO": 11,
+      "PDM065/TENSAO": 11,
+      "PDM010/NORMA": 11,
+      "PDM042/DIAMETRO NOMINAL": 11,
+      "PDM051/SCHEDULE": 11,
+      "PDM063/TENSAO BOBINA": 11,
+      "PDM043/TIPO": 10,
+      "PDM034/CLASSE PRESSAO": 10,
+      "PDM021/REFERENCIA": 10,
+      "PDM012/PRESSAO TRABALHO": 10,
+      "PDM013/DIAMETRO EXTERNO": 10,
+      "PDM044/DIAMETRO NOMINAL": 10,
+      "PDM065/TIPO": 10,
+      "PDM065/BASE": 9,
+      "PDM013/MATERIAL": 9,
+      "PDM004/NORMA": 9,
+      "PDM034/ESPESSURA": 9,
+      "PDM051/EXTREMIDADES": 9,
+      "PDM082/DIAMETRO": 8,
+      "PDM082/NORMA": 8,
+      "PDM041/CLASSE PRESSAO": 8,
+      "PDM044/TIPO CORPO": 8,
+      "PDM067/CONEXAO": 8,
+      "PDM042/CLASSE PRESSAO": 8,
+      "PDM006/BITOLA": 7,
+      "PDM043/CLASSE PRESSAO": 7,
+      "PDM041/CASTELO": 7,
+      "PDM081/ESPESSURA": 7,
+      "PDM060/COR": 7,
+      "PDM063/CORRENTE AC3": 7,
+      "PDM043/DIAMETRO NOMINAL": 7,
+      "PDM090/APLICACAO": 7,
+      "PDM012/APLICACAO": 7,
+      "PDM082/HASTE": 6,
+      "PDM064/TAMANHO": 6,
+      "PDM081/GRAO": 6,
+      "PDM072/TRATAMENTO": 6,
+      "PDM061/TIPO": 5,
+      "PDM066/SAIDA": 5,
+      "PDM021/FOLGA": 5,
+      "PDM014/PRESSAO TRABALHO": 5,
+      "PDM020/REFERENCIA": 5,
+      "PDM066/DISTANCIA SENSORA": 4,
+      "PDM090/EMBALAGEM": 4,
+      "PDM021/FURO": 4,
+      "PDM067/DIAMETRO VISOR": 4,
+      "PDM066/ROSCA CORPO": 4,
+      "PDM012/REFORCO": 4,
+      "PDM050/SCHEDULE": 4,
+      "PDM006/MATERIAL": 4,
+      "PDM012/MATERIAL": 4,
+      "PDM006/CLASSE RESISTENCIA": 3,
+      "PDM061/SECAO CABO": 3,
+      "PDM014/DIAMETRO INTERNO": 3,
+      "PDM020/VEDACAO": 3,
+      "PDM020/FOLGA": 3,
+      "PDM066/CONEXAO": 2,
+      "PDM061/FURO": 2,
+      "PDM090/VISCOSIDADE": 2,
+      "PDM066/MONTAGEM": 2,
+      "PDM034/DIAMETRO NOMINAL": 2,
+      "PDM013/COR": 2,
+      "PDM014/APLICACAO": 1,
+      "PDM013/PRESSAO TRABALHO": 1,
+      "PDM080/CLASSIFICACAO AWS": 1,
+      "PDM014/MATERIAL": 1,
+      "PDM081/TIPO": 1,
+      "PDM081/APLICACAO": 1,
+      "PDM005/PARA PARAFUSO": 1,
+      "PDM022/REFERENCIA": 1,
+      "PDM072/LENTE": 1,
+      "PDM012/DIAMETRO INTERNO": 1
+    }
+  },
+  "comparison": {
+    "historical_artifact": "enriquecimento-interno-263.json",
+    "before_status_transitions": {
+      "OUT_OF_SCOPE -> OUT_OF_SCOPE": 4532,
+      "VALID -> VALID": 10314,
+      "INCOMPLETE -> INCOMPLETE": 6953,
+      "OUT_OF_SCOPE -> VALID": 323,
+      "OUT_OF_SCOPE -> INCOMPLETE": 770,
+      "VALID -> INCOMPLETE": 614,
+      "INCOMPLETE -> VALID": 4,
+      "INCOMPLETE -> OUT_OF_SCOPE": 44
+    },
+    "classification_changes": {
+      "NONE -> PDM001": 865,
+      "NONE -> PDM002": 151,
+      "NONE -> PDM110": 4,
+      "NONE -> PDM050": 73,
+      "PDM110 -> NONE": 44
+    },
+    "recovered_required_attributes_same_class": {
+      "DIAMETRO NOMINAL": 12,
+      "REFERENCIA FABRICANTE": 5
+    },
+    "held_required_attributes_same_class": {
+      "REFERENCIA FABRICANTE": 768,
+      "VEDACAO SEDE": 6,
+      "DIAMETRO NOMINAL": 4,
+      "PERFIL": 2,
+      "TRATAMENTO": 5,
+      "MATERIAL COBERTURA": 1,
+      "VEDACAO": 1
+    },
+    "note": "A contagem VALID diminui quando evidências antes aceitas por precedência ficam retidas por contradição. Recuperação de classe não equivale a completude nem comprovação de identidade."
+  },
+  "unusable_sources": 790,
+  "review_packet": {
+    "artifact": "enriquecimento-interno-263-v2-review-packet.json",
+    "packet_sha256": "148b167f7996dc58e415f8c081f219ad2baaddf3353125d956a89e7f98d3b7a6",
+    "population": 401,
+    "sample_size": 100,
+    "reviewed": 0,
+    "precision": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "authorizes_apply": false
+  },
+  "examples": [
+    {
+      "material_code": "25571564",
+      "pdm_class_id": "PDM050",
+      "item_name": "UNIAO",
+      "original": {
+        "description": "UNIAO DIAM NOMINAL 1.1/4POL, 3000#, MAT ACO CARBONO, ROSCA, ASME B16.11",
+        "short_description": "UNIAO DIAM 1.1/4POL 3000# MAT ACO CARBON",
+        "manufacturer": "",
+        "reference": "",
+        "attributes": {
+          "DIAMETRO NOMINAL": "1.1/4POL",
+          "CLASSE PRESSAO": "3000#",
+          "NORMA": "ASME B16.11"
+        }
+      },
+      "record_conflicts": {},
+      "classification": {
+        "status": "CLASSIFIED",
+        "candidate_class_ids": [
+          "PDM050"
+        ]
+      },
+      "before": {
+        "status": "INCOMPLETE",
+        "missing_required": [
+          "MATERIAL",
+          "CONEXAO"
+        ],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [
+          "CLASSE PRESSAO",
+          "SCHEDULE"
+        ],
+        "optional_missing": []
+      },
+      "suggestions": {},
+      "gaps": [
+        {
+          "attribute": "MATERIAL",
+          "reason": "TEXT_NOT_RECOGNIZED",
+          "question": "Qual é o valor de MATERIAL?"
+        },
+        {
+          "attribute": "CONEXAO",
+          "reason": "IDENTITY_NOT_CONFIRMED",
+          "question": "Qual é o valor de CONEXAO?"
+        },
+        {
+          "attribute": "CLASSE PRESSAO",
+          "reason": "CONDITION_UNRESOLVED",
+          "question": "Confirme o tipo e as características que determinam se CLASSE PRESSAO se aplica ao item."
+        },
+        {
+          "attribute": "SCHEDULE",
+          "reason": "CONDITION_UNRESOLVED",
+          "question": "Confirme o tipo e as características que determinam se SCHEDULE se aplica ao item."
+        }
+      ]
+    },
+    {
+      "material_code": "13634321",
+      "pdm_class_id": "PDM001",
+      "item_name": "PARAFUSO SEXTAVADO",
+      "original": {
+        "description": "PARAF. SEXT, ROSCA:MA, BITOLA:M8, COMPRIMENTO:35MM, 10.9, MATERIAL:ACO CARB, ACAB:ZA, NORMA:DIN 933",
+        "short_description": "PARAF. SEXT ROSCA MA BITOLA M8 C 35MM 10",
+        "manufacturer": "",
+        "reference": "",
+        "attributes": {
+          "ROSCA": "METRICA GROSSA",
+          "BITOLA": "M8",
+          "COMPRIMENTO": "35MM",
+          "CLASSE RESISTENCIA": "10.9",
+          "MATERIAL": "ACO CARBONO",
+          "ACABAMENTO": "ZINCADO AMARELO",
+          "NORMA": "DIN 933"
+        }
+      },
+      "record_conflicts": {},
+      "classification": {
+        "status": "CLASSIFIED",
+        "candidate_class_ids": [
+          "PDM001"
+        ]
+      },
+      "before": {
+        "status": "VALID",
+        "missing_required": [],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": []
+      },
+      "suggestions": {},
+      "gaps": []
+    },
+    {
+      "material_code": "28669416",
+      "pdm_class_id": "PDM110",
+      "item_name": "PLACA TRASEIRA",
+      "original": {
+        "description": "PLACA TRASEIRA BOMBA POLPA MM400 N80767044-00",
+        "short_description": "PLACA TRASEIRA BOMBA POLPA MM400 N807670",
+        "manufacturer": "",
+        "reference": "N80767044",
+        "attributes": {
+          "APLICACAO": "BOMBA POLPA",
+          "MODELO EQUIPAMENTO": "MM400"
+        }
+      },
+      "record_conflicts": {
+        "REFERENCIA FABRICANTE": [
+          "N80767044",
+          "N80767044-00"
+        ]
+      },
+      "classification": {
+        "status": "CLASSIFIED",
+        "candidate_class_ids": [
+          "PDM110"
+        ]
+      },
+      "before": {
+        "status": "INCOMPLETE",
+        "missing_required": [
+          "FABRICANTE",
+          "REFERENCIA FABRICANTE"
+        ],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "MATERIAL"
+        ]
+      },
+      "suggestions": {},
+      "gaps": [
+        {
+          "attribute": "FABRICANTE",
+          "reason": "IDENTITY_NOT_CONFIRMED",
+          "question": "Qual é o valor de FABRICANTE?"
+        },
+        {
+          "attribute": "REFERENCIA FABRICANTE",
+          "reason": "CONTRADICTORY_OBSERVATIONS",
+          "question": "Qual é o valor correto de REFERENCIA FABRICANTE? Os textos originais apresentam valores divergentes. Anexe a fonte."
+        },
+        {
+          "attribute": "MATERIAL",
+          "reason": "IDENTITY_NOT_CONFIRMED",
+          "question": "Qual é MATERIAL? Informe o valor e o trecho do documento que o comprova."
+        }
+      ]
+    },
+    {
+      "material_code": "27772417",
+      "pdm_class_id": "PDM100",
+      "item_name": "FILTRO AR",
+      "original": {
+        "description": "ELEMENTO FILTRANTE AR; APLICACAO:CAMINHAO FORA DE ESTRADA; MARCA:TECFIL; PART NUMBER:ARL 0580 REV A",
+        "short_description": "ELEMENTO FILTRANTE AR CAMINHAO FORA DE E",
+        "manufacturer": "TECFIL",
+        "reference": "ARL0580",
+        "attributes": {
+          "APLICACAO": "CAMINHAO FORA DE ESTRADA",
+          "FABRICANTE": "TECFIL"
+        }
+      },
+      "record_conflicts": {
+        "REFERENCIA FABRICANTE": [
+          "ARL 0580 REV A",
+          "ARL0580"
+        ]
+      },
+      "classification": {
+        "status": "CLASSIFIED",
+        "candidate_class_ids": [
+          "PDM100"
+        ]
+      },
+      "before": {
+        "status": "INCOMPLETE",
+        "missing_required": [
+          "REFERENCIA FABRICANTE"
+        ],
+        "invalid": [],
+        "not_applicable": [],
+        "conditional_pending": [],
+        "optional_missing": [
+          "ALTURA",
+          "DIAMETRO EXTERNO",
+          "ROSCA"
+        ]
+      },
+      "suggestions": {},
+      "gaps": [
+        {
+          "attribute": "REFERENCIA FABRICANTE",
+          "reason": "CONTRADICTORY_OBSERVATIONS",
+          "question": "Qual é o valor correto de REFERENCIA FABRICANTE? Os textos originais apresentam valores divergentes. Anexe a fonte."
+        },
+        {
+          "attribute": "ALTURA",
+          "reason": "IDENTITY_NOT_CONFIRMED",
+          "question": "Qual é ALTURA? Informe o valor e o trecho do documento que o comprova."
+        },
+        {
+          "attribute": "DIAMETRO EXTERNO",
+          "reason": "IDENTITY_NOT_CONFIRMED",
+          "question": "Qual é DIAMETRO EXTERNO? Informe o valor e o trecho do documento que o comprova."
+        },
+        {
+          "attribute": "ROSCA",
+          "reason": "IDENTITY_NOT_CONFIRMED",
+          "question": "Qual é ROSCA? Informe o valor e o trecho do documento que o comprova."
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Medição de desenvolvimento do kit sintético; não mede precisão independente.",
+    "Os atributos são sugestões documentadas, não alterações aplicadas.",
+    "Não houve consulta Bedrock ou pesquisa pública nesta medição.",
+    "NCM, unidade, estoque e validade em produção exigem suas verificações próprias."
+  ],
+  "proposal_plan_check": {
+    "implementation_commit": "c605b5a10ca9c520a6206be3e4a33e0c77eeff51",
+    "method": "plan_internal_enrichment sobre todos os resultados com sugestões e os grupos originais do CSV",
+    "material_plans": 336,
+    "attribute_changes": 401,
+    "blocked_plans": 0,
+    "scope": "Planejamento de domínio; aprovação ainda revalida versões, fontes e política fiscal."
+  }
+}
