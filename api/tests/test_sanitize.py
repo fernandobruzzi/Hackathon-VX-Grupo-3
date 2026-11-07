@@ -32,10 +32,11 @@ def sanitized(migrated_url, tmp_path_factory):
         )
     with temporary_login(migrated_url, "api_user") as api_url, temporary_login(migrated_url, "batch_user") as batch_url:
         api = create_engine(api_url)
-        bootstrap(KIT, api, LocalObjectStore(tmp_path_factory.mktemp("storage")))
+        store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
+        bootstrap(KIT, api, store)
         api.dispose()
-        first = run_sanitize(PDM, database_url=batch_url)
-        second = run_sanitize(PDM, database_url=batch_url)
+        first = run_sanitize(PDM, database_url=batch_url, store=store)
+        second = run_sanitize(PDM, database_url=batch_url, store=store)
         yield first, second, admin, batch_url
     admin.dispose()
 
@@ -54,7 +55,7 @@ def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
     first, _, admin, _ = sanitized
     # O número de propostas não pode forçar a aceitação de identidades inconclusivas.
     assert first["merges"] > 0
-    assert first["proposals"] == first["merges"] + sum(first["corrections"]["proposals"].values())
+    assert first["proposals"] == first["merges"] + sum(first["corrections"]["proposals"].values()) + first["enrichment"]
     assert first["inserted"] == total(first)
     assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == total(first)
     with admin.connect() as connection:
@@ -119,8 +120,8 @@ def test_corrections_are_saved_with_before_after_and_rule(sanitized):
             text("SELECT proposal_type, count(*) FROM sanitization_proposals WHERE proposal_type <> 'MERGE' GROUP BY 1")
         )
         saved = {row[0]: row[1] for row in rows}
-    assert saved == first["corrections"]["proposals"]
-    assert set(saved) == {"PDM_CORRECTION", "UNIT_CORRECTION", "NCM_CORRECTION"}
+    assert saved == first["corrections"]["proposals"] | {"ENRICHMENT": first["enrichment"]}
+    assert set(saved) == {"PDM_CORRECTION", "UNIT_CORRECTION", "NCM_CORRECTION", "ENRICHMENT"}
     assert (
         scalar(
             admin,

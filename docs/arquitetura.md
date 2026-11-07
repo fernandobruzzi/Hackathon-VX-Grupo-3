@@ -95,7 +95,7 @@ O manifesto registra hashes, versões S3, quantidade de linhas e a lista dos 15 
 - **Geração de candidatos.** Recuperar possíveis duplicidades por identidade exata, busca lexical e similaridade vetorial.
 - **Verificação de identidade.** Comparar os obrigatórios aplicáveis ou fabricante + referência, conforme a classe.
 - **Validação fiscal.** Verificar formato, presença na tabela oficial e coerência com as regras do PDM.
-- **Enriquecimento.** Consultar fontes dos 15 produtos reais e registrar evidência por atributo.
+- **Enriquecimento.** O SANITIZE mede completude e propõe atributos das fontes internas com identidade comprovada e evidência por atributo. A consulta externa dos 15 produtos reais permanece no fluxo específico. Ver [enriquecimento interno](enriquecimento-interno.md).
 - **Propostas.** Persistir sugestões, conflitos, versões observadas e métricas. A aplicação das mudanças ocorre pelo fluxo de aprovação da API.
 
 #### Busca e deduplicação

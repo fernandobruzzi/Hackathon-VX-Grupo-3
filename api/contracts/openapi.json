@@ -8304,6 +8304,16 @@
                     "null"
                   ]
                 }
+              },
+              "completeness": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/MaterialCompletenessReview"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           },
@@ -9147,6 +9157,105 @@
           "reasons",
           "index_status"
         ]
+      },
+      "MaterialCompleteness": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "missing_required",
+          "invalid",
+          "not_applicable",
+          "conditional_pending",
+          "optional_missing"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "VALID",
+              "INCOMPLETE",
+              "INVALID",
+              "OUT_OF_SCOPE"
+            ]
+          },
+          "missing_required": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "not_applicable": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conditional_pending": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "optional_missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "invalid": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "reason"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "MaterialCompletenessReview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "before",
+          "after_suggestions",
+          "suggestions",
+          "conflicts"
+        ],
+        "properties": {
+          "before": {
+            "$ref": "#/components/schemas/MaterialCompleteness"
+          },
+          "after_suggestions": {
+            "$ref": "#/components/schemas/MaterialCompleteness"
+          },
+          "suggestions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "conflicts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     "parameters": {

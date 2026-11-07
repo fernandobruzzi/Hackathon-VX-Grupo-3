@@ -47,7 +47,11 @@ from vx_materials_api.schemas.proposals import (
 )
 from vx_materials_api.security.approval_identity import Principal, require_reviewer
 from vx_materials_api.security.automatic_actor import AutomaticActor
-from vx_materials_api.services.enrichment_validation import check_source_environment, validate_enrichment_context
+from vx_materials_api.services.enrichment_validation import (
+    check_source_environment,
+    validate_enrichment_context,
+    validate_internal_sources,
+)
 from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
 
@@ -711,6 +715,7 @@ def _decide_current(
                 for key, value in changed.items()
             ):
                 raise ApiError(422, "EVIDENCE_REQUIRED", "Enriquecimento exige evidencia por atributo.")
+            validate_internal_sources(changes, dataset, sources)
             check_source_environment(sources)
             if partial_enrichment and any(
                 not source.source_excerpt
