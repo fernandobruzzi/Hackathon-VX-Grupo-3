@@ -60,6 +60,15 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
   const operationBusy = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
   const pendingTurn = useRef<AbortController | null>(null);
+  const draftRef = useRef<HTMLTextAreaElement>(null);
+  const draftGuardRef = useRef<HTMLDivElement>(null);
+  // Troca que apagaria texto não enviado: espera a pessoa continuar editando ou descartar.
+  const [pendingSwitch, setPendingSwitch] = useState<
+    { kind: "new" } | { kind: "open"; id: string } | null
+  >(null);
+  useEffect(() => {
+    if (pendingSwitch) draftGuardRef.current?.querySelector("button")?.focus();
+  }, [pendingSwitch]);
   useEffect(
     () => () => {
       historyRequest.current?.abort();
@@ -187,7 +196,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     }
   };
 
-  const reset = () => {
+  const reset = (keepDraft = false) => {
     // Abortar poupa a conexão; a identidade do turno também barra respostas já recebidas.
     historyRequest.current?.abort();
     historyRequest.current = null;
@@ -198,7 +207,8 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     pendingTurn.current = null;
     operationBusy.current = false;
     setBusy(false);
-    setText("");
+    if (!keepDraft) setText("");
+    setPendingSwitch(null);
     setMessages([]);
     setSession(null);
     setError(null);
@@ -211,7 +221,8 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
 
   const restore = async (id: string) => {
     if (operationBusy.current && !pendingTurn.current) return;
-    reset();
+    // Atualizar a mesma conversa não troca de assunto: o texto em edição continua no campo.
+    reset(id !== "" && id === selected);
     if (!id) return;
     const request = new AbortController();
     historyRequest.current = request;
@@ -253,6 +264,24 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
         setLoading(false);
       }
     }
+  };
+
+  const run = (action: { kind: "new" } | { kind: "open"; id: string }) =>
+    action.kind === "new" ? reset() : restore(action.id);
+  const guardDraft = (action: { kind: "new" } | { kind: "open"; id: string }) => {
+    const sameConversation = action.kind === "open" && action.id === selected;
+    if (!text.trim() || sameConversation) return run(action);
+    setPendingSwitch(action);
+  };
+  const keepEditing = () => {
+    setPendingSwitch(null);
+    draftRef.current?.focus();
+  };
+  const discardDraft = () => {
+    if (!pendingSwitch) return;
+    const action = pendingSwitch;
+    setPendingSwitch(null);
+    void run(action);
   };
 
   const replyBusy = busy || loading || processing || submitted !== null || (!!selected && !session);
@@ -302,14 +331,18 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               variant="ghost"
               size="sm"
               disabled={busy && pendingTurn.current === null}
-              onClick={reset}
+              onClick={() => guardDraft({ kind: "new" })}
             >
               <RotateCcw className="size-4" /> Nova conversa
             </Button>
           </div>
         </div>
 
-        <ChatHistory selected={selected} onSelect={restore} revision={session?.version ?? 0} />
+        <ChatHistory
+          selected={selected}
+          onSelect={(id) => guardDraft({ kind: "open", id })}
+          revision={session?.version ?? 0}
+        />
         {(loading || processing) && (
           <p role="status" className="px-6 py-3 text-sm text-muted">
             {loading
@@ -386,6 +419,32 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
           )}
         </div>
 
+        {pendingSwitch && (
+          <div
+            ref={draftGuardRef}
+            role="group"
+            aria-labelledby="draft-guard-title"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") keepEditing();
+            }}
+            className="mx-4 mt-4 flex flex-wrap items-center gap-3 rounded-md bg-ink p-4 ring-1 ring-aviso ring-inset"
+          >
+            <p id="draft-guard-title" role="alert" className="min-w-0 flex-1 text-sm leading-5">
+              Você tem uma mensagem não enviada.{" "}
+              {pendingSwitch.kind === "new"
+                ? "Iniciar uma nova conversa apaga esse texto."
+                : "Abrir outra conversa apaga esse texto."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={keepEditing}>
+                Continuar editando
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={discardDraft}>
+                Descartar mensagem
+              </Button>
+            </div>
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -400,6 +459,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
           )}
           <div className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde">
             <textarea
+              ref={draftRef}
               disabled={
                 busy || loading || processing || submitted !== null || (!!selected && !session)
               }
