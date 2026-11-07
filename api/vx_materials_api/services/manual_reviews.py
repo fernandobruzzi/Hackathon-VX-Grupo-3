@@ -258,7 +258,7 @@ def propose_resolution(db, principal, review_id, payload, key, request_id, catal
         }
     ]
     fiscal = (
-        material.ncm != payload.ncm
+        normalizer.normalize_ncm(material.ncm).value != normalizer.normalize_ncm(payload.ncm).value
         or (material.pdm_class_id is not None and material.pdm_class_id != payload.pdm_class_id)
         or (bool(material.attributes) and material.attributes != payload.attributes)
     )

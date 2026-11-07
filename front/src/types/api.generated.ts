@@ -601,6 +601,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/registration-orders/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar ficha técnica, duplicidade e condições fiscais antes de decidir. */
+    get: operations["getOrderReview"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/registration-orders/{id}/reopen-technical-review": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Governança reavalia pedido pendente fiscal e o devolve para nova revisão técnica. */
+    post: operations["reopenOrderTechnicalReview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1078,6 +1112,9 @@ export interface components {
       expected_version: number;
       decision: components["schemas"]["Decision"];
       reason: string;
+      ncm_code?: string | null;
+      ncm_source?: string | null;
+      ncm_evaluation_hash?: string | null;
     };
     ApiError: {
       error: {
@@ -1473,6 +1510,43 @@ export interface components {
       actor_user_id: string;
       /** Format: date-time */
       created_at: string;
+    };
+    OrderReview: {
+      order: components["schemas"]["RegistrationOrder"];
+      attachment_text: string | null;
+      item_name: string | null;
+      attributes: {
+        [key: string]: string;
+      };
+      formatted_description: string | null;
+      candidate_material_ids: string[];
+      pdm_version: string;
+      pdm_source_sha256: string;
+      index_version: string;
+      ncm_assessment: components["schemas"]["NcmAssessment"];
+      ncm_proposed: string | null;
+      ncm_references: {
+        codes: string[];
+        condition: string;
+      }[];
+      review_data: {
+        [key: string]: unknown;
+      };
+      fiscal_decision: components["schemas"]["OrderFiscalDecision"] | null;
+      technical_review_current: boolean;
+    };
+    OrderFiscalDecision: {
+      ncm_code: string;
+      source: string;
+      reason: string;
+      /** Format: uuid */
+      actor_user_id: string;
+      approved_version: number;
+      assessment: components["schemas"]["NcmAssessment"];
+    };
+    OrderReopenReviewRequest: {
+      expected_version: number;
+      reason: string;
     };
   };
   responses: never;
@@ -4355,6 +4429,185 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["OrderComplementRequest"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RegistrationOrder"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getOrderReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OrderReview"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  reopenOrderTechnicalReview: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OrderReopenReviewRequest"];
       };
     };
     responses: {

@@ -296,7 +296,7 @@ def _check_group(catalog, proposal, changes, materials):
     return group
 
 
-def _ncm(code: str) -> str:
+def _ncm(code: str | None) -> str | None:
     """A base traz `84314390` ou `8431.4390`; o PDM, `8431.43.90`. Compara pela mesma grafia."""
     return get_normalization_repository().normalize_ncm(code).value or code
 
@@ -529,7 +529,7 @@ def _decide_current(
         # Enriquecimento parcial reavalia, mas preserva o NCM original sem certificá-lo.
         # O contexto abaixo impede qualquer alteração fiscal por esse caminho.
         ncm_evaluation = evaluate_proposed_ncm(catalog, changes, require_consistency=not partial_enrichment)
-        fiscal_change = any(m.ncm != changes.after.ncm for m in materials)
+        fiscal_change = any(_ncm(m.ncm) != _ncm(changes.after.ncm) for m in materials)
         fiscal_basis_changed = any(
             (m.pdm_class_id is not None and m.pdm_class_id != changes.after.pdm_class_id)
             or (bool(m.attributes) and not _attributes_match(m.attributes, changes.after.attributes))

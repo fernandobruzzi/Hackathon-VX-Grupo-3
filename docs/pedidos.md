@@ -106,6 +106,7 @@ não significa cadastro aprovado nem decisão fiscal.
 
 A migração `0014_order_supplements` sucede `0013_manual_reviews` e deve ser aplicada antes
 de servir esta versão da API. Migrações já aplicadas permanecem intactas.
+
 ## Revisão da ficha e escolha fiscal
 
 **Revisar pedido** consulta `GET /api/v1/registration-orders/{id}` antes da decisão: originais,
@@ -135,3 +136,6 @@ reexecuta PDM/duplicidade e audita a remoção das revisões antigas. O resultad
 `READY_FOR_REVIEW`, `INCOMPLETE`, `OUT_OF_SCOPE` ou `EXISTING`; nenhuma aprovação é criada. Uma ficha
 pronta passa novamente pela aprovação técnica e depois pela fiscal. Fiscal não reabre a revisão;
 pedidos registrados e rejeitados permanecem fechados.
+
+A migração `0015_order_fiscal_review` sucede `0014_order_supplements`; aplique-a antes de servir
+a revisão fiscal. Ela acrescenta o registro das decisões e não fabrica aprovações de pedidos legados.
