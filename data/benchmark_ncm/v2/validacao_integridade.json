@@ -1,0 +1,24 @@
+{
+  "data": "2026-11-07",
+  "resultado": "PASSOU",
+  "registros_pareados": 23554,
+  "grupos_cadastrados": 15,
+  "familias_descritivas": 80,
+  "pontuaveis": 13932,
+  "pendentes": 9622,
+  "corretos": 12090,
+  "incorretos": 1148,
+  "ausentes": 694,
+  "registros_v1_preservados": 6271,
+  "checagens": [
+    "15 campos conferidos célula a célula contra Excel e contra CSV do kit (numerais equivalentes)",
+    "23.554 IDs e linhas únicos em ordem original",
+    "23.554 decisões invariantes à alteração contrafactual de NCM e grupo ERP",
+    "6.271 decisões anteriores e bytes dos artefatos v1 preservados",
+    "alvos/candidatos presentes na referência e evidências literais",
+    "15 gabaritos formam partição completa sem duplicação",
+    "resumos de 15 grupos e 80 famílias reconciliados, inclusive valores de estoque",
+    "seis exemplos discriminantes de função, reforço, material e construção"
+  ],
+  "nota": "Validação de integridade/coerência documental, não revisão fiscal independente nem confirmação de vigência atual."
+}

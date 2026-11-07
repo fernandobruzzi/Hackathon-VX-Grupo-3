@@ -1,0 +1,715 @@
+{
+  "ARRUELA_LISA_ACO": {
+    "descricao": "Arruela lisa/plana de ferro/aço, incluindo DIN 125/9021; 7318.22 é específico para outras arruelas.",
+    "candidatos_observados": [
+      "73182200"
+    ]
+  },
+  "ARRUELA_PRESSAO_ACO": {
+    "descricao": "Arruela de pressão/mola, DIN 127 ou equivalente e material ferro/aço. Não confundir com arruela lisa.",
+    "candidatos_observados": [
+      "73182100"
+    ]
+  },
+  "ARRUELA_MATERIAL": {
+    "descricao": "Arruela descrita sem composição conclusiva.",
+    "candidatos_observados": [
+      "73182100",
+      "73182200"
+    ]
+  },
+  "ARRUELA_TIPO": {
+    "descricao": "Material ferro/aço comprovado; tipo da arruela não definido.",
+    "candidatos_observados": [
+      "73182100",
+      "73182200"
+    ]
+  },
+  "BARRA_ROSCADA_APRESENTACAO": {
+    "descricao": "Barra/vergalhão roscado não recebe automaticamente o código dos parafusos.",
+    "candidatos_observados": [
+      "73181500",
+      "73181900"
+    ]
+  },
+  "FUNCAO_CONSTRUCAO_INSUFICIENTE": {
+    "descricao": "Peça de britagem/peneiramento/moagem: confirmar material, construção e possível código próprio antes de herdar 8474.90.",
+    "candidatos_observados": [
+      "39269090",
+      "40169300",
+      "40169990",
+      "68138190",
+      "84122110",
+      "84129080",
+      "84129090",
+      "84139190",
+      "84149033",
+      "84149034",
+      "84149039",
+      "84313900",
+      "84314390",
+      "84314922",
+      "84314929",
+      "84749000",
+      "84821010",
+      "84831090",
+      "84835010",
+      "84835090",
+      "84842000",
+      "87083011",
+      "87083019",
+      "87083090",
+      "87087010",
+      "87087090",
+      "87089990"
+    ]
+  },
+  "BROCA_HELICOIDAL_DIAMETRO": {
+    "descricao": "Broca helicoidal para furar, geometria explícita/norma e diâmetro informado; limite de 52 mm separa .11 de outras brocas.",
+    "candidatos_observados": [
+      "82075011"
+    ]
+  },
+  "CABO_CONEXOES": {
+    "descricao": "Tensão <=1.000 V sustentada; o texto não conclui a apresentação com/sem peças de conexão.",
+    "candidatos_observados": [
+      "85444200",
+      "85444900"
+    ]
+  },
+  "PARTE_RECONHECIVEL_BOMBA": {
+    "descricao": "Rotor/carcaça/tampa/placa de bomba de líquidos identificada como peça própria; não bomba completa nem haste de extração de petróleo. A classificação pressupõe a apresentação da peça descrita, sem alterar material/construção por inferência.",
+    "candidatos_observados": [
+      "84139190"
+    ]
+  },
+  "CORREIA_CIRCUNFERENCIA": {
+    "descricao": "Código comercial ou comprimento sem referência externa não comprova a circunferência externa exigida pela NCM.",
+    "candidatos_observados": [
+      "40103100",
+      "40103200",
+      "40103300",
+      "40103400",
+      "40103900"
+    ]
+  },
+  "DISCO_ABRASIVO_CONSTRUCAO": {
+    "descricao": "Disco abrasivo de corte/desbaste/flap: o nome de aplicação não comprova aglomerante, suporte e construção.",
+    "candidatos_observados": [
+      "68042211",
+      "68042219",
+      "68051000"
+    ]
+  },
+  "DISJUNTOR_BAIXA_TENSAO": {
+    "descricao": "Disjuntor de baixa tensão, identificado pelo tipo mini/DIN ou tensão nominal explícita <=1.000 V; não fusível nem relé.",
+    "candidatos_observados": [
+      "85362000"
+    ]
+  },
+  "EIXO_TRANSMISSAO_REDUTOR": {
+    "descricao": "Eixo de entrada/saída de redutor, função de árvore de transmissão explicitada, apresentado como eixo isolado sem tipo especial descrito.",
+    "candidatos_observados": [
+      "84831090"
+    ]
+  },
+  "FILTRO_OLEO_MOTOR": {
+    "descricao": "Filtro de óleo lubrificante com aplicação explícita em motor/veículo/equipamento com motor, sem indicação de outro circuito.",
+    "candidatos_observados": [
+      "84212300"
+    ]
+  },
+  "FLANGE_MATERIAL": {
+    "descricao": "Flange de inox explicitado; código específico de flange, independentemente do tipo de conexão do flange.",
+    "candidatos_observados": [
+      "73072100",
+      "73079100"
+    ]
+  },
+  "FUSIVEL_TENSAO": {
+    "descricao": "Tipo NH/ultrarrápido e corrente não resolvem sozinhos a faixa de tensão.",
+    "candidatos_observados": [
+      "85351000",
+      "85361000"
+    ]
+  },
+  "LUVA_BORRACHA_EPI": {
+    "descricao": "Luva de borracha para proteção ocupacional, sem finalidade médica/cirúrgica descrita.",
+    "candidatos_observados": [
+      "40151900"
+    ]
+  },
+  "CONEXAO_SOLDA_ENCAIXE": {
+    "descricao": "Acessório de inox para solda de encaixe (SW), distinto de topo e de rosca.",
+    "candidatos_observados": [
+      "73072900",
+      "73079900"
+    ]
+  },
+  "MANGUEIRA_RUPTURA": {
+    "descricao": "Reforço metálico e apresentação com/sem acessórios identificados, mas o desdobramento .10/.90 depende da pressão de ruptura.",
+    "candidatos_observados": [
+      "40092210",
+      "40092290"
+    ]
+  },
+  "MANGUEIRA_METAL_ACESSORIOS_PRESSAO": {
+    "descricao": "Mangueira de reforço metálico identificado por norma/construção; apresentação com/sem terminais definida; ruptura declarada ou pressão de trabalho que por si supera o limite de 17,3 MPa. Não se multiplicou pressão de trabalho por fator presumido.",
+    "candidatos_observados": [
+      "40092210"
+    ]
+  },
+  "MANGUEIRA_BORRACHA_ACESSORIOS": {
+    "descricao": "Material da mangueira e tipo de reforço identificados.",
+    "candidatos_observados": [
+      "40093100",
+      "40093210",
+      "40093290",
+      "40094100",
+      "40094210",
+      "40094290"
+    ]
+  },
+  "MANGUEIRA_PVC_CONSTRUCAO": {
+    "descricao": "PVC com espiral de PVC: a descrição não comprova associação com outra matéria nem a estrutura exata.",
+    "candidatos_observados": [
+      "39173290",
+      "39173900"
+    ]
+  },
+  "MANGUEIRA_METAL_APRESENTACAO": {
+    "descricao": "Reforço metálico identificado, sem declaração conclusiva sobre acessórios.",
+    "candidatos_observados": [
+      "40092110",
+      "40092190",
+      "40092210",
+      "40092290"
+    ]
+  },
+  "ELEMENTO_OPERACIONAL_BRITAGEM": {
+    "descricao": "Manto/côncavo/mandíbula operacional próprio de britador, função de britagem específica explicitada; não máquina completa.",
+    "candidatos_observados": [
+      "84749000"
+    ]
+  },
+  "CONEXAO_MATERIAL": {
+    "descricao": "Conexão sem material suficientemente definido.",
+    "candidatos_observados": [
+      "73071990",
+      "73072900",
+      "73079900"
+    ]
+  },
+  "PARAFUSO_FIXACAO_ACO": {
+    "descricao": "Parafuso de fixação sextavado/Allen/hexagonal; material de ferro/aço/inox explícito (INOX). Sem característica de madeira ou ponta broca na descrição.",
+    "candidatos_observados": [
+      "73181500"
+    ]
+  },
+  "PARAFUSO_MATERIAL_NAO_CONCLUSIVO": {
+    "descricao": "Tipo descrito é compatível com parafuso comum de fixação, mas o texto não define material nem classe/grau de resistência. Norma dimensional, zincagem, oxidação ou revestimento não determinam sozinhos a matéria constitutiva.",
+    "candidatos_observados": []
+  },
+  "PORCA_FERRO_ACO": {
+    "descricao": "Porca de fixação com ferro/aço/inox identificado pelo material ou classe mecânica; 7318.16 é específico para porcas.",
+    "candidatos_observados": [
+      "73181600"
+    ]
+  },
+  "PORCA_MATERIAL": {
+    "descricao": "Porca identificada, mas sem composição/classe conclusiva.",
+    "candidatos_observados": [
+      "73181600"
+    ]
+  },
+  "RETENTOR_ELASTOMERO": {
+    "descricao": "Retentor de vedação com borracha/elastômero explícito; específico em 4016.93 em lugar de obras residuais de borracha.",
+    "candidatos_observados": [
+      "40169300"
+    ]
+  },
+  "ROLAMENTO_ESFERAS_RADIAL": {
+    "descricao": "Rolamento rígido de esferas/carga radial, identificado pelo nome e/ou série 6xxx; vedações e folga não alteram este desdobramento.",
+    "candidatos_observados": [
+      "84821010"
+    ]
+  },
+  "ROLAMENTO_CONICO_CARGA": {
+    "descricao": "Rolamento de roletes cônicos: 8482.20 é sustentado, mas falta concluir o desdobramento de carga.",
+    "candidatos_observados": [
+      "84822010",
+      "84822090"
+    ]
+  },
+  "TAMPA_CARCACA_REDUTOR": {
+    "descricao": "Tampa/carcaça apresentada separadamente como parte do redutor, não caixa de transmissão completa.",
+    "candidatos_observados": [
+      "84839000"
+    ]
+  },
+  "TUBO_SEM_COSTURA_REVESTIMENTO": {
+    "descricao": "Tubo de aço não ligado sem costura; diâmetro e revestimento influem no item nacional.",
+    "candidatos_observados": [
+      "73043910",
+      "73043920",
+      "73043990"
+    ]
+  },
+  "TUBO_API5L_SEM_COSTURA": {
+    "descricao": "API 5L identifica tubo do tipo para oleoduto/gasoduto; construção sem costura explícita.",
+    "candidatos_observados": [
+      "73041900"
+    ]
+  },
+  "VALVULA_TIPO_FUNCIONAL": {
+    "descricao": "Válvula funcionalmente identificada como gaveta; a nomenclatura possui código específico para esse tipo.",
+    "candidatos_observados": [
+      "84813000",
+      "84818093",
+      "84818094",
+      "84818095",
+      "84818097"
+    ]
+  },
+  "VALVULA_RETENCAO_COM_OBTURADOR_ESFERA": {
+    "descricao": "Válvula funcionalmente identificada como retenção; a nomenclatura possui código específico para esse tipo. A palavra esfera descreve o obturador/modelo da válvula de retenção e não altera a função de retenção.",
+    "candidatos_observados": [
+      "84813000"
+    ]
+  },
+  "CONEXAO_MALEAVEL_DIAMETRO_INTERIOR": {
+    "descricao": "Material maleável identificado, mas o diâmetro nominal não foi tratado automaticamente como diâmetro interior.",
+    "candidatos_observados": [
+      "73071910",
+      "73071990"
+    ]
+  },
+  "CALCADO_CABEDAL_TORNOZELO": {
+    "descricao": "Biqueira/solado não comprovam material do cabedal e cobertura do tornozelo. A ausência de metal pode excluir .40, mas não define sozinha .99.",
+    "candidatos_observados": [
+      "64029990",
+      "64034000",
+      "64039190",
+      "64039990"
+    ]
+  },
+  "CONEXAO_SOLDA_TOPO": {
+    "descricao": "Acessório de aço carbono para soldar topo a topo (BW), explicitado no texto.",
+    "candidatos_observados": [
+      "73072300",
+      "73079300"
+    ]
+  },
+  "DISCO_FREIO_VEICULO": {
+    "descricao": "Disco de freio apresentado como peça separada de veículo; não guarnição de freio montada.",
+    "candidatos_observados": [
+      "87083090"
+    ]
+  },
+  "FILTRO_AR_APLICACAO": {
+    "descricao": "Filtro de ar sem aplicação suficiente para distinguir entrada de motor de outros gases.",
+    "candidatos_observados": [
+      "84213100",
+      "84213990"
+    ]
+  },
+  "FILTRO_AR_MOTOR": {
+    "descricao": "Filtro de entrada de ar para motor de combustão com aplicação explícita no texto.",
+    "candidatos_observados": [
+      "84213100"
+    ]
+  },
+  "JUNTA_BORRACHA": {
+    "descricao": "Junta plana com elastômero explicitado, enquadramento específico para juntas/gaxetas de borracha.",
+    "candidatos_observados": [
+      "40169300"
+    ]
+  },
+  "LAMPADA_LED": {
+    "descricao": "Lâmpada/tubo LED identificado; não fonte modular avulsa nem incandescente.",
+    "candidatos_observados": [
+      "85395200"
+    ]
+  },
+  "MANGUEIRA_CONSTRUCAO": {
+    "descricao": "Terminais e pressão não comprovam o material/reforço da parede da mangueira.",
+    "candidatos_observados": [
+      "40092110",
+      "40092190",
+      "40092210",
+      "40092290",
+      "40093100",
+      "40094100"
+    ]
+  },
+  "MANGUEIRA_PVC_OUTRA_MATERIA_PRESSAO": {
+    "descricao": "PVC associado a aço/têxtil comprovado; a classe de pressão de tubos flexíveis ainda deve ser confirmada.",
+    "candidatos_observados": [
+      "39173100",
+      "39173900"
+    ]
+  },
+  "MANGUEIRA_PVC_PRESSAO_ACESSORIOS": {
+    "descricao": "Mangueira de PVC cristal/industrial; composição sozinha não resolve todos os desdobramentos de 3917.",
+    "candidatos_observados": [
+      "39173100",
+      "39173290",
+      "39173300",
+      "39173900"
+    ]
+  },
+  "CONEXAO_ROSCADA": {
+    "descricao": "Conexão roscada de inox; cotovelos, curvas e luvas têm desdobramento próprio, os demais tipos não recebem esse código automaticamente.",
+    "candidatos_observados": [
+      "73072200",
+      "73072900",
+      "73079200",
+      "73079900"
+    ]
+  },
+  "OLEO_COMPOSICAO_ADITIVOS": {
+    "descricao": "Viscosidade/aplicação não comprovam teor em peso de óleo de petróleo nem aditivos.",
+    "candidatos_observados": [
+      "27101931",
+      "27101932",
+      "34031900"
+    ]
+  },
+  "ROLETE_TRANSPORTADOR": {
+    "descricao": "Rolete de carga/retorno/impacto de transportador, apresentado como conjunto funcional, não rolamento isolado.",
+    "candidatos_observados": [
+      "84313900"
+    ]
+  },
+  "TERMINAL_TENSAO_E_APRESENTACAO": {
+    "descricao": "Terminal elétrico identificado, mas não há prova suficiente de tensão de aplicação e se constitui plugue/tomada ou outro conector.",
+    "candidatos_observados": [
+      "85359090",
+      "85366990",
+      "85369090"
+    ]
+  },
+  "TUBO_SEM_COSTURA_GRANDE": {
+    "descricao": "Tubo sem costura de aço não ligado, de diâmetro nominal >=250 mm/10 pol; DE acima de 229 mm, fora dos itens .10/.20.",
+    "candidatos_observados": [
+      "73043990"
+    ]
+  },
+  "ANEL_VEDACAO_ELASTOMERO_EXPLICITO": {
+    "descricao": "Anel de vedação/O-ring ou retentor acabado, com material elastomérico explícito (BORRACHA). O texto da posição 4016 e da subposição 4016.93 contempla juntas, gaxetas e semelhantes de borracha vulcanizada não endurecida. A classificação foi derivada do tipo de produto e material, sem usar o NCM cadastrado.",
+    "candidatos_observados": [
+      "40169300"
+    ]
+  },
+  "CONTATOR_TENSAO_CONTATOS": {
+    "descricao": "A descrição informa tensão de bobina/comando, que não comprova a tensão de serviço dos contatos.",
+    "candidatos_observados": [
+      "85364100",
+      "85364900"
+    ]
+  },
+  "CORREIA_MATERIAL": {
+    "descricao": "Perfil V e circunferência de 1843 mm definidos; sem material conclusivo para afirmar capítulo 40.",
+    "candidatos_observados": [
+      "39269090",
+      "40103200",
+      "40103400",
+      "40103900",
+      "59100000"
+    ]
+  },
+  "ENGRENAGEM_PINHAO_ISOLADO": {
+    "descricao": "Engrenagem/pinhão de transmissão apresentado isoladamente, código próprio para rodas dentadas/elementos de transmissão, não redutor completo.",
+    "candidatos_observados": [
+      "84839000"
+    ]
+  },
+  "LUVA_PROTECAO_COURO": {
+    "descricao": "Luva EPI de couro/vaqueta/raspa, sem finalidade esportiva.",
+    "candidatos_observados": [
+      "42032900"
+    ]
+  },
+  "LUVA_EPI_CONSTRUCAO": {
+    "descricao": "Luva EPI sem material/construção suficientemente declarados.",
+    "candidatos_observados": [
+      "40151900",
+      "42032900",
+      "61161000"
+    ]
+  },
+  "MANCAL_COM_ROLAMENTO": {
+    "descricao": "Mancal/caixa com rolamento incorporado, explicitado no texto ou na série UCP/UCF.",
+    "candidatos_observados": [
+      "84832000"
+    ]
+  },
+  "ROLAMENTO_ROLOS_TONEL": {
+    "descricao": "Rolamento autocompensador de rolos/roletes em forma de tonel, identificado pelo tipo/série 222xx ou 223xx.",
+    "candidatos_observados": [
+      "84823000"
+    ]
+  },
+  "ROLAMENTO_GEOMETRIA": {
+    "descricao": "Rolamento sem geometria/carga conclusiva na descrição.",
+    "candidatos_observados": [
+      "84821010",
+      "84821090",
+      "84823000"
+    ]
+  },
+  "ANEL_VEDACAO_MATERIAL_NAO_INFORMADO": {
+    "descricao": "A descrição identifica anel de vedação/O-ring, mas não especifica material. Dimensões e dureza Shore A não distinguem com segurança borracha de outros polímeros para fins do gabarito.",
+    "candidatos_observados": []
+  },
+  "ANEL_MECANICO_REQUER_FICHA_CATALOGO": {
+    "descricao": "Anel de função mecânica (vedação) descrito como aplicação em equipamento. A aplicação e a referência de fabricante, sem catálogo/desenho examinado, não foram usadas como prova suficiente de um NCM único para o gabarito.",
+    "candidatos_observados": []
+  },
+  "DISJUNTOR_TENSAO": {
+    "descricao": "Tipo genérico motor/caixa moldada/termomagnético sem tensão conclusiva.",
+    "candidatos_observados": [
+      "85352100",
+      "85352900",
+      "85362000"
+    ]
+  },
+  "ELETRODO_METAL_REVESTIDO_ARCO": {
+    "descricao": "Eletrodo metálico revestido para solda a arco, por tipo de revestimento ou classe AWS; não vareta para solda à chama.",
+    "candidatos_observados": [
+      "83111000"
+    ]
+  },
+  "ELEMENTO_FILTRANTE_APRESENTACAO": {
+    "descricao": "Elemento filtrante pode ser filtro com caráter de aparelho ou parte/material filtrante; a palavra elemento não resolve sozinha.",
+    "candidatos_observados": [
+      "84212300",
+      "84213100",
+      "84219910",
+      "84219999"
+    ]
+  },
+  "FILTRO_SEPARADOR_AR_OLEO": {
+    "descricao": "Filtro separador ar/óleo do compressor: filtra gás, não combustível/lubrificante no motor nem entrada de ar de motor.",
+    "candidatos_observados": [
+      "84213990"
+    ]
+  },
+  "JUNTA_ESPIRALADA": {
+    "descricao": "Junta espiralada/metaloplástica, combinação de fita metálica e enchimento; não é junta plana de PTFE ou borracha.",
+    "candidatos_observados": [
+      "84841000"
+    ]
+  },
+  "JUNTA_PTFE": {
+    "descricao": "Junta plana de PTFE/plástico explicitado, não junta de borracha nem metaloplástica.",
+    "candidatos_observados": [
+      "39269090"
+    ]
+  },
+  "JUNTA_MATERIAL_CONSTRUCAO": {
+    "descricao": "Material e construção da junta não estão conclusivos.",
+    "candidatos_observados": [
+      "39269090",
+      "40169300",
+      "84841000",
+      "84842000"
+    ]
+  },
+  "MANOMETRO_PRESSAO": {
+    "descricao": "Produto identificado como manômetro, com função de medir pressão; desdobramento próprio em 9026.20.10.",
+    "candidatos_observados": [
+      "90262010"
+    ]
+  },
+  "RETENTOR_MATERIAL": {
+    "descricao": "Geometria/modelo de retentor não confirma a composição.",
+    "candidatos_observados": [
+      "40169300",
+      "84842000"
+    ]
+  },
+  "BRACO_SUSPENSAO_VEICULO": {
+    "descricao": "Braço de suspensão de veículo, função expressa; 8708.80 é específico para sistemas de suspensão e partes, em lugar do residual 8708.99.",
+    "candidatos_observados": [
+      "87088000"
+    ]
+  },
+  "CORREIA_TIPO": {
+    "descricao": "Circunferência explícita, sem tipo de construção conclusivo.",
+    "candidatos_observados": [
+      "40103200",
+      "40103400",
+      "40103900"
+    ]
+  },
+  "DENTE_CACAMBA_ESCAVADEIRA": {
+    "descricao": "Dente de caçamba de escavadeira, peça específica da máquina de escavação, não ferramenta intercambiável de perfuração.",
+    "candidatos_observados": [
+      "84314929"
+    ]
+  },
+  "PARTE_METALICA_BENEFICIAMENTO": {
+    "descricao": "Peça metálica identificável de britador/peneira/moinho; descrição traz aplicação e material, sem caracterização como artigo de uso geral.",
+    "candidatos_observados": [
+      "84749000"
+    ]
+  },
+  "ROLETE_ESTEIRA_ESCAVADEIRA": {
+    "descricao": "Rolete de esteira de escavadeira, não conjunto de lagarta/esteira completo nem rolamento avulso.",
+    "candidatos_observados": [
+      "84314929"
+    ]
+  },
+  "CONEXAO_MOLDADA_OU_OUTRA": {
+    "descricao": "Material de aço identificado, mas falta distinguir conexão moldada de outras construções.",
+    "candidatos_observados": [
+      "73071920",
+      "73072100",
+      "73072200",
+      "73072300",
+      "73072900",
+      "73079100",
+      "73079200",
+      "73079300",
+      "73079900"
+    ]
+  },
+  "CONEXAO_LIGACAO": {
+    "descricao": "Material definido, mas a forma de ligação não está explicitada.",
+    "candidatos_observados": [
+      "73072200",
+      "73072300",
+      "73072900",
+      "73079200",
+      "73079300",
+      "73079900"
+    ]
+  },
+  "FILTRO_COMBUSTIVEL_MOTOR": {
+    "descricao": "Filtro de combustível para motor de combustão, função específica; não filtro hidráulico.",
+    "candidatos_observados": [
+      "84212300"
+    ]
+  },
+  "PALHETA_TURBINA_HIDRAULICA": {
+    "descricao": "Palheta operacional de turbina hidráulica identificada, parte de 8410, não componente de turbina a gás ou válvula.",
+    "candidatos_observados": [
+      "84109000"
+    ]
+  },
+  "SENSOR_INDUTIVO_COMUTACAO": {
+    "descricao": "Sensor indutivo com saída de comutação PNP/NPN NA/NF e tensão de baixa tensão; função interruptor de proximidade.",
+    "candidatos_observados": [
+      "85365090"
+    ]
+  },
+  "FILTRO_OLEO_APLICACAO": {
+    "descricao": "Óleo pode pertencer ao motor, ao circuito hidráulico, ao compressor ou à transmissão.",
+    "candidatos_observados": [
+      "84212300",
+      "84212990"
+    ]
+  },
+  "TUBO_INOX_SOLDADO": {
+    "descricao": "Tubo de seção circular em aço inox com costura explicitada; não é tubo sem costura.",
+    "candidatos_observados": [
+      "73064000"
+    ]
+  },
+  "TUBO_CONSTRUCAO": {
+    "descricao": "Material, costura ou dimensões do tubo não estão suficientes para alvo único.",
+    "candidatos_observados": [
+      "73041900",
+      "73043910",
+      "73043920",
+      "73043990",
+      "73063090",
+      "73064000"
+    ]
+  },
+  "TUBO_API5L_COSTURA": {
+    "descricao": "API 5L não decide sozinho se o tubo é soldado ou sem costura.",
+    "candidatos_observados": [
+      "73041900",
+      "73061900"
+    ]
+  },
+  "TUBO_ACO_SOLDADO_OUTROS": {
+    "descricao": "Tubo circular soldado de aço não ligado; dimensão nominal descrita exclui o DE específico de 22,25 mm do item 7306.30.10.",
+    "candidatos_observados": [
+      "73063090"
+    ]
+  },
+  "TUBO_ACO_SOLDADO_DIMENSOES": {
+    "descricao": "Tubo circular soldado de aço não ligado; confirmar dimensões do desdobramento nacional.",
+    "candidatos_observados": [
+      "73063010",
+      "73063090"
+    ]
+  },
+  "CABO_TENSAO_CONEXOES": {
+    "descricao": "Seção/isolação não comprovam tensão nem peças de conexão.",
+    "candidatos_observados": [
+      "85444200",
+      "85444900",
+      "85446000"
+    ]
+  },
+  "FILTRO_CIRCUITO_HIDRAULICO": {
+    "descricao": "Filtro de circuito hidráulico identificado no nome do produto, não inferido de escavadeira hidráulica na aplicação.",
+    "candidatos_observados": [
+      "84212990"
+    ]
+  },
+  "FUSIVEL_BAIXA_TENSAO": {
+    "descricao": "Fusível de tensão <=1.000 V explicitada ou tipo Diazed, padrão de baixa tensão; não disjuntor.",
+    "candidatos_observados": [
+      "85361000"
+    ]
+  },
+  "SENSOR_SAIDA_FUNCAO": {
+    "descricao": "Sensor indutivo não declara saída/função suficiente para distinguir comutação e medição.",
+    "candidatos_observados": [
+      "85365090",
+      "90318099"
+    ]
+  },
+  "LUVA_MALHA_REVESTIDA": {
+    "descricao": "Luva de malha revestida/banhada em plástico ou borracha explicitada, em vez de luva integral de borracha.",
+    "candidatos_observados": [
+      "61161000"
+    ]
+  },
+  "OCULOS_SEGURANCA": {
+    "descricao": "Óculos de proteção/segurança com função ocupacional identificada, em vez de outros óculos.",
+    "candidatos_observados": [
+      "90049020"
+    ]
+  },
+  "OCULOS_FUNCAO": {
+    "descricao": "Óculos sem finalidade comprovada.",
+    "candidatos_observados": [
+      "90049020",
+      "90049090"
+    ]
+  },
+  "BROCA_GEOMETRIA_DIAMETRO": {
+    "descricao": "Broca sem geometria e diâmetro simultaneamente conclusivos.",
+    "candidatos_observados": [
+      "82075011",
+      "82075019",
+      "82075090"
+    ]
+  },
+  "FILTRO_FLUIDO_APLICACAO": {
+    "descricao": "Referência de filtro sem fluido/aplicação suficientes.",
+    "candidatos_observados": [
+      "84212300",
+      "84212990",
+      "84213100",
+      "84213990",
+      "84219999"
+    ]
+  }
+}
