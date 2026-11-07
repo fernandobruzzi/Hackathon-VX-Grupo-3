@@ -3,13 +3,18 @@
 from dataclasses import asdict, replace
 
 from clients.ncm_snapshot_store import load_configured_ncm_snapshot
-from domain.contracts import AnalyzedMaterial, FieldCorrection, MergeProposal, PdmCatalog, ValidationStatus
-from domain.ncm_rules import RULES_VERSION, check_ncm_consistency, requires_snapshot_fiscal_review
+from domain.contracts import AnalyzedMaterial, FieldCorrection, MergeProposal, PdmCatalog
+from domain.ncm_rules import (
+    PROPOSAL_POLICY_VERSION,
+    RULES_VERSION,
+    check_ncm_consistency,
+    ncm_proposal_blockers,
+    requires_snapshot_fiscal_review,
+)
 from domain.ncm_snapshot import NcmSnapshot
-from domain.pdm_validator import validate_pdm
 from domain.proposals import canonical_hash
 from pipelines.corrections import build_correction_proposal
-from repositories.corrections.head_noun_v1 import opens_description
+from repositories.corrections.head_noun_v2 import head_confirmed
 
 
 def propose_ncm_corrections(
@@ -18,12 +23,12 @@ def propose_ncm_corrections(
     snapshot = snapshot if snapshot is not None else load_configured_ncm_snapshot()
     proposals = []
     for material in materials:
-        if material.record.status != "ATIVO" or material.pdm_class_id is None or not material.item_name:
+        # NCM é dado fiscal do item em qualquer status; a aprovação fiscal continua obrigatória.
+        if material.pdm_class_id is None or not head_confirmed(material):
             continue
-        if not opens_description(material.item_name, material.record.description):
-            continue
-        validation = validate_pdm(catalog, material.pdm_class_id, material.attributes, item_name=material.item_name)
-        if validation.status is not ValidationStatus.VALID:
+        # Só os atributos que decidem o código são exigidos: a condição não resolvida abaixo
+        # barra a proposta, e o código único da classe exige a matéria provada.
+        if ncm_proposal_blockers(catalog.classes[material.pdm_class_id], material.attributes, material.item_name):
             continue
         before = check_ncm_consistency(
             catalog,
@@ -52,7 +57,7 @@ def propose_ncm_corrections(
                     "ncm",
                     material.record.ncm or None,
                     target,
-                    f"{RULES_VERSION}/{before.rule_id}; PDM sha256:{catalog.source_sha256}",
+                    f"{RULES_VERSION}/{before.rule_id}; {PROPOSAL_POLICY_VERSION}; PDM sha256:{catalog.source_sha256}",
                 )
             ],
             (),

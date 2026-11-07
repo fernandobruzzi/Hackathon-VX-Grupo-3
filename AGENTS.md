@@ -543,10 +543,19 @@ The `GRANT migration_user TO <master>` line is required on PostgreSQL 16: withou
 and PDM coherence without writing materials or approving changes. Without the
 official snapshot (#30), existence and validity are unknown, never inferred from
 the PDM. Evaluation hashes bind inputs and reference versions. The batch proposes
-`NCM_CORRECTION` only with a confirmed class, complete PDM and one resolved code;
-the approval payload pins the before/after assessments. The API recomputes the
+`NCM_CORRECTION` in any status for a class opened by the item name (in full or
+unambiguously abbreviated) with one resolved code. Only the attributes that decide the
+code are required, and `ncm_proposal_blockers` adds a stricter proposal policy without
+changing coherence for chat or approval: a unique class code needs its matter proven by
+an admitted `MATERIAL` or `CLASSE RESISTENCIA` (fastener grades exist only for steel), and
+rings or seals of spare parts (`PDM110`) go to manual review. An approved
+`NCM_CORRECTION` writes only the NCM, for blocked and obsolete materials too: class,
+attributes, description, identity and canonical state never change through it.
+The approval payload pins the before/after assessments. The API recomputes the
 assessment before each approval, refuses changed fiscal bases and enforces all
-required technical/fiscal reviews. See `docs/ncm.md` for behavior and verification.
+required technical/fiscal reviews. Measure against the documentary benchmark, from `back/`,
+with `uv run python -m pipelines.measure_ncm_benchmark ../data/benchmark_ncm/v1 --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx`.
+See `docs/ncm.md` for behavior and verification.
 
 ## Material requests (M7)
 

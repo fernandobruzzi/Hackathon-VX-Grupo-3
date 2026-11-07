@@ -239,3 +239,19 @@ def test_snapshot_binding_preserves_raw_ncm_for_technical_corrections_and_existi
     # O merge normaliza o NCM efetivamente, então conserva a revisão já exigida.
     merges = [p for p in captured if p.proposal_type == "MERGE"]
     assert merges and all(p.fiscal_review_required for p in merges)
+
+
+def test_analysis_chunks_keep_the_classification_rule():
+    # Retomar um job não pode perder a regra da classe: ela decide a confiança do nome inicial.
+    from domain.contracts import AnalyzedMaterial
+
+    material = AnalyzedMaterial(
+        MaterialRecord("1", "ATIVO", "PARAF CAB SEXTAVADA M12"),
+        "PDM001",
+        "PARAFUSO SEXTAVADO",
+        {"BITOLA": "M12"},
+        None,
+        ("MOTIVO",),
+        "aliases_v2/head.name",
+    )
+    assert full_run._decode(json.loads(json.dumps(full_run._encode(material)))) == material

@@ -86,12 +86,14 @@ def test_master_data_stays_untouched(sanitized):
 
 
 def test_only_active_materials_are_proposed(sanitized):
+    # NCM é dado fiscal do item em qualquer status; as demais propostas só envolvem ativos.
     _, _, admin, _ = sanitized
     query = (
         "SELECT count(*) FROM sanitization_proposals p, jsonb_array_elements(p.members) member, materials_master m "
-        "WHERE m.id = (member->>'material_id')::uuid AND m.status <> 'ATIVO'"
+        "WHERE m.id = (member->>'material_id')::uuid AND m.status <> 'ATIVO' AND p.proposal_type {} 'NCM_CORRECTION'"
     )
-    assert scalar(admin, query) == 0
+    assert scalar(admin, query.format("<>")) == 0
+    assert scalar(admin, query.format("=")) > 0
 
 
 def test_batch_credential_cannot_change_master(sanitized):
