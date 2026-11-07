@@ -256,29 +256,66 @@ casos que precisam continuar reconhecidos.
 ### Revalidação corrente da integração (#205)
 
 A comparação de desenvolvimento em 2026-11-07 mantém o classificador
-`aliases_v1` revisão **2** nos dois processos e compara o extrator revisão **8**
-com **9**. O [registro corrente](measurements/alias-evidence-158-current.json)
-identifica os hashes dos três arquivos de entrada, das implementações e cada
-alteração semântica. Os relatórios e gabaritos históricos permanecem preservados.
+`aliases_v1` revisão **2** nos dois processos. A base é
+`23b37a6df8eaf06d3b3061beb7d8a626e53adc3b`, com o extrator
+**`9-inline-label-prefix-198`** da #215; a integração medida é
+`8e729794dd4029a6af052b1f54ed3e051018a8f0`, com o extrator revisão **10**.
+O [registro corrente](measurements/alias-evidence-158-current.json) identifica
+os hashes dos três arquivos de entrada, das implementações e cada alteração
+semântica. Os relatórios e gabaritos históricos permanecem preservados.
 
-| Medida | Antes (8) | Depois (9) |
-| ------ | --------: | ---------: |
-| Materiais analisados | 23.554 | 23.554 |
-| Atributos preenchidos | 74.306 | 74.301 |
-| Materiais válidos pelo PDM | 10.927 | 10.927 |
-| Materiais incompletos | 7.002 | 7.002 |
-| Materiais fora do PDM | 5.625 | 5.625 |
-| Chaves de identidade disponíveis | 11.813 | 11.813 |
-| Pedidos prontos para revisão | 256 | 256 |
-| Pedidos incompletos | 183 | 183 |
-| Pedidos fora do escopo | 81 | 81 |
+A base já inclui os quatro ganhos de quantidade explícita de condutores da
+[#215](inline-label-prefix.md), nos materiais `27406104`, `29181674`, `19387950`
+e `18347105`. Eles estão nos dois lados desta comparação e não são ganhos
+atribuíveis à #205. A [medição própria da #215](measurements/inline-label-prefix-198.json)
+permanece separada e intacta.
 
-Só os cinco parafusos históricos acima perdem `ROSCA`; continuam incompletos,
-sem chave. Nos 520 pedidos não muda atributo, estado nem chave. Os 1.922
-atributos e as 256 chaves dos pedidos permanecem iguais. A contagem histórica de
-10.883 materiais válidos não representa esta integração. Esta rodada mede
-cobertura e diferenças de extração; não mede propostas nem precisão populacional
-e não constitui revisão técnica independente.
+| Medida                             | Antes (9-inline-label-prefix-198) | Depois (10) |
+| ---------------------------------- | --------------------------------: | ----------: |
+| Materiais analisados               |                            23.554 |      23.554 |
+| Atributos preenchidos em materiais |                            74.310 |      74.305 |
+| Materiais válidos pelo PDM         |                            10.928 |      10.928 |
+| Materiais incompletos              |                             7.001 |       7.001 |
+| Materiais fora do PDM              |                             5.625 |       5.625 |
+| Chaves de identidade de materiais  |                            11.814 |      11.814 |
+| Pedidos analisados                 |                               520 |         520 |
+| Atributos preenchidos em pedidos   |                             1.922 |       1.921 |
+| Pedidos prontos para revisão       |                               256 |         256 |
+| Pedidos incompletos                |                               183 |         183 |
+| Pedidos fora do escopo             |                                81 |          81 |
+| Chaves de identidade de pedidos    |                               256 |         256 |
+
+Nos materiais, só os cinco parafusos históricos acima perdem `ROSCA`;
+continuam incompletos, sem chave. Nos pedidos, **seis referências de fabricante
+mudam**. Os seis textos terminam com `código do fabricante na plaqueta`, sem
+conteúdo de anexo. A leitura anterior confundia a preposição `DO` desse
+cabeçalho composto com uma referência. A integração deixa de fornecer esse
+falso código, recupera cinco números de peça explícitos e mantém uma referência
+desconhecida:
+
+| Pedido         | Antes | Depois       | Evidência no texto original                           |
+| -------------- | ----- | ------------ | ----------------------------------------------------- |
+| `SC-202600031` | `DO`  | `2713243123` | `amortecedor FLSMIDTH 2713243123 do LUDOWICI 3.6X8.5` |
+| `SC-202600048` | `DO`  | `6644889826` | `tela FLSMIDTH 6644889826 do LUDOWICI 3.6X8.5`        |
+| `SC-202600416` | `DO`  | `N72836H06`  | `viga METSO N72836H06 do LH 8X20`                     |
+| `SC-202600451` | `DO`  | `497-9544`   | `pino CATERPILLAR 497-9544 do 6030`                   |
+| `SC-202600481` | `DO`  | Ausente      | `viga HAVER HB-798945 do T-CLASS 3.0X7.3`             |
+| `SC-202600497` | `DO`  | `87796744`   | `rotor KSB 87796744 do MEGANORM 100-315`              |
+
+O texto de `SC-202600481` contém `HB-798945`, mas a regra atual não o reconhece
+como referência; o campo fica ausente, sem completar ou confirmar o código por
+suposição. Os seis pedidos continuam **INCOMPLETE**, com chave de identidade
+nula. Nenhum outro atributo, estado ou chave de pedido muda. A queda de um
+atributo preenchido vem dessa abstenção; as outras cinco alterações substituem
+`DO` pelo código do próprio texto. As regressões permanentes em
+`back/tests/test_inline_labels.py` conferem as seis linhas reais, referências,
+estados e chaves, preservando textos, ausência de anexos e bytes do arquivo de
+entrada.
+
+A contagem histórica de 10.883 materiais válidos não representa esta integração.
+Esta rodada mede cobertura e diferenças de extração; não mede propostas nem
+precisão populacional e não constitui revisão técnica independente. Estados dos
+pedidos são anteriores à consulta de duplicidade ao cadastro.
 
 O guarda usa a bitola já interpretada e validada, com evidência fora de campos
 de referência: `PN:M12`, `REF:M12`, `MODELO:M12`, `REF:M1234`, `REF:MA`,
@@ -293,19 +330,20 @@ ponto, com ou sem espaço: `REF. M12X50`, `PN.M12X50`, `P/N. M12X50`,
 literalmente não resolvidas e não fornecem `BITOLA`, `COMPRIMENTO` ou `ROSCA`.
 O mesmo limite reconhece os separadores de referência `:`, `.`, `=`, `-`, `/`
 e espaço; `REF-M12X50` e `REF/M12X50` também não viram dimensões físicas.
+Cabeçalhos compostos, como `CODIGO DO FABRICANTE`, `COD DO FABRICANTE`,
+`REF DO FABRICANTE` e `REFERENCIA DO FABRICANTE`, são reconhecidos inteiros,
+sem tratar `DO` como código nem emprestar a medida da referência.
 O rótulo `P/N` conserva a leitura de referências e não impede uma bitola física
 separada, como em `P/N/M12X50 BITOLA M12`.
 `M12` físico sem rótulo e `BITOLA:M12` continuam válidos,
-inclusive em `REF:M12 BITOLA M12`, sem consumir o código da referência. Esse filtro
-físico adicional não acrescenta diferenças nos 23.554 materiais nem nos 520
-pedidos em relação à primeira correção do guarda. `MA` e `MF`
-continuam válidos em `ROSCA:ROSCA GROSSA MA` e `ROSCA:ROSCA FINA MF`, sem
-emprestar evidência de outro rótulo. O marcador também precisa começar fora de
-uma referência: `REF:ROSCA:ROSCA GROSSA MA`, com ou sem espaços, não confirma o
-alias. Um campo `ROSCA` separado por vírgula depois de `REF` continua válido. Uma bitola explícita em polegadas veta o
-alias mesmo com esses marcadores. O rolamento `BLINDADO` com `MODELO:6004ZZ`
-ou `6004ZZ/C3` mantém a vedação, enquanto `6004` continua sem vedação e não
-recebe `ABERTO` por inferência.
+inclusive em `REF:M12 BITOLA M12`, sem consumir o código da referência.
+`MA` e `MF` continuam válidos em `ROSCA:ROSCA GROSSA MA` e `ROSCA:ROSCA FINA MF`,
+sem emprestar evidência de outro rótulo. O marcador também precisa começar fora
+de uma referência: `REF:ROSCA:ROSCA GROSSA MA`, com ou sem espaços, não confirma
+o alias. Um campo `ROSCA` separado por vírgula depois de `REF` continua válido.
+Uma bitola explícita em polegadas veta o alias mesmo com esses marcadores.
+O rolamento `BLINDADO` com `MODELO:6004ZZ` ou `6004ZZ/C3` mantém a vedação,
+enquanto `6004` continua sem vedação e não recebe `ABERTO` por inferência.
 
 Reproduzir sem alterar os dados, usando dois worktrees com as revisões indicadas:
 

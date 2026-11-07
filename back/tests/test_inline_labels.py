@@ -104,3 +104,56 @@ def test_real_cables_keep_the_explicit_conductor_quantity(code, conductors):
     assert result.pdm_class_id == "PDM060"
     assert result.attributes["NUMERO CONDUTORES"] == conductors
     assert result.record == record
+
+
+@pytest.mark.parametrize(
+    "order_id,reference,original_text",
+    [
+        (
+            "SC-202600031",
+            "2713243123",
+            "Item amortecedor FLSMIDTH 2713243123 do LUDOWICI 3.6X8.5, código do fabricante na plaqueta",
+        ),
+        (
+            "SC-202600048",
+            "6644889826",
+            "Peça tela FLSMIDTH 6644889826 do LUDOWICI 3.6X8.5, código do fabricante na plaqueta",
+        ),
+        (
+            "SC-202600416",
+            "N72836H06",
+            "Peça viga METSO N72836H06 do LH 8X20, código do fabricante na plaqueta",
+        ),
+        (
+            "SC-202600451",
+            "497-9544",
+            "Preciso de pino CATERPILLAR 497-9544 do 6030, código do fabricante na plaqueta",
+        ),
+        (
+            "SC-202600481",
+            None,
+            "Peça viga HAVER HB-798945 do T-CLASS 3.0X7.3, código do fabricante na plaqueta",
+        ),
+        (
+            "SC-202600497",
+            "87796744",
+            "Item rotor KSB 87796744 do MEGANORM 100-315, código do fabricante na plaqueta",
+        ),
+    ],
+)
+def test_real_compound_manufacturer_headers_preserve_order_evidence(order_id, reference, original_text):
+    catalog = load_pdm(KIT / "03_padrao_cadastro_PDM.xlsx")
+    source = KIT / "02_pedidos_cadastro.csv"
+    content = source.read_bytes()
+    row = next(r for r in read_orders(content) if r.source_order_id == order_id)
+    assert row.original_text == original_text
+    assert row.attachment_text is None
+
+    result = analyze_order(row, catalog, get_classification_repository(catalog), RuleBasedV1ExtractionRepository())
+
+    assert result.attributes.get("REFERENCIA FABRICANTE") == reference
+    assert result.status == "INCOMPLETE"
+    assert result.identity_key is None
+    assert row.original_text == original_text
+    assert row.attachment_text is None
+    assert source.read_bytes() == content
