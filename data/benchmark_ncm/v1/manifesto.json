@@ -1,0 +1,168 @@
+{
+  "versao": "ncm-parafusos-valvulas-aneis-documental-v1.0-2026-11-07",
+  "tipo": "gabarito_documental_revisado",
+  "data": "2026-11-07",
+  "escopo_ncm": [
+    "Parafusos",
+    "Válvulas",
+    "Anéis"
+  ],
+  "arquivo_original": "Parafuso_classificao_groundtruth.xlsx",
+  "sha256_original": "21f9493ba58e415079ea0b28a36c841362432640524a462bc66c5ee516ae9579",
+  "aba_original": "BASE_MATERIAIS",
+  "contagens": {
+    "total": 6271,
+    "pontuaveis_ncm": 5908,
+    "pendentes_revisao": 363,
+    "corretos_entrada_pontuavel": 5213,
+    "incorretos_entrada_pontuavel": 395,
+    "ausentes_entrada_pontuavel": 300
+  },
+  "por_familia": {
+    "Parafusos": {
+      "TOTAL": 3730,
+      "PONTUAVEIS": 3713,
+      "CORRETO": 3292,
+      "INCORRETO": 249,
+      "AUSENTE": 172,
+      "PENDENTES": 17,
+      "NAO_AVALIAVEL": 17
+    },
+    "Anéis": {
+      "TOTAL": 1203,
+      "PENDENTES": 346,
+      "NAO_AVALIAVEL": 346,
+      "PONTUAVEIS": 857,
+      "CORRETO": 746,
+      "INCORRETO": 61,
+      "AUSENTE": 50
+    },
+    "Válvulas": {
+      "TOTAL": 1338,
+      "PONTUAVEIS": 1338,
+      "CORRETO": 1175,
+      "AUSENTE": 78,
+      "INCORRETO": 85
+    }
+  },
+  "cobertura_pontuavel": 0.942114495295806,
+  "baseline_manter_original": 0.8823628977657414,
+  "normalizacao_ncm": {
+    "alvo": "string de 8 dígitos",
+    "representacoes_equivalentes": [
+      "7318.15.00",
+      "73181500"
+    ],
+    "permitidos_na_string": "apenas dígitos ASCII, pontos e espaços",
+    "operacao": "remover pontos/espaços e exigir exatamente 8 dígitos",
+    "proibido": "extrair de texto com letras; truncar; completar com zeros"
+  },
+  "acoes": {
+    "MANTER_CLASSIFICACAO": "mesmos 8 dígitos; normalização de representação permitida",
+    "CORRIGIR": "NCM original preenchido difere do gabarito",
+    "PREENCHER": "NCM original ausente e alvo definido",
+    "REVISAO_MANUAL": "evidência insuficiente para alvo NCM único; avaliar encaminhamento, sem comparar NCM vazio"
+  },
+  "grupos_particao": {
+    "total_grupos": 6090,
+    "registros_repetidos_agrupados": 181,
+    "grupos_com_mais_de_um_alvo": 0,
+    "criterios": [
+      "mesma descrição longa normalizada por acento/caixa/espaços",
+      "mesmo código de material",
+      "mesmo fabricante e referência, quando ambos preenchidos"
+    ],
+    "particao_criada": false
+  },
+  "fontes": {
+    "origem_oficial": "https://portalunico.siscomex.gov.br/classif/api/publico/nomenclatura/download/json",
+    "reproducao_consultada": "https://github.com/iricardofernandes/horizon/blob/d2e511ed405cffe4e9364ba831d55f34c6345135/knowledge/data/ncm-table.json.gz",
+    "vigencia_declarada": "Vigente em 29/09/2026",
+    "ato": "Resolução Gecex nº 926/2026",
+    "acesso_oficial_direto": "bloqueado pela rede",
+    "vigencia_posterior_confirmada": false
+  },
+  "correcao_auditoria_anterior": {
+    "valvulas_retencao_tipo_esfera_revisadas": 23,
+    "falsos_positivos_removidos": 17,
+    "alvos_de_incorretos_corrigidos": 3,
+    "alvos_de_ausentes_corrigidos": 3,
+    "incorretos_valvulas_resultantes": 85
+  },
+  "limite": "Gabarito documental, sem inspeção física, certificado/catálogo completo ou validação fiscal independente. Não interpretar sugestão anterior baseada só em aplicação mecânica como rótulo definitivo.",
+  "validacao_fiscal_independente": false,
+  "revisores_humanos": [],
+  "formato": {
+    "encoding": "UTF-8 com BOM",
+    "delimitador": ",",
+    "terminador_linha": "CRLF",
+    "ncm": "texto; oito dígitos após normalização",
+    "pareamento": "ID_BENCHMARK; mesmas linhas e ordem nas duas bases"
+  },
+  "arquivos": {
+    "base_com_gabarito.csv": {
+      "registros": 6271,
+      "colunas": [
+        "CODIGO_MATERIAL",
+        "DESCRICAO_CURTA",
+        "DESCRICAO_LONGA",
+        "UNIDADE_MEDIDA",
+        "NCM",
+        "GRUPO_MERCADORIA",
+        "FABRICANTE",
+        "REFERENCIA_FABRICANTE",
+        "CENTRO",
+        "STATUS",
+        "DATA_CRIACAO",
+        "USUARIO_CRIACAO",
+        "DATA_ULTIMA_MOVIMENTACAO",
+        "ESTOQUE_ATUAL",
+        "PRECO_MEDIO_UNITARIO",
+        "ID_BENCHMARK",
+        "GRUPO_PARTICAO",
+        "LINHA_ORIGEM",
+        "FAMILIA_GABARITO",
+        "SUBTIPO_GABARITO",
+        "NCM_ORIGINAL_NORMALIZADO",
+        "NCM_GABARITO",
+        "NCM_GABARITO_FORMATADO",
+        "STATUS_GABARITO",
+        "ELEGIVEL_BENCHMARK_NCM",
+        "SITUACAO_NCM_ORIGINAL",
+        "ACAO_ESPERADA_NCM",
+        "JUSTIFICATIVA_GABARITO",
+        "EVIDENCIA_DESCRICAO",
+        "PENDENCIA_TECNICA",
+        "REGRA_GABARITO",
+        "VERSAO_GABARITO"
+      ],
+      "sha256": "d90e8c013a663d21380e6c249a7419f2e73945f14ef4007ca87d6e6e6d78e13a",
+      "bytes": 4931736
+    },
+    "base_sem_gabarito.csv": {
+      "registros": 6271,
+      "colunas": [
+        "CODIGO_MATERIAL",
+        "DESCRICAO_CURTA",
+        "DESCRICAO_LONGA",
+        "UNIDADE_MEDIDA",
+        "NCM",
+        "GRUPO_MERCADORIA",
+        "FABRICANTE",
+        "REFERENCIA_FABRICANTE",
+        "CENTRO",
+        "STATUS",
+        "DATA_CRIACAO",
+        "USUARIO_CRIACAO",
+        "DATA_ULTIMA_MOVIMENTACAO",
+        "ESTOQUE_ATUAL",
+        "PRECO_MEDIO_UNITARIO",
+        "ID_BENCHMARK",
+        "GRUPO_PARTICAO",
+        "LINHA_ORIGEM"
+      ],
+      "sha256": "30cbc59a3c119f7b4f0f536c65f197fc78dbcebff8b0e0ac370cfae9b338161d",
+      "bytes": 1913767
+    }
+  }
+}
