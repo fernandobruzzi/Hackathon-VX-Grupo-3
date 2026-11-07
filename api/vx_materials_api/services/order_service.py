@@ -23,15 +23,17 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
 from domain.ncm_rules import check_ncm_consistency
+from domain.contracts import AnalyzedMaterial, MaterialRecord
+from domain.identity_decision import decide_identity
 from domain.pdm_validator import validate_pdm
 from pipelines.import_orders import STATUS_READY, OrderAnalysis, OrderRow, analyze_order
-from pipelines.search_index import index_version
+from pipelines.search_index import analyze_search_candidate, index_version
+from repositories.batch_repository import SearchSource
 from repositories.classification import get_classification_repository
 from repositories.extraction import get_extraction_repository
 from vx_materials_api.db.models import (
     AuditLog,
     MaterialMaster,
-    MaterialSearchIndex,
     OperationRequest,
     RegistrationOrder,
     UserSso,
@@ -61,49 +63,103 @@ def _rules(catalog):
     return classifier, extractor, index_version(catalog, classifier, extractor)
 
 
-def existing_materials(db, tenant_id, identity_key: str, version: str) -> list[str]:
-    """Ativos com a mesma identidade, no índice da versão atual ou já publicados como principais."""
-    from_index = select(MaterialSearchIndex.material_id).where(
-        MaterialSearchIndex.tenant_id == tenant_id,
-        MaterialSearchIndex.normalization_version == version,
-        MaterialSearchIndex.candidate_identity_key == identity_key,
-        MaterialSearchIndex.source_version == MaterialMaster.version,
-        MaterialSearchIndex.material_id == MaterialMaster.id,
-    )
-    rows = db.scalars(
-        select(MaterialMaster.id)
-        .where(
-            MaterialMaster.tenant_id == tenant_id,
-            MaterialMaster.status == "ATIVO",
-            (MaterialMaster.id.in_(from_index)) | (MaterialMaster.identity_key == identity_key),
+class IdentityReviewRequired(ApiProblem):
+    def __init__(self, candidates: dict[str, list[str]]) -> None:
+        super().__init__(
+            409,
+            "IDENTITY_REVIEW_REQUIRED",
+            "A identidade exige revisão técnica das evidências antes de confirmar ou publicar.",
+            candidate_material_ids=list(candidates),
+            reasons=candidates,
         )
-        .order_by(MaterialMaster.material_code)
+
+
+def existing_materials(db, tenant_id, catalog, analysis: OrderAnalysis, version: str) -> list[str]:
+    """Chaves recuperam candidatos; a decisão compartilhada confirma identidade no mesmo snapshot da cobertura."""
+    db.flush()
+    state = db.execute(
+        text(
+            "SELECT count(*) AS total, "
+            "count(i.material_id) FILTER (WHERE i.source_version = m.version) AS current, "
+            "jsonb_agg(jsonb_build_object("
+            "'id', m.id, 'code', m.material_code, 'status', m.status, "
+            "'original_description', m.original_description_long, 'pdm_description', m.pdm_description, "
+            "'approved_class_id', m.pdm_class_id, 'approved_attributes', m.attributes, "
+            "'manufacturer', m.manufacturer, 'reference', m.manufacturer_reference, "
+            "'material_version', m.version, 'indexed_class_id', i.proposed_class_id, "
+            "'indexed_attributes', i.extracted_attributes, 'indexed_key', i.candidate_identity_key) "
+            "ORDER BY m.material_code) FILTER (WHERE m.status = 'ATIVO' AND "
+            "(m.identity_key = :identity OR (i.source_version = m.version AND "
+            "i.candidate_identity_key = :identity))) AS candidates "
+            "FROM materials_master m LEFT JOIN material_search_index i ON i.material_id = m.id "
+            "AND i.tenant_id = m.tenant_id AND i.normalization_version = :version "
+            "WHERE m.tenant_id = :tenant"
+        ),
+        {"tenant": tenant_id, "identity": analysis.identity_key, "version": version},
+    ).one()
+    requested = AnalyzedMaterial(
+        MaterialRecord("", "ATIVO", analysis.source_text),
+        analysis.pdm_class_id,
+        analysis.item_name,
+        analysis.attributes,
+        analysis.identity_key,
     )
-    result = [str(material_id) for material_id in rows]
-    if result:
-        return result
-    total = db.scalar(select(func.count()).select_from(MaterialMaster).where(MaterialMaster.tenant_id == tenant_id))
-    current = db.scalar(
-        select(func.count())
-        .select_from(MaterialSearchIndex)
-        .join(MaterialMaster, MaterialMaster.id == MaterialSearchIndex.material_id)
-        .where(
-            MaterialSearchIndex.tenant_id == tenant_id,
-            MaterialMaster.tenant_id == tenant_id,
-            MaterialSearchIndex.normalization_version == version,
-            MaterialSearchIndex.source_version == MaterialMaster.version,
+    classifier, extractor, _ = _rules(catalog)
+    verified = []
+    review = {}
+    for row in state.candidates or []:
+        approved = row["approved_class_id"] is not None or row["approved_attributes"]
+        source = SearchSource(
+            MaterialRecord(
+                row["code"],
+                row["status"],
+                (row["pdm_description"] or row["original_description"] or "")
+                if approved
+                else row["original_description"] or "",
+                manufacturer=row["manufacturer"] or "",
+                reference=row["reference"] or "",
+                version=row["material_version"],
+            ),
+            row["approved_class_id"],
+            row["approved_attributes"] or {},
+            row["original_description"],
         )
-    )
-    if not total or current != total:
+        candidate = analyze_search_candidate(
+            source,
+            catalog,
+            classifier,
+            extractor,
+            row["indexed_class_id"],
+            row["indexed_attributes"],
+            row["indexed_key"],
+        )
+        decision = decide_identity(catalog, requested, candidate)
+        if decision.status == "SAME_MATERIAL":
+            verified.append(row["id"])
+        elif decision.status == "REVIEW_REQUIRED":
+            review[row["id"]] = list(decision.reasons)
+    if verified:
+        return verified
+    if not state.total or state.current != state.total:
         raise SearchIndexMissing(version)
-    return result
+    if review:
+        raise IdentityReviewRequired(review)
+    return []
 
 
-def _evaluate(db, tenant_id, analysis: OrderAnalysis, version: str) -> tuple[str, list[str]]:
+def _evaluate(db, tenant_id, catalog, analysis: OrderAnalysis, version: str) -> tuple[str, list[str], tuple[str, ...]]:
     if analysis.status != STATUS_READY:
-        return analysis.status, []
-    existing = existing_materials(db, tenant_id, analysis.identity_key, version)
-    return ("EXISTING", existing) if existing else (STATUS_READY, [])
+        return analysis.status, [], analysis.missing_attributes
+    try:
+        existing = existing_materials(db, tenant_id, catalog, analysis, version)
+    except IdentityReviewRequired as error:
+        reasons = sorted({reason for values in error.details["reasons"].values() for reason in values})
+        return (
+            STATUS_READY,
+            error.details["candidate_material_ids"],
+            tuple("REVISAO DE IDENTIDADE: " + r for r in reasons),
+        )
+    return ("EXISTING" if existing else STATUS_READY), existing, analysis.missing_attributes
 
 
 def import_orders(db, tenant_id, catalog, rows: list[OrderRow]) -> dict:
@@ -113,7 +169,7 @@ def import_orders(db, tenant_id, catalog, rows: list[OrderRow]) -> dict:
     values = []
     for row in rows:
         analysis = analyze_order(row, catalog, classifier, extractor)
-        status, candidates = _evaluate(db, tenant_id, analysis, version)
+        status, candidates, missing = _evaluate(db, tenant_id, catalog, analysis, version)
         counts[status] += 1
         values.append(
             {
@@ -127,7 +183,7 @@ def import_orders(db, tenant_id, catalog, rows: list[OrderRow]) -> dict:
                 "urgency": row.urgency,
                 "pdm_class_id": analysis.pdm_class_id,
                 "attributes": analysis.attributes,
-                "missing_attributes": list(analysis.missing_attributes),
+                "missing_attributes": list(missing),
                 "candidate_material_ids": candidates,
                 "status": status,
             }
@@ -316,9 +372,9 @@ def submit_order(db, identity, catalog, order_id, expected_version, key, request
     before = _state(order)
     classifier, extractor, version = _rules(catalog)
     analysis = _analysis(order, catalog, classifier, extractor)
-    order.status, order.candidate_material_ids = _evaluate(db, identity.tenant_id, analysis, version)
+    order.status, order.candidate_material_ids, missing = _evaluate(db, identity.tenant_id, catalog, analysis, version)
     order.pdm_class_id, order.attributes = analysis.pdm_class_id, analysis.attributes
-    order.missing_attributes = list(analysis.missing_attributes)
+    order.missing_attributes = list(missing)
     order.version += 1
     db.flush()
     _audit(db, identity, role, order, "ORDER_SUBMITTED", None, before, request_id)
@@ -379,6 +435,15 @@ def _analysis(order, catalog, classifier, extractor) -> OrderAnalysis:
             tuple(attribute.name for attribute in validation.missing_attributes),
             validation.identity_key,
             validation.formatted_description,
+            source_text="\n".join(
+                part
+                for part in (
+                    order.original_text,
+                    order.attachment_text,
+                    *(item["text"] for item in getattr(order, "supplements", None) or []),
+                )
+                if part
+            ),
         )
     supplements = order.supplements or []
     # Separadores mantêm os rótulos dos complementos independentes do texto original.
@@ -421,6 +486,9 @@ def _publish(db, order, catalog, analysis: OrderAnalysis) -> MaterialMaster:
 def decide_order(db, identity, catalog, order_id, decision, key, request_id=None) -> dict:
     """Governança aprova a parte técnica; o Fiscal aprova o NCM e publica. Rejeição encerra o pedido."""
     operation = "registration_order.decide"
+    # A aprovação de materiais usa seed 0; sempre o adquirimos antes do lock dos pedidos (seed 1).
+    # Ambos ficam retidos até o commit, inclusive entre a busca final e a publicação.
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:t, 0))"), {"t": str(identity.tenant_id)})
     db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:t, 1))"), {"t": str(identity.tenant_id)})
     previous, payload_hash = _idempotent(
         db, identity, operation, key, {"order_id": str(order_id), **decision.model_dump(mode="json", exclude_none=True)}
@@ -461,7 +529,7 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
         analysis = _analysis(order, catalog, classifier, extractor)
         if analysis.status != STATUS_READY or analysis.pdm_class_id != order.pdm_class_id:
             raise ApiProblem(422, "ORDER_INCOMPLETE", "O pedido não cumpre mais o PDM. Reavalie antes de aprovar.")
-        existing = existing_materials(db, identity.tenant_id, analysis.identity_key, version)
+        existing = existing_materials(db, identity.tenant_id, catalog, analysis, version)
         if existing:
             order.status, order.candidate_material_ids, action = "EXISTING", existing, "ORDER_FOUND_EXISTING"
         elif order.status == "READY_FOR_REVIEW":
@@ -525,7 +593,9 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
                     material = _publish(db, order, catalog, analysis)
             except IntegrityError:
                 # Outro principal com a mesma identidade entrou ao mesmo tempo: não duplica.
-                existing = existing_materials(db, identity.tenant_id, analysis.identity_key, version)
+                existing = existing_materials(db, identity.tenant_id, catalog, analysis, version)
+                if not existing:
+                    raise
                 order.status, order.candidate_material_ids, action = "EXISTING", existing, "ORDER_FOUND_EXISTING"
             else:
                 order.material_id, order.status, action = material.id, "REGISTERED", "ORDER_REGISTERED"

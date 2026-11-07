@@ -36,6 +36,8 @@ class OrderAnalysis:
     missing_attributes: tuple[str, ...] = ()
     identity_key: str | None = None
     formatted_description: str | None = None
+    # Evidência recebida: a descrição formatada pode omitir revisão e outros trechos não consumidos.
+    source_text: str = ""
 
 
 def read_orders(content: bytes) -> list[OrderRow]:
@@ -62,7 +64,7 @@ def analyze_order(
     )
     class_id = classification.pdm_class_id
     if class_id is None:
-        return OrderAnalysis(STATUS_OUT_OF_SCOPE)
+        return OrderAnalysis(STATUS_OUT_OF_SCOPE, source_text=text)
     pdm_class = catalog.classes[class_id]
     item_name = resolve_item_name(pdm_class, [evidence.matched_name for evidence in classification.evidence])
     extraction = extractor.extract(pdm_class, text)
@@ -72,7 +74,9 @@ def analyze_order(
     if item_name is None and len(pdm_class.item_names) > 1:
         missing = ("ITEM", *missing)
     if missing or not validation.can_submit or validation.identity_key is None:
-        return OrderAnalysis(STATUS_INCOMPLETE, class_id, item_name, attributes, missing or ("REVISAO",))
+        return OrderAnalysis(
+            STATUS_INCOMPLETE, class_id, item_name, attributes, missing or ("REVISAO",), source_text=text
+        )
     return OrderAnalysis(
         STATUS_READY,
         class_id,
@@ -81,4 +85,5 @@ def analyze_order(
         (),
         validation.identity_key,
         validation.formatted_description,
+        source_text=text,
     )

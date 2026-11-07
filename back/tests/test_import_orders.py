@@ -60,3 +60,18 @@ def test_attachment_text_is_part_of_the_order(catalog, orders):
     order = orders["SC-202600002"]
     assert order.attachment_text
     assert analyze(catalog, order).pdm_class_id == "PDM032"
+
+
+@pytest.mark.parametrize("extra", ["REV A", "PN: N9999999"])
+def test_analysis_keeps_original_warning_and_reference_evidence_outside_formatted_output(catalog, extra):
+    from pipelines.import_orders import OrderRow
+
+    raw = (
+        "MANTO; APLICACAO: BRITADOR CONICO; MODELO EQUIPAMENTO: HP400; "
+        "FABRICANTE: METSO; REFERENCIA FABRICANTE: N1234567;"
+    )
+    order = OrderRow("SOURCE", raw, extra, "1100", None)
+    result = analyze(catalog, order)
+    assert result.source_text == raw + " " + extra
+    assert result.attributes["REFERENCIA FABRICANTE"] == "N1234567"
+    assert extra not in result.formatted_description

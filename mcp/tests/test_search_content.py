@@ -113,7 +113,7 @@ def searchable(content_database_url, monkeypatch):
     engine.dispose()
 
 
-def search(case, reference, class_id="PDM100", attributes=None):
+def search(case, reference, class_id="PDM100", attributes=None, item_name="FILTRO OLEO LUBRIFICANTE"):
     tool = SimilarMaterialsSearch(case["catalog"], case["reader"], caller_from_environment())
     try:
         return tool.run(
@@ -125,6 +125,7 @@ def search(case, reference, class_id="PDM100", attributes=None):
                 "REFERENCIA FABRICANTE": reference,
             },
             20,
+            item_name=item_name,
         )
     finally:
         tool._engine.dispose()
@@ -132,9 +133,8 @@ def search(case, reference, class_id="PDM100", attributes=None):
 
 @contextmanager
 def automatic_index(case):
-    root = Path(__file__).parents[2]
     environment = {name: os.environ[name] for name in ("PATH", "LANG", "HOME") if name in os.environ}
-    environment.update(DATABASE_URL=case["batch"], PYTHONPATH=str(root / "back"), APP_ENV="local")
+    environment.update(DATABASE_URL=case["batch"], APP_ENV="local")
     process = subprocess.Popen(
         [sys.executable, "-m", "cli", "index", "--watch", "--poll-seconds", "1", "--pdm-workbook", PDM],
         env=environment,
@@ -198,13 +198,15 @@ def test_publication_invalidates_until_incremental_batch_finds_current_material(
     technical = decide(case, path, "GESTOR_CADASTRO", 1)
     decide(case, path, "AUDITOR_FISCAL", technical["version"])
     with pytest.raises(ToolError, match="INDEX_UPDATING"):
-        search(case, reference, analysis.pdm_class_id, analysis.attributes)
+        search(case, reference, analysis.pdm_class_id, analysis.attributes, item_name=analysis.item_name)
     with automatic_index(case) as process:
         deadline = time.monotonic() + 15
         while True:
             assert process.poll() is None, "O indexador automático encerrou antes de atualizar"
             try:
-                found = search(case, reference, analysis.pdm_class_id, analysis.attributes)
+                found = search(
+                    case, reference, analysis.pdm_class_id, analysis.attributes, item_name=analysis.item_name
+                )
                 break
             except ToolError:
                 if time.monotonic() >= deadline:
@@ -223,12 +225,14 @@ def test_publication_invalidates_until_incremental_batch_finds_current_material(
     assert row.original_description_long == "Texto original preservado" and reference in row.pdm_description
 
 
-def test_technical_application_uses_approved_values_instead_of_previous_interpretation(searchable):
+@pytest.mark.parametrize("item_name", ["FILTRO OLEO LUBRIFICANTE", "FILTRO COMBUSTIVEL"])
+def test_technical_application_uses_approved_values_instead_of_previous_interpretation(searchable, item_name):
     case = searchable
     run_index(PDM, case["batch"])
     material = case["materials"][0]
     changes = deepcopy(case["original"].changeset)
     changes["after"]["attributes"]["REFERENCIA FABRICANTE"] = "LF9999"
+    changes["after"]["item_name"] = item_name
     changes["sources"] = {"attributes": "Correção aprovada"}
     members = [case["original"].members[0]]
     proposal = SanitizationProposal(
@@ -250,9 +254,16 @@ def test_technical_application_uses_approved_values_instead_of_previous_interpre
         search(case, "LF9999")
     result = run_index(PDM, case["batch"], if_stale=True)
     assert result["written"] == 1 and result["pending"] == 0
-    found = search(case, "LF9999")
+    found = search(case, "LF9999", item_name=item_name)
     assert found.match_status == "EXISTING_FOUND"
     assert any(c.material_code == material.material_code and c.identity_verified for c in found.candidates)
+    with case["engine"].connect() as connection:
+        original, current = connection.execute(
+            text("SELECT original_description_long, pdm_description FROM materials_master WHERE id=:id"),
+            {"id": material.id},
+        ).one()
+    assert original == "FILTRO FLEETGUARD 100"
+    assert current.startswith(item_name + ";") and "LF9999" in current
     old = search(case, "LF9009")
     assert not any(c.material_code == material.material_code and c.identity_verified for c in old.candidates)
 
@@ -473,3 +484,78 @@ def test_unchanged_catalog_preserves_real_choices_without_searching_again(search
         assert not any(call["name"] == "search_similar_materials" for call in third["tool_calls"])
         if choice == "PICK_CANDIDATE":
             assert third["material_card"]["existing"]["material_code"] == action["material_code"]
+
+
+def test_freshness_counts_only_the_authenticated_tenant(searchable):
+    from vx_materials_mcp.repositories.catalog_repository import CatalogRepository
+
+    case = searchable
+    version = run_index(PDM, case["batch"])["index_version"]
+    other = uuid.uuid4()
+    with case["engine"].begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO materials_master (tenant_id, source_system, material_code, status) "
+                "VALUES (:tenant, 'TEST', 'PRIVATE', 'ATIVO')"
+            ),
+            {"tenant": other},
+        )
+    reader = create_engine(case["reader"])
+    try:
+        assert CatalogRepository(reader, str(TENANT_ID)).index_state(version) == (2, 2)
+        assert CatalogRepository(reader, str(other)).index_state(version) == (1, 0)
+        assert search(case, "LF9009").match_status == "EXISTING_FOUND"
+    finally:
+        reader.dispose()
+
+
+def test_negative_order_check_does_not_mix_old_candidates_with_refreshed_coverage(searchable):
+    from sqlalchemy import event
+
+    from vx_materials_api.services.order_service import SearchIndexMissing, existing_materials
+
+    case = searchable
+    version = run_index(PDM, case["batch"])["index_version"]
+    material = case["materials"][0]
+    target = "PDM100|FLEETGUARD|LF9999"
+    with case["engine"].begin() as connection:
+        connection.execute(text("UPDATE materials_master SET version=2 WHERE id=:id"), {"id": material.id})
+    writer = create_engine(case["engine"].url)
+    changed = False
+
+    def after_candidates(connection, cursor, statement, parameters, context, executemany):
+        nonlocal changed
+        if changed or not statement.lstrip().upper().startswith("SELECT") or "material_search_index" not in statement:
+            return
+        changed = True
+        with writer.begin() as concurrent:
+            concurrent.execute(
+                text("UPDATE materials_master SET identity_key=:key WHERE id=:id"),
+                {"key": target, "id": material.id},
+            )
+            concurrent.execute(
+                text(
+                    "UPDATE material_search_index SET candidate_identity_key=:key, source_version=2 "
+                    "WHERE material_id=:id"
+                ),
+                {"key": target, "id": material.id},
+            )
+
+    event.listen(case["engine"], "after_cursor_execute", after_candidates)
+    try:
+        with pytest.raises(SearchIndexMissing):
+            from pipelines.import_orders import OrderAnalysis
+
+            analysis = OrderAnalysis(
+                "READY_FOR_REVIEW",
+                "PDM100",
+                "FILTRO OLEO LUBRIFICANTE",
+                {"FABRICANTE": "FLEETGUARD", "REFERENCIA FABRICANTE": "LF9999"},
+                (),
+                target,
+            )
+            existing_materials(case["db"], TENANT_ID, case["catalog"], analysis, version)
+        assert changed
+    finally:
+        event.remove(case["engine"], "after_cursor_execute", after_candidates)
+        writer.dispose()

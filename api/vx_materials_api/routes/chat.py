@@ -42,7 +42,7 @@ async def send_message(
     verify_write(request, identity)
     rid = request_id(request)
     reservation = chat_service.reserve_turn(
-        db, identity, payload, rules_version=chat_service.cache_rules(catalog(request))
+        db, identity, payload, rules_version=lambda: chat_service.cache_rules(catalog(request))
     )
     secret = settings.agent_internal_token_secret()
     token = issue_agent_token(
@@ -54,7 +54,13 @@ async def send_message(
         chat_service.release_turn(db, reservation)
         raise ApiProblem(503, error.code, str(error)) from error
     return chat_service.complete_turn(
-        db, identity, payload, reservation, result, rid, rules_version=chat_service.cache_rules(catalog(request))
+        db,
+        identity,
+        payload,
+        reservation,
+        result,
+        rid,
+        rules_version=lambda: chat_service.cache_rules(catalog(request)),
     )
 
 

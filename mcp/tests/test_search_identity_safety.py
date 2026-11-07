@@ -30,7 +30,19 @@ def pdm():
     return load_pdm(KIT)
 
 
-def search(pdm, class_id, query, attributes, *, manufacturer="", reference="", description="", candidate_item=None):
+def search(
+    pdm,
+    class_id,
+    query,
+    attributes,
+    *,
+    manufacturer="",
+    reference="",
+    description="",
+    candidate_item=None,
+    current_description=None,
+    approved_attributes=None,
+):
     # A chave simulada coincide até nos casos inseguros: a verificação precisa conferir a evidência.
     from domain.pdm_validator import validate_pdm
 
@@ -42,7 +54,9 @@ def search(pdm, class_id, query, attributes, *, manufacturer="", reference="", d
         "material_code": "123",
         "status": "ATIVO",
         "original_description_long": description or query,
-        "pdm_description": None,
+        "pdm_description": current_description,
+        "approved_class_id": class_id if approved_attributes is not None else None,
+        "approved_attributes": approved_attributes,
         "manufacturer": manufacturer,
         "manufacturer_reference": reference,
         "candidate_identity_key": key,
@@ -206,3 +220,56 @@ def test_explicitly_ambiguous_names_are_not_generic_missing_names(pdm, ambiguous
     assert candidate["identity_verified"] is False
     assert "SUBSTANTIVO_AMBIGUO" in candidate["pending_checks"]
     assert result["match_status"] == "REVIEW_REQUIRED"
+
+
+def test_current_approved_noun_and_attributes_precede_original_inference(pdm):
+    attributes = {"FABRICANTE": "FLEETGUARD", "REFERENCIA FABRICANTE": "LF9999"}
+    result = search(
+        pdm,
+        "PDM100",
+        "FILTRO COMBUSTIVEL FLEETGUARD LF9999",
+        attributes,
+        manufacturer="FLEETGUARD",
+        reference="LF9999",
+        description="FILTRO OLEO LUBRIFICANTE FLEETGUARD LF9009",
+        current_description="FILTRO COMBUSTIVEL; FABRICANTE: FLEETGUARD; REFERENCIA FABRICANTE: LF9999",
+        approved_attributes=attributes,
+    )
+    assert result["candidates"][0]["identity_verified"]
+    assert result["match_status"] == "EXISTING_FOUND"
+
+
+def test_original_revision_evidence_is_kept_with_approved_current_values(pdm):
+    attributes = {"FABRICANTE": "METSO", "REFERENCIA FABRICANTE": "N1234567"}
+    result = search(
+        pdm,
+        "PDM110",
+        "MANTO METSO N1234567",
+        attributes,
+        manufacturer="METSO",
+        reference="N1234567",
+        description="MANTO METSO N1234567 REV A",
+        current_description="MANTO; FABRICANTE: METSO; REFERENCIA FABRICANTE: N1234567",
+        approved_attributes=attributes,
+    )
+    candidate = result["candidates"][0]
+    assert not candidate["identity_verified"]
+    assert "REVISAO_DE_PECA_NAO_CONFIRMADA" in candidate["pending_checks"]
+
+
+def test_approved_values_do_not_hide_a_current_structured_reference_conflict(pdm):
+    attributes = {"FABRICANTE": "FLEETGUARD", "REFERENCIA FABRICANTE": "LF9999"}
+    result = search(
+        pdm,
+        "PDM100",
+        "FILTRO COMBUSTIVEL FLEETGUARD LF9999",
+        attributes,
+        manufacturer="FLEETGUARD",
+        reference="LF9009",
+        description="FILTRO FLEETGUARD LF9009",
+        current_description="FILTRO COMBUSTIVEL; FABRICANTE: FLEETGUARD; REFERENCIA FABRICANTE: LF9999",
+        approved_attributes=attributes,
+    )
+    candidate = result["candidates"][0]
+    assert not candidate["identity_verified"]
+    assert "REFERENCIA_CONFLITANTE" in candidate["pending_checks"]
