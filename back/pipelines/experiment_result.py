@@ -59,6 +59,15 @@ def _has_evidence(value):
     return isinstance(value, str) and bool(value.strip())
 
 
+def _empty_cell(value):
+    # XLSX roundtrips collapse empty strings to None; preserve every other value.
+    return None if value == "" else value
+
+
+def _protected_values(values):
+    return tuple(_empty_cell(value) for value in values)
+
+
 def _validate_workbook(wb, key):
     expected = workbook(key)
     if wb.sheetnames != expected.sheetnames:
@@ -78,17 +87,22 @@ def _validate_workbook(wb, key):
                     editable = (sheet.title == SHEET_GUIDE and cell.coordinate == REVIEWER_CELL) or (
                         sheet.title == SHEET_MANUAL and cell.coordinate in ("B1", "D1", "F1")
                     )
-                    if not editable and cell.value != (original[cell.coordinate].value or None):
+                    if not editable and _empty_cell(cell.value) != _empty_cell(original[cell.coordinate].value):
                         raise ExperimentError(f"Conteúdo protegido alterado: {sheet.title}!{cell.coordinate}")
         if spec:
             first, id_column, protected = spec
             expected_rows = {
-                row[id_column]: row[:protected] for row in original.iter_rows(min_row=first, values_only=True)
+                row[id_column]: _protected_values(row[:protected])
+                for row in original.iter_rows(min_row=first, values_only=True)
             }
             seen = set()
             for row in sheet.iter_rows(min_row=first, values_only=True):
                 case = row[id_column]
-                if case in seen or case not in expected_rows or row[:protected] != expected_rows[case]:
+                if (
+                    case in seen
+                    or case not in expected_rows
+                    or _protected_values(row[:protected]) != expected_rows[case]
+                ):
                     raise ExperimentError("Caso duplicado, desconhecido ou conteúdo protegido alterado")
                 seen.add(case)
             if seen != set(expected_rows):

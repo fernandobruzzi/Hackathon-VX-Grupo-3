@@ -315,3 +315,47 @@ def test_control_groups_keep_unproposed_pair_and_full_a_groups(packet):
             assert tuple(sorted(case["codes"])) in proposals
         else:
             assert _pairs(case["codes"]) - proposed_pairs
+
+
+def nullable_packet_key():
+    return {
+        "package_id": "nullable-protected-roundtrip",
+        "pairs": {"P001": {"members": [""]}},
+        "corrections": {"D001": {"code": "001", "original": "", "proposed": None}},
+        "slice_order": ["001"],
+        "slice": {"001": {"description": "", "unit": ""}},
+    }
+
+
+def test_nullable_protected_cells_roundtrip(tmp_path):
+    from pipelines.experiment_result import _validate_workbook
+
+    key = nullable_packet_key()
+    path = tmp_path / "nullable.xlsx"
+    workbook(key).save(path)
+    restored = load_workbook(path)
+    assert restored["Manual"]["D4"].value is None
+    assert restored["Manual"]["B4"].value == "001"
+    assert restored["Manual"]["B4"].data_type == "s"
+    _validate_workbook(restored, key)
+
+
+@pytest.mark.parametrize(
+    "sheet,cell,value",
+    [
+        ("Manual", "D4", " "),
+        ("Manual", "B4", 1),
+        ("Descrição", "C2", " "),
+        ("Descrição", "D2", "=1+1"),
+    ],
+)
+def test_nullable_protected_cells_still_reject_changes(tmp_path, sheet, cell, value):
+    from pipelines.experiment_result import _validate_workbook
+
+    key = nullable_packet_key()
+    path = tmp_path / "nullable-edited.xlsx"
+    wb = workbook(key)
+    wb[sheet][cell] = value
+    wb.save(path)
+    with pytest.raises(ExperimentError):
+        _validate_workbook(load_workbook(path), key)
