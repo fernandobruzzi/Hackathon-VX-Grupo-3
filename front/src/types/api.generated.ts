@@ -675,6 +675,58 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/material-requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar solicitações próprias e pendências da fila autorizada, limitadas aos centros. */
+    get: operations["listMaterialRequests"];
+    put?: never;
+    /** Criar solicitação sem movimentar estoque; estado derivado no servidor. */
+    post: operations["createMaterialRequest"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/material-requests/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar solicitação e histórico de transições no próprio escopo. */
+    get: operations["getMaterialRequest"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/material-requests/{id}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancelar solicitação própria sem reserva; versão e motivo obrigatórios. */
+    post: operations["cancelMaterialRequest"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -726,7 +778,12 @@ export interface components {
       | "audit:own"
       | "audit:technical"
       | "audit:fiscal"
-      | "chat:diagnostics";
+      | "chat:diagnostics"
+      | "requests:create"
+      | "requests:read_own"
+      | "requests:cancel_own"
+      | "requests:read_queue"
+      | "requests:read_fiscal";
     Me: {
       user: {
         /** Format: uuid */
@@ -1741,6 +1798,176 @@ export interface components {
       extraction_rule?: string;
       /** @constant */
       manual_confirmation_required?: true;
+    };
+    /** CreateMaterialRequest */
+    CreateMaterialRequest: {
+      /** Original Text */
+      original_text: string;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /** Center Code */
+      center_code: string;
+      /**
+       * Material Id
+       * @default null
+       */
+      material_id: string | null;
+      /**
+       * Chat Session Id
+       * @default null
+       */
+      chat_session_id: string | null;
+      /**
+       * Registration Order Id
+       * @default null
+       */
+      registration_order_id: string | null;
+    };
+    /** CancelMaterialRequest */
+    CancelMaterialRequest: {
+      /** Expected Version */
+      expected_version: number;
+      /** Reason */
+      reason: string;
+    };
+    /** MaterialRequestSummary */
+    MaterialRequestSummary: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Protocol */
+      protocol: string;
+      /**
+       * Requester User Id
+       * Format: uuid
+       */
+      requester_user_id: string;
+      /** Original Text */
+      original_text: string;
+      /** Material Id */
+      material_id: string | null;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /** Center Code */
+      center_code: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "EM_IDENTIFICACAO" | "AGUARDANDO_CADASTRO" | "EM_ATENDIMENTO" | "ENCERRADA";
+      /** Closure Reason */
+      closure_reason: string | null;
+      /** Chat Session Id */
+      chat_session_id: string | null;
+      /** Registration Order Id */
+      registration_order_id: string | null;
+      /** Version */
+      version: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Can Cancel */
+      can_cancel: boolean;
+    };
+    /** MaterialRequestTransition */
+    MaterialRequestTransition: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Actor User Id
+       * Format: uuid
+       */
+      actor_user_id: string;
+      /** Before Status */
+      before_status:
+        ("EM_IDENTIFICACAO" | "AGUARDANDO_CADASTRO" | "EM_ATENDIMENTO" | "ENCERRADA") | null;
+      /**
+       * After Status
+       * @enum {string}
+       */
+      after_status: "EM_IDENTIFICACAO" | "AGUARDANDO_CADASTRO" | "EM_ATENDIMENTO" | "ENCERRADA";
+      /** Reason */
+      reason: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
+    /** MaterialRequestDetail */
+    MaterialRequestDetail: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Protocol */
+      protocol: string;
+      /**
+       * Requester User Id
+       * Format: uuid
+       */
+      requester_user_id: string;
+      /** Original Text */
+      original_text: string;
+      /** Material Id */
+      material_id: string | null;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /** Center Code */
+      center_code: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "EM_IDENTIFICACAO" | "AGUARDANDO_CADASTRO" | "EM_ATENDIMENTO" | "ENCERRADA";
+      /** Closure Reason */
+      closure_reason: string | null;
+      /** Chat Session Id */
+      chat_session_id: string | null;
+      /** Registration Order Id */
+      registration_order_id: string | null;
+      /** Version */
+      version: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+      /** Can Cancel */
+      can_cancel: boolean;
+      /** History */
+      history: components["schemas"]["MaterialRequestTransition"][];
+    };
+    /** MaterialRequestList */
+    MaterialRequestList: {
+      /** Items */
+      items: components["schemas"]["MaterialRequestSummary"][];
+      /** Next Cursor */
+      next_cursor: string | null;
     };
   };
   responses: never;
@@ -4997,6 +5224,365 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AutomaticCorrectionReport"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  listMaterialRequests: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        mine?: boolean;
+        status?: "EM_IDENTIFICACAO" | "AGUARDANDO_CADASTRO" | "EM_ATENDIMENTO" | "ENCERRADA";
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Solicitação de material no escopo autorizado. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MaterialRequestList"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  createMaterialRequest: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateMaterialRequest"];
+      };
+    };
+    responses: {
+      /** @description Solicitação de material no escopo autorizado. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MaterialRequestDetail"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getMaterialRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Solicitação de material no escopo autorizado. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MaterialRequestDetail"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  cancelMaterialRequest: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CancelMaterialRequest"];
+      };
+    };
+    responses: {
+      /** @description Solicitação de material no escopo autorizado. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MaterialRequestDetail"];
         };
       };
       /** @description Sessão inválida ou expirada. */

@@ -2588,5 +2588,160 @@
       ],
       "next_cursor": null
     }
+  },
+  {
+    "name": "material-request-create",
+    "path": "/api/v1/material-requests",
+    "method": "post",
+    "status": 201,
+    "request": {
+      "original_text": "Preciso de 10 peças para manutenção.",
+      "quantity": "10",
+      "unit": "PC",
+      "center_code": "1200"
+    },
+    "response": {
+      "id": "72372372-0000-4000-8000-000000000001",
+      "protocol": "SM-00000001",
+      "requester_user_id": "72372372-0000-4000-8000-000000000002",
+      "original_text": "Preciso de 10 peças para manutenção.",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "material_id": null,
+      "status": "EM_IDENTIFICACAO",
+      "closure_reason": null,
+      "chat_session_id": null,
+      "registration_order_id": null,
+      "version": 1,
+      "created_at": "2026-11-07T20:00:00Z",
+      "updated_at": "2026-11-07T20:00:00Z",
+      "can_cancel": true,
+      "history": [
+        {
+          "id": "72372372-0000-4000-8000-000000000003",
+          "actor_user_id": "72372372-0000-4000-8000-000000000002",
+          "before_status": null,
+          "after_status": "EM_IDENTIFICACAO",
+          "reason": null,
+          "created_at": "2026-11-07T20:00:00Z"
+        }
+      ]
+    }
+  },
+  {
+    "name": "material-request-list",
+    "path": "/api/v1/material-requests",
+    "method": "get",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "id": "72372372-0000-4000-8000-000000000001",
+          "protocol": "SM-00000001",
+          "requester_user_id": "72372372-0000-4000-8000-000000000002",
+          "original_text": "Preciso de 10 peças para manutenção.",
+          "quantity": "10.000000",
+          "unit": "PC",
+          "center_code": "1200",
+          "material_id": null,
+          "status": "EM_IDENTIFICACAO",
+          "closure_reason": null,
+          "chat_session_id": null,
+          "registration_order_id": null,
+          "version": 1,
+          "created_at": "2026-11-07T20:00:00Z",
+          "updated_at": "2026-11-07T20:00:00Z",
+          "can_cancel": true
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "material-request-detail",
+    "path": "/api/v1/material-requests/{id}",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000001"
+    },
+    "response": {
+      "id": "72372372-0000-4000-8000-000000000001",
+      "protocol": "SM-00000001",
+      "requester_user_id": "72372372-0000-4000-8000-000000000002",
+      "original_text": "Preciso de 10 peças para manutenção.",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "material_id": null,
+      "status": "EM_IDENTIFICACAO",
+      "closure_reason": null,
+      "chat_session_id": null,
+      "registration_order_id": null,
+      "version": 1,
+      "created_at": "2026-11-07T20:00:00Z",
+      "updated_at": "2026-11-07T20:00:00Z",
+      "can_cancel": true,
+      "history": [
+        {
+          "id": "72372372-0000-4000-8000-000000000003",
+          "actor_user_id": "72372372-0000-4000-8000-000000000002",
+          "before_status": null,
+          "after_status": "EM_IDENTIFICACAO",
+          "reason": null,
+          "created_at": "2026-11-07T20:00:00Z"
+        }
+      ]
+    }
+  },
+  {
+    "name": "material-request-cancel",
+    "path": "/api/v1/material-requests/{id}/cancel",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000001"
+    },
+    "request": {
+      "expected_version": 1,
+      "reason": "Não preciso mais."
+    },
+    "response": {
+      "id": "72372372-0000-4000-8000-000000000001",
+      "protocol": "SM-00000001",
+      "requester_user_id": "72372372-0000-4000-8000-000000000002",
+      "original_text": "Preciso de 10 peças para manutenção.",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "material_id": null,
+      "status": "ENCERRADA",
+      "closure_reason": "CANCELADA",
+      "chat_session_id": null,
+      "registration_order_id": null,
+      "version": 2,
+      "created_at": "2026-11-07T20:00:00Z",
+      "updated_at": "2026-11-07T20:00:00Z",
+      "can_cancel": false,
+      "history": [
+        {
+          "id": "72372372-0000-4000-8000-000000000003",
+          "actor_user_id": "72372372-0000-4000-8000-000000000002",
+          "before_status": null,
+          "after_status": "EM_IDENTIFICACAO",
+          "reason": null,
+          "created_at": "2026-11-07T20:00:00Z"
+        },
+        {
+          "id": "72372372-0000-4000-8000-000000000004",
+          "actor_user_id": "72372372-0000-4000-8000-000000000002",
+          "before_status": "EM_IDENTIFICACAO",
+          "after_status": "ENCERRADA",
+          "reason": "Não preciso mais.",
+          "created_at": "2026-11-07T20:01:00Z"
+        }
+      ]
+    }
   }
 ]

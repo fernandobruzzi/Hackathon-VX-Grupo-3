@@ -556,7 +556,9 @@ working on #237 to #251. It defines quantities and invariants (reserved + delive
 never exceeds the request; delivery never deducts stock twice; imported snapshots never
 change), states and roles. Decisions D1–D8 were approved by the operational owner and recorded
 on #236. Follow that approved model for dependent issues; the document itself does not
-implement requests or stock movements.
+implement requests or stock movements. The #237 persistence base implements creation, scoped
+reads and owner cancellation with transactional audit; stock and purchasing operations remain
+in their respective follow-up issues. See section 13 of the model for current API behavior.
 
 ## Chat order submission
 
