@@ -45,7 +45,16 @@ Parameters:
     Default: ""
     Description: Host do endpoint HTTPS do Express, sem https:// (origem do CloudFront).
 
+  GitHubRepository:
+    Type: String
+    Default: ""
+    AllowedPattern: "^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)?$"
+    Description: >-
+      owner/repo autorizado a publicar por OIDC a partir de main. Vazio mantem o
+      deploy somente manual.
+
 Conditions:
+  HasGitHubDeploy: !Not [!Equals [!Ref GitHubRepository, ""]]
   HasPublicOrigin: !Not [!Equals [!Ref PublicOrigin, ""]]
   HasCustomDomain: !And
     - !Not [!Equals [!Ref CustomDomain, ""]]
@@ -379,7 +388,129 @@ Resources:
       Tags:
         - { Key: vx-project, Value: !Ref Name }
 
+  # Deploy automatico: o GitHub troca o token OIDC do workflow por esta role. Sem chaves
+  # de longa duracao, e somente pushes em main deste repositorio podem assumi-la.
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: HasGitHubDeploy
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+      Tags:
+        - { Key: vx-project, Value: !Ref Name }
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Condition: HasGitHubDeploy
+    Properties:
+      RoleName: !Sub "${Name}-github-deploy"
+      MaxSessionDuration: 7200
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Federated: !Ref GitHubOidcProvider }
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": sts.amazonaws.com
+                "token.actions.githubusercontent.com:sub": !Sub "repo:${GitHubRepository}:ref:refs/heads/main"
+      Policies:
+        - PolicyName: images
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Name}-*"
+        - PolicyName: ecs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Sem permissao por recurso nestas acoes de leitura/registro.
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServiceDeployments
+                  - ecs:DescribeServiceRevisions
+                  - ecs:DescribeTaskDefinition
+                  - ecs:ListServiceDeployments
+                  - ecs:RegisterTaskDefinition
+                Resource: "*"
+              - Effect: Allow
+                Action: ecs:RunTask
+                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${Name}-*:*"
+                Condition:
+                  ArnEquals:
+                    ecs:cluster: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${Name}"
+              - Effect: Allow
+                Action: [ecs:DescribeTasks, ecs:StopTask]
+                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/${Name}/*"
+              - Effect: Allow
+                Action:
+                  - ecs:CreateExpressGatewayService
+                  - ecs:DescribeExpressGatewayService
+                  - ecs:DescribeServices
+                  - ecs:TagResource
+                  - ecs:UpdateExpressGatewayService
+                Resource:
+                  - !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${Name}/*"
+                  - !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${Name}"
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - !GetAtt ExecutionRole.Arn
+                  - !GetAtt WebTaskRole.Arn
+                  - !GetAtt BatchTaskRole.Arn
+                Condition:
+                  StringEquals: { "iam:PassedToService": ecs-tasks.amazonaws.com }
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt ExpressInfrastructureRole.Arn
+                Condition:
+                  StringEquals: { "iam:PassedToService": ecs.amazonaws.com }
+        - PolicyName: deploy-checks
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Lock condicional do deploy; a aplicacao nao recebe este prefixo.
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:DeleteObject, s3:DeleteObjectVersion]
+                Resource: !Sub "arn:aws:s3:::${Name}-${AWS::AccountId}-${AWS::Region}/locks/${Name}/*"
+              # O deploy confere URLs, senhas e chave de sessao em memoria, sem imprimir.
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/api-database-*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/agent-database-*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/batch-database-*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/migration-database-*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/database-passwords-*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/internal-token-*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${Name}/session-encryption-*"
+              - Effect: Allow
+                Action: rds:DescribeDBInstances
+                Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:db:${Name}"
+              - Effect: Allow
+                Action: cognito-idp:DescribeUserPoolClient
+                Resource: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*"
+      Tags:
+        - { Key: vx-project, Value: !Ref Name }
+
 Outputs:
+  GitHubDeployRoleArn:
+    Condition: HasGitHubDeploy
+    Value: !GetAtt GitHubDeployRole.Arn
   CustomDomainTarget:
     Condition: HasCustomDomain
     Description: Valor do CNAME do dominio proprio.
