@@ -1453,7 +1453,9 @@
         "ncm_version": "ncm-demo-v1",
         "center_code": "1200",
         "history": [],
-        "confirmed_attributes": {}
+        "confirmed_attributes": {},
+        "pdm_class_id": null,
+        "item_name": null
       }
     },
     "response": {

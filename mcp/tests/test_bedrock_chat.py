@@ -10,7 +10,8 @@ import pytest
 from botocore.exceptions import ClientError
 from botocore.validate import validate_parameters
 from fastapi.testclient import TestClient
-from test_conversation_flow import BOLT, PDM, SECRET, run
+from test_conversation_flow import BOLT, PDM, SECRET, run, token
+from test_search_identity_safety import search as search_index
 
 from domain.pdm_loader import load_pdm
 from repositories.classification import get_classification_repository
@@ -140,6 +141,8 @@ def test_uses_history_and_preserves_confirmed_values(catalog):
         )
     ]
     payload.context.confirmed_attributes = {"CLASSE RESISTENCIA": "8.8"}
+    payload.context.pdm_class_id = "PDM001"
+    payload.context.item_name = "PARAFUSO SEXTAVADO"
     sdk = FakeBedrock()
     context = interpret(catalog, sdk, payload)
     assert context.attributes["CLASSE RESISTENCIA"] == "8.8"
@@ -344,3 +347,263 @@ def test_sdk_uses_region_bounded_timeouts_and_closes_client(catalog, monkeypatch
     assert (config.connect_timeout, config.read_timeout) == (2, 8)
     assert config.retries == {"total_max_attempts": 1}
     sdk.close.assert_called_once()
+
+
+def previous_state(payload, message=BOLT, class_id="PDM001", item_name="PARAFUSO SEXTAVADO", attributes=None):
+    payload.context.history = [
+        HistoryMessage.model_validate(
+            {
+                "id": "00000000-0000-0000-0000-000000000003",
+                "author": "user",
+                "content": message,
+                "created_at": "2026-11-07T12:00:00Z",
+            }
+        )
+    ]
+    payload.context = payload.context.model_copy(
+        update={
+            "pdm_class_id": class_id,
+            "item_name": item_name,
+            "confirmed_attributes": attributes or {},
+        }
+    )
+    return payload
+
+
+def test_class_change_drops_shared_attributes_of_previous_material(catalog):
+    payload = previous_state(
+        request("Agora preciso de uma porca sextavada M16."),
+        attributes={
+            "BITOLA": "M12",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "ZINCADO BRANCO",
+            "NORMA": "DIN 933",
+        },
+    )
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM003",
+            "item_name": "PORCA",
+            "attributes": [
+                {"name": "BITOLA", "value": "M16", "source": "M16"},
+            ],
+        }
+    )
+    context = interpret(catalog, sdk, payload)
+    assert context.pdm_class.id == "PDM003"
+    assert context.attributes["BITOLA"] == "M16"
+    assert not {"MATERIAL", "ACABAMENTO", "NORMA"} & context.attributes.keys()
+
+
+def test_item_change_in_same_class_does_not_reuse_manufacturer(catalog):
+    payload = previous_state(
+        request("Agora preciso de um filtro combustível."),
+        message="Preciso de um filtro ar Donaldson.",
+        class_id="PDM100",
+        item_name="FILTRO AR",
+        attributes={"FABRICANTE": "DONALDSON"},
+    )
+    sdk = FakeBedrock({"pdm_class_id": "PDM100", "item_name": "FILTRO COMBUSTIVEL", "attributes": []})
+    assert "FABRICANTE" not in interpret(catalog, sdk, payload).attributes
+
+
+def test_same_material_keeps_confirmed_attributes_and_explicit_clears(catalog):
+    payload = previous_state(
+        request("A classe de resistência é 8.8."),
+        attributes={
+            "BITOLA": "M12",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": None,
+        },
+    )
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM001",
+            "item_name": "PARAFUSO SEXTAVADO",
+            "attributes": [
+                {"name": "CLASSE RESISTENCIA", "value": "8.8", "source": "resistência é 8.8"},
+            ],
+        }
+    )
+    attributes = interpret(catalog, sdk, payload).attributes
+    assert attributes["BITOLA"] == "M12"
+    assert attributes["MATERIAL"] == "ACO CARBONO"
+    assert attributes["ACABAMENTO"] is None
+    assert attributes["CLASSE RESISTENCIA"] == "8.8"
+
+
+def test_withdrawal_stays_cleared_on_next_http_turn(catalog, monkeypatch):
+    monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
+    withdrawal = "Não sei o acabamento, apague zincado branco."
+    payload = previous_state(request(withdrawal), attributes={"ACABAMENTO": "ZINCADO BRANCO"})
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM001",
+            "item_name": "PARAFUSO SEXTAVADO",
+            "attributes": [
+                {"name": "ACABAMENTO", "value": None, "source": withdrawal},
+            ],
+        }
+    )
+    headers = {"X-Request-ID": "withdrawal-test", "Authorization": f"Bearer {token()}"}
+    first = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run", json=payload.model_dump(mode="json"), headers=headers
+    )
+    assert first.status_code == 200
+    patch = first.json()["context_patch"]
+    assert patch["confirmed_attributes"]["ACABAMENTO"] is None
+    next_payload = previous_state(request("A classe de resistência é 8.8."), attributes=patch["confirmed_attributes"])
+    next_payload.context.history.extend(
+        [
+            HistoryMessage.model_validate(
+                {
+                    "id": "00000000-0000-0000-0000-000000000004",
+                    "author": "user",
+                    "content": withdrawal,
+                    "created_at": "2026-11-07T12:01:00Z",
+                }
+            )
+        ]
+    )
+    sdk.interpretation["attributes"] = [{"name": "CLASSE RESISTENCIA", "value": "8.8", "source": "resistência é 8.8"}]
+    second = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run", json=next_payload.model_dump(mode="json"), headers=headers
+    )
+    assert second.status_code == 200
+    assert second.json()["material_card"]["attributes"]["ACABAMENTO"] is None
+    assert second.json()["context_patch"]["confirmed_attributes"]["ACABAMENTO"] is None
+    assert second.json()["material_card"]["can_submit"] is False
+    search = next(call for call in second.json()["tool_calls"] if call["name"] == "search_similar_materials")
+    assert "zincado branco" not in search["input"]["query"].lower()
+
+
+def test_new_material_search_excludes_previous_material_facts(catalog, monkeypatch):
+    monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
+    payload = previous_state(
+        request("Agora preciso de uma porca sextavada M16."),
+        attributes={
+            "BITOLA": "M12",
+            "MATERIAL": "ACO CARBONO",
+            "ACABAMENTO": "ZINCADO BRANCO",
+            "NORMA": "DIN 933",
+        },
+    )
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM003",
+            "item_name": "PORCA",
+            "attributes": [
+                {"name": "BITOLA", "value": "M16", "source": "M16"},
+            ],
+        }
+    )
+    response = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run",
+        json=payload.model_dump(mode="json"),
+        headers={"X-Request-ID": "new-material", "Authorization": f"Bearer {token()}"},
+    )
+    assert response.status_code == 200
+    search = next(call for call in response.json()["tool_calls"] if call["name"] == "search_similar_materials")
+    assert search["input"]["pdm_class_id"] == "PDM003"
+    assert "M16" in search["input"]["query"]
+    assert "parafuso" not in search["input"]["query"].lower()
+    assert "DIN 933" not in search["input"]["query"]
+
+
+def test_old_material_evidence_cannot_fill_new_material(catalog):
+    payload = previous_state(request("Agora preciso de uma porca sextavada M16."))
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM003",
+            "item_name": "PORCA",
+            "attributes": [
+                {"name": "ACABAMENTO", "value": "zincado branco", "source": "zincado branco"},
+            ],
+        }
+    )
+    with pytest.raises(BedrockError):
+        interpret(catalog, sdk, payload)
+
+
+def test_old_evidence_cannot_restore_explicitly_cleared_attribute(catalog):
+    payload = previous_state(request("A classe de resistência é 8.8."), attributes={"ACABAMENTO": None})
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM001",
+            "item_name": "PARAFUSO SEXTAVADO",
+            "attributes": [
+                {"name": "ACABAMENTO", "value": "zincado branco", "source": "zincado branco"},
+            ],
+        }
+    )
+    with pytest.raises(BedrockError):
+        interpret(catalog, sdk, payload)
+
+
+def test_current_confirmation_can_replace_explicit_clear(catalog):
+    payload = previous_state(request("Confirmei o acabamento: zincado branco."), attributes={"ACABAMENTO": None})
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM001",
+            "item_name": "PARAFUSO SEXTAVADO",
+            "attributes": [
+                {"name": "ACABAMENTO", "value": "zincado branco", "source": "zincado branco"},
+            ],
+        }
+    )
+    assert interpret(catalog, sdk, payload).attributes["ACABAMENTO"] == "zincado branco"
+
+
+def test_uncertain_class_cannot_erase_accepted_state(catalog, monkeypatch):
+    monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
+    payload = previous_state(request("Não sei informar mais detalhes."), attributes={"ACABAMENTO": None})
+    sdk = FakeBedrock({"pdm_class_id": None, "item_name": None, "attributes": []})
+    headers = {"X-Request-ID": "uncertain-class", "Authorization": f"Bearer {token()}"}
+    response = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run", json=payload.model_dump(mode="json"), headers=headers
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "BEDROCK_INVALID_RESPONSE"
+    assert "context_patch" not in response.json()
+    # Um erro não completa o turno; a próxima chamada recebe o mesmo estado da API.
+    payload.message = "A classe de resistência é 8.8."
+    sdk.interpretation = {
+        "pdm_class_id": "PDM001",
+        "item_name": "PARAFUSO SEXTAVADO",
+        "attributes": [
+            {"name": "CLASSE RESISTENCIA", "value": "8.8", "source": "resistência é 8.8"},
+        ],
+    }
+    next_turn = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run", json=payload.model_dump(mode="json"), headers=headers
+    )
+    assert next_turn.status_code == 200
+    assert next_turn.json()["context_patch"]["confirmed_attributes"]["ACABAMENTO"] is None
+
+
+@pytest.mark.parametrize("revision", ["REV A", "revisão B", "REVISION 2"])
+def test_curated_bedrock_search_preserves_revision_review(catalog, revision):
+    payload = request(f"MANTO METSO N1234567 {revision}")
+    sdk = FakeBedrock(
+        {
+            "pdm_class_id": "PDM110",
+            "item_name": "MANTO",
+            "attributes": [
+                {"name": "FABRICANTE", "value": "METSO", "source": "METSO"},
+                {"name": "REFERENCIA FABRICANTE", "value": "N1234567", "source": "N1234567"},
+            ],
+        }
+    )
+    context = interpret(catalog, sdk, payload)
+    result = search_index(
+        catalog,
+        "PDM110",
+        context.search_text,
+        context.attributes,
+        manufacturer="METSO",
+        reference="N1234567",
+        description="MANTO METSO N1234567",
+    )
+    assert result["match_status"] == "REVIEW_REQUIRED"
+    assert result["candidates"][0]["identity_verified"] is False
+    assert "REVISAO_DE_PECA_NAO_CONFIRMADA" in result["candidates"][0]["pending_checks"]

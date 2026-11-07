@@ -247,6 +247,10 @@ precisa de `bedrock:InvokeModel` no perfil e nos modelos de destino; SCPs precis
 permitir os destinos do perfil. A conta também precisa satisfazer os requisitos
 de acesso ao modelo/Anthropic e ter quota. Não é necessário `InvokeModelWithResponseStream`
 para este fluxo síncrono. A chamada do preflight comprova acesso, não a qualidade da entrevista.
+O template `infra.yaml` concede esse acesso na role web compartilhada pelo Agent,
+restrito ao perfil US do Opus 5.5 e aos destinos `us-east-1`, `us-east-2` e `us-west-2`;
+os destinos só podem ser invocados por esse perfil. A alteração precisa ser aplicada
+à stack existente antes de ativar o chat. Não acrescenta acesso ao Opus na role do batch.
 
 O system prompt `material_registration_system_v1` fica em
 `mcp/vx_materials_mcp/chatbot/prompts.py`. Por turno, o Agent interpreta o pedido
@@ -254,6 +258,16 @@ com saída estruturada, exige trechos literais do usuário para atributos propos
 executa o ciclo MCP existente e pede ao modelo uma resposta baseada na ficha.
 São no máximo duas chamadas Converse e cinco tools. Classe/nome/atributos são
 validados; prontidão, duplicidade e aprovação continuam no domínio/API.
+A API envia a classe e o nome da última ficha persistida com os atributos aceitos.
+O Agent reaproveita esses atributos apenas para o mesmo item na mesma classe;
+outra identidade começa com os dados da mensagem atual. Remoções explícitas são
+persistidas como `null`, sem reextrair valores retirados das mensagens antigas.
+A consulta de duplicidade também usa apenas o nome e os atributos aceitos, para
+que a busca MCP não extraia novamente fatos retirados ou pertencentes a outro item.
+Trechos explícitos de revisão de peça continuam na consulta, preservando a exigência
+de revisão pelo motor de identidade mesmo quando a referência aceita não contém o sufixo.
+Se o modelo deixar a classe inconclusiva para uma ficha já conhecida, o turno
+retorna erro sem substituir o estado aceito, as mensagens ou a versão da conversa.
 Em botões de escolha/descarte, o modelo reconstrói a descrição pelo histórico;
 a mensagem do botão fica fora da interpretação e a ação estruturada permanece
 autoritativa no ciclo determinístico.
