@@ -113,6 +113,24 @@ def test_local_publishes_only_complete_file(tmp_path, monkeypatch):
     assert called
 
 
+@pytest.mark.parametrize("operation", ["fsync", "link"])
+def test_local_failure_leaves_no_partial_object_or_temporary(tmp_path, monkeypatch, operation):
+    import os
+
+    store = LocalObjectStore(tmp_path)
+
+    def fail(*args):
+        raise OSError("falha de armazenamento")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, operation, fail)
+        with pytest.raises(OSError, match="falha de armazenamento"):
+            store.put_if_absent("object", b"conteudo")
+    assert list(tmp_path.iterdir()) == []
+    store.put_if_absent("object", b"conteudo")
+    assert store.get("object") == b"conteudo"
+
+
 @pytest.mark.parametrize("same_content", [False, True])
 def test_concurrent_s3_writers(same_content):
     import hashlib
