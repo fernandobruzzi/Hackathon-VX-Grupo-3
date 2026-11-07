@@ -44,7 +44,11 @@ def original_item_name(catalog, class_id: str, material) -> str | None:
     if len(cls.item_names) == 1:
         return cls.item_names[0]
     result = get_classification_repository(catalog).classify(
-        ClassificationInput(value(material, "original_description_long"), value(material, "original_description_short"))
+        ClassificationInput(
+            value(material, "original_description_long"),
+            value(material, "original_description_short"),
+            value(material, "original_merchandise_group"),
+        )
     )
     names = [
         item.matched_name

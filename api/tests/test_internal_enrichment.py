@@ -20,6 +20,7 @@ from repositories.extraction import get_extraction_repository
 from vx_materials_api.db.models import EnrichmentSource, SanitizationProposal
 
 FILTER = "FILTRO OLEO LUBRIFICANTE; FABRICANTE: FLEETGUARD; REFERENCIA FABRICANTE: LF9009"
+BUCHA = "BUCHA; FABRICANTE: CATERPILLAR; REFERENCIA FABRICANTE: 5072254"
 
 
 @pytest.fixture
@@ -28,11 +29,16 @@ def internal_case(approval_case, connection, monkeypatch, request):
 
     case = approval_case
     supplemental = getattr(request, "param", "csv") == "supplemental"
+    grouped = getattr(request, "param", "csv") == "group"
     monkeypatch.delenv("ENRICHMENT_INTERNAL_SOURCES_KEY", raising=False)
     monkeypatch.setenv("ENRICHMENT_LLM_MAX_CALLS", "0")
     db, m, dataset = case["session"], case["materials"][0], case["dataset"]
     m.original_description_long = FILTER
     m.attributes, m.pdm_class_id = {}, None
+    if grouped:
+        m.original_description_long = BUCHA
+        m.original_merchandise_group = "SOB01"
+        m.manufacturer, m.manufacturer_reference, m.ncm = "CATERPILLAR", "5072254", "8431.49.29"
     db.commit()
     headers = [
         "CODIGO_MATERIAL",
@@ -53,7 +59,12 @@ def internal_case(approval_case, connection, monkeypatch, request):
         | {
             "CODIGO_MATERIAL": "donor",
             "STATUS": "ATIVO",
-            "DESCRICAO_LONGA": FILTER + ("" if supplemental else "; ALTURA: 100MM"),
+            "DESCRICAO_LONGA": (
+                BUCHA + "; APLICACAO: ESCAVADEIRA HIDRAULICA; MODELO EQUIPAMENTO: 6015B"
+                if grouped
+                else FILTER + ("" if supplemental else "; ALTURA: 100MM")
+            ),
+            "GRUPO_MERCADORIA": m.original_merchandise_group or "",
         }
     )
     content = buf.getvalue().encode()
@@ -96,6 +107,7 @@ def internal_case(approval_case, connection, monkeypatch, request):
         m.material_code,
         m.status,
         m.original_description_long,
+        group=m.original_merchandise_group or "",
         manufacturer=m.manufacturer,
         reference=m.manufacturer_reference,
         unit=m.unit,
@@ -462,3 +474,55 @@ def test_unrelated_document_keeps_original_source_date_hash_and_proposal(interna
     assert case["proposal"].changeset["enrichment_context"].get("supplemental_source") is None
     assert case["session"].scalar(select(func.count()).select_from(EnrichmentSource)) == 1
     assert case["proposal"].status == "PENDING" and "ALTURA" not in case["materials"][0].attributes
+
+
+@pytest.mark.parametrize("internal_case", ["group"], indirect=True)
+def test_original_group_resolves_bucha_for_internal_enrichment_and_approval(internal_case):
+    case = internal_case
+    proposal = case["proposal"]
+    assert case["analyzed"].pdm_class_id == "PDM110" and case["analyzed"].item_name == "BUCHA"
+    assert proposal.changeset["after"]["item_name"] == "BUCHA"
+    assert proposal.changeset["after"]["attributes"]["APLICACAO"] == "ESCAVADEIRA HIDRAULICA"
+    response = decide(
+        case,
+        payload={
+            "expected_version": 1,
+            "review_area": "TECHNICAL",
+            "decision": "APPROVE",
+            "reason": "Identidade e grupo original da bucha conferidos.",
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["technical_review_status"] == "APPROVED"
+    assert response.json()["status"] == "APPLIED"
+    case["session"].expire_all()
+    material = case["materials"][0]
+    assert material.attributes["APLICACAO"] == "ESCAVADEIRA HIDRAULICA"
+    assert material.original_description_long == BUCHA and material.original_merchandise_group == "SOB01"
+
+
+@pytest.mark.parametrize("internal_case", ["group"], indirect=True)
+@pytest.mark.parametrize("changed_group", [None, "TUB01"])
+def test_missing_or_changed_original_group_refuses_approval_despite_a_revised_group(internal_case, changed_group):
+    from domain.enrichment_rules import original_hash
+
+    case = internal_case
+    material = case["materials"][0]
+    before_hash = original_hash(material)
+    material.original_merchandise_group = changed_group
+    material.merchandise_group = "SOB01"
+    case["session"].commit()
+    assert original_hash(material) == before_hash
+    response = decide(
+        case,
+        payload={
+            "expected_version": 1,
+            "review_area": "TECHNICAL",
+            "decision": "APPROVE",
+            "reason": "Verificação de alteração do grupo original.",
+        },
+    )
+    assert response.status_code == 409, response.text
+    assert response.json()["error"]["code"] == "ENRICHMENT_BASIS_CHANGED"
+    case["session"].expire_all()
+    assert "APLICACAO" not in material.attributes and case["proposal"].status == "PENDING"
