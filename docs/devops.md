@@ -17,6 +17,9 @@ com destino `main`. PRs para `homologacao` e pushes, inclusive o merge em `main`
 não iniciam esses workflows. Não há
 gatilho agendado ou manual. Isso concentra os minutos de CI na promoção para produção, sem executar de novo o mesmo lote após o
 merge. Corrija falhas de desenvolvimento localmente antes de publicar outra versão.
+Os jobs completos também conferem a origem: somente `homologacao` do mesmo
+repositório os executa. Um PR de outra branch ou fork para `main` recebe a
+recusa de `policy`, sem iniciar os jobs completos.
 
 ## Promover para produção
 
@@ -53,6 +56,7 @@ merge. Corrija falhas de desenvolvimento localmente antes de publicar outra vers
 
    Só administradores podem fazer esse push: a regra de `homologacao` exige PR para
    todos os demais.
+
 6. Confira que `main` é ancestral de `homologacao`, libere a integração e avise o
    time para rebasear as branches de trabalho abertas:
 
@@ -238,16 +242,16 @@ A mudança dos gatilhos não recupera minutos já consumidos.
 
 Revalidar estes itens na versão atual de `main`, pois há entregas simultâneas:
 
-| Tema | Entrega / ação |
-|---|---|
-| Login, sessão BFF e CSRF | Implementados localmente; homologação Cognito/HTTPS na #91 |
-| RBAC e aprovação transacional | Implementados; smoke autenticado exige uma sessão real |
-| Identidade por turno no MCP | Corrigida no `main` usado nesta entrega: Caller e centros seguem do JWT ao subprocesso sem alterar `os.environ` global; preservar em novas implementações |
-| Batch RunTask/heartbeat | Runner `ecs_fargate` preparado na #6; testar PassRole e task real na conta |
-| Rotas estáticas com IDs reais | Saneamento já usa `/saneamento/revisao?id=...`; enriquecimento ainda tem páginas mock |
-| Implantação ECS/RDS | #6; ainda precisa validação real na conta do workshop |
-| HTTPS alternativo | Render e script EC2/Caddy em `docs/ec2.md`; testar conta/TLS/login na #29 |
-| Seed/reset da demo | #34; bootstrap idempotente não equivale a reset de sessão/proposta |
+| Tema                          | Entrega / ação                                                                                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Login, sessão BFF e CSRF      | Implementados localmente; homologação Cognito/HTTPS na #91                                                                                                |
+| RBAC e aprovação transacional | Implementados; smoke autenticado exige uma sessão real                                                                                                    |
+| Identidade por turno no MCP   | Corrigida no `main` usado nesta entrega: Caller e centros seguem do JWT ao subprocesso sem alterar `os.environ` global; preservar em novas implementações |
+| Batch RunTask/heartbeat       | Runner `ecs_fargate` preparado na #6; testar PassRole e task real na conta                                                                                |
+| Rotas estáticas com IDs reais | Saneamento já usa `/saneamento/revisao?id=...`; enriquecimento ainda tem páginas mock                                                                     |
+| Implantação ECS/RDS           | #6; ainda precisa validação real na conta do workshop                                                                                                     |
+| HTTPS alternativo             | Render e script EC2/Caddy em `docs/ec2.md`; testar conta/TLS/login na #29                                                                                 |
+| Seed/reset da demo            | #34; bootstrap idempotente não equivale a reset de sessão/proposta                                                                                        |
 
 ## Requisitos do primeiro deploy
 

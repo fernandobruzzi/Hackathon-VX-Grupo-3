@@ -224,9 +224,14 @@ model usage and says so, and embeddings stay off. The only model-backed option,
 embeddings, has `simulated_v1`, labeled as simulated and refused outside `APP_ENV=local`.
 
 CI runs the same flow in an isolated Compose project, with cached images that
-include the original data kit. `DB_PORT` and `API_BIND_PORT` choose local ports;
+include the original data kit. The promotion's image job runs the local smoke,
+resets the demo with the cached API image, then runs the complete flow. Its project
+name includes the run ID and attempt, and cleanup runs after failures or cancellation.
+Only same-repository `homologacao` promotions to `main` run the complete CI jobs;
+work PRs to `homologacao` keep their local verification gate.
+`DB_PORT` and `API_BIND_PORT` choose local ports;
 published ports bind to loopback. CI also checks branch/commit policy and runs the
-installed migration command twice. A newer push to the same PR or to `main` cancels
+installed migration command twice. An update to the same promotion PR cancels
 the older CI run, so the CI workflow must never deploy or migrate anything outside the
 runner; real deploys keep their own S3 lock. Operational limits, authenticated smoke usage
 and required GitHub admin settings are in [`docs/devops.md`](docs/devops.md).

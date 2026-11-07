@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   style:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +45,7 @@ jobs:
       - run: node --test scripts/tests/*.test.cjs
 
   python:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -75,6 +77,7 @@ jobs:
           docker compose -f "$RUNNER_TEMP/vx-ec2/compose.json" config --no-env-resolution --quiet
 
   database:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -117,6 +120,7 @@ jobs:
         working-directory: mcp
 
   front:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -141,6 +145,7 @@ jobs:
       - run: npm run build
 
   images:
+    if: ${{ github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:

@@ -38,6 +38,29 @@ class QueueTimingTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_complete_ci_requires_the_same_repository_promotion(self):
+        guard = (
+            "${{ github.event.pull_request.head.ref == 'homologacao' && "
+            "github.event.pull_request.head.repo.full_name == github.repository }}"
+        )
+        for name in REQUIRED_JOBS:
+            with self.subTest(job=name):
+                self.assertIn(f"  {name}:\n    if: {guard}\n", CI)
+
+    def test_isolated_images_run_both_smokes_and_reset_before_the_full_flow(self):
+        self.assertIn("COMPOSE_PROJECT_NAME: vx-ci-${{ github.run_id }}-${{ github.run_attempt }}", CI)
+        for service in ("api", "migrate", "bootstrap", "demo", "agent", "batch", "index"):
+            self.assertIn("${{ env.COMPOSE_PROJECT_NAME }}-" + service + ":latest", CI)
+        local = CI.index("scripts/smoke_test.sh http://127.0.0.1:18000 --mode local")
+        reset = CI.index("docker compose --profile demo run --rm --no-deps --pull never demo reset")
+        flow = CI.index("scripts/smoke_test.sh http://127.0.0.1:18000 --mode flow")
+        self.assertLess(local, reset)
+        self.assertLess(reset, flow)
+        self.assertIn('DEMO_MODE: "true"', CI)
+        self.assertIn("if: failure() || cancelled()", CI)
+        self.assertIn("if: always()", CI)
+        self.assertNotRegex(CI, r"docker compose[^\n]*run[^\n]*--no-build")
+
     def test_validation_only_runs_for_pull_requests_targeting_main(self):
         for filename in ("ci.yml", "policy.yml"):
             with self.subTest(workflow=filename):
