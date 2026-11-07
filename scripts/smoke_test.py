@@ -169,6 +169,8 @@ class Smoke:
             ("SOLICITANTE_OPERACAO", "TECHNICAL"),
             ("GESTOR_CADASTRO", "FISCAL"),
             ("AUDITOR_FISCAL", "TECHNICAL"),
+            ("ALMOXARIFADO", "TECHNICAL"),
+            ("COMPRAS", "FISCAL"),
         ]:
             me = self.json(
                 "/api/v1/auth/local-session", payload={"persona": persona}, headers={"Origin": self.base_url}
@@ -186,7 +188,7 @@ class Smoke:
                 headers={"Origin": self.base_url, "X-CSRF-Token": csrf, "Idempotency-Key": str(uuid.uuid4())},
             )
             dashboard_path = "/api/v1/dashboard/metrics"
-            if persona == "SOLICITANTE_OPERACAO":
+            if persona in ("SOLICITANTE_OPERACAO", "ALMOXARIFADO", "COMPRAS"):
                 self.request(dashboard_path, expected=403)
             else:
                 quality = self.json(dashboard_path)

@@ -37,12 +37,18 @@ ROLE_PERMISSIONS = {
     },
     # Diagnóstico técnico das chamadas MCP; não aprova, não publica e não administra.
     "ROLE_DEV_TI": COMMON | {"chat:diagnostics"},
+    # Operação da solicitação de material (docs/solicitacao-material.md, seção 9). Nenhum dos dois
+    # aprova cadastro, decide NCM ou unifica materiais.
+    "ROLE_ALMOXARIFADO": COMMON | {"stock:reserve", "stock:deliver", "stock:reverse"},
+    "ROLE_COMPRAS": COMMON | {"purchasing:read", "purchasing:handle"},
 }
 PERSONA_ROLES = {
     "SOLICITANTE_OPERACAO": "ROLE_SOLICITANTE",
     "GESTOR_CADASTRO": "ROLE_GOVERNANCA_PDM",
     "AUDITOR_FISCAL": "ROLE_AUDITOR_FISCAL",
     "DEV_TI": "ROLE_DEV_TI",
+    "ALMOXARIFADO": "ROLE_ALMOXARIFADO",
+    "COMPRAS": "ROLE_COMPRAS",
 }
 
 
