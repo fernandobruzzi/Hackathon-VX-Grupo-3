@@ -1,8 +1,51 @@
 # Preparar e publicar na conta do workshop
 
-Estas ferramentas foram validadas **localmente**, inclusive contra os contratos
-do SDK AWS. Nenhum recurso foi provisionado na AWS e nenhuma permissão da conta do
-workshop foi comprovada. A homologação RDS/ECS continua na #6 e o login real na #91.
+Estas ferramentas foram usadas na conta do workshop (#6): pré-requisitos por
+CloudFormation, RDS preparado, migração, carga, índice e serviço Express. O login
+real continua na #91.
+
+## Sequência usada na conta do workshop
+
+A conta do workshop entrega só a VPC padrão. A role `WSParticipantRole` pode criar
+IAM, RDS e ECS em `us-east-1`; outras regiões são negadas.
+
+1. Credenciais: `aws login --profile workshop` reaproveita a sessão do console. As
+   credenciais duram cerca de 15 minutos e o CLI as renova sozinho. O boto3 só faz
+   isso com `botocore[crt]`, então rode os scripts Python com
+   `uv run --locked --with 'botocore[crt]' --package vx-materials-back python scripts/<script>.py ... --profile workshop`.
+   Variáveis exportadas por `aws configure export-credentials` expiram no meio do
+   deploy e deixam o lock para trás.
+2. Pré-requisitos, sem segredos no template: roles de execução, web, batch e
+   infraestrutura Express; SG das tasks sem ingresso; SG do RDS liberando 5432 só
+   para as tasks; RDS privado com senha do master gerenciada pelo próprio RDS.
+
+   ```bash
+   aws cloudformation create-stack --stack-name vx-grupo3-infra \
+     --template-body file://deployment/infra.yaml --capabilities CAPABILITY_NAMED_IAM \
+     --parameters ParameterKey=VpcId,ParameterValue=<vpc> 'ParameterKey=SubnetIds,ParameterValue="<s1>,<s2>,<s3>,<s4>"'
+   ```
+
+3. Preencher `aws.local.json` com as saídas da stack (roles, SG das tasks,
+   instância) e criar ECR, log group, bucket e cluster com
+   `bootstrap_aws.sh --apply`.
+4. Segredos: `aws_database.py secrets --endpoint <DatabaseEndpoint> --apply`
+   gera senhas hexadecimais, monta as URLs com `URL.create` e imprime só os ARNs.
+   Copiar os ARNs para `secrets`. Repetir o comando não sobrescreve nada.
+5. Imagens: em Mac Apple Silicon, use `architecture=ARM64` e
+   `docker buildx build --platform linux/arm64`, que não precisa de emulação.
+   Copiar os digests para `images`.
+6. RDS pelo master: `aws_database.py init --master-secret-arn <DatabaseMasterSecretArn> --apply`
+   roda o SQL de `AGENTS.md` dentro da VPC e confere o dono do banco e o `vector`.
+7. Preflight e deploy, como nas seções abaixo.
+
+O Express anexa às tasks um SG próprio, que só libera a porta 8000 a partir do
+balanceador. O Agent (8001) fica sem ingresso, e o SG das tasks não precisa de
+regra. A política gerenciada da role de infraestrutura não cobre
+`ecs:DescribeServices`, `ecs:UpdateService` nem `cloudwatch:DescribeAlarms`. Sem
+essas permissões, o CloudTrail mostra AccessDenied e o deployment fica parado com
+zero tasks; o template as concede só para os serviços do cluster. Enquanto um
+deployment Express está em andamento, um novo update recebe `ConflictException`:
+espere o deployment terminar antes de repetir.
 
 ## Configuração e validação offline
 
@@ -204,9 +247,12 @@ downgrade automático nem exclusão automática de RDS/bucket.
 
 ## O que continua dependendo da conta
 
-- IAM/PassRole e operação real do Express com sidecar, SG e endereço público.
-- Instalação de vector, grants e logins SQL por TLS no RDS.
-- Quotas/model access e invocações reais do Bedrock.
+Comprovado na conta do workshop (#6): roles e PassRole, Express com o Agent como
+sidecar, HTTPS público servindo o front pela API e Agent sem ingresso. Também
+comprovados: RDS privado, `vector` 0.8.2, migração e senhas, e logins TLS
+`verify-full` de `api_user`, `batch_user` e `mcp_reader`. Ainda falta:
+
+- Batch disparado pela API no ECS (`ecs:RunTask` da role web) e invocações reais do Bedrock.
 - Login Cognito e cookies aceitos pelo navegador em HTTPS (#91).
 - Plano B EC2/Caddy preparado em [`docs/ec2.md`](../docs/ec2.md); validar na EC2 (#29).
 - Reset completo de propostas/pedidos/sessões da demo (#34).
