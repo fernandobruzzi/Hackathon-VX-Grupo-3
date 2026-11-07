@@ -17,6 +17,13 @@ from vx_materials_api.db.models import AuditLog, AutomaticCorrectionResult, Batc
 from vx_materials_api.services import automatic_corrections as automatic
 
 
+@pytest.fixture(autouse=True)
+def measured_stack(monkeypatch):
+    """A política #224 foi medida com aliases_v1 + head_noun_v1; outra pilha exige nova medição."""
+    monkeypatch.setenv("CLASSIFICATION_REPOSITORY", "aliases_v1")
+    monkeypatch.setenv("CORRECTION_REPOSITORY", "head_noun_v1")
+
+
 @pytest.fixture(scope="module")
 def records():
     return {r.code: r for r in read_csv_records(Path(__file__).parents[2] / "data/desafio01/01_base_materiais.csv")}
