@@ -64,7 +64,7 @@ _POOL_REFERENCE = re.compile(
 _POOL_BEARING = re.compile(r"\b\d{4,5}[A-Z]*(?:[\s\-/]*(?:2RS|ZZ))?(?:[\s\-/]*C3)?\b")
 # Evidência exigida por aliases que completariam o valor (#158).
 _METRIC_THREADS = frozenset({"METRICA GROSSA", "METRICA FINA"})
-_METRIC_EVIDENCE = re.compile(r"(?<![A-Z0-9])(?:M[\s\-]?\d|(?:MA|MF)(?![A-Z]))")
+_THREAD_METRIC_MARKER = re.compile(r"\bROSCA\s*:\s*(?:ROSCA\s+)?(?:GROSSA|FINA)\s+(?:MA|MF)(?![A-Z0-9])")
 _BOTH_SHIELDS = re.compile(r"(?<![A-Z0-9])(?:ZZ|2Z)(?![A-Z0-9])")
 
 _WORD_ALIASES = {"FEM": "FEMEA", "AC": "ACO"}
@@ -260,6 +260,23 @@ class _Extraction:
         return False
 
 
+def _has_metric_gauge_evidence(work: "_Extraction", evidence: str, gauge: str) -> bool:
+    """Exige uma ocorrência física da bitola; REF/PN/MODELO não autorizam completar ROSCA."""
+    if not gauge.startswith("M"):
+        return False
+    reference_labels = _REFERENCE_LABELS | {"MODELO"}
+    labels = sorted(reference_labels | KEY_ALIASES.keys() | work.by_name.keys(), key=len, reverse=True)
+    pattern = re.compile(r"(?<![\w./\-])(" + "|".join(map(re.escape, labels)) + r")(?:\s*:\s*|\s+)")
+    for segment in _SEGMENTS.split(evidence):
+        for match in _POOL_METRIC.finditer(segment):
+            if f"M{match[1]}" != gauge.split("X", 1)[0]:
+                continue
+            preceding_labels = list(pattern.finditer(segment[: match.start()]))
+            if not preceding_labels or preceding_labels[-1][1] not in reference_labels:
+                return True
+    return False
+
+
 class RuleBasedV1ExtractionRepository:
     name = "rule_based_v1"
     revision = "9"
@@ -290,7 +307,7 @@ class RuleBasedV1ExtractionRepository:
         pool = self._scan_inches(work, pool)
         pool = self._scan_bearing_reference(work, pool)
         pool = self._scan_manufacturer_reference(work, pool)
-        blocked = self._require_alias_evidence(work, f"{text} {manufacturer_reference or ''}")
+        blocked = self._require_alias_evidence(work, text, manufacturer_reference)
         self._apply_documented_inferences(work, blocked)
 
         parts = (part.strip() for part in pool.split(" , "))
@@ -549,7 +566,9 @@ class RuleBasedV1ExtractionRepository:
         return pool[: matches[0].start()] + pool[matches[0].end() :]
 
     @staticmethod
-    def _require_alias_evidence(work: _Extraction, evidence: str) -> frozenset[str]:
+    def _require_alias_evidence(
+        work: _Extraction, evidence: str, manufacturer_reference: str | None = None
+    ) -> frozenset[str]:
         """Aliases que completariam o valor só valem com evidência no texto (#158).
 
         `ROSCA GROSSA` vira `METRICA GROSSA` só se há bitola métrica quando a classe também aceita
@@ -564,11 +583,22 @@ class RuleBasedV1ExtractionRepository:
             allowed = work.by_name[name].allowed_values or ()
             imperial = {"UNC", "UNF"} & set(allowed)
             if found.value in _METRIC_THREADS and "METRICA" not in original and imperial:
-                if not _METRIC_EVIDENCE.search(evidence):
+                gauge = work.found.get("BITOLA")
+                # A bitola em polegadas prevalece; códigos de referência não confirmam a rosca.
+                metric = _THREAD_METRIC_MARKER.search(evidence)
+                if gauge:
+                    metric = gauge.value.startswith("M") and (
+                        _has_metric_gauge_evidence(work, evidence, gauge.value) or metric
+                    )
+                if not metric:
                     del work.found[name]
                     blocked.add(name)
             elif found.value == "METALICA AMBOS LADOS" and "AMBOS" not in original:
-                if not _BOTH_SHIELDS.search(evidence):
+                reference = work.found.get("REFERENCIA")
+                parsed_zz = reference and _BEARING.fullmatch(reference.value) and "-ZZ" in reference.value
+                if not parsed_zz and not _BOTH_SHIELDS.search(
+                    f"{evidence} {_clean_text(manufacturer_reference or '')}"
+                ):
                     del work.found[name]
                     blocked.add(name)
         return frozenset(blocked)
