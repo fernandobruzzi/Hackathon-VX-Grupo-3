@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from aws_ci_config import render  # noqa: E402
 from aws_support import ConfigurationError  # noqa: E402
@@ -44,6 +46,25 @@ class DeployWorkflowTests(unittest.TestCase):
             self.assertIn(f"@${{{{ steps.{target}.outputs.digest }}}}", WORKFLOW)
         self.assertIn('--release "$RELEASE"', WORKFLOW)
         self.assertIn("github.run_attempt", WORKFLOW)
+
+    def test_canary_reads_only_the_projects_ecs_service(self):
+        template = yaml.load((ROOT / "deployment" / "infra.yaml").read_text(), Loader=yaml.BaseLoader)
+        role = template["Resources"]["GitHubDeployRole"]["Properties"]
+        service = "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${Name}/${Name}"
+        revision = "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service-revision/${Name}/${Name}/*"
+        expected = {
+            "ecs:ListServiceDeployments": {service},
+            "ecs:DescribeServiceRevisions": {service, revision},
+        }
+        grants = {action: set() for action in expected}
+        for policy in role["Policies"]:
+            for statement in policy["PolicyDocument"]["Statement"]:
+                actions = statement["Action"]
+                resources = statement["Resource"]
+                for action in [actions] if isinstance(actions, str) else actions:
+                    if action in grants:
+                        grants[action].update([resources] if isinstance(resources, str) else resources)
+        self.assertEqual(grants, expected)
 
     def config(self):
         return json.loads(EXAMPLE.read_text())
