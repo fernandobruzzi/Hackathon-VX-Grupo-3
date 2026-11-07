@@ -56,9 +56,10 @@ quando esse recurso estiver configurado no Cognito.
 
 No app client, habilitar Authorization Code, scopes `openid email profile` e
 callback exato `<APP_ORIGIN>/auth/callback/`. Criar os grupos
-`ROLE_SOLICITANTE`, `ROLE_GOVERNANCA_PDM`, `ROLE_AUDITOR_FISCAL` e, para quem
-consulta as chamadas MCP do chat, `ROLE_DEV_TI`, e associar as contas corretas
-(ver [autorizacao.md](autorizacao.md#diagnóstico-devti)). Grupos desconhecidos não concedem acesso. Neste MVP de uma
+`ROLE_SOLICITANTE`, `ROLE_GOVERNANCA_PDM`, `ROLE_AUDITOR_FISCAL`, `ROLE_ALMOXARIFADO`,
+`ROLE_COMPRAS` e, para quem consulta as chamadas MCP do chat, `ROLE_DEV_TI`, e associar
+as contas corretas (ver [autorizacao.md](autorizacao.md#diagnóstico-devti) e
+[Almoxarifado e Compras](autorizacao.md#almoxarifado-e-compras)). Grupos desconhecidos não concedem acesso. Neste MVP de uma
 empresa, os centros autorizados são definidos no backend para todas as contas;
 uma política por usuário pode substituir essa configuração sem confiar no front.
 

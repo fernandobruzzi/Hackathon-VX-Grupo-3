@@ -48,6 +48,28 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "orders:update_own",
     "chat:diagnostics",
   ],
+  // Operação da solicitação de material: não aprovam cadastro, NCM nem unificação.
+  ROLE_ALMOXARIFADO: [
+    "chat:use",
+    "materials:read",
+    "inventory:read",
+    "orders:create",
+    "orders:read_own",
+    "orders:update_own",
+    "stock:reserve",
+    "stock:deliver",
+    "stock:reverse",
+  ],
+  ROLE_COMPRAS: [
+    "chat:use",
+    "materials:read",
+    "inventory:read",
+    "orders:create",
+    "orders:read_own",
+    "orders:update_own",
+    "purchasing:read",
+    "purchasing:handle",
+  ],
 };
 
 export const PERSONAS: {
@@ -84,6 +106,22 @@ export const PERSONAS: {
     name: "Dev/TI · Diagnóstico",
     short: "Dev/TI",
     description: "Usa o chat e consulta as chamadas MCP executadas; não aprova nem publica.",
+  },
+  {
+    label: "ALMOXARIFADO",
+    role: "ROLE_ALMOXARIFADO",
+    name: "Almoxarifado",
+    short: "Almoxarifado",
+    description:
+      "Reserva, entrega e reverte entregas nos centros autorizados; não aprova cadastro.",
+  },
+  {
+    label: "COMPRAS",
+    role: "ROLE_COMPRAS",
+    name: "Compras",
+    short: "Compras",
+    description:
+      "Trata os encaminhamentos para compras dos centros autorizados; não aprova cadastro.",
   },
 ];
 
