@@ -313,10 +313,22 @@ definition.
 
 Preparação, uma vez por conta:
 
-1. Atualizar a stack com `GitHubRepository=<owner>/<repo>`. Ela cria o provedor
-   OIDC do GitHub e a role. A role recebe ECR só nos repositórios `<name>-*`,
-   ECS só no cluster e nas famílias do projeto, PassRole só nas quatro roles,
-   o prefixo `locks/` do bucket e leitura dos segredos que o deploy confere.
+1. Atualizar a stack com `GitHubRepository` no mesmo formato que o GitHub
+   emite no campo `sub` do token OIDC. Este repositório usa o formato imutável
+   `<owner>@<owner-id>/<repo>@<repo-id>`. Rode na raiz do clone para obter o valor:
+
+   ```bash
+   gh api 'repos/{owner}/{repo}' --jq '"\(.owner.login)@\(.owner.id)/\(.name)@\(.id)"'
+   ```
+
+   Se a stack já foi criada com `<owner>/<repo>`, atualize o parâmetro antes da
+   primeira promoção com o workflow. O formato sem IDs continua disponível para
+   repositórios que ainda o usam. [Referência de OIDC do GitHub](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims).
+
+   A stack cria o provedor OIDC e a role. A role recebe ECR só nos repositórios
+   `<name>-*`, acesso ao cluster e às famílias de tasks do projeto,
+   PassRole só nas quatro roles, acesso ao prefixo `locks/` do bucket e leitura
+   dos segredos que o deploy confere.
 2. Criar as variáveis do repositório no GitHub, sem segredos:
    - `AWS_DEPLOY_ROLE_ARN`: saída `GitHubDeployRoleArn`;
    - `AWS_REGION`;
