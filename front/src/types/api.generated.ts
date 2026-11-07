@@ -1264,6 +1264,11 @@ export interface components {
     LogoutResponse: {
       /** @constant */
       logged_out: true;
+      /**
+       * Format: uri
+       * @description Somente no Cognito: o navegador deve seguir este endereço para encerrar também a sessão do provedor.
+       */
+      provider_logout_url?: string;
     };
     ProposalInventoryRow: {
       center_code: string;

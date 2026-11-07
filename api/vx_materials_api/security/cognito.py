@@ -6,7 +6,7 @@ import hmac
 import os
 import re
 from dataclasses import dataclass
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 
 import httpx
 import jwt
@@ -36,6 +36,13 @@ class CognitoConfig:
     @property
     def redirect_uri(self):
         return self.origin + "/auth/callback/"
+
+    @property
+    def logout_url(self):
+        """Encerra a sessão do Hosted UI; senão o próximo login volta à mesma conta sem pedir senha."""
+        return (
+            self.domain + "/logout?" + urlencode({"client_id": self.client_id, "logout_uri": self.origin + "/login/"})
+        )
 
     @classmethod
     def from_environment(cls):

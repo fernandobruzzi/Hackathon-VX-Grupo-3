@@ -28,8 +28,8 @@ export function SignOutButton({
         inFlight.current = true;
         setLeaving(true);
         try {
-          await signOut();
-          onSignedOut();
+          // No Cognito o navegador segue para o logout do provedor; não redirecionar por cima.
+          if (!(await signOut())) onSignedOut();
         } catch {
           // O provedor reconcilia a identidade e apresenta o erro com a opção de tentar novamente.
         } finally {

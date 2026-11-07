@@ -191,6 +191,14 @@ def test_pkce_login_opaque_cookie_encrypted_tokens_and_logout(browser):
         "/api/v1/auth/logout", json={}, headers={"Origin": "https://app.test", "X-CSRF-Token": me.json()["csrf_token"]}
     )
     assert result.status_code == 200
+    # O provedor também encerra a própria sessão; sem isso o próximo login volta à mesma conta.
+    logout_url = urlsplit(result.json()["provider_logout_url"])
+    assert (logout_url.scheme, logout_url.netloc, logout_url.path) == (
+        "https",
+        "pool.auth.us-east-1.amazoncognito.com",
+        "/logout",
+    )
+    assert parse_qs(logout_url.query) == {"client_id": ["client1"], "logout_uri": ["https://app.test/login/"]}
     assert client.get("/api/v1/auth/me").status_code == 401
 
 
@@ -260,12 +268,11 @@ def test_local_accounts_have_server_roles_and_revocable_sessions(connection, mon
     assert me["user"]["roles"] == [role]
     assert "HttpOnly" in response.headers["set-cookie"]
     assert me["demo"]["active_persona"] == persona
-    assert (
-        client.post(
-            "/api/v1/auth/logout",
-            json={},
-            headers={"Origin": "http://localhost:8000", "X-CSRF-Token": me["csrf_token"]},
-        ).status_code
-        == 200
+    logout = client.post(
+        "/api/v1/auth/logout",
+        json={},
+        headers={"Origin": "http://localhost:8000", "X-CSRF-Token": me["csrf_token"]},
     )
+    assert logout.status_code == 200
+    assert logout.json() == {"logged_out": True}
     assert client.get("/api/v1/auth/me").status_code == 401
