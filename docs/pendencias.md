@@ -7,7 +7,8 @@ um estado corrigido. A fila de propostas continua em `/saneamento/`.
 
 ## Registrar as observações
 
-A migração `0012` cria `manual_reviews`. Depois de atualizar a aplicação, execute
+A migração `0013_manual_reviews`, posterior a `0012_current_inventory_dataset`,
+cria `manual_reviews`. Depois de atualizar a aplicação, execute
 um novo saneamento: execuções anteriores não possuíam essas observações.
 
 ```bash
@@ -83,3 +84,9 @@ O MCP não recebe acesso à tabela. Nenhum valor financeiro é incluído na proj
 Os testes verificam correspondência das contagens na base inteira, repetição sem
 duplicação, escopo, CSRF, versões, referências, fontes de conversão, auditoria e
 aprovação pela API sem edição antecipada do material.
+
+Para estoque sem unidade no registro importado, a origem da conversão é uma
+string vazia (`from_unit: ""`). Fator positivo e fonte continuam obrigatórios,
+mesmo quando o fator informado é 1. O encaminhamento não deduz a unidade nem
+altera o snapshot; a aprovação normal aplica a conversão e conserva o valor
+contábil e os registros originais.
