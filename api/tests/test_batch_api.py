@@ -45,11 +45,24 @@ def base(migrated_url, tmp_path_factory):
 @pytest.fixture
 def clean_jobs(base):
     admin = base[0]
+
+    def clear_commands():
+        with admin.begin() as connection:
+            connection.execute(
+                text(
+                    "DELETE FROM operation_requests WHERE operation = 'BATCH_COMMAND' "
+                    "AND user_id IN (SELECT id FROM users_sso WHERE tenant_id = :tenant)"
+                ),
+                {"tenant": TENANT_ID},
+            )
+
+    clear_commands()
     with admin.begin() as connection:
         connection.execute(text("DELETE FROM manual_reviews"))
         connection.execute(text("DELETE FROM sanitization_proposals"))
         connection.execute(text("DELETE FROM batch_jobs"))
-    return base
+    yield base
+    clear_commands()
 
 
 def _identity(admin, persona: str) -> Identity:
