@@ -5,6 +5,7 @@ progresso no banco (checkpoint e heartbeat). Antes de qualquer leitura ou dispar
 vida há mais que o prazo viram FAILED, com o checkpoint preservado: reprocessar continua dele.
 """
 
+import hashlib
 import json
 import re
 import uuid
@@ -17,10 +18,11 @@ from sqlalchemy.orm import Session
 from clients.storage import ObjectStore
 from domain.pdm_loader import DEFAULT_PDM_VERSION
 from pipelines.full_run import PIPELINE_VERSION
-from vx_materials_api.db.models import BatchJob, Dataset, MaterialMaster, UserSso
+from vx_materials_api.db.models import BatchJob, Dataset, MaterialMaster, OperationRequest, UserSso
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.batch import BatchJobOut, BatchJobRequest, JobCounts, JobError, JobProgress
 from vx_materials_api.security.identity import Identity
+from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.services.batch_runner import BatchRunner, LaunchRequest
 
 NCM_VERSION = "ncm-demo-v1"
@@ -29,6 +31,55 @@ ACTIVE_STATUSES = ("QUEUED", "RUNNING")
 WORKER_TIMEOUT = "WORKER_TIMEOUT"
 WORKER_NOT_STARTED = "WORKER_NOT_STARTED"
 _ERROR_CODE = re.compile(r"^([A-Z][A-Z_]+): (.*)$", re.S)
+COMMAND_OPERATION = "BATCH_COMMAND"
+
+
+def _command(db: Session, identity: Identity, key: uuid.UUID, action: str, resource: uuid.UUID, payload: dict):
+    # O lock de usuário/chave também serializa uma tentativa com outro tenant ou recurso.
+    db.execute(
+        text("SELECT pg_advisory_xact_lock(hashtext(:key))"),
+        {"key": f"batch-command:{identity.user_id}:{key}"},
+    )
+    digest = hashlib.sha256(
+        json.dumps(
+            {"tenant": str(identity.tenant_id), "action": action, "resource": str(resource), "payload": payload},
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()
+    previous = db.scalar(
+        select(OperationRequest).where(
+            OperationRequest.user_id == identity.user_id,
+            OperationRequest.operation == COMMAND_OPERATION,
+            OperationRequest.idempotency_key == str(key),
+        )
+    )
+    if previous is not None and previous.payload_hash != digest:
+        raise ApiProblem(409, "IDEMPOTENCY_CONFLICT", "A chave já foi usada com outro comando batch.")
+    return previous, digest
+
+
+def _remember_command(db: Session, identity: Identity, key: uuid.UUID, digest: str, job: BatchJob) -> None:
+    # Persiste antes do disparo: nem uma resposta perdida nem uma falha ambígua relança a task.
+    db.add(
+        OperationRequest(
+            user_id=identity.user_id,
+            operation=COMMAND_OPERATION,
+            idempotency_key=str(key),
+            payload_hash=digest,
+            status="COMPLETED",
+            resource_id=str(job.id),
+            response={"job_id": str(job.id)},
+        )
+    )
+
+
+def _replay_job(db: Session, identity: Identity, previous: OperationRequest) -> BatchJob:
+    job = db.scalar(
+        select(BatchJob).where(BatchJob.id == uuid.UUID(previous.resource_id), BatchJob.tenant_id == identity.tenant_id)
+    )
+    if job is None:
+        raise ApiProblem(404, "NOT_FOUND", "Job não encontrado.")
+    return job
 
 
 def manifest_key(job_id: uuid.UUID) -> str:
@@ -77,7 +128,9 @@ def start_job(
     store: ObjectStore,
     runner: BatchRunner,
     timeout_seconds: int,
+    idempotency_key: uuid.UUID,
 ) -> BatchJob:
+    require_permission(identity, "batch:run")
     if request.job_type not in SUPPORTED_TYPES:
         raise ApiProblem(422, "JOB_TYPE_NOT_SUPPORTED", f"O tipo {request.job_type} ainda não roda no batch.")
     if set(request.scope.include_statuses) != {"ATIVO", "BLOQUEADO", "OBSOLETO"}:
@@ -97,6 +150,11 @@ def start_job(
     expire_stale_jobs(db, identity.tenant_id, timeout_seconds)
     # Um job por vez: o lock evita dois disparos simultâneos passando pela mesma verificação.
     db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:key))"), {"key": f"batch:{identity.tenant_id}"})
+    previous, digest = _command(
+        db, identity, idempotency_key, "START", request.dataset_id, request.model_dump(mode="json")
+    )
+    if previous is not None:
+        return _replay_job(db, identity, previous)
     active = _active_job(db, identity.tenant_id)
     if active is not None:
         raise ApiProblem(409, "JOB_ALREADY_RUNNING", "Já existe um job em andamento.", {"job_id": str(active.id)})
@@ -123,15 +181,22 @@ def start_job(
         "output_prefix": f"runs/{job.id}/",
     }
     store.put_if_absent(manifest_key(job.id), json.dumps(manifest, indent=2, sort_keys=True).encode())
+    _remember_command(db, identity, idempotency_key, digest, job)
     db.commit()
     _launch(db, job, runner)
     return job
 
 
 def resume_job(
-    db: Session, identity: Identity, job_id: uuid.UUID, runner: BatchRunner, timeout_seconds: int
+    db: Session,
+    identity: Identity,
+    job_id: uuid.UUID,
+    runner: BatchRunner,
+    timeout_seconds: int,
+    idempotency_key: uuid.UUID,
 ) -> BatchJob:
     """Reprocessa um job que falhou. A task continua dos checkpoints dele, sem duplicar propostas."""
+    require_permission(identity, "batch:run")
     expire_stale_jobs(db, identity.tenant_id, timeout_seconds)
     db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:key))"), {"key": f"batch:{identity.tenant_id}"})
     job = db.scalar(
@@ -139,6 +204,9 @@ def resume_job(
     )
     if job is None:
         raise ApiProblem(404, "NOT_FOUND", "Job não encontrado.")
+    previous, digest = _command(db, identity, idempotency_key, "RESUME", job_id, {})
+    if previous is not None:
+        return _replay_job(db, identity, previous)
     if job.status != "FAILED":
         raise ApiProblem(409, "JOB_NOT_RESUMABLE", "Só um job que falhou pode ser reprocessado.")
     active = _active_job(db, identity.tenant_id)
@@ -150,6 +218,7 @@ def resume_job(
         .where(BatchJob.id == job.id)
         .values(status="QUEUED", heartbeat_at=None, error_summary=None, updated_at=func.now())
     )
+    _remember_command(db, identity, idempotency_key, digest, job)
     db.commit()
     db.refresh(job)
     _launch(db, job, runner)

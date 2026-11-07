@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Header, Query, Request
 from sqlalchemy.orm import Session
 
 from clients.storage import get_object_store
@@ -44,11 +44,12 @@ def start_job(
     identity: Governance,
     db: Db,
     task: Annotated[BatchRunner, Depends(runner)],
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
 ) -> BatchJobOut:
     """Cria o job, grava o manifesto e dispara a task, sem token do usuário."""
     verify_write(request, identity)
     timeout = settings.batch_heartbeat_timeout_seconds()
-    job = batch_service.start_job(db, identity, payload, get_object_store(), task, timeout)
+    job = batch_service.start_job(db, identity, payload, get_object_store(), task, timeout, idempotency_key)
     return batch_service.to_contract(db, job)
 
 
@@ -78,8 +79,11 @@ def resume_job(
     identity: Governance,
     db: Db,
     task: Annotated[BatchRunner, Depends(runner)],
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
 ) -> BatchJobOut:
     """Reprocessa um job que falhou, continuando dos checkpoints."""
     verify_write(request, identity)
-    job = batch_service.resume_job(db, identity, job_id, task, settings.batch_heartbeat_timeout_seconds())
+    job = batch_service.resume_job(
+        db, identity, job_id, task, settings.batch_heartbeat_timeout_seconds(), idempotency_key
+    )
     return batch_service.to_contract(db, job)
