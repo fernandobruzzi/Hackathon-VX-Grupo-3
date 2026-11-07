@@ -4,6 +4,10 @@ O módulo `domain.ncm_snapshot` prepara a tabela de referência e confere exist�
 vigência de códigos na **data registrada no snapshot**. Não usa a data da consulta,
 não muda materiais, não sugere substituições e não concede aprovação fiscal.
 
+Preparação local da #30: **manter o PR em rascunho** até obter e validar uma
+captura oficial real. Os testes locais e os contratos integrados não encerram
+esse critério; não há bytes oficiais nesta entrega.
+
 ## Fonte e limite da entrega
 
 A [Receita Federal](https://www.gov.br/receitafederal/pt-br/assuntos/aduana-e-comercio-exterior/classificacao-fiscal-de-mercadorias/download-ncm-nomenclatura-comum-do-mercosul)
@@ -119,7 +123,8 @@ inclui `ncm_version`, `ncm_source_sha256`, `ncm_snapshot_date` (ISO) e
 
 O batch vincula a referência às propostas fiscais e, quando configurada, também
 às propostas de merge/correção técnica. O checkpoint guarda versão, hash, data e
-origem; retomar um job com outra referência exige novo job. A API recalcula a
+origem; retomar a análise com outra referência exige novo job. A retomada
+exclusiva da finalização usa as métricas já congeladas, sem reavaliar propostas. A API recalcula a
 avaliação usando a mesma configuração em cada aprovação e compara o assessment
 inteiro já vinculado ao changeset. Mudanças de versão, hash, data ou origem recusam
 a proposta com `NCM_ASSESSMENT_CHANGED`; propostas antigas sem assessment também
@@ -147,3 +152,20 @@ Validação local:
 ```bash
 uv run pytest tests/test_ncm_snapshot.py
 ```
+
+## Critério pendente para sair de rascunho
+
+Registrar uma captura obtida pelo cliente HTTPS fixo, com TLS e política de rede
+vigentes, conferir o envelope e os campos contra os bytes oficiais e preservar
+SHA-256, data de cobertura, origem e manifesto no ObjectStore. Validar então a
+leitura compartilhada e os assessments de batch, MCP e API com essa referência.
+O registro histórico de bloqueio por CONNECT 403 acima não foi substituído por
+uma captura nesta integração. Um arquivo de espelho ou uma fixture não recebe
+origem oficial. A configuração permanece vazia até essa validação; sem referência
+a existência e a vigência continuam desconhecidas.
+
+A integração conserva a resolução manual de pendências e a finalização de métricas
+congeladas do batch: a retomada da finalização não reexecuta a análise nem altera
+o payload aprovado. A referência NCM é vinculada à análise e às propostas antes
+desse congelamento. A aprovação continua reavaliando a referência configurada
+e exigindo as autorizações técnica e fiscal aplicáveis.

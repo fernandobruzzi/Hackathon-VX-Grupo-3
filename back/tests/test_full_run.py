@@ -1,8 +1,10 @@
 """Retomada da análise só com as mesmas regras (#83). O checkpoint no banco fica de fora destes testes."""
 
 import json
+from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -140,6 +142,25 @@ def test_resume_cannot_mix_ncm_references(job, catalog, ncm_snapshot, monkeypatc
         full_run.run_full(RECORDS, catalog, job(checkpoint))
 
 
+def _manual_review_context(monkeypatch, records, catalog):
+    connection = object()
+    context = RunContext(engine=SimpleNamespace(begin=lambda: nullcontext(connection)), tenant_id="t")
+    saved = []
+
+    def save(connection_arg, records_arg, analyzed, pending_by_code, context_arg, catalog_arg, corrector_name):
+        assert connection_arg is connection
+        assert records_arg is records
+        assert [material.record for material in analyzed] == records
+        assert context_arg is context
+        assert catalog_arg is catalog
+        assert corrector_name == "head_noun_v1"
+        saved.append(pending_by_code)
+        return "test-manual-review-run"
+
+    monkeypatch.setattr(full_run, "save_manual_reviews", save)
+    return context, saved
+
+
 def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, monkeypatch):
     captured = []
     monkeypatch.setattr(
@@ -147,8 +168,10 @@ def test_full_run_binds_snapshot_to_technical_proposals(catalog, ncm_snapshot, m
     )
     # Itens de identidade por referência geram merge e correções técnicas.
     records = [replace(RECORDS[0], code=str(i), ncm="8421.23.00", unit="PC") for i in range(1, 3)]
-    context = RunContext(engine=None, tenant_id="t")
+    context, manual_reviews = _manual_review_context(monkeypatch, records, catalog)
     result = full_run.run_full(records, catalog, context)
+    assert manual_reviews == [{}]
+    assert result["manual_review_run_id"] == "test-manual-review-run"
     assert result["merge_summary"]["fiscal_review_required"] == sum(
         p.fiscal_review_required for p in captured if p.proposal_type == "MERGE"
     )
@@ -192,7 +215,10 @@ def test_snapshot_binding_preserves_raw_ncm_for_technical_corrections_and_existi
         full_run, "save_all", lambda proposals, records, context: captured.extend(proposals) or len(proposals)
     )
     records = [replace(RECORDS[0], code=str(i), ncm="84212300", unit="PC") for i in range(1, 3)]
-    full_run.run_full(records, catalog, RunContext(engine=None, tenant_id="t"))
+    context, manual_reviews = _manual_review_context(monkeypatch, records, catalog)
+    result = full_run.run_full(records, catalog, context)
+    assert manual_reviews == [{}]
+    assert result["manual_review_run_id"] == "test-manual-review-run"
     technical = [p for p in captured if p.proposal_type == "PDM_CORRECTION"]
     assert technical
     for proposal in technical:
