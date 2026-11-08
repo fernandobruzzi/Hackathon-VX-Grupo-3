@@ -144,12 +144,16 @@ def _candidates_patch(decision: DuplicateDecision) -> dict[str, Any]:
 
 
 def _no_class_response(
-    context: TurnContext, recorder: ToolRecorder, search: dict[str, Any] | None, decision: DuplicateDecision
+    context: TurnContext,
+    recorder: ToolRecorder,
+    search: dict[str, Any] | None,
+    decision: DuplicateDecision,
+    center_code: str,
 ) -> AgentRunResponse:
     candidates = context.classification.candidate_class_ids
     if decision.existing is not None or decision.similar:
         # Em classes de referência, fabricante e referência bastam para achar o item, mesmo sem a classe.
-        message = existing_message(decision.existing) if decision.existing else decision.message
+        message = existing_message(decision.existing, center_code) if decision.existing else decision.message
         return AgentRunResponse(
             assistant_message=message,
             tool_calls=recorder.calls,
@@ -238,7 +242,7 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     if context.pdm_class is None:
         search = await _search(recorder, request, context, None)
         decision = decide(search, request.message, offered, dismissed, request.action)
-        return _no_class_response(context, recorder, search, decision)
+        return _no_class_response(context, recorder, search, decision, request.context.center_code)
 
     pdm_class = context.pdm_class
     version = request.context.pdm_version
@@ -277,7 +281,7 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
     missing = [item["name"] for item in validation["missing_attributes"]] if validation else []
     message = _message_for(validation, _class_name(pdm_class, context.item_name))
     if decision.existing is not None:
-        message = existing_message(decision.existing)
+        message = existing_message(decision.existing, request.context.center_code)
     elif decision.message:
         message += " " + decision.message
     elif status == "VALID":

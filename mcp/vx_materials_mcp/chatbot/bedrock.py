@@ -225,7 +225,7 @@ class BedrockPlanner:
         return result.model_copy(
             update={
                 # O estoque autorizado mantém quantidades e apresentação determinísticas.
-                "assistant_message": existing_message(result.material_card.existing)
+                "assistant_message": existing_message(result.material_card.existing, request.context.center_code)
                 if result.material_card.existing
                 else text.strip(),
                 "context_patch": {
