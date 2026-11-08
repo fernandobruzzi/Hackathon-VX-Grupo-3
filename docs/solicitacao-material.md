@@ -678,3 +678,31 @@ As ações do próprio solicitante não viram notificação.
 
 O menu do front mostra "Notificações" com o contador real. Sem resposta confiável da API, o contador some em vez de mostrar zero.
 
+
+
+## 23. Resolução do cadastro vinculado (#243)
+
+A decisão do cadastro e a continuidade da solicitação compartilham a mesma transação,
+com auditoria, controle de versão e a idempotência da decisão existente:
+
+- `REGISTERED`: vincula o código recém-publicado, muda para `EM_ATENDIMENTO` e cria um
+  encaminhamento `ENCAMINHADO` para Compras com a quantidade e a unidade confirmadas
+  pelo solicitante. Não cria compra, recebimento, reserva nem movimento de estoque.
+- `EXISTING`: um único material ativo e com unidade compatível passa a ser o material da
+  solicitação. Ela segue em `EM_ATENDIMENTO`, sem encaminhamento automático, pelo fluxo
+  normal de consulta de saldo e confirmação do atendimento.
+- `REJECTED`: encerra com `CADASTRO_REJEITADO`. O histórico mostra o motivo da decisão
+  e orienta criar uma nova solicitação com as correções; a solicitação encerrada não reabre.
+
+Mais de um código possível ou unidade incompatível retorna a necessidade a
+`EM_IDENTIFICACAO`, com motivo para revisão de Cadastro, sem escolher um substituto
+incerto nem converter a quantidade. Solicitações já encerradas, inclusive canceladas,
+são preservadas. O protocolo, o dono, o centro e o texto original não mudam.
+
+O encaminhamento automático registra o revisor que publicou o cadastro como ator,
+com o papel efetivo daquela decisão; não se faz passar pelo solicitante. Ele dá
+continuidade à necessidade já confirmada, não exige uma nova sessão do dono. Uma falha
+na gravação ou na auditoria desfaz material, cadastro, solicitação e encaminhamento juntos.
+O histórico existente da solicitação expõe essas transições, sem mudar o contrato da API.
+A resolução para material existente também vale quando detectada no envio ou na complementação
+do cadastro, além da decisão de Governança ou Fiscal.
