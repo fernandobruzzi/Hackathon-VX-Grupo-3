@@ -1360,6 +1360,7 @@ export interface components {
         estimated_savings: components["schemas"]["Decimal"] | null;
         assumptions?: string[];
       };
+      ncm: components["schemas"]["NcmMetrics"];
     };
     /** @description Quantidade ou valor decimal, sem conversão para ponto flutuante. */
     Decimal: string;
@@ -2740,6 +2741,95 @@ export interface components {
       scorer_simulated: boolean;
       version: string;
       error: string | null;
+    };
+    /** NcmBenchmark */
+    NcmBenchmark: {
+      /**
+       * Data Origin
+       * @constant
+       */
+      data_origin: "DEVELOPMENT_MEASUREMENT";
+      /**
+       * Labels
+       * @constant
+       */
+      labels: "DOCUMENTAL_SEM_REVISAO_INDEPENDENTE";
+      /** Benchmark Version */
+      benchmark_version: string;
+      /**
+       * Measured At
+       * Format: date-time
+       */
+      measured_at: string;
+      /** Rules Version */
+      rules_version: string;
+      /** Algorithms */
+      algorithms: {
+        [key: string]: string;
+      };
+      /** Pdm Source Sha256 */
+      pdm_source_sha256: string;
+      /** Input Sha256 */
+      input_sha256: string;
+      /** Families */
+      families: components["schemas"]["NcmBenchmarkFamily"][];
+    };
+    /** NcmBenchmarkFamily */
+    NcmBenchmarkFamily: {
+      /** Family */
+      family: string;
+      /** Resolved */
+      resolved: number;
+      /** Eligible Problems */
+      eligible_problems: number;
+      /** Improper Changes */
+      improper_changes: number;
+      /** Abstentions */
+      abstentions: number;
+    };
+    /** NcmProposalCounts */
+    NcmProposalCounts: {
+      /**
+       * Created
+       * @default 0
+       */
+      created: number;
+      /**
+       * Fiscal Approved
+       * @default 0
+       */
+      fiscal_approved: number;
+      /**
+       * Rejected
+       * @default 0
+       */
+      rejected: number;
+      /**
+       * Pending
+       * @default 0
+       */
+      pending: number;
+      /**
+       * Stale
+       * @default 0
+       */
+      stale: number;
+    };
+    /** NcmMetrics */
+    NcmMetrics: {
+      /** Missing Before */
+      missing_before: number;
+      /** Missing After */
+      missing_after: number | null;
+      content: components["schemas"]["NcmProposalCounts"];
+      format_only: components["schemas"]["NcmProposalCounts"];
+      /** Fiscal Decided */
+      fiscal_decided: number;
+      /** Fiscal Approved Decisions */
+      fiscal_approved_decisions: number;
+      /** Operational Precision */
+      operational_precision: number | null;
+      benchmark: components["schemas"]["NcmBenchmark"];
     };
   };
   responses: never;

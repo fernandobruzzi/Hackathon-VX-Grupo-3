@@ -37,6 +37,63 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
   depois, só os que continuam ativos no snapshot. Unificações rejeitadas ou
   desatualizadas não contam.
 
+## Tratamento de NCM
+
+O objeto `ncm` e a seção “Tratamento de NCM” apresentam a ausência no original e
+no snapshot posterior. Sem snapshot, `missing_after=null`; corrigir a master não
+inventa o depois.
+
+O funil conta uma vez cada proposta `NCM_CORRECTION`, nas mesmas restrições de
+tenant, dataset e centros do funil geral. Uma proposta com qualquer membro fora do
+escopo fica inteiramente de fora. `content` reúne mudanças de código e
+`format_only` reúne grafias diferentes de um mesmo NCM válido de oito dígitos no
+`ncm_before_assessment.input_ncm` fixado na proposta (no legado sem avaliação,
+usa-se o original importado; por exemplo, `73181500` → `7318.15.00`). Estoque em vários centros não
+multiplica propostas.
+
+- `created`: propostas registradas no dataset.
+- `fiscal_approved`: propostas com decisão fiscal humana auditada.
+- `rejected`: propostas cujo estado final é rejeitado, inclusive rejeição técnica.
+- `pending`: propostas ainda pendentes e sem decisão fiscal auditada.
+- `stale`: propostas desatualizadas.
+
+Os desfechos são exclusivos: rejeição ou desatualização prevalece sobre uma
+aprovação fiscal anterior. Aprovação fiscal pendente da técnica fica na coluna
+aprovada fiscal. A **precisão operacional** é a proporção de aprovações nas decisões fiscais
+registradas, incluindo as duas categorias e contando cada proposta uma vez. `fiscal_approved_decisions` conserva o numerador histórico, mesmo se a proposta
+foi depois rejeitada na revisão técnica. A aprovação técnica ou apenas preencher a coluna `fiscal_review_status` não entra
+nesse denominador. Sem decisões, `operational_precision=null` e
+`fiscal_decided=0`. Essa aceitação operacional não prova acurácia independente.
+
+### Benchmark de desenvolvimento
+
+A tabela expansível exibe o resultado **por família** do benchmark NCM v2:
+incorretos/ausentes resolvidos e seu denominador elegível, alterações indevidas e
+abstenções. Ela é uma medição global de desenvolvimento congelada, separada das
+contagens operacionais do tenant. Não publica os indicadores de avaliação
+independente da #113. Os rótulos são documentais, sem revisão fiscal independente.
+
+O artefato `back/pipelines/evaluation_data/ncm_benchmark_v2.json` conserva data,
+versões de regras/algoritmos e hashes da entrada e do PDM. Ele é incluído no pacote
+Python; o endpoint lê o resultado congelado, sem reexecutar regras ou usar rede.
+A medição de 08/11/2026 às 11h18 BRT usou `pdm-ncm-v2`, `aliases_v2@1`,
+`rule_based_v1@11-quantity-reference-199` e `head_noun_v2`: **1.228/1.842**
+problemas elegíveis resolvidos, **1 alteração indevida** e **605 abstenções**,
+preservadas na tela por família. Não remover erros nem reclassificar pendentes
+como acertos. Famílias sem problema elegível mostram denominador zero.
+
+Para reproduzir o relatório bruto, a partir de `back/`:
+
+```bash
+CLASSIFICATION_REPOSITORY=aliases_v2 EXTRACTION_REPOSITORY=rule_based_v1 CORRECTION_REPOSITORY=head_noun_v2 uv run python -m pipelines.measure_ncm_benchmark ../data/benchmark_ncm/v2 --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+```
+
+A captura usa a configuração padrão **sem snapshot NCM oficial** e sem auditor
+LLM. Uma nova medição deve registrar sua própria data, versões e hashes. Por
+família, `resolved` e `eligible_problems` são o numerador/denominador de
+`errors_and_missing_resolved`; `improper_changes` e `abstentions` conservam seus
+nomes no relatório bruto. Nenhum desses resultados autoriza aplicação fiscal.
+
 ## Snapshot posterior
 
 `POST /api/v1/dashboard/snapshots` exige `batch:run` (Governança), CSRF e
