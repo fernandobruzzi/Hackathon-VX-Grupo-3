@@ -163,6 +163,8 @@ def detail(db, proposal, principal, catalog):
         "status": proposal.status,
         "application_mode": proposal.application_mode,
         "automation": automation_info(db, proposal),
+        "origin": changes.origin,
+        "llm_audit": llm_audit_view(changes.llm_audit),
         "title": f"{after.item_name or after.pdm_class_id or 'Classe pendente'} · "
         + " / ".join(m.material_code for m in materials),
         "material_codes": [m.material_code for m in materials],
@@ -259,10 +261,30 @@ def queue(db, principal, catalog, *, area=None, status=None, proposal_type=None,
                     "created_at",
                     "application_mode",
                     "automation",
+                    "origin",
                 )
             }
         )
     return {"items": items, "next_cursor": None}
+
+
+def llm_audit_view(audit) -> dict | None:
+    """O que a revisão precisa ver da sugestão do auditor LLM: modelo, evidências e justificativa."""
+    if audit is None:
+        return None
+    return {
+        "model": audit.call.model,
+        "prompt_version": audit.prompt_version,
+        "policy_version": audit.policy_version,
+        "simulated": audit.simulated,
+        "selection_reasons": audit.selection_reasons,
+        "class_source": audit.class_source,
+        "attributes": [
+            {"name": a.nome, "value": a.valor, "quote": a.trecho, "basis": a.base} for a in audit.attributes
+        ],
+        "evidence": audit.evidence,
+        "rationale": audit.rationale,
+    }
 
 
 def redact_financial(value):

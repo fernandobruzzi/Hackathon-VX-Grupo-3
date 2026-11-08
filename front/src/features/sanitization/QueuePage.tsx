@@ -19,6 +19,7 @@ import {
 import { ApiError } from "@/lib/api";
 import type { components } from "@/types/api.generated";
 import {
+  ProposalOriginBadge,
   ProposalStatusBadge,
   ProposalTypeBadge,
   ReviewBadge,
@@ -281,7 +282,10 @@ export function QueuePage() {
                     )}
                   </Td>
                   <Td>
-                    <ProposalTypeBadge value={p.proposal_type} />
+                    <div className="flex flex-col items-start gap-1">
+                      <ProposalTypeBadge value={p.proposal_type} />
+                      <ProposalOriginBadge value={p.origin} />
+                    </div>
                   </Td>
                   <Td>
                     <Code>{p.material_codes.join(" · ")}</Code>
