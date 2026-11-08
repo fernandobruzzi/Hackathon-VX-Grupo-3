@@ -54,6 +54,9 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     id: string;
     status: "READY_FOR_REVIEW" | "EXISTING";
   } | null>(null);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const confirmationRef = useRef<HTMLHeadingElement>(null);
+  const focusNewRegistration = useRef(false);
   const submissionAttempt = useRef<{ sessionId: string; version: number; key: string } | null>(
     null,
   );
@@ -70,6 +73,13 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
   useEffect(() => {
     if (pendingSwitch) draftGuardRef.current?.querySelector("button")?.focus();
   }, [pendingSwitch]);
+  useEffect(() => {
+    if (submitted) confirmationRef.current?.focus();
+    if (!submitted && focusNewRegistration.current) {
+      focusNewRegistration.current = false;
+      draftRef.current?.focus();
+    }
+  }, [submitted, registrationClosed]);
   useEffect(
     () => () => {
       historyRequest.current?.abort();
@@ -216,6 +226,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     setLast(null);
     setCalls([]);
     setSubmitted(null);
+    setRegistrationClosed(false);
     submissionAttempt.current = null;
     setPanel("ficha");
   };
@@ -267,8 +278,11 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     }
   };
 
-  const run = (action: { kind: "new" } | { kind: "open"; id: string }) =>
-    action.kind === "new" ? reset() : restore(action.id);
+  const run = (action: { kind: "new" } | { kind: "open"; id: string }) => {
+    if (action.kind === "open") return restore(action.id);
+    focusNewRegistration.current = submitted !== null;
+    reset();
+  };
   const guardDraft = (action: { kind: "new" } | { kind: "open"; id: string }) => {
     const sameConversation = action.kind === "open" && action.id === selected;
     if (!text.trim() || sameConversation) return run(action);
@@ -276,7 +290,8 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
   };
   const keepEditing = () => {
     setPendingSwitch(null);
-    draftRef.current?.focus();
+    if (submitted) confirmationRef.current?.focus();
+    else draftRef.current?.focus();
   };
   const discardDraft = () => {
     if (!pendingSwitch) return;
@@ -460,7 +475,55 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               {error}
             </p>
           )}
-          <div className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde">
+          {submitted && (
+            <section
+              aria-labelledby="registration-confirmation-title"
+              className="mx-auto max-w-2xl space-y-3 rounded-md bg-ink p-4"
+            >
+              <h2
+                id="registration-confirmation-title"
+                aria-describedby="registration-confirmation-detail"
+                className="font-bold"
+                ref={confirmationRef}
+                tabIndex={-1}
+              >
+                {submitted.status === "EXISTING"
+                  ? "Pedido confirmado. O item já está cadastrado."
+                  : "Pedido enviado para revisão."}
+              </h2>
+              {registrationClosed ? (
+                <p
+                  id="registration-confirmation-detail"
+                  role="status"
+                  className="text-sm text-muted"
+                >
+                  Conversa encerrada. Você pode consultar as mensagens acima.
+                </p>
+              ) : (
+                <>
+                  <p id="registration-confirmation-detail" className="text-sm text-muted">
+                    Quer fazer mais cadastros?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" onClick={() => guardDraft({ kind: "new" })}>
+                      Novo cadastro
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setRegistrationClosed(true)}
+                    >
+                      Encerrar
+                    </Button>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+          <div
+            hidden={submitted !== null && !text.trim()}
+            className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde"
+          >
             <textarea
               ref={draftRef}
               disabled={
@@ -508,10 +571,12 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               <ArrowUp className="size-4" />
             </Button>
           </div>
-          <p className="mx-auto mt-2 max-w-2xl text-[11px] text-muted">
-            Validar no chat não publica o material: o pedido passa por Governança PDM e, se mexer em
-            NCM, pelo Fiscal.
-          </p>
+          {!submitted && (
+            <p className="mx-auto mt-2 max-w-2xl text-[11px] text-muted">
+              Validar no chat não publica o material: o pedido passa por Governança PDM e, se mexer
+              em NCM, pelo Fiscal.
+            </p>
+          )}
         </form>
       </section>
 
