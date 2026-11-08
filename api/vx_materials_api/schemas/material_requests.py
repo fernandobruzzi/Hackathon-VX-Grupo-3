@@ -21,6 +21,8 @@ class CreateMaterialRequest(BaseModel):
     material_id: UUID | None = None
     chat_session_id: UUID | None = None
     registration_order_id: UUID | None = None
+    # Confirma a criação mesmo com solicitação aberta do mesmo material e centro (#248).
+    acknowledge_open_requests: bool = False
 
     @field_validator("original_text")
     @classmethod

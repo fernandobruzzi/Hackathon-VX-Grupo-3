@@ -3,6 +3,7 @@
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
@@ -396,3 +397,95 @@ def test_fiscal_queue_requires_a_linked_order_awaiting_fiscal_review(case):
     db.commit()
     assert client.get(f"{PATH}/{row['id']}").status_code == 404
     assert client.get(PATH).json()["items"] == []
+
+
+def count_rows(db, table, *conditions):
+    return db.scalar(select(func.count()).select_from(table).where(*conditions))
+
+
+def test_open_request_of_same_material_and_center_warns_owner_with_protocol(case):
+    client, db, me = case
+    material = add_material(db)
+    body = payload(material_id=str(material.id))
+    first = create(client, me, body)
+    key = str(uuid.uuid4())
+    warned = client.post(PATH, json=body, headers=headers(me, key))
+    assert warned.status_code == 409, warned.text
+    error = warned.json()["error"]
+    assert error["code"] == "OPEN_REQUESTS_EXIST"
+    shown = error["details"]["open_requests"][0]
+    assert datetime.fromisoformat(shown["created_at"]) == datetime.fromisoformat(first["created_at"])
+    shown["created_at"] = first["created_at"]
+    assert error["details"] == {
+        "total_count": 1,
+        "hidden_count": 0,
+        "open_requests": [
+            {
+                "id": first["id"],
+                "protocol": first["protocol"],
+                "status": "EM_ATENDIMENTO",
+                "quantity": first["quantity"],
+                "unit": "PC",
+                "created_at": first["created_at"],
+            }
+        ],
+    }
+    assert count_rows(db, MaterialRequest) == 1
+    assert count_rows(db, OperationRequest, OperationRequest.idempotency_key == key) == 0
+    # O aviso não grava resposta idempotente: a mesma chave pode confirmar.
+    confirmed = create(client, me, {**body, "acknowledge_open_requests": True}, key=key)
+    assert confirmed["id"] != first["id"] and confirmed["status"] == "EM_ATENDIMENTO"
+    assert "1 solicitação(ões) aberta(s)" in confirmed["history"][0]["reason"]
+    assert create(client, me, {**body, "acknowledge_open_requests": True}, key=key) == confirmed
+    event = db.scalar(select(AuditLog).where(AuditLog.entity_id == confirmed["id"]))
+    assert event.action == "MATERIAL_REQUEST_CREATED"
+    assert event.after_json["open_request_acknowledgement"] == {
+        "total_count": 1,
+        "hidden_count": 0,
+        "visible_request_ids": [first["id"]],
+    }
+    first_event = db.scalar(select(AuditLog).where(AuditLog.entity_id == first["id"]))
+    assert "open_request_acknowledgement" not in first_event.after_json and first_event.reason is None
+
+
+def test_warning_for_invisible_requests_reveals_only_the_aggregate_count(case):
+    client, db, me = case
+    material = add_material(db)
+    body = payload(material_id=str(material.id), original_text="Texto privado do solicitante", quantity="7")
+    create(client, me, body)
+    create(client, me, {**body, "acknowledge_open_requests": True})
+    governance = login(client, "GESTOR_CADASTRO")
+    warned = client.post(PATH, json=payload(material_id=str(material.id)), headers=headers(governance))
+    assert warned.status_code == 409
+    assert warned.json()["error"]["details"] == {"total_count": 2, "hidden_count": 2, "open_requests": []}
+    assert "Texto privado" not in warned.text and me["user"]["id"] not in warned.text
+    confirmed = create(client, governance, payload(material_id=str(material.id), acknowledge_open_requests=True))
+    event = db.scalar(select(AuditLog).where(AuditLog.entity_id == confirmed["id"]))
+    assert event.after_json["open_request_acknowledgement"] == {
+        "total_count": 2,
+        "hidden_count": 2,
+        "visible_request_ids": [],
+    }
+    assert "2 solicitação(ões)" in confirmed["history"][0]["reason"]
+
+
+def test_closed_requests_other_centers_and_unresolved_material_do_not_warn(case):
+    client, db, me = case
+    material = add_material(db)
+    body = payload(material_id=str(material.id))
+    cancelled = create(client, me, body)
+    response = client.post(
+        f"{PATH}/{cancelled['id']}/cancel", json={"expected_version": 1, "reason": "Não preciso."}, headers=headers(me)
+    )
+    assert response.status_code == 200
+    concluded = create(client, me, body)
+    row = db.get(MaterialRequest, uuid.UUID(concluded["id"]))
+    row.status, row.closure_reason = "ENCERRADA", "ATENDIDA_ESTOQUE"
+    db.commit()
+    fresh = create(client, me, body)
+    assert fresh["history"][0]["reason"] is None
+    create(client, me, payload(material_id=str(material.id), center_code="1100"))
+    create(client, me)
+    assert create(client, me)["status"] == "EM_IDENTIFICACAO"
+    event = db.scalar(select(AuditLog).where(AuditLog.entity_id == fresh["id"]))
+    assert "open_request_acknowledgement" not in event.after_json

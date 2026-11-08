@@ -109,6 +109,8 @@ def new_request(client, me, material, quantity, center="1200"):
         "unit": material.unit,
         "center_code": center,
         "material_id": str(material.id),
+        # Várias solicitações do mesmo material e centro são intencionais aqui (#248).
+        "acknowledge_open_requests": True,
     }
     response = client.post(REQUESTS, json=body, headers=headers(me))
     assert response.status_code == 201, response.text
