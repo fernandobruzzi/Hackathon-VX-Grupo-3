@@ -75,6 +75,7 @@ class MaterialRequestSummary(BaseModel):
 class MaterialRequestTransition(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: UUID
+    action: str
     actor_user_id: UUID
     before_status: RequestStatus | None
     after_status: RequestStatus
@@ -82,7 +83,68 @@ class MaterialRequestTransition(BaseModel):
     created_at: datetime
 
 
+PurchaseForwardStatus = Literal["ENCAMINHADO", "ACEITO", "DEVOLVIDO", "CANCELADO"]
+
+
+class ForwardToPurchasing(BaseModel):
+    """Encaminha a quantidade pendente inteira; a divisão com reserva parcial é da #242."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_version: int = Field(ge=1)
+
+
+class AcceptPurchaseForward(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_version: int = Field(ge=1)
+
+
+class ReturnPurchaseForward(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_version: int = Field(ge=1)
+    reason: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("reason")
+    @classmethod
+    def nonblank_reason(cls, value):
+        if not value.strip():
+            raise ValueError("Informe o motivo da devolução.")
+        return value
+
+
+class PurchaseForward(BaseModel):
+    """Demanda para Compras; não indica pedido ao fornecedor, recebimento nem entrega."""
+
+    model_config = ConfigDict(extra="forbid")
+    id: UUID
+    material_request_id: UUID
+    request_protocol: str
+    material_id: UUID
+    material_code: str
+    material_description: str | None
+    quantity: Quantity
+    unit: str
+    center_code: str
+    status: PurchaseForwardStatus
+    reason: str | None
+    forwarded_by_user_id: UUID
+    handled_by_user_id: UUID | None
+    handled_at: datetime | None
+    version: int = Field(ge=1)
+    created_at: datetime
+    updated_at: datetime
+    can_handle: bool
+
+
+class PurchaseForwardList(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    items: list[PurchaseForward]
+    next_cursor: UUID | None
+
+
 class MaterialRequestDetail(MaterialRequestSummary):
+    pending_quantity: Quantity
+    forwarded_quantity: Quantity
+    purchase_forwards: list[PurchaseForward]
     history: list[MaterialRequestTransition]
 
 
