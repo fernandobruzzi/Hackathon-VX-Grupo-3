@@ -34,6 +34,8 @@ O resultado esperado dessa integração é **1 passed, sem skips**. Uma execuç�
 
 O pedido incompleto permanece sem publicação. Uma segunda persona não consegue continuar a conversa pelo UUID. Uma proposta real gerada pelo batch passa por Governança e Fiscal, com 403 nas decisões indevidas, idempotência e autoria de auditoria. O teste confere os snapshots originais, o estoque consolidado e o funil do dashboard, mantendo economia realizada e comparação posterior indisponíveis quando não há evidência para elas.
 
+`mcp/tests/test_search_content.py::test_registration_revalidates_sanitized_follow_up_and_preserves_original_text` usa o PDM do kit e um catálogo pequeno em PostgreSQL para testar três respostas ao campo `ACABAMENTO`. O valor do PDM e o alias inequívoco `zinc bco` completam o campo. O termo ambíguo `zincado` mantém a pergunta e bloqueia o envio. A validação roda em MCP stdio e o histórico conserva a resposta original em cada caso.
+
 As escritas da API são desfeitas ao final, inclusive quando o teste falha. O HTTP interno em memória não cobre DNS, portas, cookies em navegador, imagens de container ou o provedor Cognito.
 
 ## Matriz dos critérios
