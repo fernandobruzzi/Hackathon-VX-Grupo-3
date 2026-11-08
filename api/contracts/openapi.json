@@ -8686,6 +8686,9 @@
               "estimated_savings"
             ],
             "additionalProperties": false
+          },
+          "ncm": {
+            "$ref": "#/components/schemas/NcmMetrics"
           }
         },
         "required": [
@@ -8695,7 +8698,8 @@
           "after",
           "after_snapshot",
           "evaluation",
-          "pipeline"
+          "pipeline",
+          "ncm"
         ],
         "additionalProperties": false
       },
@@ -13604,6 +13608,195 @@
           "version",
           "error"
         ]
+      },
+      "NcmBenchmark": {
+        "additionalProperties": false,
+        "properties": {
+          "data_origin": {
+            "const": "DEVELOPMENT_MEASUREMENT",
+            "title": "Data Origin",
+            "type": "string"
+          },
+          "labels": {
+            "const": "DOCUMENTAL_SEM_REVISAO_INDEPENDENTE",
+            "title": "Labels",
+            "type": "string"
+          },
+          "benchmark_version": {
+            "title": "Benchmark Version",
+            "type": "string"
+          },
+          "measured_at": {
+            "format": "date-time",
+            "title": "Measured At",
+            "type": "string"
+          },
+          "rules_version": {
+            "title": "Rules Version",
+            "type": "string"
+          },
+          "algorithms": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Algorithms",
+            "type": "object"
+          },
+          "pdm_source_sha256": {
+            "title": "Pdm Source Sha256",
+            "type": "string"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "families": {
+            "items": {
+              "$ref": "#/components/schemas/NcmBenchmarkFamily"
+            },
+            "title": "Families",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data_origin",
+          "labels",
+          "benchmark_version",
+          "measured_at",
+          "rules_version",
+          "algorithms",
+          "pdm_source_sha256",
+          "input_sha256",
+          "families"
+        ],
+        "title": "NcmBenchmark",
+        "type": "object"
+      },
+      "NcmBenchmarkFamily": {
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "resolved": {
+            "title": "Resolved",
+            "type": "integer"
+          },
+          "eligible_problems": {
+            "title": "Eligible Problems",
+            "type": "integer"
+          },
+          "improper_changes": {
+            "title": "Improper Changes",
+            "type": "integer"
+          },
+          "abstentions": {
+            "title": "Abstentions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "family",
+          "resolved",
+          "eligible_problems",
+          "improper_changes",
+          "abstentions"
+        ],
+        "title": "NcmBenchmarkFamily",
+        "type": "object"
+      },
+      "NcmProposalCounts": {
+        "additionalProperties": false,
+        "properties": {
+          "created": {
+            "default": 0,
+            "title": "Created",
+            "type": "integer"
+          },
+          "fiscal_approved": {
+            "default": 0,
+            "title": "Fiscal Approved",
+            "type": "integer"
+          },
+          "rejected": {
+            "default": 0,
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "pending": {
+            "default": 0,
+            "title": "Pending",
+            "type": "integer"
+          },
+          "stale": {
+            "default": 0,
+            "title": "Stale",
+            "type": "integer"
+          }
+        },
+        "title": "NcmProposalCounts",
+        "type": "object"
+      },
+      "NcmMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "missing_before": {
+            "title": "Missing Before",
+            "type": "integer"
+          },
+          "missing_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing After"
+          },
+          "content": {
+            "$ref": "#/components/schemas/NcmProposalCounts"
+          },
+          "format_only": {
+            "$ref": "#/components/schemas/NcmProposalCounts"
+          },
+          "fiscal_decided": {
+            "title": "Fiscal Decided",
+            "type": "integer"
+          },
+          "fiscal_approved_decisions": {
+            "title": "Fiscal Approved Decisions",
+            "type": "integer"
+          },
+          "operational_precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operational Precision"
+          },
+          "benchmark": {
+            "$ref": "#/components/schemas/NcmBenchmark"
+          }
+        },
+        "required": [
+          "missing_before",
+          "missing_after",
+          "content",
+          "format_only",
+          "fiscal_decided",
+          "fiscal_approved_decisions",
+          "operational_precision",
+          "benchmark"
+        ],
+        "title": "NcmMetrics",
+        "type": "object"
       }
     },
     "parameters": {

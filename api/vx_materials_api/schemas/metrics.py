@@ -37,6 +37,45 @@ class Evaluation(_Contract):
     validated_class_ids: list[str] = Field(default_factory=list)
 
 
+class NcmProposalCounts(_Contract):
+    created: int = 0
+    fiscal_approved: int = 0
+    rejected: int = 0
+    pending: int = 0
+    stale: int = 0
+
+
+class NcmBenchmarkFamily(_Contract):
+    family: str
+    resolved: int
+    eligible_problems: int
+    improper_changes: int
+    abstentions: int
+
+
+class NcmBenchmark(_Contract):
+    data_origin: Literal["DEVELOPMENT_MEASUREMENT"]
+    labels: Literal["DOCUMENTAL_SEM_REVISAO_INDEPENDENTE"]
+    benchmark_version: str
+    measured_at: datetime
+    rules_version: str
+    algorithms: dict[str, str]
+    pdm_source_sha256: str
+    input_sha256: str
+    families: list[NcmBenchmarkFamily]
+
+
+class NcmMetrics(_Contract):
+    missing_before: int
+    missing_after: int | None
+    content: NcmProposalCounts
+    format_only: NcmProposalCounts
+    fiscal_decided: int
+    fiscal_approved_decisions: int
+    operational_precision: float | None
+    benchmark: NcmBenchmark
+
+
 class FinancialMetrics(_Contract):
     currency: Literal["BRL"] = "BRL"
     data_origin: Literal["SYNTHETIC_CHALLENGE_DATA"] = "SYNTHETIC_CHALLENGE_DATA"
@@ -69,4 +108,5 @@ class DashboardMetrics(_Contract):
     after_snapshot: QualitySnapshotOut | None = None
     pipeline: ProposalCounts
     evaluation: Evaluation = Field(default_factory=Evaluation)
+    ncm: NcmMetrics
     financial: FinancialMetrics | None = None

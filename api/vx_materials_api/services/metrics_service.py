@@ -18,6 +18,7 @@ from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.metrics import DashboardMetrics, FinancialMetrics, ProposalCounts, QualityCounts
 from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.services.approval_service import exact_sum
+from vx_materials_api.services.ncm_metrics import ncm_metrics
 from vx_materials_api.services.snapshot_service import latest_snapshot, to_contract
 
 
@@ -86,9 +87,17 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
     allowed = {key for key, centers in material_centers.items() if centers <= identity.center_codes}
     statuses = Counter()
     duplicates: set[str] = set()
-    for status, members, primary in db.execute(
+    ncm_proposals = []
+    for status, members, primary, proposal_id, proposal_type, target_ncm, before_ncm, has_before in db.execute(
         select(
-            SanitizationProposal.status, SanitizationProposal.members, SanitizationProposal.primary_material_id
+            SanitizationProposal.status,
+            SanitizationProposal.members,
+            SanitizationProposal.primary_material_id,
+            SanitizationProposal.id,
+            SanitizationProposal.proposal_type,
+            SanitizationProposal.changeset["after"]["ncm"].astext,
+            SanitizationProposal.changeset["ncm_before_assessment"]["input_ncm"].astext,
+            func.jsonb_exists(SanitizationProposal.changeset["ncm_before_assessment"], "input_ncm"),
         ).where(
             SanitizationProposal.tenant_id == identity.tenant_id,
             SanitizationProposal.changeset["schema_version"].astext == "proposal-v1",
@@ -106,6 +115,8 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
             )
         ):
             statuses[status] += 1
+            if proposal_type == "NCM_CORRECTION":
+                ncm_proposals.append((proposal_id, status, members, target_ncm, before_ncm, has_before))
             # Unificação ainda válida: os membros além do principal são os códigos duplicados.
             if len(members) > 1 and status in {"PENDING", "APPLIED"}:
                 duplicates |= {member["material_id"] for member in members} - {str(primary)}
@@ -145,6 +156,14 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
             applied=statuses["APPLIED"],
             rejected=statuses["REJECTED"],
             stale=statuses["STALE"],
+        ),
+        ncm=ncm_metrics(
+            db,
+            identity.tenant_id,
+            ncm_proposals,
+            {str(key): ncm for key, (_, ncm, _) in originals.items()},
+            before,
+            after,
         ),
     )
     # Precisão/recall exigem uma amostra rotulada independente. Aprovar não prova acerto.

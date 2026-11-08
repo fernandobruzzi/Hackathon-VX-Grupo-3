@@ -1,0 +1,576 @@
+{
+  "data_origin": "DEVELOPMENT_MEASUREMENT",
+  "labels": "DOCUMENTAL_SEM_REVISAO_INDEPENDENTE",
+  "benchmark_version": "benchmark-ncm-v2",
+  "measured_at": "2026-11-08T14:18:03.799219+00:00",
+  "rules_version": "pdm-ncm-v2",
+  "algorithms": {
+    "classification": "aliases_v2@1",
+    "extraction": "rule_based_v1@11-quantity-reference-199",
+    "corrections": "head_noun_v2"
+  },
+  "pdm_source_sha256": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b",
+  "input_sha256": "2d95512d27ca453b659f2337d454c5cfdf6f90ccafabc27f8fd62e8d5c16547b",
+  "families": [
+    {
+      "family": "ADAPTADOR",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "AMORTECEDOR",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "ARRUELA",
+      "resolved": 19,
+      "eligible_problems": 40,
+      "improper_changes": 0,
+      "abstentions": 21
+    },
+    {
+      "family": "Anéis",
+      "resolved": 98,
+      "eligible_problems": 111,
+      "improper_changes": 0,
+      "abstentions": 13
+    },
+    {
+      "family": "BARRA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "BRACO",
+      "resolved": 0,
+      "eligible_problems": 109,
+      "improper_changes": 0,
+      "abstentions": 105
+    },
+    {
+      "family": "BROCA",
+      "resolved": 21,
+      "eligible_problems": 23,
+      "improper_changes": 0,
+      "abstentions": 2
+    },
+    {
+      "family": "BUCHA",
+      "resolved": 7,
+      "eligible_problems": 7,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CABECOTE",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CABO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CALCADO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CAP",
+      "resolved": 2,
+      "eligible_problems": 4,
+      "improper_changes": 0,
+      "abstentions": 2
+    },
+    {
+      "family": "CAPA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CARCACA",
+      "resolved": 0,
+      "eligible_problems": 16,
+      "improper_changes": 0,
+      "abstentions": 16
+    },
+    {
+      "family": "CHAPA",
+      "resolved": 2,
+      "eligible_problems": 2,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CILINDRO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CONCAVO",
+      "resolved": 4,
+      "eligible_problems": 9,
+      "improper_changes": 0,
+      "abstentions": 5
+    },
+    {
+      "family": "CONTATOR",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CONTRAEIXO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CORREIA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "COTOVELO",
+      "resolved": 9,
+      "eligible_problems": 20,
+      "improper_changes": 0,
+      "abstentions": 11
+    },
+    {
+      "family": "CUBO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CUNHA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "CURVA",
+      "resolved": 0,
+      "eligible_problems": 2,
+      "improper_changes": 0,
+      "abstentions": 2
+    },
+    {
+      "family": "DENTE",
+      "resolved": 1,
+      "eligible_problems": 8,
+      "improper_changes": 0,
+      "abstentions": 7
+    },
+    {
+      "family": "DESGASTE",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "DISCO",
+      "resolved": 0,
+      "eligible_problems": 9,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "DISJUNTOR",
+      "resolved": 28,
+      "eligible_problems": 29,
+      "improper_changes": 0,
+      "abstentions": 1
+    },
+    {
+      "family": "EIXO",
+      "resolved": 0,
+      "eligible_problems": 167,
+      "improper_changes": 0,
+      "abstentions": 162
+    },
+    {
+      "family": "ELETRODO",
+      "resolved": 4,
+      "eligible_problems": 4,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "ENGRENAGEM",
+      "resolved": 3,
+      "eligible_problems": 12,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "EXPULSOR",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "FILTRO",
+      "resolved": 69,
+      "eligible_problems": 72,
+      "improper_changes": 0,
+      "abstentions": 3
+    },
+    {
+      "family": "FLANGE",
+      "resolved": 31,
+      "eligible_problems": 31,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "FUSIVEL",
+      "resolved": 2,
+      "eligible_problems": 2,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "GRELHA",
+      "resolved": 1,
+      "eligible_problems": 1,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "JUNTA",
+      "resolved": 39,
+      "eligible_problems": 48,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "LABIRINTO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "LAMINA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "LAMPADA",
+      "resolved": 15,
+      "eligible_problems": 15,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "LEVANTADOR",
+      "resolved": 4,
+      "eligible_problems": 4,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "LUVA",
+      "resolved": 20,
+      "eligible_problems": 31,
+      "improper_changes": 0,
+      "abstentions": 11
+    },
+    {
+      "family": "MANCAL",
+      "resolved": 1,
+      "eligible_problems": 2,
+      "improper_changes": 0,
+      "abstentions": 1
+    },
+    {
+      "family": "MANDIBULA",
+      "resolved": 1,
+      "eligible_problems": 24,
+      "improper_changes": 0,
+      "abstentions": 23
+    },
+    {
+      "family": "MANGUEIRA",
+      "resolved": 78,
+      "eligible_problems": 78,
+      "improper_changes": 1,
+      "abstentions": 0
+    },
+    {
+      "family": "MANOMETRO",
+      "resolved": 24,
+      "eligible_problems": 24,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "MANTO",
+      "resolved": 1,
+      "eligible_problems": 10,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "NIPLE",
+      "resolved": 2,
+      "eligible_problems": 11,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "OCULOS",
+      "resolved": 1,
+      "eligible_problems": 1,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "OLEO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "PALHETA",
+      "resolved": 0,
+      "eligible_problems": 5,
+      "improper_changes": 0,
+      "abstentions": 5
+    },
+    {
+      "family": "PASTILHA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "PINHAO",
+      "resolved": 3,
+      "eligible_problems": 12,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "PINO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "PISTAO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "PLACA",
+      "resolved": 2,
+      "eligible_problems": 18,
+      "improper_changes": 0,
+      "abstentions": 16
+    },
+    {
+      "family": "PORCA",
+      "resolved": 47,
+      "eligible_problems": 63,
+      "improper_changes": 0,
+      "abstentions": 16
+    },
+    {
+      "family": "Parafusos",
+      "resolved": 416,
+      "eligible_problems": 421,
+      "improper_changes": 0,
+      "abstentions": 5
+    },
+    {
+      "family": "RASPADOR",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "RETENTOR",
+      "resolved": 52,
+      "eligible_problems": 52,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "REVESTIMENTO",
+      "resolved": 1,
+      "eligible_problems": 2,
+      "improper_changes": 0,
+      "abstentions": 1
+    },
+    {
+      "family": "RODA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "ROLAMENTO",
+      "resolved": 27,
+      "eligible_problems": 42,
+      "improper_changes": 0,
+      "abstentions": 15
+    },
+    {
+      "family": "ROLETE",
+      "resolved": 0,
+      "eligible_problems": 41,
+      "improper_changes": 0,
+      "abstentions": 41
+    },
+    {
+      "family": "ROTOR",
+      "resolved": 2,
+      "eligible_problems": 22,
+      "improper_changes": 0,
+      "abstentions": 20
+    },
+    {
+      "family": "SAPATA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "SEGMENTO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "SENSOR",
+      "resolved": 9,
+      "eligible_problems": 9,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "TAMBOR",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "TAMPA",
+      "resolved": 0,
+      "eligible_problems": 23,
+      "improper_changes": 0,
+      "abstentions": 23
+    },
+    {
+      "family": "TAMPAO",
+      "resolved": 0,
+      "eligible_problems": 1,
+      "improper_changes": 0,
+      "abstentions": 1
+    },
+    {
+      "family": "TE",
+      "resolved": 14,
+      "eligible_problems": 23,
+      "improper_changes": 0,
+      "abstentions": 9
+    },
+    {
+      "family": "TELA",
+      "resolved": 1,
+      "eligible_problems": 2,
+      "improper_changes": 0,
+      "abstentions": 1
+    },
+    {
+      "family": "TERMINAL",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "TUBO",
+      "resolved": 3,
+      "eligible_problems": 16,
+      "improper_changes": 0,
+      "abstentions": 13
+    },
+    {
+      "family": "UNIAO",
+      "resolved": 1,
+      "eligible_problems": 1,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "VEDACAO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "VERGALHAO",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "VIGA",
+      "resolved": 0,
+      "eligible_problems": 0,
+      "improper_changes": 0,
+      "abstentions": 0
+    },
+    {
+      "family": "Válvulas",
+      "resolved": 163,
+      "eligible_problems": 163,
+      "improper_changes": 0,
+      "abstentions": 0
+    }
+  ]
+}

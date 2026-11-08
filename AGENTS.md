@@ -925,6 +925,9 @@ Quality requires `metrics:quality`; executive values require `metrics:financial`
 The quality view never returns financial values. Missing evaluations, savings or
 approved after snapshots stay unavailable; applying proposals does not imply
 savings or an independent accuracy measurement. See [`docs/dashboard.md`](docs/dashboard.md).
+NCM operational acceptance counts distinct audited fiscal decisions, with format-only
+proposals separated. The packaged NCM benchmark is a dated development measurement
+with documentary labels, not a tenant result or independent product accuracy.
 
 ## Frontend
 
