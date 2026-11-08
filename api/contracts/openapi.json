@@ -4999,7 +4999,7 @@
     "/api/v1/material-requests/{id}/cancel": {
       "post": {
         "operationId": "cancelMaterialRequest",
-        "summary": "Cancelar solicitação própria sem reserva; versão e motivo obrigatórios.",
+        "summary": "Cancelar solicitação própria e liberar suas reservas ativas; versão e motivo obrigatórios.",
         "tags": [
           "material-requests"
         ],
@@ -5121,6 +5121,371 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CancelMaterialRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/material-requests/{id}/reservations": {
+      "get": {
+        "operationId": "listStockReservations",
+        "summary": "Listar reservas e parcelas da solicitação: próprio solicitante ou Almoxarifado do centro.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Reservas da solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockReservationList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "reserveStock",
+        "summary": "Reservar saldo do centro para a solicitação em atendimento; transacional, recusa (409) acima do disponível ou do pendente.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Reserva criada, com a disponibilidade depois dela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockReservationResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStockReservation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/availability": {
+      "get": {
+        "operationId": "getStockAvailability",
+        "summary": "Consultar a disponibilidade de um material num centro autorizado; não cria registros.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "material_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "center_code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Disponibilidade no centro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockAvailability"
+                }
               }
             }
           }
@@ -10370,6 +10735,282 @@
           "next_cursor"
         ],
         "title": "MaterialRequestList",
+        "type": "object"
+      },
+      "StockAvailability": {
+        "additionalProperties": false,
+        "description": "Disponível = saldo importado do dataset vigente (com consolidações aprovadas) - reservas ATIVA - entregas menos reversões do mesmo dataset, no centro e na unidade do material. Sem preço nem valor.",
+        "properties": {
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_code": {
+            "title": "Material Code",
+            "type": "string"
+          },
+          "center_code": {
+            "title": "Center Code",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "dataset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Id"
+          },
+          "imported": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "reserved": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "delivered": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "available": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "unconverted_units": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unconverted Units",
+            "type": "array"
+          },
+          "reservable": {
+            "title": "Reservable",
+            "type": "boolean"
+          },
+          "blocked_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "INACTIVE_MATERIAL",
+                  "MATERIAL_WITHOUT_UNIT",
+                  "NO_INVENTORY_DATASET",
+                  "RECONCILIATION_REQUIRED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Reason"
+          }
+        },
+        "required": [
+          "material_id",
+          "material_code",
+          "center_code",
+          "unit",
+          "dataset_id",
+          "imported",
+          "reserved",
+          "delivered",
+          "available",
+          "unconverted_units",
+          "reservable",
+          "blocked_reason"
+        ],
+        "title": "StockAvailability",
+        "type": "object"
+      },
+      "CreateStockReservation": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Quantity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "quantity"
+        ],
+        "title": "CreateStockReservation",
+        "type": "object"
+      },
+      "StockReservation": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "center_code": {
+            "title": "Center Code",
+            "type": "string"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ATIVA",
+              "CONSUMIDA",
+              "CANCELADA"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "dataset_id": {
+            "format": "uuid",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "title": "Created By User Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "request_id",
+          "material_id",
+          "center_code",
+          "quantity",
+          "unit",
+          "status",
+          "dataset_id",
+          "created_by_user_id",
+          "version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "StockReservation",
+        "type": "object"
+      },
+      "RequestFulfillment": {
+        "additionalProperties": false,
+        "description": "Parcelas da solicitação: pendente = solicitado - reservado - entregue. Encaminhamentos para compras entram com a #241.",
+        "properties": {
+          "requested": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "reserved": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "delivered": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "pending": {
+            "$ref": "#/components/schemas/Decimal"
+          }
+        },
+        "required": [
+          "requested",
+          "reserved",
+          "delivered",
+          "pending"
+        ],
+        "title": "RequestFulfillment",
+        "type": "object"
+      },
+      "StockReservationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "reservation": {
+            "$ref": "#/components/schemas/StockReservation"
+          },
+          "request": {
+            "$ref": "#/components/schemas/MaterialRequestSummary"
+          },
+          "fulfillment": {
+            "$ref": "#/components/schemas/RequestFulfillment"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/StockAvailability"
+          }
+        },
+        "required": [
+          "reservation",
+          "request",
+          "fulfillment",
+          "availability"
+        ],
+        "title": "StockReservationResult",
+        "type": "object"
+      },
+      "StockReservationList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StockReservation"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "fulfillment": {
+            "$ref": "#/components/schemas/RequestFulfillment"
+          }
+        },
+        "required": [
+          "items",
+          "fulfillment"
+        ],
+        "title": "StockReservationList",
         "type": "object"
       }
     },

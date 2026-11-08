@@ -2743,5 +2743,129 @@
         }
       ]
     }
+  },
+  {
+    "name": "stock-availability",
+    "path": "/api/v1/stock/availability",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "material_id": "23923923-0000-4000-8000-000000000001",
+      "center_code": "1200"
+    },
+    "response": {
+      "material_id": "23923923-0000-4000-8000-000000000001",
+      "material_code": "100234",
+      "center_code": "1200",
+      "unit": "PC",
+      "dataset_id": "23923923-0000-4000-8000-000000000003",
+      "imported": "6",
+      "reserved": "0",
+      "delivered": "0",
+      "available": "6",
+      "unconverted_units": [],
+      "reservable": true,
+      "blocked_reason": null
+    }
+  },
+  {
+    "name": "stock-reserve",
+    "path": "/api/v1/material-requests/{id}/reservations",
+    "method": "post",
+    "status": 201,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000001"
+    },
+    "request": {
+      "expected_version": 1,
+      "quantity": "6"
+    },
+    "response": {
+      "reservation": {
+        "id": "23923923-0000-4000-8000-000000000002",
+        "request_id": "72372372-0000-4000-8000-000000000001",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "center_code": "1200",
+        "quantity": "6.000000",
+        "unit": "PC",
+        "status": "ATIVA",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+        "version": 1,
+        "created_at": "2026-11-08T14:00:00Z",
+        "updated_at": "2026-11-08T14:00:00Z"
+      },
+      "request": {
+        "id": "72372372-0000-4000-8000-000000000001",
+        "protocol": "SM-00000001",
+        "requester_user_id": "72372372-0000-4000-8000-000000000002",
+        "original_text": "Preciso de 10 peças para manutenção.",
+        "quantity": "10.000000",
+        "unit": "PC",
+        "center_code": "1200",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "status": "EM_ATENDIMENTO",
+        "closure_reason": null,
+        "chat_session_id": null,
+        "registration_order_id": null,
+        "version": 2,
+        "created_at": "2026-11-08T13:00:00Z",
+        "updated_at": "2026-11-08T14:00:00Z",
+        "can_cancel": false
+      },
+      "fulfillment": {
+        "requested": "10",
+        "reserved": "6",
+        "delivered": "0",
+        "pending": "4"
+      },
+      "availability": {
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "material_code": "100234",
+        "center_code": "1200",
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "imported": "6",
+        "reserved": "6",
+        "delivered": "0",
+        "available": "0",
+        "unconverted_units": [],
+        "reservable": false,
+        "blocked_reason": null
+      }
+    }
+  },
+  {
+    "name": "stock-reservations-list",
+    "path": "/api/v1/material-requests/{id}/reservations",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000001"
+    },
+    "response": {
+      "items": [
+        {
+          "id": "23923923-0000-4000-8000-000000000002",
+          "request_id": "72372372-0000-4000-8000-000000000001",
+          "material_id": "23923923-0000-4000-8000-000000000001",
+          "center_code": "1200",
+          "quantity": "6.000000",
+          "unit": "PC",
+          "status": "ATIVA",
+          "dataset_id": "23923923-0000-4000-8000-000000000003",
+          "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+          "version": 1,
+          "created_at": "2026-11-08T14:00:00Z",
+          "updated_at": "2026-11-08T14:00:00Z"
+        }
+      ],
+      "fulfillment": {
+        "requested": "10",
+        "reserved": "6",
+        "delivered": "0",
+        "pending": "4"
+      }
+    }
   }
 ]

@@ -26,6 +26,7 @@ from vx_materials_api.routes import (
     materials,
     registration_orders,
     sanitization,
+    stock,
 )
 from vx_materials_api.security.cognito import CognitoClient, CognitoConfig
 from vx_materials_api.security.identity import Identity
@@ -110,6 +111,7 @@ def create_app(
     app.include_router(sanitization.router)
     app.include_router(enrichment.router)
     app.include_router(registration_orders.router)
+    app.include_router(stock.router)
 
     # Montado por ultimo: as rotas da API tem prioridade sobre os arquivos estaticos.
     if front_dist:

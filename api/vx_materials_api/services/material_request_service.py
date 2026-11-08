@@ -13,6 +13,7 @@ from vx_materials_api.db.models import (
     MaterialRequest,
     OperationRequest,
     RegistrationOrder,
+    StockReservation,
 )
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.security.rbac import (
@@ -123,7 +124,8 @@ def list_requests(db, caller, *, mine=False, status=None, cursor=None, limit=20)
     }
 
 
-def _previous(db, caller, operation, key, digest):
+def claim_idempotency(db, caller, operation, key, digest):
+    """Operação anterior com a mesma chave, ou None; conteúdo diferente com a mesma chave é recusado."""
     # Serializa também a primeira chamada: uma chave concorrente ainda não tem linha para bloquear.
     lock = f"{caller.tenant_id}:{caller.user_id}:{operation}:{key}"
     db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:lock, 0))"), {"lock": lock})
@@ -136,6 +138,11 @@ def _previous(db, caller, operation, key, digest):
     )
     if previous and previous.payload_hash != digest:
         raise ApiProblem(409, "IDEMPOTENCY_CONFLICT", "A chave já foi usada com outro conteúdo.")
+    return previous
+
+
+def _previous(db, caller, operation, key, digest):
+    previous = claim_idempotency(db, caller, operation, key, digest)
     if previous:
         # Não devolve uma resposta antiga depois de revogar o centro ou trocar de tenant.
         row = db.get(MaterialRequest, previous.resource_id)
@@ -147,7 +154,7 @@ def _previous(db, caller, operation, key, digest):
     return previous
 
 
-def _remember(db, caller, operation, key, digest, row, response):
+def remember_idempotency(db, caller, operation, key, digest, row, response):
     db.add(
         OperationRequest(
             user_id=caller.user_id,
@@ -257,9 +264,45 @@ def create_request(db, caller, payload, key, request_id):
     db.flush()
     _audit(db, caller, role, row, None, None, request_id)
     response = detail(db, row, caller)
-    _remember(db, caller, "material-request.create", key, digest, row, response)
+    remember_idempotency(db, caller, "material-request.create", key, digest, row, response)
     db.commit()
     return response
+
+
+def _release_reservations(db, caller, role, row, reason, correlation_id):
+    """Cancelar a solicitação libera suas reservas ATIVA; movimentos já feitos permanecem (seção 5)."""
+    reservations = db.scalars(
+        select(StockReservation)
+        .where(StockReservation.request_id == row.id, StockReservation.status == "ATIVA")
+        .order_by(StockReservation.id)
+        .with_for_update()
+    )
+    for reservation in reservations:
+        before = {"id": str(reservation.id), "status": reservation.status, "version": reservation.version}
+        reservation.status, reservation.version = "CANCELADA", reservation.version + 1
+        db.add(
+            AuditLog(
+                tenant_id=caller.tenant_id,
+                actor_user_id=caller.user_id,
+                actor_type="USER",
+                roles_snapshot=list(caller.roles),
+                effective_role=role,
+                action="STOCK_RESERVATION_CANCELLED",
+                entity_type="stock_reservation",
+                entity_id=str(reservation.id),
+                before_json={**before, "quantity": format(reservation.quantity, "f")},
+                after_json={
+                    **before,
+                    "status": reservation.status,
+                    "version": reservation.version,
+                    "quantity": format(reservation.quantity, "f"),
+                    "request_id": str(row.id),
+                },
+                reason=reason,
+                request_id=correlation_id,
+            )
+        )
+    db.flush()
 
 
 def cancel_request(db, caller, request_id, payload, key, correlation_id):
@@ -279,7 +322,8 @@ def cancel_request(db, caller, request_id, payload, key, correlation_id):
     row.status, row.closure_reason, row.version = "ENCERRADA", "CANCELADA", row.version + 1
     db.flush()
     _audit(db, caller, role, row, before, payload.reason, correlation_id)
+    _release_reservations(db, caller, role, row, payload.reason, correlation_id)
     response = detail(db, row, caller)
-    _remember(db, caller, "material-request.cancel", key, digest, row, response)
+    remember_idempotency(db, caller, "material-request.cancel", key, digest, row, response)
     db.commit()
     return response
