@@ -314,8 +314,18 @@ export const Th = ({ children, className }: { children?: ReactNode; className?: 
     {children}
   </th>
 );
-export const Td = ({ children, className }: { children?: ReactNode; className?: string }) => (
-  <td className={cn("border-b border-surface-2 px-4 py-3 align-top", className)}>{children}</td>
+export const Td = ({
+  children,
+  className,
+  colSpan,
+}: {
+  children?: ReactNode;
+  className?: string;
+  colSpan?: number;
+}) => (
+  <td colSpan={colSpan} className={cn("border-b border-surface-2 px-4 py-3 align-top", className)}>
+    {children}
+  </td>
 );
 
 /* ---------- KPI ---------- */
