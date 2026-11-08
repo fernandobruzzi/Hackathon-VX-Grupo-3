@@ -16,14 +16,14 @@ import pytest
 from alembic import command
 from fastapi.testclient import TestClient
 from mcp.server.mcpserver.exceptions import ToolError
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from pipelines.search_index import run_index
 from vx_materials_api.bootstrap import TENANT_ID
 from vx_materials_api.db.cli import alembic_config
-from vx_materials_api.db.models import RegistrationOrder, SanitizationProposal
+from vx_materials_api.db.models import ChatMessage, RegistrationOrder, SanitizationProposal
 from vx_materials_api.db.temporary_login import temporary_login
 from vx_materials_api.main import create_app
 from vx_materials_api.schemas.proposals import proposal_hash
@@ -387,7 +387,7 @@ def test_a_late_old_payload_cannot_overwrite_a_newer_material_revision(searchabl
 
 
 @contextmanager
-def real_chat(case, monkeypatch):
+def real_chat(case, monkeypatch, *, timeout_seconds=None):
     secret = "test-content-proof-secret-with-at-least-32-bytes"
     monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", secret)
 
@@ -396,7 +396,8 @@ def real_chat(case, monkeypatch):
         async with connect(PDM, case["reader"], caller_to_environment(caller)) as client:
             yield client
 
-    with TestClient(create_agent_app(case["catalog"], secret, mcp)) as agent:
+    options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
+    with TestClient(create_agent_app(case["catalog"], secret, mcp, **options)) as agent:
 
         def transport(request):
             response = agent.post(request.url.path, content=request.content, headers=dict(request.headers))
@@ -406,10 +407,10 @@ def real_chat(case, monkeypatch):
         yield
 
 
-def chat_turn(case, message, previous=None, action=None):
+def chat_turn(case, message, previous=None, action=None, *, persona="DEV_TI"):
     client = case["client"]
     # Os testes conferem se a busca rodou pelas chamadas MCP, que só a role Dev/TI recebe (#232).
-    me = client.post("/api/v1/auth/local-session", json={"persona": "DEV_TI"}, headers={"Origin": ORIGIN}).json()
+    me = client.post("/api/v1/auth/local-session", json={"persona": persona}, headers={"Origin": ORIGIN}).json()
     response = client.post(
         "/api/v1/chat/message",
         json={
@@ -424,6 +425,71 @@ def chat_turn(case, message, previous=None, action=None):
     )
     assert response.status_code == 200, response.text
     return response.json()
+
+
+@pytest.mark.parametrize(
+    "answer, normalized",
+    [
+        pytest.param("Acabamento: zincado branco", "ZINCADO BRANCO", id="canonical"),
+        pytest.param("Acabamento: zinc bco", "ZINCADO BRANCO", id="unambiguous-alias"),
+        pytest.param("Acabamento: zincado", None, id="ambiguous"),
+    ],
+)
+def test_registration_revalidates_sanitized_follow_up_and_preserves_original_text(
+    searchable, monkeypatch, answer, normalized
+):
+    case = searchable
+    client = case["client"]
+    persona = "SOLICITANTE_OPERACAO"
+    original = "Parafuso sextavado M36x333, classe A4-70, aço inox 316, DIN 931"
+    run_index(PDM, case["batch"])
+    with real_chat(case, monkeypatch, timeout_seconds=60):
+        first = chat_turn(case, original, persona=persona)
+        assert first["status"] == "NEEDS_INPUT"
+        assert first["material_card"]["missing_attributes"] == ["ACABAMENTO"]
+        assert first["material_card"]["can_submit"] is False
+        turn = chat_turn(case, answer, first, persona=persona)
+
+    session_id = turn["session_id"]
+    card = turn["material_card"]
+    expected_status = "INCOMPLETE" if normalized is None else "VALID"
+    assert card["attributes"]["ACABAMENTO"] == normalized
+    assert card["validation_status"] == expected_status
+    assert card["missing_attributes"] == (["ACABAMENTO"] if normalized is None else [])
+    assert turn["order_id"] is None
+    reply = case["db"].scalar(
+        select(ChatMessage)
+        .where(ChatMessage.session_id == uuid.UUID(session_id), ChatMessage.author_type == "ASSISTANT")
+        .order_by(ChatMessage.sequence.desc())
+        .limit(1)
+    )
+    (validation,) = [call for call in reply.tool_calls if call["name"] == "validate_and_format_pdm"]
+    assert validation["status"] == "SUCCEEDED" and validation["transport"] == "MCP_STDIO"
+    assert validation["input"]["attributes"].get("ACABAMENTO") == normalized
+    assert validation["result"]["validation_status"] == expected_status
+
+    me = client.get("/api/v1/auth/me").json()
+    response = client.post(
+        f"/api/v1/chat/{session_id}/submit",
+        headers={"Origin": ORIGIN, "X-CSRF-Token": me["csrf_token"], "Idempotency-Key": str(uuid.uuid4())},
+        json={"expected_session_version": turn["session_version"]},
+    )
+    if normalized is None:
+        assert turn["status"] == "NEEDS_INPUT" and card["can_submit"] is False
+        assert "acabamento" in turn["assistant_message"].lower()
+        assert response.status_code == 422, response.text
+        assert response.json()["error"]["code"] == "CHAT_NOT_READY"
+    else:
+        assert turn["status"] == "READY_TO_SUBMIT" and card["can_submit"] is True
+        assert response.status_code == 200, response.text
+        assert response.json()["status"] == "READY_FOR_REVIEW"
+
+    response = client.get(f"/api/v1/chat/sessions/{session_id}")
+    assert response.status_code == 200, response.text
+    saved = response.json()
+    assert [message["content"] for message in saved["messages"] if message["author"] == "user"] == [original, answer]
+    assert saved["material_card"]["attributes"]["ACABAMENTO"] == normalized
+    assert (saved["order_id"] is None) == (normalized is None)
 
 
 @pytest.mark.parametrize("indexed", [True, False])
