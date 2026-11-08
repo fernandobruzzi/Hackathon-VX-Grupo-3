@@ -510,6 +510,45 @@ centros, idempotência e CSRF, uma sequência aleatória de operações com enca
 entregas concorrentes contra a mesma reserva, o encerramento combinado com Compras nas duas
 ordens e o cancelamento da solicitação após entrega parcial.
 
+## 18. Saldo em outros centros autorizados (#251)
+
+Pela decisão D6, saldo em outro centro é só informação: o sistema não cria transferência,
+reserva nem movimento, e a decisão de transferir fica com os papéis responsáveis, fora deste
+modelo.
+
+**API.** `GET /api/v1/stock/availability/alternatives?material_id=…&center_code=…&quantity=…`
+exige `inventory:read` e centro de destino autorizado (`403` fora do escopo) e só lê. `quantity`
+é opcional, na unidade do material e positiva; sem ela, o destino atende quando tem algum
+disponível. A resposta traz:
+
+- `destination`: a mesma disponibilidade da seção 14 para o destino;
+- `needed` e `destination_sufficient`: se o `D` do destino cobre a quantidade, sem bloqueio;
+- `alternatives`: só quando o destino não atende, os outros centros do escopo do usuário com
+  `D > 0`, do maior para o menor disponível, com código, nome do centro quando o snapshot o traz,
+  disponível, unidade e `reservable`/`blocked_reason` daquele centro;
+- `suggest_purchasing`: verdadeiro quando o destino não atende, nenhum centro autorizado tem
+  disponível e o material está ativo e com unidade. Material inativo ou sem unidade não sugere
+  outro centro nem compras.
+
+O cálculo reutiliza `compute_availability` (saldo do dataset vigente com consolidações, reservas
+`ATIVA` e saídas), centro a centro. Uma leitura do saldo importado escolhe os candidatos: como
+`D ≤ S`, centros sem saldo positivo na unidade do material ficam de fora. Outras unidades
+continuam sem conversão. A consulta percorre apenas os centros autorizados ao usuário: um centro
+fora do escopo, mesmo com saldo, não aparece e não muda `suggest_purchasing`. Preço e valor nunca
+entram.
+
+**Chat.** Quando a conversa encontra um material existente e o centro de destino da sessão não
+tem saldo, a resposta acrescenta os outros centros autorizados com saldo, a partir da visão de
+estoque do usuário (`inventory_view`), e diz que nada é reservado nem transferido. O chat lê o
+saldo importado, sem reservas, que o MCP não acessa; o disponível autoritativo é o da API. Sem
+saldo em nenhum centro autorizado, a mensagem continua “Sem estoque nos seus centros.”
+
+**Uso com o encaminhamento (#241 e #242).** Antes de encaminhar o faltante, o cliente consulta o
+endpoint com `quantity` igual ao pendente (no servidor, `stock_service.other_centers(db, caller,
+material, row.center_code, pendente)`). Com `suggest_purchasing` verdadeiro, segue para compras;
+com alternativas, mostra-as ao solicitante antes de confirmar. O encaminhamento não depende da
+consulta nem é bloqueado por ela, já que a sugestão é informativa. Nada disso altera `p`.
+
 ## 19. Atendimento parcial entre estoque e compras (#242)
 
 Implementa o caminho 3 e a decisão D1. Nenhuma tabela nova nem migração: as parcelas são uma
