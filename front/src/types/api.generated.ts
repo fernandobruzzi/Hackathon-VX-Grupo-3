@@ -1003,6 +1003,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/notifications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Notificações do próprio solicitante, derivadas da auditoria das suas solicitações. */
+    get: operations["listNotifications"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/notifications/read": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Marcar notificações próprias como lidas, ou todas. */
+    post: operations["markNotificationsRead"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2934,6 +2968,53 @@ export interface components {
        * Format: uuid
        */
       equivalence_id: string;
+    };
+    /** Notification */
+    Notification: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /** Request Id */
+      request_id: string | null;
+      /** Protocol */
+      protocol: string | null;
+      /** Action */
+      action: string;
+      /** Title */
+      title: string;
+      /** Reason */
+      reason: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Read */
+      read: boolean;
+    };
+    /**
+     * NotificationList
+     * @description `unread_count` é o total real de não lidas, não o tamanho da página.
+     */
+    NotificationList: {
+      /** Items */
+      items: components["schemas"]["Notification"][];
+      /** Unread Count */
+      unread_count: number;
+      /** Next Cursor */
+      next_cursor: string | null;
+    };
+    /** MarkNotificationsRead */
+    MarkNotificationsRead: {
+      /** Ids */
+      ids?: string[];
+      /**
+       * All
+       * @default false
+       */
+      all: boolean;
     };
   };
   responses: never;
@@ -8100,6 +8181,185 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MaterialRequestDetail"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  listNotifications: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        unread?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Notificações com o total real de não lidas. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationList"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  markNotificationsRead: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MarkNotificationsRead"];
+      };
+    };
+    responses: {
+      /** @description Notificações atualizadas. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationList"];
         };
       };
       /** @description Sessão inválida ou expirada. */
