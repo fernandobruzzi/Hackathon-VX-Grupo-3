@@ -1876,6 +1876,12 @@ export interface components {
        * @default null
        */
       registration_order_id: string | null;
+      /**
+       * Acknowledge Open Requests
+       * @description Confirma a criação mesmo com solicitação aberta do mesmo material e centro, após o aviso OPEN_REQUESTS_EXIST. A confirmação fica na auditoria da criação.
+       * @default false
+       */
+      acknowledge_open_requests: boolean;
     };
     /** CancelMaterialRequest */
     CancelMaterialRequest: {
@@ -1883,6 +1889,33 @@ export interface components {
       expected_version: number;
       /** Reason */
       reason: string;
+    };
+    /** @description Solicitação aberta que o usuário já pode ler; nunca inclui solicitante nem texto. */
+    OpenMaterialRequestRef: {
+      /** Format: uuid */
+      id: string;
+      protocol: string;
+      /** @enum {string} */
+      status: "EM_IDENTIFICACAO" | "AGUARDANDO_CADASTRO" | "EM_ATENDIMENTO";
+      quantity: string;
+      unit: string;
+      /** Format: date-time */
+      created_at: string;
+    };
+    /** @description Solicitações não encerradas do mesmo tenant, material e centro. As que o usuário não pode ler aparecem só em hidden_count. */
+    OpenMaterialRequestsWarning: {
+      total_count: number;
+      hidden_count: number;
+      open_requests: components["schemas"]["OpenMaterialRequestRef"][];
+    };
+    OpenMaterialRequestsConflict: {
+      error: {
+        /** @constant */
+        code: "OPEN_REQUESTS_EXIST";
+        message: string;
+        request_id: string;
+        details: components["schemas"]["OpenMaterialRequestsWarning"];
+      };
     };
     /** MaterialRequestSummary */
     MaterialRequestSummary: {
@@ -5602,13 +5635,15 @@ export interface operations {
           "application/json": components["schemas"]["ApiError"];
         };
       };
-      /** @description Conflito de versão, turno ou idempotência. */
+      /** @description Conflito de idempotência ou aviso OPEN_REQUESTS_EXIST: há solicitação aberta do mesmo material e centro. O aviso não grava nada; reenvie com acknowledge_open_requests=true para criar mesmo assim. */
       409: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["ApiError"];
+          "application/json":
+            | components["schemas"]["OpenMaterialRequestsConflict"]
+            | components["schemas"]["ApiError"];
         };
       };
       /** @description Payload inválido. */
