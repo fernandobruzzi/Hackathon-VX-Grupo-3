@@ -1,0 +1,67 @@
+name: Windows storage
+
+on:
+  pull_request:
+    branches: [homologacao, main]
+    paths:
+      - .github/workflows/storage-windows.yml
+      - back/clients/storage.py
+      - back/tests/test_storage*.py
+      - api/vx_materials_api/bootstrap.py
+      - api/tests/test_bootstrap.py
+      - api/vx_materials_api/db/migrations/**
+      - uv.lock
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  storage-and-bootstrap:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://migration_user@127.0.0.1:55432/vx_storage_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.16"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            **/pyproject.toml
+      - run: uv sync --locked --all-packages
+      - name: Build pgvector for the runner's PostgreSQL
+        shell: cmd
+        run: |
+          for %%I in ("%PGBIN%\..") do set "PGROOT=%%~fI"
+          for /f "usebackq tokens=*" %%I in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do call "%%I\VC\Auxiliary\Build\vcvars64.bat"
+          git clone --depth 1 --branch v0.8.2 https://github.com/pgvector/pgvector.git "%RUNNER_TEMP%\pgvector"
+          if errorlevel 1 exit /b 1
+          cd /d "%RUNNER_TEMP%\pgvector"
+          nmake /F Makefile.win && nmake /F Makefile.win install
+      - name: Start disposable PostgreSQL on loopback
+        shell: pwsh
+        run: |
+          & "$env:PGBIN/initdb.exe" -D "$env:RUNNER_TEMP/storage-pg" -U migration_user -A trust -E UTF8 --locale=C
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$env:PGBIN/pg_ctl.exe" -D "$env:RUNNER_TEMP/storage-pg" -l "$env:RUNNER_TEMP/storage-pg.log" -o "-p 55432 -h 127.0.0.1" -w start
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test storage on native Windows
+        working-directory: back
+        run: uv run --locked pytest tests/test_storage.py tests/test_storage_portability.py -ra
+      - name: Load the real kit twice on native Windows
+        working-directory: api
+        run: uv run --locked pytest tests/test_bootstrap.py -ra
+      - name: Stop disposable PostgreSQL
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path "$env:RUNNER_TEMP/storage-pg/postmaster.pid") {
+            & "$env:PGBIN/pg_ctl.exe" -D "$env:RUNNER_TEMP/storage-pg" -m immediate -w stop
+          }
