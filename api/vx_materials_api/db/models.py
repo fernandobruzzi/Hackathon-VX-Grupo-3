@@ -601,3 +601,67 @@ class MaterialRequest(Base):
     version: Mapped[int] = _version()
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = _updated_at()
+
+
+RESERVATION_STATUSES = ("ATIVA", "CONSUMIDA", "CANCELADA")
+MOVEMENT_TYPES = ("ENTREGA", "REVERSAO")
+
+
+class StockReservation(Base):
+    """Compromisso de saldo de um centro para uma solicitação; nunca altera os snapshots importados."""
+
+    __tablename__ = "stock_reservations"
+    __table_args__ = (
+        CheckConstraint("quantity > 0 AND quantity <> 'NaN'::numeric", name="positive_quantity"),
+        CheckConstraint(_one_of("status", RESERVATION_STATUSES), name="status"),
+        CheckConstraint("length(btrim(center_code)) > 0", name="center_code"),
+        CheckConstraint("length(btrim(unit)) > 0", name="unit"),
+        CheckConstraint("version > 0", name="version"),
+        Index(
+            "ix_stock_reservations_tenant_id_material_id_center_code_status",
+            "tenant_id",
+            "material_id",
+            "center_code",
+            "status",
+        ),
+        Index("ix_stock_reservations_request_id", "request_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    request_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("material_requests.id"), nullable=False)
+    # Material principal: saldos consolidados por unificação aprovada aparecem nele.
+    material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
+    center_code: Mapped[str] = mapped_column(Text, nullable=False)
+    quantity: Mapped[Any] = mapped_column(Numeric(24, 6), nullable=False)
+    unit: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'ATIVA'"))
+    # Dataset de estoque vigente quando a reserva foi feita (seção 4.4 do modelo).
+    dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id"), nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    version: Mapped[int] = _version()
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()
+
+
+class StockMovement(Base):
+    """Entrega ou reversão de uma reserva. Somente inserção; as operações chegam na #240."""
+
+    __tablename__ = "stock_movements"
+    __table_args__ = (
+        CheckConstraint("quantity > 0 AND quantity <> 'NaN'::numeric", name="positive_quantity"),
+        CheckConstraint(_one_of("movement_type", MOVEMENT_TYPES), name="movement_type"),
+        CheckConstraint("(movement_type = 'REVERSAO') = (reverses_movement_id IS NOT NULL)", name="reversal_reference"),
+        Index("ix_stock_movements_reservation_id", "reservation_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    reservation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("stock_reservations.id"), nullable=False)
+    movement_type: Mapped[str] = mapped_column(Text, nullable=False)
+    quantity: Mapped[Any] = mapped_column(Numeric(24, 6), nullable=False)
+    reverses_movement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("stock_movements.id"))
+    # Saídas só descontam do saldo do dataset contra o qual foram registradas (D4).
+    dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id"), nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    created_at: Mapped[datetime] = _created_at()
