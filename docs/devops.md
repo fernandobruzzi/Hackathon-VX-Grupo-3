@@ -138,6 +138,34 @@ rede, banco e volumes ficam no runner isolado. Logs são exibidos em falhas e
 cancelamentos, e a limpeza dos volumes roda com `always()`. A saúde da imagem
 é liveness; não prova disponibilidade de todas as dependências.
 
+Para reproduzir esse job fora do GitHub, na raiz do repositório (Docker e acesso
+HTTPS ao certificado da RDS e aos registries):
+
+```bash
+scripts/ci_images_smoke.sh --no-cache
+```
+
+O script executa os mesmos passos e na mesma ordem: as três imagens, as checagens
+das referências empacotadas, o recorte do kit, `--mode local`, o reset da demo,
+`--mode flow` e a medição de concorrência e cancelamento do Agent. Usa projeto
+Compose próprio (`vx-ci-local-<horário>-<pid>`) e as portas 15432 e 18000, que
+`DB_PORT` e `API_BIND_PORT` podem trocar, sem tocar a stack padrão. Em falha imprime
+os logs; em qualquer saída, inclusive Ctrl+C, remove containers, volumes, rede e as
+imagens do projeto. Sem `--no-cache`, reaproveita o cache local do Docker.
+`scripts/tests/test_ci_images_smoke.py` falha se os comandos do script e do job
+divergirem.
+
+Execução de referência (#157), em 08/11/2026 sobre `f899c99` com os ajustes desta
+branch, em macOS com Docker 28.1.1: build sem cache, referências, smoke `local`
+(7 verificações), reset, smoke `flow` (9 verificações: chat com similares, estoque
+por centro, batch com 7 propostas, pedidos, Governança e Fiscal com as três
+decisões na auditoria, snapshot posterior) e Agent com limite 2: de 8 requisições
+paralelas, 2 respostas 200 e 6 `AGENT_BUSY`, p95 de 7,3 s, pico de 2 processos MCP
+e zero depois dos cancelamentos. Duração total de 2min55s, das quais 1min36s de
+build. Uma execução com a porta da API já ocupada falhou no `up`, imprimiu os logs
+e removeu os recursos. Esta execução local não substitui a do runner do GitHub na
+próxima promoção.
+
 As imagens incluem uma cópia imutável do kit original, sem modificar seus valores.
 Assim o PDM e os dados de bootstrap existem fora dos bind mounts do Compose.
 As dependências externas são instaladas antes do código, e o runtime não carrega uv,
