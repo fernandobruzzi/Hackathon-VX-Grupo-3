@@ -6023,6 +6023,250 @@
         }
       }
     },
+    "/api/v1/material-requests/{id}/fulfillment-options": {
+      "get": {
+        "operationId": "previewMaterialRequestFulfillment",
+        "summary": "Consultar a divisão entre reserva e compras do próprio solicitante; não grava nada.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Opções de atendimento com a divisão calculada agora; a opção padrão é PARTIAL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FulfillmentPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/material-requests/{id}/fulfillment": {
+      "post": {
+        "operationId": "confirmMaterialRequestFulfillment",
+        "summary": "Confirmar a escolha do solicitante na falta parcial (D1): reservar o disponível e encaminhar o restante para compras, ou encaminhar tudo; a divisão é recalculada na transação.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Parcelas gravadas na mesma solicitação; o encaminhamento é a demanda para Compras, não compra realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FulfillmentResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmFulfillment"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchase-forwards": {
       "get": {
         "operationId": "listPurchaseForwards",
@@ -11850,11 +12094,30 @@
             "title": "Pending Quantity",
             "type": "string"
           },
+          "reserved_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Reserved Quantity",
+            "type": "string"
+          },
+          "delivered_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Delivered Quantity",
+            "type": "string"
+          },
           "forwarded_quantity": {
             "maxLength": 25,
             "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
             "title": "Forwarded Quantity",
             "type": "string"
+          },
+          "reservations": {
+            "items": {
+              "$ref": "#/components/schemas/StockReservation"
+            },
+            "title": "Reservations",
+            "type": "array"
           },
           "purchase_forwards": {
             "items": {
@@ -11889,7 +12152,10 @@
           "updated_at",
           "can_cancel",
           "pending_quantity",
+          "reserved_quantity",
+          "delivered_quantity",
           "forwarded_quantity",
+          "reservations",
           "purchase_forwards",
           "history"
         ],
@@ -12048,6 +12314,7 @@
       },
       "StockReservation": {
         "additionalProperties": false,
+        "description": "`quantity` é a quantidade reservada original; `open_quantity` ainda conta em `R`.",
         "properties": {
           "id": {
             "format": "uuid",
@@ -12077,14 +12344,14 @@
           "delivered_quantity": {
             "maxLength": 25,
             "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
-            "type": "string",
-            "title": "Delivered Quantity"
+            "title": "Delivered Quantity",
+            "type": "string"
           },
           "open_quantity": {
             "maxLength": 25,
             "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
-            "type": "string",
-            "title": "Open Quantity"
+            "title": "Open Quantity",
+            "type": "string"
           },
           "unit": {
             "title": "Unit",
@@ -12441,6 +12708,247 @@
           "expected_version"
         ],
         "title": "ForwardToPurchasing",
+        "type": "object"
+      },
+      "ConfirmFulfillment": {
+        "additionalProperties": false,
+        "description": "Escolha do solicitante na falta parcial (D1); a divisão é recalculada no servidor.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "option": {
+            "enum": [
+              "PARTIAL",
+              "PURCHASING_ONLY"
+            ],
+            "title": "Option",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "option"
+        ],
+        "title": "ConfirmFulfillment",
+        "type": "object"
+      },
+      "FulfillmentSplit": {
+        "additionalProperties": false,
+        "description": "Quanto seria reservado do estoque e quanto seria encaminhado para compras.",
+        "properties": {
+          "option": {
+            "enum": [
+              "PARTIAL",
+              "PURCHASING_ONLY"
+            ],
+            "title": "Option",
+            "type": "string"
+          },
+          "reserve_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Reserve Quantity",
+            "type": "string"
+          },
+          "forward_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Forward Quantity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option",
+          "reserve_quantity",
+          "forward_quantity"
+        ],
+        "title": "FulfillmentSplit",
+        "type": "object"
+      },
+      "FulfillmentPreview": {
+        "additionalProperties": false,
+        "description": "Consulta da divisão; não reserva, não encaminha e não grava nada.",
+        "properties": {
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "request_version": {
+            "minimum": 1,
+            "title": "Request Version",
+            "type": "integer"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "center_code": {
+            "title": "Center Code",
+            "type": "string"
+          },
+          "requested": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Requested",
+            "type": "string"
+          },
+          "reserved": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Reserved",
+            "type": "string"
+          },
+          "delivered": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Delivered",
+            "type": "string"
+          },
+          "forwarded": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Forwarded",
+            "type": "string"
+          },
+          "pending": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Pending",
+            "type": "string"
+          },
+          "available": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Available",
+            "type": "string"
+          },
+          "blocked_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "REQUEST_NOT_IN_SERVICE",
+                  "INACTIVE_MATERIAL",
+                  "UNIT_MISMATCH",
+                  "NOTHING_PENDING",
+                  "NO_INVENTORY_DATASET",
+                  "RECONCILIATION_REQUIRED",
+                  "STOCK_UNIT_UNRESOLVED",
+                  "STOCK_AVAILABLE"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Reason"
+          },
+          "default_option": {
+            "anyOf": [
+              {
+                "enum": [
+                  "PARTIAL",
+                  "PURCHASING_ONLY"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Option"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/FulfillmentSplit"
+            },
+            "title": "Options",
+            "type": "array"
+          }
+        },
+        "required": [
+          "request_id",
+          "request_version",
+          "unit",
+          "center_code",
+          "requested",
+          "reserved",
+          "delivered",
+          "forwarded",
+          "pending",
+          "available",
+          "blocked_reason",
+          "default_option",
+          "options"
+        ],
+        "title": "FulfillmentPreview",
+        "type": "object"
+      },
+      "FulfillmentResult": {
+        "additionalProperties": false,
+        "description": "Parcelas efetivamente gravadas, calculadas com o disponível lido dentro do bloqueio.",
+        "properties": {
+          "option": {
+            "enum": [
+              "PARTIAL",
+              "PURCHASING_ONLY"
+            ],
+            "title": "Option",
+            "type": "string"
+          },
+          "reserved_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Reserved Quantity",
+            "type": "string"
+          },
+          "forwarded_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Forwarded Quantity",
+            "type": "string"
+          },
+          "available_at_confirmation": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Available At Confirmation",
+            "type": "string"
+          },
+          "reservation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reservation Id"
+          },
+          "purchase_forward_id": {
+            "format": "uuid",
+            "title": "Purchase Forward Id",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/MaterialRequestDetail"
+          }
+        },
+        "required": [
+          "option",
+          "reserved_quantity",
+          "forwarded_quantity",
+          "available_at_confirmation",
+          "reservation_id",
+          "purchase_forward_id",
+          "request"
+        ],
+        "title": "FulfillmentResult",
         "type": "object"
       },
       "AcceptPurchaseForward": {
