@@ -292,7 +292,7 @@ ordem de versão. Replay não cria outro evento e revalida o escopo atual.
 Esta base não entrega nem encaminha para compras. Os vínculos de conversa e pedido
 já possuem chaves estrangeiras; reservas, movimentos e encaminhamentos referenciam
 a solicitação nas respectivas issues, sem inventar identificadores de entidades inexistentes.
-O reset explícito da demo inclui as solicitações, reservas e movimentos operacionais.
+O reset explícito da demo inclui as solicitações, reservas, movimentos e encaminhamentos operacionais.
 
 ## 14. Disponibilidade e reserva (#239)
 
@@ -327,7 +327,7 @@ usuário responde `404`, e a consulta de outro centro, `403`. A transação:
    unidade;
 2. obtém `pg_advisory_xact_lock` por tenant, material principal e centro, e só então lê `D`;
 3. recusa com `409 INSUFFICIENT_STOCK` acima de `D` e com `409 QUANTITY_EXCEEDS_PENDING` acima do
-   pendente da solicitação (`Q − r − e`);
+   pendente da solicitação (`Q − r − e − c`, seção 16);
 4. insere a reserva, incrementa a versão da solicitação e grava `STOCK_RESERVED` em `audit_logs`
    com papel efetivo, disponível antes e depois.
 
@@ -335,7 +335,7 @@ Duas reservas concorrentes acima do disponível resultam em uma aceita e uma rec
 espera o bloqueio e lê as reservas já confirmadas. A mesma chave com o mesmo conteúdo devolve a
 resposta original, revalidando tenant e centro; conteúdo diferente recebe `409`.
 `GET /api/v1/material-requests/{id}/reservations` lista as reservas e as parcelas
-(`requested`, `reserved`, `delivered`, `pending`) para o próprio solicitante ou para quem reserva
+(`requested`, `reserved`, `delivered`, `forwarded`, `pending`) para o próprio solicitante ou para quem reserva
 no centro.
 
 **Cancelamento.** Cancelar a solicitação muda as reservas `ATIVA` para `CANCELADA` na mesma
@@ -344,8 +344,8 @@ transação, com um evento `STOCK_RESERVATION_CANCELLED` por reserva. Movimentos
 **Pontos de integração.** A #240 grava `stock_movements` com o dataset vigente, muda reservas
 para `CONSUMIDA` e cancela reservas avulsas, usando o mesmo bloqueio por material e centro; a
 fórmula de `D` e as parcelas da solicitação já contam esses movimentos. A reversão deve apontar
-uma entrega do mesmo dataset, para que `E` nunca fique negativo. A #241 acrescenta os
-encaminhamentos (`c`) ao pendente em `stock_service.fulfillment`. A reconciliação de reservas na
+uma entrega do mesmo dataset, para que `E` nunca fique negativo. Os encaminhamentos
+da #241 (`c`) já entram no pendente de `stock_service.fulfillment` (seção 16). A reconciliação de reservas na
 troca de dataset (seção 4.4) ainda não existe: até lá, o bloqueio `RECONCILIATION_REQUIRED`
 impede novas reservas afetadas.
 
@@ -377,3 +377,55 @@ simultâneas não passam ambas sem aviso. Toda reserva ativa (#239) pertence a u
 não encerrada, então o critério também cobre reservas sem consultar a tabela delas. Se uma
 reserva puder existir sem solicitação aberta, esta consulta precisa incluí-la. Ainda não há
 tela de criação de solicitação no front; o contrato descreve o aviso para quando ela existir.
+
+## 16. Encaminhamento para compras sem saldo (#241)
+
+`POST /api/v1/material-requests/{id}/purchase-forwards` implementa o caminho 2. O dono da
+solicitação envia `expected_version`; o servidor encaminha toda a quantidade pendente
+`p = Q − r − e − c` com o código já cadastrado, sem criar pedido de cadastro e sem tocar nos
+snapshots de estoque. O encaminhamento (`purchase_forwards`) guarda solicitação de origem,
+material, quantidade, unidade, centro, quem encaminhou e, depois, quem tratou em Compras.
+
+A transação segue a mesma ordem da reserva (seção 14): bloqueia a linha da solicitação, confere
+dono, versão, estado `EM_ATENDIMENTO`, material ativo e unidade, obtém o bloqueio consultivo por
+tenant, material principal e centro e só então lê as parcelas e o disponível, pelas mesmas
+funções `stock_service.fulfillment` e `stock_service.compute_availability`. Recusa com:
+
+- `409 NOTHING_PENDING` quando `p = 0`;
+- `409 STOCK_AVAILABLE` quando `D ≥ p`: o atendimento é por reserva. Com `0 < D < p`, encaminhar
+  tudo é a opção integral da D1; a divisão entre reserva e compras é da #242;
+- o `blocked_reason` da disponibilidade (`NO_INVENTORY_DATASET`, `RECONCILIATION_REQUIRED`),
+  porque sem saldo confiável a falta não pode ser confirmada;
+- `409 STOCK_UNIT_UNRESOLVED` quando o centro tem saldo em outra unidade (`unconverted_units`),
+  sem conversão presumida.
+
+Cada parcela é única por versão da solicitação (`material_request_id`, `request_version`), e o
+encaminhamento incrementa a versão. Repetir com a mesma `Idempotency-Key` devolve a resposta
+salva; outra chave com a mesma versão recebe `409 VERSION_CONFLICT`. A parcela nunca duplica.
+Como o pendente da reserva também desconta `c`, uma reserva acima do que sobrou recebe
+`409 QUANTITY_EXCEEDS_PENDING`, e `r + e + c ≤ Q` vale entre as duas operações.
+
+A fila de Compras fica em `GET /api/v1/purchase-forwards` (filtros `status` e `center_code`) e
+`GET /api/v1/purchase-forwards/{id}`, com `purchasing:read` e somente nos centros autorizados.
+`POST .../{id}/accept` e `POST .../{id}/return` (motivo obrigatório) exigem `purchasing:handle`
+pelo `require_purchasing_action`, versão do encaminhamento, Origin/CSRF e `Idempotency-Key`. Os
+demais papéis recebem `403`; um encaminhamento de centro fora do escopo não aparece (`404`). O
+detalhe da solicitação mostra `pending_quantity`, `forwarded_quantity`, os encaminhamentos e a
+ação de cada evento do histórico.
+
+Estados e solicitação:
+
+- `ACEITO` termina o encaminhamento (D7). Quando não resta pendência, reserva `ATIVA` nem
+  encaminhamento aguardando Compras, a solicitação encerra com `ENCAMINHADA_COMPRAS` (ou
+  `ATENDIDA_PARCIAL_COMPRAS` se houver entregas). Enquanto Compras não decide, a solicitação
+  continua aberta, porque uma devolução precisa voltar a `p` e uma solicitação encerrada não reabre.
+- `DEVOLVIDO` retorna a quantidade a `p`, incrementa a versão da solicitação e permite reservar
+  ou encaminhar de novo.
+- O cancelamento pelo solicitante cancela os encaminhamentos `ENCAMINHADO` com o mesmo motivo,
+  junto com as reservas `ATIVA`; os encaminhamentos já aceitos permanecem.
+
+Toda criação e transição grava auditoria na mesma transação, para o encaminhamento
+(`purchase_forward`) e para a solicitação quando a versão dela muda. A tela `/compras/` mostra a
+fila com o aviso de que o encaminhamento é a demanda para Compras e não confirma pedido ao
+fornecedor, compra realizada nem recebimento. A #242 deve reservar até `D` e encaminhar o
+restante na mesma transação, reaproveitando essas verificações e a unicidade por versão.

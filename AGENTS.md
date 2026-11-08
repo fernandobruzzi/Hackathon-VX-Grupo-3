@@ -596,6 +596,21 @@ attributes. Order approvals revalidate that structured card rather than extracti
 superseded values from earlier messages. A submitted conversation accepts no new
 turns; start a new one for another item. See [`docs/pedidos.md`](docs/pedidos.md).
 
+## Purchasing forwards
+
+When an identified material lacks stock at the request's center, its owner forwards
+the whole pending quantity to purchasing with the existing code
+(`POST /api/v1/material-requests/{id}/purchase-forwards`). This path never creates a
+registration order or touches inventory snapshots, and is refused while the shared
+stock availability covers the pending quantity. It locks the request row and then the
+same stock advisory lock as reservations. Pending is `Q − r − e − c` in
+`stock_service.fulfillment`, so reservations and forwards keep `r + e + c ≤ Q`. One
+forward per request version keeps a repeated parcel from duplicating. Compras reads,
+accepts or returns forwards with reason in `/api/v1/purchase-forwards`, only for
+authorized centers through `require_purchasing_action`. A forward is demand, never a
+purchase or receipt, and the UI must say so. See section 16 of
+[`docs/solicitacao-material.md`](docs/solicitacao-material.md#16-encaminhamento-para-compras-sem-saldo-241).
+
 ## Browser session transitions
 
 The frontend serializes login, persona switching and logout. While a transition
