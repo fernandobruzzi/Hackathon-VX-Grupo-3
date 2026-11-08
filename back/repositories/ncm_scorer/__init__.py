@@ -5,9 +5,11 @@ import os
 from collections.abc import Callable
 
 from domain.ncm_scoring import NcmScorer
+from repositories.ncm_scorer.bedrock_import_v1 import BedrockImportV1NcmScorer
 from repositories.ncm_scorer.simulated_v1 import SimulatedV1NcmScorer
 
 REPOSITORIES: dict[str, Callable[[], NcmScorer]] = {
+    BedrockImportV1NcmScorer.name: BedrockImportV1NcmScorer,
     SimulatedV1NcmScorer.name: SimulatedV1NcmScorer,
 }
 
