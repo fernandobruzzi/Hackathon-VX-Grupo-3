@@ -5376,6 +5376,399 @@
         }
       }
     },
+    "/api/v1/stock/reservations/{id}/deliveries": {
+      "post": {
+        "operationId": "deliverStockReservation",
+        "summary": "Confirmar a entrega total ou parcial de uma reserva ativa; move a quantidade de reservado para entregue sem alterar o disponível.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Entrega registrada como movimento, com a reserva, as parcelas e a disponibilidade depois dela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverStockReservation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/reservations/{id}/cancel": {
+      "post": {
+        "operationId": "cancelStockReservation",
+        "summary": "Cancelar uma reserva ativa, liberando só a parte reservada e não entregue.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Reserva cancelada, com as parcelas e a disponibilidade depois dela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockReservationResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelStockReservation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/movements/{id}/reversal": {
+      "post": {
+        "operationId": "reverseStockDelivery",
+        "summary": "Reverter parte ou toda uma entrega com um movimento compensatório; nada é editado nem apagado.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Reversão registrada; a quantidade volta ao disponível do centro e ao pendente da solicitação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseStockMovement"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/stock/availability": {
       "get": {
         "operationId": "getStockAvailability",
@@ -11681,6 +12074,18 @@
             "title": "Quantity",
             "type": "string"
           },
+          "delivered_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "type": "string",
+            "title": "Delivered Quantity"
+          },
+          "open_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "type": "string",
+            "title": "Open Quantity"
+          },
           "unit": {
             "title": "Unit",
             "type": "string"
@@ -11726,6 +12131,8 @@
           "material_id",
           "center_code",
           "quantity",
+          "delivered_quantity",
+          "open_quantity",
           "unit",
           "status",
           "dataset_id",
@@ -11739,7 +12146,7 @@
       },
       "RequestFulfillment": {
         "additionalProperties": false,
-        "description": "Parcelas da solicitação: pendente = solicitado - reservado - entregue - encaminhado para compras.",
+        "description": "Parcelas da solicitação: pendente = solicitado - reservado - entregue - encaminhado para compras. reservado conta só a parte ainda não entregue das reservas ativas, e entregue desconta reversões.",
         "properties": {
           "requested": {
             "$ref": "#/components/schemas/Decimal"
@@ -11792,6 +12199,205 @@
         "title": "StockReservationResult",
         "type": "object"
       },
+      "DeliverStockReservation": {
+        "additionalProperties": false,
+        "description": "Saída física de parte ou de toda a reserva; expected_version é a versão da solicitação.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "type": "string",
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "expected_version",
+          "quantity"
+        ],
+        "title": "DeliverStockReservation",
+        "type": "object"
+      },
+      "CancelStockReservation": {
+        "additionalProperties": false,
+        "description": "Libera a parte reservada e não entregue; expected_version é a versão da solicitação.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "reason"
+        ],
+        "title": "CancelStockReservation",
+        "type": "object"
+      },
+      "ReverseStockMovement": {
+        "additionalProperties": false,
+        "description": "Movimento compensatório de uma entrega, limitado ao que ainda não foi revertido; expected_version é a versão da solicitação.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "type": "string",
+            "title": "Quantity"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "quantity",
+          "reason"
+        ],
+        "title": "ReverseStockMovement",
+        "type": "object"
+      },
+      "StockMovement": {
+        "additionalProperties": false,
+        "description": "Entrega ou reversão; somente inserção. reversed_quantity só existe na entrega.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string",
+            "title": "Id"
+          },
+          "reservation_id": {
+            "format": "uuid",
+            "type": "string",
+            "title": "Reservation Id"
+          },
+          "request_id": {
+            "format": "uuid",
+            "type": "string",
+            "title": "Request Id"
+          },
+          "movement_type": {
+            "enum": [
+              "ENTREGA",
+              "REVERSAO"
+            ],
+            "title": "Movement Type",
+            "type": "string"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "type": "string",
+            "title": "Quantity"
+          },
+          "reverses_movement_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reverses Movement Id"
+          },
+          "reversed_quantity": {
+            "anyOf": [
+              {
+                "maxLength": 25,
+                "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reversed Quantity"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "dataset_id": {
+            "format": "uuid",
+            "type": "string",
+            "title": "Dataset Id"
+          },
+          "created_by_user_id": {
+            "format": "uuid",
+            "type": "string",
+            "title": "Created By User Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reservation_id",
+          "request_id",
+          "movement_type",
+          "quantity",
+          "reverses_movement_id",
+          "reversed_quantity",
+          "unit",
+          "dataset_id",
+          "created_by_user_id",
+          "created_at"
+        ],
+        "title": "StockMovement",
+        "type": "object"
+      },
+      "StockMovementResult": {
+        "additionalProperties": false,
+        "properties": {
+          "movement": {
+            "$ref": "#/components/schemas/StockMovement"
+          },
+          "reservation": {
+            "$ref": "#/components/schemas/StockReservation"
+          },
+          "request": {
+            "$ref": "#/components/schemas/MaterialRequestSummary"
+          },
+          "fulfillment": {
+            "$ref": "#/components/schemas/RequestFulfillment"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/StockAvailability"
+          }
+        },
+        "required": [
+          "movement",
+          "reservation",
+          "request",
+          "fulfillment",
+          "availability"
+        ],
+        "title": "StockMovementResult",
+        "type": "object"
+      },
       "StockReservationList": {
         "additionalProperties": false,
         "properties": {
@@ -11802,12 +12408,20 @@
             "title": "Items",
             "type": "array"
           },
+          "movements": {
+            "items": {
+              "$ref": "#/components/schemas/StockMovement"
+            },
+            "title": "Movements",
+            "type": "array"
+          },
           "fulfillment": {
             "$ref": "#/components/schemas/RequestFulfillment"
           }
         },
         "required": [
           "items",
+          "movements",
           "fulfillment"
         ],
         "title": "StockReservationList",

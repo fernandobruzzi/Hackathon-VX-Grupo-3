@@ -2880,6 +2880,8 @@
         "material_id": "23923923-0000-4000-8000-000000000001",
         "center_code": "1200",
         "quantity": "6.000000",
+        "delivered_quantity": "0.000000",
+        "open_quantity": "6.000000",
         "unit": "PC",
         "status": "ATIVA",
         "dataset_id": "23923923-0000-4000-8000-000000000003",
@@ -2945,6 +2947,8 @@
           "material_id": "23923923-0000-4000-8000-000000000001",
           "center_code": "1200",
           "quantity": "6.000000",
+          "delivered_quantity": "0.000000",
+          "open_quantity": "6.000000",
           "unit": "PC",
           "status": "ATIVA",
           "dataset_id": "23923923-0000-4000-8000-000000000003",
@@ -2954,6 +2958,7 @@
           "updated_at": "2026-11-08T14:00:00Z"
         }
       ],
+      "movements": [],
       "fulfillment": {
         "requested": "10",
         "reserved": "6",
@@ -3164,6 +3169,243 @@
       "created_at": "2026-11-08T09:00:00Z",
       "updated_at": "2026-11-08T10:00:00Z",
       "can_handle": false
+    }
+  },
+  {
+    "name": "stock-deliver",
+    "path": "/api/v1/stock/reservations/{id}/deliveries",
+    "method": "post",
+    "status": 201,
+    "params": {
+      "id": "23923923-0000-4000-8000-000000000002"
+    },
+    "request": {
+      "expected_version": 2,
+      "quantity": "4"
+    },
+    "response": {
+      "movement": {
+        "id": "24024024-0000-4000-8000-000000000001",
+        "reservation_id": "23923923-0000-4000-8000-000000000002",
+        "request_id": "72372372-0000-4000-8000-000000000001",
+        "movement_type": "ENTREGA",
+        "quantity": "4.000000",
+        "reverses_movement_id": null,
+        "reversed_quantity": "0.000000",
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+        "created_at": "2026-11-08T15:00:00Z"
+      },
+      "reservation": {
+        "id": "23923923-0000-4000-8000-000000000002",
+        "request_id": "72372372-0000-4000-8000-000000000001",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "center_code": "1200",
+        "quantity": "6.000000",
+        "unit": "PC",
+        "status": "ATIVA",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+        "version": 2,
+        "created_at": "2026-11-08T14:00:00Z",
+        "updated_at": "2026-11-08T15:00:00Z",
+        "delivered_quantity": "4.000000",
+        "open_quantity": "2.000000"
+      },
+      "request": {
+        "id": "72372372-0000-4000-8000-000000000001",
+        "protocol": "SM-00000001",
+        "requester_user_id": "72372372-0000-4000-8000-000000000002",
+        "original_text": "Preciso de 10 peças para manutenção.",
+        "quantity": "10.000000",
+        "unit": "PC",
+        "center_code": "1200",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "status": "EM_ATENDIMENTO",
+        "closure_reason": null,
+        "chat_session_id": null,
+        "registration_order_id": null,
+        "version": 3,
+        "created_at": "2026-11-08T13:00:00Z",
+        "updated_at": "2026-11-08T15:00:00Z",
+        "can_cancel": false
+      },
+      "fulfillment": {
+        "requested": "10",
+        "reserved": "2",
+        "delivered": "4",
+        "forwarded": "0",
+        "pending": "4"
+      },
+      "availability": {
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "material_code": "100234",
+        "center_code": "1200",
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "imported": "6",
+        "reserved": "2",
+        "delivered": "4",
+        "available": "0",
+        "unconverted_units": [],
+        "reservable": false,
+        "blocked_reason": null
+      }
+    }
+  },
+  {
+    "name": "stock-reservation-cancel",
+    "path": "/api/v1/stock/reservations/{id}/cancel",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "id": "23923923-0000-4000-8000-000000000002"
+    },
+    "request": {
+      "expected_version": 3,
+      "reason": "O restante não será retirado."
+    },
+    "response": {
+      "reservation": {
+        "id": "23923923-0000-4000-8000-000000000002",
+        "request_id": "72372372-0000-4000-8000-000000000001",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "center_code": "1200",
+        "quantity": "6.000000",
+        "unit": "PC",
+        "status": "CANCELADA",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+        "version": 3,
+        "created_at": "2026-11-08T14:00:00Z",
+        "updated_at": "2026-11-08T16:00:00Z",
+        "delivered_quantity": "4.000000",
+        "open_quantity": "0.000000"
+      },
+      "request": {
+        "id": "72372372-0000-4000-8000-000000000001",
+        "protocol": "SM-00000001",
+        "requester_user_id": "72372372-0000-4000-8000-000000000002",
+        "original_text": "Preciso de 10 peças para manutenção.",
+        "quantity": "10.000000",
+        "unit": "PC",
+        "center_code": "1200",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "status": "EM_ATENDIMENTO",
+        "closure_reason": null,
+        "chat_session_id": null,
+        "registration_order_id": null,
+        "version": 4,
+        "created_at": "2026-11-08T13:00:00Z",
+        "updated_at": "2026-11-08T16:00:00Z",
+        "can_cancel": false
+      },
+      "fulfillment": {
+        "requested": "10",
+        "reserved": "0",
+        "delivered": "4",
+        "forwarded": "0",
+        "pending": "6"
+      },
+      "availability": {
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "material_code": "100234",
+        "center_code": "1200",
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "imported": "6",
+        "reserved": "0",
+        "delivered": "4",
+        "available": "2",
+        "unconverted_units": [],
+        "reservable": true,
+        "blocked_reason": null
+      }
+    }
+  },
+  {
+    "name": "stock-delivery-reversal",
+    "path": "/api/v1/stock/movements/{id}/reversal",
+    "method": "post",
+    "status": 201,
+    "params": {
+      "id": "24024024-0000-4000-8000-000000000001"
+    },
+    "request": {
+      "expected_version": 4,
+      "quantity": "1",
+      "reason": "Uma peça voltou ao almoxarifado."
+    },
+    "response": {
+      "movement": {
+        "id": "24024024-0000-4000-8000-000000000002",
+        "reservation_id": "23923923-0000-4000-8000-000000000002",
+        "request_id": "72372372-0000-4000-8000-000000000001",
+        "movement_type": "REVERSAO",
+        "quantity": "1.000000",
+        "reverses_movement_id": "24024024-0000-4000-8000-000000000001",
+        "reversed_quantity": null,
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+        "created_at": "2026-11-08T17:00:00Z"
+      },
+      "reservation": {
+        "id": "23923923-0000-4000-8000-000000000002",
+        "request_id": "72372372-0000-4000-8000-000000000001",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "center_code": "1200",
+        "quantity": "6.000000",
+        "unit": "PC",
+        "status": "CANCELADA",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "created_by_user_id": "23923923-0000-4000-8000-000000000004",
+        "version": 3,
+        "created_at": "2026-11-08T14:00:00Z",
+        "updated_at": "2026-11-08T16:00:00Z",
+        "delivered_quantity": "4.000000",
+        "open_quantity": "0.000000"
+      },
+      "request": {
+        "id": "72372372-0000-4000-8000-000000000001",
+        "protocol": "SM-00000001",
+        "requester_user_id": "72372372-0000-4000-8000-000000000002",
+        "original_text": "Preciso de 10 peças para manutenção.",
+        "quantity": "10.000000",
+        "unit": "PC",
+        "center_code": "1200",
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "status": "EM_ATENDIMENTO",
+        "closure_reason": null,
+        "chat_session_id": null,
+        "registration_order_id": null,
+        "version": 5,
+        "created_at": "2026-11-08T13:00:00Z",
+        "updated_at": "2026-11-08T17:00:00Z",
+        "can_cancel": false
+      },
+      "fulfillment": {
+        "requested": "10",
+        "reserved": "0",
+        "delivered": "3",
+        "forwarded": "0",
+        "pending": "7"
+      },
+      "availability": {
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "material_code": "100234",
+        "center_code": "1200",
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "imported": "6",
+        "reserved": "0",
+        "delivered": "3",
+        "available": "3",
+        "unconverted_units": [],
+        "reservable": true,
+        "blocked_reason": null
+      }
     }
   }
 ]

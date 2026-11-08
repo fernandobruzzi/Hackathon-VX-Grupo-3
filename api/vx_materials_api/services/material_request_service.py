@@ -14,6 +14,7 @@ from vx_materials_api.db.models import (
     OperationRequest,
     PurchaseForward,
     RegistrationOrder,
+    StockMovement,
     StockReservation,
 )
 from vx_materials_api.errors import ApiProblem
@@ -424,6 +425,13 @@ def _release_reservations(db, caller, role, row, reason, correlation_id):
         .with_for_update()
     )
     for reservation in reservations:
+        # Só a parte ainda não entregue é liberada; entregas já feitas continuam em `e` (#240).
+        delivered = db.scalar(
+            select(func.coalesce(func.sum(StockMovement.quantity), 0)).where(
+                StockMovement.reservation_id == reservation.id, StockMovement.movement_type == "ENTREGA"
+            )
+        )
+        released = quantity_text(Decimal(reservation.quantity) - Decimal(delivered))
         before = {"id": str(reservation.id), "status": reservation.status, "version": reservation.version}
         reservation.status, reservation.version = "CANCELADA", reservation.version + 1
         db.add(
@@ -442,6 +450,7 @@ def _release_reservations(db, caller, role, row, reason, correlation_id):
                     "status": reservation.status,
                     "version": reservation.version,
                     "quantity": format(reservation.quantity, "f"),
+                    "released_quantity": released,
                     "request_id": str(row.id),
                 },
                 reason=reason,

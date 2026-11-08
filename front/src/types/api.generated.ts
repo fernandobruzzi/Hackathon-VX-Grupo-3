@@ -745,6 +745,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/stock/reservations/{id}/deliveries": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirmar a entrega total ou parcial de uma reserva ativa; move a quantidade de reservado para entregue sem alterar o disponível. */
+    post: operations["deliverStockReservation"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/stock/reservations/{id}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancelar uma reserva ativa, liberando só a parte reservada e não entregue. */
+    post: operations["cancelStockReservation"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/stock/movements/{id}/reversal": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reverter parte ou toda uma entrega com um movimento compensatório; nada é editado nem apagado. */
+    post: operations["reverseStockDelivery"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/stock/availability": {
     parameters: {
       query?: never;
@@ -2211,6 +2262,10 @@ export interface components {
       center_code: string;
       /** Quantity */
       quantity: string;
+      /** Delivered Quantity */
+      delivered_quantity: string;
+      /** Open Quantity */
+      open_quantity: string;
       /** Unit */
       unit: string;
       /**
@@ -2243,7 +2298,7 @@ export interface components {
     };
     /**
      * RequestFulfillment
-     * @description Parcelas da solicitação: pendente = solicitado - reservado - entregue - encaminhado para compras.
+     * @description Parcelas da solicitação: pendente = solicitado - reservado - entregue - encaminhado para compras. reservado conta só a parte ainda não entregue das reservas ativas, e entregue desconta reversões.
      */
     RequestFulfillment: {
       requested: components["schemas"]["Decimal"];
@@ -2259,10 +2314,101 @@ export interface components {
       fulfillment: components["schemas"]["RequestFulfillment"];
       availability: components["schemas"]["StockAvailability"];
     };
+    /**
+     * DeliverStockReservation
+     * @description Saída física de parte ou de toda a reserva; expected_version é a versão da solicitação.
+     */
+    DeliverStockReservation: {
+      /** Expected Version */
+      expected_version: number;
+      /** Quantity */
+      quantity: string;
+    };
+    /**
+     * CancelStockReservation
+     * @description Libera a parte reservada e não entregue; expected_version é a versão da solicitação.
+     */
+    CancelStockReservation: {
+      /** Expected Version */
+      expected_version: number;
+      /** Reason */
+      reason: string;
+    };
+    /**
+     * ReverseStockMovement
+     * @description Movimento compensatório de uma entrega, limitado ao que ainda não foi revertido; expected_version é a versão da solicitação.
+     */
+    ReverseStockMovement: {
+      /** Expected Version */
+      expected_version: number;
+      /** Quantity */
+      quantity: string;
+      /** Reason */
+      reason: string;
+    };
+    /**
+     * StockMovement
+     * @description Entrega ou reversão; somente inserção. reversed_quantity só existe na entrega.
+     */
+    StockMovement: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Reservation Id
+       * Format: uuid
+       */
+      reservation_id: string;
+      /**
+       * Request Id
+       * Format: uuid
+       */
+      request_id: string;
+      /**
+       * Movement Type
+       * @enum {string}
+       */
+      movement_type: "ENTREGA" | "REVERSAO";
+      /** Quantity */
+      quantity: string;
+      /** Reverses Movement Id */
+      reverses_movement_id: string | null;
+      /** Reversed Quantity */
+      reversed_quantity: string | null;
+      /** Unit */
+      unit: string;
+      /**
+       * Dataset Id
+       * Format: uuid
+       */
+      dataset_id: string;
+      /**
+       * Created By User Id
+       * Format: uuid
+       */
+      created_by_user_id: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
+    /** StockMovementResult */
+    StockMovementResult: {
+      movement: components["schemas"]["StockMovement"];
+      reservation: components["schemas"]["StockReservation"];
+      request: components["schemas"]["MaterialRequestSummary"];
+      fulfillment: components["schemas"]["RequestFulfillment"];
+      availability: components["schemas"]["StockAvailability"];
+    };
     /** StockReservationList */
     StockReservationList: {
       /** Items */
       items: components["schemas"]["StockReservation"][];
+      /** Movements */
+      movements: components["schemas"]["StockMovement"][];
       fulfillment: components["schemas"]["RequestFulfillment"];
     };
     /**
@@ -6150,6 +6296,288 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["StockReservationResult"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  deliverStockReservation: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DeliverStockReservation"];
+      };
+    };
+    responses: {
+      /** @description Entrega registrada como movimento, com a reserva, as parcelas e a disponibilidade depois dela. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockMovementResult"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  cancelStockReservation: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CancelStockReservation"];
+      };
+    };
+    responses: {
+      /** @description Reserva cancelada, com as parcelas e a disponibilidade depois dela. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockReservationResult"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  reverseStockDelivery: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReverseStockMovement"];
+      };
+    };
+    responses: {
+      /** @description Reversão registrada; a quantidade volta ao disponível do centro e ao pendente da solicitação. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockMovementResult"];
         };
       };
       /** @description Sessão inválida ou expirada. */
