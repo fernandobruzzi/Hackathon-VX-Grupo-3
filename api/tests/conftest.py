@@ -1,5 +1,8 @@
 import os
+import subprocess
+import sys
 import uuid
+from pathlib import Path
 
 import psycopg
 import pytest
@@ -47,6 +50,29 @@ def connection(migrated_url):
         yield conn
         transaction.rollback()
     engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def small_sanitization_kit(tmp_path_factory):
+    root = Path(__file__).resolve().parents[2]
+    kit = tmp_path_factory.mktemp("sanitization") / "kit"
+    extra_codes = (
+        "10109628",
+        "10436289",  # Correções de unidade.
+        "12352505",
+        "11416625",  # Um material e a fonte de seu enriquecimento.
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            str(root / "scripts" / "ci_smoke_kit.py"),
+            str(root / "data" / "desafio01"),
+            str(kit),
+            *(arg for code in extra_codes for arg in ("--material-code", code)),
+        ],
+        check=True,
+    )
+    return kit
 
 
 @pytest.fixture(scope="module")
