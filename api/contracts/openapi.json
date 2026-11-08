@@ -7700,6 +7700,19 @@
                 "type": "null"
               }
             ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/ProposalOrigin"
+          },
+          "llm_audit": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmAuditSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -7719,7 +7732,8 @@
           "conflicts",
           "ranking_score",
           "created_at",
-          "allowed_actions"
+          "allowed_actions",
+          "origin"
         ],
         "additionalProperties": false
       },
@@ -8688,6 +8702,9 @@
                 "type": "null"
               }
             ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/ProposalOrigin"
           }
         },
         "required": [
@@ -8701,7 +8718,8 @@
           "technical_review_status",
           "fiscal_review_status",
           "conflicts",
-          "allowed_actions"
+          "allowed_actions",
+          "origin"
         ],
         "additionalProperties": false
       },
@@ -13162,6 +13180,97 @@
         ],
         "title": "PurchaseForwardList",
         "type": "object"
+      },
+      "ProposalOrigin": {
+        "type": "string",
+        "enum": [
+          "RULES",
+          "LLM_AUDITOR"
+        ],
+        "description": "RULES: regras do batch. LLM_AUDITOR: sugestão do auditor LLM, sempre com revisão técnica e fiscal."
+      },
+      "LlmAuditSuggestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Evidência do auditor LLM (#290) para a revisão humana; nada é aplicado por ela.",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "prompt_version": {
+            "type": "string"
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "simulated": {
+            "type": "boolean"
+          },
+          "selection_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "class_source": {
+            "type": "string",
+            "enum": [
+              "RULES",
+              "LLM"
+            ]
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "quote": {
+                  "type": "string"
+                },
+                "basis": {
+                  "type": "string",
+                  "enum": [
+                    "LITERAL",
+                    "INFERIDO"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "value",
+                "quote",
+                "basis"
+              ]
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rationale": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "prompt_version",
+          "policy_version",
+          "simulated",
+          "selection_reasons",
+          "class_source",
+          "attributes",
+          "evidence",
+          "rationale"
+        ]
       }
     },
     "parameters": {

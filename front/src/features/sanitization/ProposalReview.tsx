@@ -8,6 +8,7 @@ import { AlertTriangle, ArrowLeft, Check, X } from "lucide-react";
 import { Badge, Button, Card, Code, Eyebrow, Field, Input, Table, Td, Th } from "@/components/ui";
 import {
   MaterialStatusBadge,
+  ProposalOriginBadge,
   ProposalStatusBadge,
   ProposalTypeBadge,
   ReviewBadge,
@@ -16,7 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { ApiError } from "@/lib/api";
 import { cn, fmtBRL } from "@/lib/format";
-import type { Proposal, ReviewStatus } from "@/types/api";
+import type { LlmAuditSuggestion, Proposal, ReviewStatus } from "@/types/api";
 
 /** Integração: POST /api/v1/sanitization/{id}/decide { expected_version, review_area, decision, primary_material_code, reason }. */
 export function ProposalReview({ proposal }: { proposal: Proposal }) {
@@ -187,6 +188,7 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ProposalTypeBadge value={p.proposal_type} />
+          <ProposalOriginBadge value={p.origin} />
           <ProposalStatusBadge value={p.status} />
           <AutomaticDecision
             status={p.status}
@@ -208,10 +210,12 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
         </div>
       )}
 
+      {p.llm_audit && <LlmAuditPanel audit={p.llm_audit} />}
+
       {p.ncm_assessment && (
         <section aria-label="Avaliação de NCM">
           <Card>
-            <Eyebrow n="03">Avaliação de NCM</Eyebrow>
+            <Eyebrow n={p.llm_audit ? "04" : "03"}>Avaliação de NCM</Eyebrow>
             <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
               <div>
                 <dt className="text-muted">Formato</dt>
@@ -472,5 +476,66 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
         )}
       </section>
     </div>
+  );
+}
+
+/** Evidências do auditor LLM: contexto para a revisão técnica e fiscal, nunca uma decisão. */
+function LlmAuditPanel({ audit }: { audit: LlmAuditSuggestion }) {
+  return (
+    <section aria-label="Sugestão do auditor LLM">
+      <Card>
+        <Eyebrow n="03">Sugestão do auditor LLM</Eyebrow>
+        <p className="mt-4 text-sm">
+          As regras não resolveram este caso ({audit.selection_reasons.join(", ")}). O modelo trouxe
+          as evidências abaixo, e o motor de domínio recalculou o código a partir delas. Confira os
+          trechos na descrição antes de aprovar.
+        </p>
+        {audit.simulated && (
+          <p className="mt-2 text-sm font-semibold text-aviso">
+            Resposta simulada: não mede a qualidade de um modelo real.
+          </p>
+        )}
+        {audit.attributes.length > 0 && (
+          <Table className="mt-4">
+            <thead>
+              <tr>
+                <Th>Atributo</Th>
+                <Th>Valor</Th>
+                <Th>Trecho citado</Th>
+                <Th>Base</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {audit.attributes.map((a) => (
+                <tr key={`${a.name}-${a.value}`}>
+                  <Td>{a.name}</Td>
+                  <Td>
+                    <Code>{a.value}</Code>
+                  </Td>
+                  <Td>“{a.quote}”</Td>
+                  <Td>
+                    <Badge tone={a.basis === "LITERAL" ? "success" : "warning"}>
+                      {a.basis === "LITERAL" ? "Escrito" : "Inferido"}
+                    </Badge>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+        {audit.evidence.length > 0 && (
+          <ul className="mt-4 list-disc pl-5 text-sm leading-6">
+            {audit.evidence.map((quote) => (
+              <li key={quote}>“{quote}”</li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-4 text-sm">{audit.rationale}</p>
+        <p className="mt-2 text-sm text-muted">
+          Classe {audit.class_source === "LLM" ? "escolhida pelo auditor" : "das regras"} · modelo{" "}
+          {audit.model} · prompt {audit.prompt_version} · política {audit.policy_version}.
+        </p>
+      </Card>
+    </section>
   );
 }

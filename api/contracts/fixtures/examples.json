@@ -419,7 +419,8 @@
           "allowed_actions": [
             "APPROVE",
             "REJECT"
-          ]
+          ],
+          "origin": "RULES"
         }
       ],
       "next_cursor": null
@@ -549,7 +550,9 @@
       "fiscal_review_status": "NOT_REQUIRED",
       "conflicts": [],
       "ranking_score": 0.97,
-      "created_at": "2026-11-07T14:15:00Z"
+      "created_at": "2026-11-07T14:15:00Z",
+      "origin": "RULES",
+      "llm_audit": null
     },
     "params": {
       "id": "66666666-6666-4666-8666-666666666666"

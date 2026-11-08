@@ -1169,6 +1169,8 @@ export interface components {
       /** @enum {string} */
       application_mode?: "HUMAN" | "AUTOMATIC";
       automation?: components["schemas"]["ProposalAutomation"] | null;
+      origin: components["schemas"]["ProposalOrigin"];
+      llm_audit?: components["schemas"]["LlmAuditSuggestion"] | null;
     };
     EvidenceItem: {
       attribute: string;
@@ -1377,6 +1379,7 @@ export interface components {
       /** @enum {string} */
       application_mode?: "HUMAN" | "AUTOMATIC";
       automation?: components["schemas"]["ProposalAutomation"] | null;
+      origin: components["schemas"]["ProposalOrigin"];
     };
     Material: {
       material_code: string;
@@ -2642,6 +2645,30 @@ export interface components {
       items: components["schemas"]["PurchaseForward"][];
       /** Next Cursor */
       next_cursor: string | null;
+    };
+    /**
+     * @description RULES: regras do batch. LLM_AUDITOR: sugestão do auditor LLM, sempre com revisão técnica e fiscal.
+     * @enum {string}
+     */
+    ProposalOrigin: "RULES" | "LLM_AUDITOR";
+    /** @description Evidência do auditor LLM (#290) para a revisão humana; nada é aplicado por ela. */
+    LlmAuditSuggestion: {
+      model: string;
+      prompt_version: string;
+      policy_version: string;
+      simulated: boolean;
+      selection_reasons: string[];
+      /** @enum {string} */
+      class_source: "RULES" | "LLM";
+      attributes: {
+        name: string;
+        value: string;
+        quote: string;
+        /** @enum {string} */
+        basis: "LITERAL" | "INFERIDO";
+      }[];
+      evidence: string[];
+      rationale: string;
     };
   };
   responses: never;

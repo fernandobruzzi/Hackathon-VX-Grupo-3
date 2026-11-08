@@ -3,7 +3,7 @@
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 from domain.enrichment_rules import evidence_hash as evidence_hash
 from domain.proposals import proposal_hash as proposal_hash
@@ -88,6 +88,41 @@ class EnrichmentContext(StrictModel):
     supplemental_source: SupplementalSource | None = None
 
 
+class LlmCallRecord(StrictModel):
+    repository: str
+    model: str
+    prompt_version: str
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+    latency_ms: int = Field(ge=0)
+    attempts: int = Field(ge=1)
+    simulated: bool
+
+
+class LlmAuditAttribute(StrictModel):
+    nome: str
+    valor: str
+    trecho: str
+    base: Literal["LITERAL", "INFERIDO"]
+
+
+class LlmAuditContext(StrictModel):
+    """Evidência do auditor LLM (#290). É contexto da revisão: nada aqui é aplicado por si só."""
+
+    policy_version: str = Field(min_length=1)
+    prompt_version: str = Field(min_length=1)
+    call: LlmCallRecord
+    simulated: bool
+    selection_reasons: list[str] = Field(min_length=1)
+    class_source: Literal["RULES", "LLM"]
+    rules_reading: dict[str, Any]
+    attributes: list[LlmAuditAttribute] = Field(default_factory=list)
+    inferred_attributes: list[str] = Field(default_factory=list)
+    evidence: list[str] = Field(default_factory=list)
+    rationale: str
+    context: dict[str, Any]
+
+
 class ProposalChangeset(StrictModel):
     schema_version: Literal["proposal-v1"]
     dataset_id: UUID
@@ -105,3 +140,13 @@ class ProposalChangeset(StrictModel):
     ncm_before_assessment: dict[str, Any] | None = None
     review_lane: ReviewLane | None = None
     enrichment_context: EnrichmentContext | None = None
+    origin: Literal["RULES", "LLM_AUDITOR"] = "RULES"
+    llm_audit: LlmAuditContext | None = None
+
+    @model_validator(mode="after")
+    def audit_matches_origin(self):
+        if (self.origin == "LLM_AUDITOR") != (self.llm_audit is not None):
+            raise ValueError("Sugestão do auditor LLM exige origem LLM_AUDITOR e o contexto da auditoria")
+        if self.llm_audit is not None and self.review_lane is not None:
+            raise ValueError("Sugestão do auditor LLM nunca entra em lote")
+        return self
