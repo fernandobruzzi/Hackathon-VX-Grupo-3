@@ -74,10 +74,28 @@ modelos e migrações, contratos OpenAPI, tipos do front, formatação e build e
 O comando instalado `vx-db upgrade` roda duas vezes em um banco separado dos testes.
 Os nomes dos jobs completos permanecem os mesmos.
 
-O check obrigatório `database` só passa quando os quatro jobs PostgreSQL passam.
-Cada job usa seu próprio runner e PostgreSQL. A suíte MCP roda em paralelo com
-os três grupos da API (demo, batch e os demais testes). O último grupo também inclui
-novos módulos automaticamente. Cada job imprime as dez maiores durações do pytest.
+Os checks obrigatórios `python (back)` e `database` aguardam todos os seus grupos.
+Cada grupo PostgreSQL usa seu próprio runner e banco. `scripts/ci_pytest.py`
+separa os testes mais caros por módulo, e os grupos `main` incluem novos testes
+automaticamente. Cada grupo imprime as dez maiores durações do pytest.
+
+O smoke HTTP usa um recorte determinístico com dois pares de unificação, os
+15 produtos reais do manifesto e um pedido do kit. Ele continua executando API, Agent, MCP stdio, batch, revisão
+técnica e fiscal, auditoria, snapshot e reset. As imagens incluem o kit inteiro,
+que continua sendo usado na avaliação empacotada e nos testes de carga, busca e
+saneamento. O teste de ensaio usa o recorte para repetir o reset e conferir a
+impressão digital. O teste de carga da demo continua verificando 23.554 materiais
+e 520 pedidos com o kit inteiro.
+
+Na promoção de referência de 7/11, `python (back)` levou 9min29s, `images`
+levou 9min17s e o MCP PostgreSQL levou 8min51s. O objetivo da #329 é reduzir
+o caminho crítico a cinco minutos de execução. A próxima promoção precisa
+registrar o tempo útil e a espera pelo runner separadamente.
+
+Para medir as mesmas suítes sem promover, execute
+`gh workflow run ci.yml --ref homologacao`. O disparo manual executa os jobs
+completos somente em `homologacao`. A política do PR roda separadamente na
+promoção.
 
 Uma atualização nova do mesmo PR de produção cancela a execução anterior.
 Dependências uv/npm e camadas Docker têm cache; uv é fixado na versão do Dockerfile.

@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [homologacao, main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +20,7 @@ concurrency:
 
 jobs:
   style:
-    if: ${{ github.base_ref == 'homologacao' || (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ github.base_ref == 'homologacao' || (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,12 +45,12 @@ jobs:
         working-directory: front
 
   python:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        module: [back, mcp, api]
+        module: [mcp, api]
     defaults:
       run:
         working-directory: ${{ matrix.module }}
@@ -65,52 +66,129 @@ jobs:
             **/pyproject.toml
       - run: uv sync --locked
       - run: uv run pytest
-      - if: matrix.module == 'back'
-        run: uv run --package vx-materials-back python -m unittest discover -s scripts/tests -p 'test_*.py'
-        working-directory: .
-      - if: matrix.module == 'back'
-        name: Validate offline EC2 Compose definition
-        working-directory: .
-        run: |
-          uv run --package vx-materials-back python scripts/ec2_deploy.py --config deployment/aws.example.json --host 203.0.113.10.nip.io --render-dir "$RUNNER_TEMP/vx-ec2"
-          docker compose -f "$RUNNER_TEMP/vx-ec2/compose.json" config --no-env-resolution --quiet
 
-  database-api-demo:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
-    uses: ./.github/workflows/database-tests.yml
+  back-main:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/back-tests.yml
     with:
-      suite: api-demo
+      shard: main
 
-  database-api-batch:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
-    uses: ./.github/workflows/database-tests.yml
+  back-sanitize:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/back-tests.yml
     with:
-      suite: api-batch
+      shard: sanitize
 
-  database-api-main:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
-    uses: ./.github/workflows/database-tests.yml
+  back-evaluation:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/back-tests.yml
     with:
-      suite: api-main
+      shard: evaluation
 
-  database-mcp:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
-    uses: ./.github/workflows/database-tests.yml
+  back-experiment:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/back-tests.yml
     with:
-      suite: mcp
+      shard: experiment
 
-  database:
-    if: ${{ always() && github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
-    needs: [database-api-demo, database-api-batch, database-api-main, database-mcp]
+  back-experiment-seed:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/back-tests.yml
+    with:
+      shard: experiment-seed
+
+  python-back:
+    name: python (back)
+    if: ${{ always() && ((github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao')) }}
+    needs: [back-main, back-sanitize, back-evaluation, back-experiment, back-experiment-seed]
     runs-on: ubuntu-latest
     steps:
-      - name: Require every PostgreSQL suite to succeed
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: test "$RESULTS" = "success success success success success"
+
+  database-api-main:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: api
+      shard: main
+
+  database-api-demo:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: api
+      shard: demo
+
+  database-api-batch:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: api
+      shard: batch
+
+  database-api-superseded:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: api
+      shard: superseded
+
+  database-api-batch-job:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: api
+      shard: batch-job
+
+  database-api-sanitize:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: api
+      shard: sanitize
+
+  database-mcp-main:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: mcp
+      shard: main
+
+  database-mcp-acceptance:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: mcp
+      shard: acceptance
+
+  database-mcp-search:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: mcp
+      shard: search
+
+  database-mcp-index:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    uses: ./.github/workflows/database-tests.yml
+    with:
+      module: mcp
+      shard: index
+
+  database:
+    if: ${{ always() && ((github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao')) }}
+    needs: [database-api-main, database-api-demo, database-api-batch, database-api-superseded, database-api-batch-job, database-api-sanitize, database-mcp-main, database-mcp-acceptance, database-mcp-search, database-mcp-index]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every PostgreSQL shard to succeed
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
-        run: test "$RESULTS" = "success success success success"
+        run: test "$RESULTS" = "success success success success success success success success success success"
 
   front:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -135,7 +213,7 @@ jobs:
       - run: npm run build
 
   images:
-    if: ${{ github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -188,6 +266,11 @@ jobs:
         run: |
           docker run --rm --network none --read-only "$COMPOSE_PROJECT_NAME-batch" vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx > "$RUNNER_TEMP/sanitization-evaluation.json"
           python3 -c 'import json,os; r=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"sanitization-evaluation.json"))); assert r["evaluation_kind"] == "DEVELOPMENT_EVALUATION"; assert not r["independent_review"] and not r["authorizes_merge"]; assert r["groups"]["counts"]["cases"] == 40'
+      - name: Prepare the deterministic HTTP smoke kit
+        run: |
+          python3 scripts/ci_smoke_kit.py data/desafio01 "$RUNNER_TEMP/vx-smoke-data/desafio01"
+          echo "CI_SMOKE_DATA_DIR=$RUNNER_TEMP/vx-smoke-data" >> "$GITHUB_ENV"
+          echo "COMPOSE_FILE=docker-compose.yml:.github/compose-smoke.yml" >> "$GITHUB_ENV"
       - name: Start isolated Compose stack, real search index included
         run: docker compose up -d --no-build --wait --wait-timeout 300 api
       - name: Verify frontend and real MCP turn
