@@ -641,6 +641,16 @@ class MaterialEquivalence(Base):
     updated_at: Mapped[datetime] = _updated_at()
 
 
+class NotificationRead(Base):
+    """Notificação lida pelo solicitante (#249). A notificação em si é derivada da auditoria."""
+
+    __tablename__ = "notification_reads"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users_sso.id"), primary_key=True)
+    audit_log_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("audit_logs.id"), primary_key=True)
+    read_at: Mapped[datetime] = _created_at()
+
+
 RESERVATION_STATUSES = ("ATIVA", "CONSUMIDA", "CANCELADA")
 MOVEMENT_TYPES = ("ENTREGA", "REVERSAO")
 
