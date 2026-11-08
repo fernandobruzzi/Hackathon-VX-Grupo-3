@@ -44,6 +44,29 @@ class StockAvailability(BaseModel):
     blocked_reason: AvailabilityBlock | None
 
 
+class OtherCenterAvailability(BaseModel):
+    """Disponível positivo de outro centro autorizado. Informativo: não reserva nem transfere."""
+
+    model_config = ConfigDict(extra="forbid")
+    center_code: str
+    center_name: str | None
+    available: DecimalText
+    unit: str | None
+    reservable: bool
+    blocked_reason: AvailabilityBlock | None
+
+
+class StockAlternatives(BaseModel):
+    """Destino e, se ele não atende, outros centros do escopo do usuário com disponível (#251)."""
+
+    model_config = ConfigDict(extra="forbid")
+    destination: StockAvailability
+    needed: DecimalText | None
+    destination_sufficient: bool
+    alternatives: list[OtherCenterAvailability]
+    suggest_purchasing: bool
+
+
 class CreateStockReservation(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     expected_version: int = Field(ge=1)
