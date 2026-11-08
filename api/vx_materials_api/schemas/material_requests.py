@@ -87,7 +87,7 @@ PurchaseForwardStatus = Literal["ENCAMINHADO", "ACEITO", "DEVOLVIDO", "CANCELADO
 
 
 class ForwardToPurchasing(BaseModel):
-    """Encaminha a quantidade pendente inteira; a divisão com reserva parcial é da #242."""
+    """Encaminha a quantidade pendente inteira; a divisão com reserva parcial usa ConfirmFulfillment."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
     expected_version: int = Field(ge=1)
@@ -141,9 +141,36 @@ class PurchaseForwardList(BaseModel):
     next_cursor: UUID | None
 
 
+ReservationStatus = Literal["ATIVA", "CONSUMIDA", "CANCELADA"]
+
+
+class StockReservation(BaseModel):
+    """`quantity` é a quantidade reservada original; `open_quantity` ainda conta em `R`."""
+
+    model_config = ConfigDict(extra="forbid")
+    id: UUID
+    request_id: UUID
+    material_id: UUID
+    center_code: str
+    quantity: Quantity
+    delivered_quantity: Quantity
+    open_quantity: Quantity
+    unit: str
+    status: ReservationStatus
+    dataset_id: UUID
+    created_by_user_id: UUID
+    version: int = Field(ge=1)
+    created_at: datetime
+    updated_at: datetime
+
+
 class MaterialRequestDetail(MaterialRequestSummary):
     pending_quantity: Quantity
+    reserved_quantity: Quantity
+    delivered_quantity: Quantity
     forwarded_quantity: Quantity
+    # As duas parcelas do atendimento (#242) aparecem juntas: reservas e encaminhamentos.
+    reservations: list[StockReservation]
     purchase_forwards: list[PurchaseForward]
     history: list[MaterialRequestTransition]
 
@@ -152,3 +179,65 @@ class MaterialRequestList(BaseModel):
     model_config = ConfigDict(extra="forbid")
     items: list[MaterialRequestSummary]
     next_cursor: UUID | None
+
+
+FulfillmentOption = Literal["PARTIAL", "PURCHASING_ONLY"]
+FulfillmentBlock = Literal[
+    "REQUEST_NOT_IN_SERVICE",
+    "INACTIVE_MATERIAL",
+    "UNIT_MISMATCH",
+    "NOTHING_PENDING",
+    "NO_INVENTORY_DATASET",
+    "RECONCILIATION_REQUIRED",
+    "STOCK_UNIT_UNRESOLVED",
+    "STOCK_AVAILABLE",
+]
+
+
+class ConfirmFulfillment(BaseModel):
+    """Escolha do solicitante na falta parcial (D1); a divisão é recalculada no servidor."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_version: int = Field(ge=1)
+    option: FulfillmentOption
+
+
+class FulfillmentSplit(BaseModel):
+    """Quanto seria reservado do estoque e quanto seria encaminhado para compras."""
+
+    model_config = ConfigDict(extra="forbid")
+    option: FulfillmentOption
+    reserve_quantity: Quantity
+    forward_quantity: Quantity
+
+
+class FulfillmentPreview(BaseModel):
+    """Consulta da divisão; não reserva, não encaminha e não grava nada."""
+
+    model_config = ConfigDict(extra="forbid")
+    request_id: UUID
+    request_version: int = Field(ge=1)
+    unit: str
+    center_code: str
+    requested: Quantity
+    reserved: Quantity
+    delivered: Quantity
+    forwarded: Quantity
+    pending: Quantity
+    available: Quantity
+    blocked_reason: FulfillmentBlock | None
+    default_option: FulfillmentOption | None
+    options: list[FulfillmentSplit]
+
+
+class FulfillmentResult(BaseModel):
+    """Parcelas efetivamente gravadas, calculadas com o disponível lido dentro do bloqueio."""
+
+    model_config = ConfigDict(extra="forbid")
+    option: FulfillmentOption
+    reserved_quantity: Quantity
+    forwarded_quantity: Quantity
+    available_at_confirmation: Quantity
+    reservation_id: UUID | None
+    purchase_forward_id: UUID
+    request: MaterialRequestDetail

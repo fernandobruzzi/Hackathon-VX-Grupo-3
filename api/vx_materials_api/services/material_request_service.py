@@ -161,13 +161,25 @@ def detail(db, row, caller):
         .order_by(PurchaseForward.request_version)
     ).all()
     # Import tardio: stock_service importa este módulo para idempotência e resumo.
-    from vx_materials_api.services.stock_service import fulfillment
+    from vx_materials_api.services.stock_service import _delivered_by_reservation, fulfillment, reservation_view
 
+    reservations = list(
+        db.scalars(
+            select(StockReservation)
+            .where(StockReservation.request_id == row.id)
+            .order_by(StockReservation.created_at, StockReservation.id)
+        )
+    )
+    delivered = _delivered_by_reservation(db, [item.id for item in reservations])
     quantities = fulfillment(db, row)
     return {
         **summary(row, caller),
         "pending_quantity": quantity_text(quantities["pending"]),
+        "reserved_quantity": quantity_text(quantities["reserved"]),
+        "delivered_quantity": quantity_text(quantities["delivered"]),
         "forwarded_quantity": quantity_text(quantities["forwarded"]),
+        # As parcelas de estoque e de compras ficam na mesma solicitação (#242).
+        "reservations": [reservation_view(item, delivered.get(item.id, Decimal(0))) for item in reservations],
         "purchase_forwards": [forward_view(forward, material, row, caller) for forward, material in forwards],
         "history": [
             {
@@ -245,10 +257,12 @@ def remember_idempotency(db, caller, operation, key, digest, row, response):
     )
 
 
-def _audit(db, caller, role, row, before, reason, request_id, acknowledgement=None, *, action=None):
+def _audit(db, caller, role, row, before, reason, request_id, acknowledgement=None, *, action=None, extra=None):
     after = summary(row, caller)
     if acknowledgement:
         after["open_request_acknowledgement"] = acknowledgement
+    if extra:
+        after.update(extra)
     db.add(
         AuditLog(
             tenant_id=caller.tenant_id,

@@ -38,6 +38,65 @@ from vx_materials_api.services.stock_service import (
 )
 
 
+def request_problem(row, material):
+    """Por que a solicitação não pode ser atendida por compras agora, antes de ler o saldo; ou None."""
+    if row.status != "EM_ATENDIMENTO" or row.material_id is None:
+        return 409, "REQUEST_NOT_IN_SERVICE", "Só é possível encaminhar um material já identificado."
+    if material is None or material.status != "ATIVO":
+        # Obsoleto nunca é encaminhado; bloqueado segue o código ativo indicado no cadastro.
+        return 422, "INACTIVE_MATERIAL", "O material não está ativo; use o código ativo indicado."
+    if material.unit != row.unit:
+        return 422, "UNIT_MISMATCH", "A unidade da solicitação difere da unidade do material."
+    return None
+
+
+def shortage_problem(pending, state):
+    """Por que a falta de saldo não está confirmada para `p` com o disponível `D` lido; ou None."""
+    if pending <= 0:
+        return 409, "NOTHING_PENDING", "Não há quantidade pendente para encaminhar."
+    if state["blocked_reason"]:
+        # Sem dataset ou com reservas a reconciliar, a falta de saldo não pode ser confirmada.
+        return 409, state["blocked_reason"], "Não é possível confirmar a falta de saldo agora."
+    if state["unconverted_units"]:
+        # Saldo em outra unidade não é convertido sem fator conhecido nem tratado como falta.
+        return 409, "STOCK_UNIT_UNRESOLVED", "O saldo do centro está em outra unidade; a conversão precisa de revisão."
+    if state["available"] >= pending:
+        return 409, "STOCK_AVAILABLE", "O centro tem saldo para atender; a reserva fica com o Almoxarifado."
+    return None
+
+
+def _raise(problem):
+    if problem:
+        raise ApiProblem(*problem)
+
+
+def locked_shortage(db, caller, request_id, expected_version):
+    """Bloqueia a solicitação do próprio solicitante e o saldo, e confirma a falta (`D < p`).
+
+    Ordem da reserva (#239): linha da solicitação, material, bloqueio consultivo por tenant,
+    material principal e centro, e só então as parcelas e o disponível. Usado pelo encaminhamento
+    integral (#241) e pela divisão parcial (#242).
+    """
+    row = _find(db, caller, request_id, lock=True)
+    if row.requester_user_id != caller.user_id:
+        raise ApiProblem(404, "NOT_FOUND", "Solicitação não encontrada.")
+    if row.version != expected_version:
+        raise ApiProblem(409, "VERSION_CONFLICT", "A solicitação mudou. Atualize antes de encaminhar.")
+    material = None
+    if row.material_id is not None:
+        material = db.scalar(
+            select(MaterialMaster)
+            .where(MaterialMaster.id == row.material_id, MaterialMaster.tenant_id == caller.tenant_id)
+            .with_for_update(read=True)
+        )
+    _raise(request_problem(row, material))
+    _lock_stock(db, row.tenant_id, material.id, row.center_code)
+    values = fulfillment(db, row)
+    state = compute_availability(db, row.tenant_id, material, row.center_code)
+    _raise(shortage_problem(values["pending"], state))
+    return row, material, state, values["pending"]
+
+
 def forward_request(db, caller, request_id, payload, key, correlation_id):
     """Encaminha toda a quantidade pendente quando o centro não tem saldo para atendê-la."""
     role = require_permission(caller, "requests:create")
@@ -45,39 +104,7 @@ def forward_request(db, caller, request_id, payload, key, correlation_id):
     previous = _previous(db, caller, "material-request.forward", key, digest)
     if previous:
         return previous.response
-    row = _find(db, caller, request_id, lock=True)
-    if row.requester_user_id != caller.user_id:
-        raise ApiProblem(404, "NOT_FOUND", "Solicitação não encontrada.")
-    if row.version != payload.expected_version:
-        raise ApiProblem(409, "VERSION_CONFLICT", "A solicitação mudou. Atualize antes de encaminhar.")
-    if row.status != "EM_ATENDIMENTO" or row.material_id is None:
-        raise ApiProblem(409, "REQUEST_NOT_IN_SERVICE", "Só é possível encaminhar um material já identificado.")
-    material = db.scalar(
-        select(MaterialMaster)
-        .where(MaterialMaster.id == row.material_id, MaterialMaster.tenant_id == caller.tenant_id)
-        .with_for_update(read=True)
-    )
-    if material is None or material.status != "ATIVO":
-        # Obsoleto nunca é encaminhado; bloqueado segue o código ativo indicado no cadastro.
-        raise ApiProblem(422, "INACTIVE_MATERIAL", "O material não está ativo; use o código ativo indicado.")
-    if material.unit != row.unit:
-        raise ApiProblem(422, "UNIT_MISMATCH", "A unidade da solicitação difere da unidade do material.")
-    # Mesma ordem da reserva (#239): solicitação bloqueada, depois o saldo do material e centro.
-    _lock_stock(db, row.tenant_id, material.id, row.center_code)
-    pending = fulfillment(db, row)["pending"]
-    if pending <= 0:
-        raise ApiProblem(409, "NOTHING_PENDING", "Não há quantidade pendente para encaminhar.")
-    state = compute_availability(db, row.tenant_id, material, row.center_code)
-    if state["blocked_reason"]:
-        # Sem dataset ou com reservas a reconciliar, a falta de saldo não pode ser confirmada.
-        raise ApiProblem(409, state["blocked_reason"], "Não é possível confirmar a falta de saldo agora.")
-    if state["unconverted_units"]:
-        # Saldo em outra unidade não é convertido sem fator conhecido nem tratado como falta.
-        raise ApiProblem(
-            409, "STOCK_UNIT_UNRESOLVED", "O saldo do centro está em outra unidade; a conversão precisa de revisão."
-        )
-    if state["available"] >= pending:
-        raise ApiProblem(409, "STOCK_AVAILABLE", "O centro tem saldo para atender; a reserva fica com o Almoxarifado.")
+    row, _, _, pending = locked_shortage(db, caller, request_id, payload.expected_version)
     before = summary(row, caller)
     forward = PurchaseForward(
         id=uuid4(),
