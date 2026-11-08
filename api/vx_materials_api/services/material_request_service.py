@@ -3,7 +3,7 @@
 from decimal import Decimal
 from uuid import uuid4
 
-from sqlalchemy import Integer, and_, cast, or_, select, text
+from sqlalchemy import Integer, and_, cast, func, or_, select, text
 
 from domain.proposals import canonical_hash
 from vx_materials_api.db.models import (
@@ -168,7 +168,10 @@ def remember_idempotency(db, caller, operation, key, digest, row, response):
     )
 
 
-def _audit(db, caller, role, row, before, reason, request_id):
+def _audit(db, caller, role, row, before, reason, request_id, acknowledgement=None):
+    after = summary(row, caller)
+    if acknowledgement:
+        after["open_request_acknowledgement"] = acknowledgement
     db.add(
         AuditLog(
             tenant_id=caller.tenant_id,
@@ -180,7 +183,7 @@ def _audit(db, caller, role, row, before, reason, request_id):
             entity_type="material_request",
             entity_id=str(row.id),
             before_json=before,
-            after_json=summary(row, caller),
+            after_json=after,
             reason=reason,
             request_id=request_id,
         )
@@ -218,10 +221,54 @@ def _links(db, caller, payload):
     return order
 
 
+def _open_requests(db, caller, material_id, center_code):
+    """Solicitações abertas do mesmo material e centro, separando as visíveis ao chamador.
+
+    Toda reserva ativa pertence a uma solicitação não encerrada, então este critério também
+    cobre reservas (#239) sem consultar a tabela delas.
+    """
+    # Serializa criações concorrentes do mesmo material e centro: a segunda vê a primeira.
+    lock = f"material-request-open:{caller.tenant_id}:{material_id}:{center_code}"
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:lock, 0))"), {"lock": lock})
+    same = and_(
+        MaterialRequest.tenant_id == caller.tenant_id,
+        MaterialRequest.material_id == material_id,
+        MaterialRequest.center_code == center_code,
+        MaterialRequest.status != "ENCERRADA",
+    )
+    total = db.scalar(select(func.count()).select_from(MaterialRequest).where(same))
+    if not total:
+        return 0, []
+    visible = list(db.scalars(scoped_query(caller).where(same).order_by(MaterialRequest.protocol_number)))
+    return total, visible
+
+
+def _open_request_warning(total, visible):
+    return {
+        "total_count": total,
+        "hidden_count": total - len(visible),
+        "open_requests": [
+            {
+                "id": str(row.id),
+                "protocol": f"SM-{row.protocol_number:08d}",
+                "status": row.status,
+                "quantity": format(row.quantity.quantize(Decimal("0.000001")), "f"),
+                "unit": row.unit,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in visible
+        ],
+    }
+
+
 def create_request(db, caller, payload, key, request_id):
     role = require_permission(caller, "requests:create")
     require_center(caller, payload.center_code)
-    digest = canonical_hash(payload.model_dump(mode="json"))
+    content = payload.model_dump(mode="json")
+    if not content["acknowledge_open_requests"]:
+        # Mantém o hash das chaves gravadas antes da confirmação existir.
+        del content["acknowledge_open_requests"]
+    digest = canonical_hash(content)
     previous = _previous(db, caller, "material-request.create", key, digest)
     if previous:
         return previous.response
@@ -247,6 +294,23 @@ def create_request(db, caller, payload, key, request_id):
             raise ApiProblem(422, "INACTIVE_MATERIAL", "Selecione um material ativo.")
         if not material.unit or unit != material.unit:
             raise ApiProblem(422, "UNIT_MISMATCH", "Use a unidade do material; conversões não são presumidas.")
+    acknowledgement = None
+    if material_id:
+        total, visible = _open_requests(db, caller, material_id, payload.center_code)
+        if total and not payload.acknowledge_open_requests:
+            # Aviso, não bloqueio: o cliente reenvia com a confirmação para criar mesmo assim.
+            raise ApiProblem(
+                409,
+                "OPEN_REQUESTS_EXIST",
+                "Já existe solicitação aberta deste material para este centro. Confirme para criar outra.",
+                _open_request_warning(total, visible),
+            )
+        if total:
+            acknowledgement = {
+                "total_count": total,
+                "hidden_count": total - len(visible),
+                "visible_request_ids": [str(row.id) for row in visible],
+            }
     row = MaterialRequest(
         id=uuid4(),
         tenant_id=caller.tenant_id,
@@ -262,7 +326,13 @@ def create_request(db, caller, payload, key, request_id):
     )
     db.add(row)
     db.flush()
-    _audit(db, caller, role, row, None, None, request_id)
+    reason = (
+        f"Criada com confirmação de {acknowledgement['total_count']} solicitação(ões) aberta(s) "
+        "do mesmo material e centro."
+        if acknowledgement
+        else None
+    )
+    _audit(db, caller, role, row, None, reason, request_id, acknowledgement)
     response = detail(db, row, caller)
     remember_idempotency(db, caller, "material-request.create", key, digest, row, response)
     db.commit()
