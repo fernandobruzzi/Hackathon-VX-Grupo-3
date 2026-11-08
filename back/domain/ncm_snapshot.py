@@ -12,6 +12,9 @@ from types import MappingProxyType
 from repositories.normalization import get_normalization_repository
 
 OFFICIAL_NCM_URL = "https://portalunico.siscomex.gov.br/classif/api/publico/nomenclatura/download/json"
+# O endereço publicado responde 307 para o mesmo recurso com o perfil público (verificado em
+# 08/11/2026). Só esse destino exato é seguido; qualquer outro redirecionamento é recusado.
+OFFICIAL_NCM_REDIRECT_URL = f"{OFFICIAL_NCM_URL}?perfil=PUBLICO"
 MAX_SNAPSHOT_BYTES = 20 * 1024 * 1024
 
 
@@ -122,8 +125,9 @@ def load_ncm_snapshot(
         if not isinstance(row, dict):
             raise NcmSnapshotError(f"Nomenclatura {index} invalida")
         code = _text(row.get("Codigo"), "Codigo")
-        # A exportação também inclui capítulos, posições e subposições.
-        if not re.fullmatch(r"[0-9]{2}|[0-9]{4}(?:\.[0-9]{1,2}(?:\.[0-9]{1,2})?)?", code):
+        # A exportação também inclui capítulos (01), posições (01.01), subposições (0101.2,
+        # 0101.21) e itens (0101.21.0); só os códigos de oito dígitos são NCM completos.
+        if not re.fullmatch(r"[0-9]{2}(?:\.[0-9]{2})?|[0-9]{4}(?:\.[0-9]{1,2}(?:\.[0-9]{1,2})?)?", code):
             raise NcmSnapshotError(f"Codigo de nomenclatura invalido: {code}")
         description = _text(row.get("Descricao"), "Descricao")
         start = _date(row.get("Data_Inicio"), "Data_Inicio")

@@ -1,14 +1,27 @@
-"""Download somente do endpoint público oficial; sem redirecionamentos ou fallback."""
+"""Download somente do endpoint público oficial; sem fallback nem redirecionamento para outro destino."""
 
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from domain.ncm_snapshot import MAX_SNAPSHOT_BYTES, OFFICIAL_NCM_URL, NcmSnapshot, NcmSourceKind, load_ncm_snapshot
+from domain.ncm_snapshot import (
+    MAX_SNAPSHOT_BYTES,
+    OFFICIAL_NCM_REDIRECT_URL,
+    OFFICIAL_NCM_URL,
+    NcmSnapshot,
+    NcmSourceKind,
+    load_ncm_snapshot,
+)
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Segue apenas o redirecionamento do endereço publicado para o perfil público, uma vez."""
+
+    max_redirections = 1
+
     def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if req is not None and req.full_url == OFFICIAL_NCM_URL and newurl == OFFICIAL_NCM_REDIRECT_URL:
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
         return None
 
 
