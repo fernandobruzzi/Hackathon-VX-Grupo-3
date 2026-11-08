@@ -9,6 +9,7 @@
 > - **Pacotes Python (seção 4):** `mcp` e `api` ficam em `mcp/vx_materials_mcp/` e `api/vx_materials_api/`, em um único workspace uv com `uv.lock` na raiz.
 > - **Armazenamento (seção 4):** fica em `back/clients/storage.py`, com pasta local ou S3, no lugar de `clients/s3.py`.
 > - **Tools (seção 3):** `format` traz o texto do PDM, sem códigos como `DECIMAL_MM`. `get_pdm_template` acrescenta `item_names` e `ncm_references`, e `validate_and_format_pdm` aceita `item_name` e `unit`. Em classes com vários qualificadores, `qualifier` é nulo.
+> - **Árvore de diretórios (seção 4, #305):** não existem `back/matching/`, `back/clients/bedrock.py`, `security/jwt_validator.py`, `security/csrf.py`, `services/registration_service.py` nem `schemas/auth.py`. Candidatos a duplicidade ficam em `back/repositories/candidates/`, embeddings em `back/repositories/embeddings/`, Bedrock em `back/repositories/llm/` e `mcp/vx_materials_mcp/chatbot/bedrock.py`, Cognito e sessões em `security/cognito.py` e `security/sessions.py`, CSRF em `security/sessions.py`, e publicação de pedidos em `services/order_service.py`.
 > - **Candidatos a duplicidade:** ficam em `back/repositories/candidates/`. O padrão é a identidade exata; a busca por tokens fica registrada, mas desligada até atingir precisão suficiente em pares revisados.
 > - **Segurança da identidade:** `identity-v2` separa fabricantes também nas classes técnicas e deixa modelos e revisões de peça para revisão. Equivalências ficam em relatório próprio, fora da fila aplicável. Critérios, reprodução e limites em [`identidade.md`](identidade.md).
 > - **Enriquecimento e resources (#35):** o MCP consulta o cache persistido e autoriza os 15 códigos pelo manifesto vigente do tenant assinado. Sem cache ou com `refresh=true`, usa o cliente e extrator da #23 para preview sem persistência, com orçamento único de três segundos de rede. Fonte indisponível, prazo excedido ou evidência ausente retornam `PENDING`, preservando o cache. Resources PDM, material e evidência estão registrados; NCM lê somente o snapshot versionado selecionado no servidor, com tenant ativo, hash, data e procedência. Sem referência configurada ou íntegra, falha explicitamente; captura oficial ainda depende de acesso ao Siscomex. Escopo, limites e prompts em [`mcp-recursos.md`](mcp-recursos.md).
@@ -565,16 +566,11 @@ A estrutura abaixo mantém chatbot dentro de /mcp. Os nomes entre comentários d
 │   │   ├── normalization.py
 │   │   ├── identity.py
 │   │   └── ncm_rules.py
-│   ├── matching/
-│   │   ├── embeddings.py
-│   │   ├── candidates.py
-│   │   └── clusters.py
 │   ├── enrichment/
 │   │   ├── trusted_sources.py
 │   │   └── evidence.py
 │   ├── clients/
-│   │   ├── s3.py
-│   │   └── bedrock.py
+│   │   └── s3.py
 │   ├── repositories/
 │   │   └── batch_repository.py
 │   └── tests/
@@ -622,19 +618,15 @@ A estrutura abaixo mantém chatbot dentro de /mcp. Os nomes entre comentários d
 │   │   ├── batch.py
 │   │   └── dashboard.py
 │   ├── security/
-│   │   ├── jwt_validator.py
 │   │   ├── sessions.py
-│   │   ├── csrf.py
 │   │   ├── rbac.py
 │   │   └── service_tokens.py
 │   ├── services/
 │   │   ├── chat_service.py
 │   │   ├── approval_service.py
-│   │   ├── registration_service.py
 │   │   ├── batch_service.py
 │   │   └── metrics_service.py
 │   ├── schemas/
-│   │   ├── auth.py
 │   │   ├── chat.py
 │   │   ├── materials.py
 │   │   ├── proposals.py

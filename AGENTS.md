@@ -11,7 +11,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `front/` | Next.js static export with mock data ([details](front/README.md)) | Prototype |
 | `back/domain/` | Shared rules and contracts, used by batch and MCP | In progress |
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
-| `back/pipelines/`, `matching/`, `enrichment/`, `clients/` | Batch stages and external clients | Classification report and storage implemented; other stages are placeholders |
+| `back/pipelines/`, `enrichment/`, `clients/` | Batch stages, enrichment and external clients | Implemented; duplicate candidates live in `back/repositories/candidates/` |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
 | `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Optional Bedrock Sonnet 5 chat, local rules, five tools, scoped resources, versioned prompts and bounded enrichment preview; official NCM snapshot capture pending |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
