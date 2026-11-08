@@ -7846,6 +7846,16 @@
                 "type": "null"
               }
             ]
+          },
+          "confidence_band": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceBand"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -8838,6 +8848,16 @@
           },
           "origin": {
             "$ref": "#/components/schemas/ProposalOrigin"
+          },
+          "confidence_band": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceBand"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -13402,6 +13422,16 @@
           },
           "rationale": {
             "type": "string"
+          },
+          "confidence": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LlmAuditConfidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -13473,6 +13503,97 @@
         ],
         "title": "ChatMaterialRequestResponse",
         "type": "object"
+      },
+      "ConfidenceBand": {
+        "type": "string",
+        "enum": [
+          "ALTA",
+          "MEDIA",
+          "BAIXA"
+        ],
+        "description": "Faixa de confiança da sugestão do auditor LLM (#297). Só ordena a revisão; nunca aprova, aplica nem coloca em lote."
+      },
+      "LlmAuditConfidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Confiança da sugestão (#297): validação pelo domínio e, com pontuador, probabilidades entre os códigos de referência do PDM.",
+        "properties": {
+          "domain_validated": {
+            "type": "boolean"
+          },
+          "band": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceBand"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "probability": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "chosen": {
+            "type": "string"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "probability": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "code",
+                "probability"
+              ]
+            }
+          },
+          "scorer_model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scorer_simulated": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "domain_validated",
+          "band",
+          "probability",
+          "chosen",
+          "candidates",
+          "scorer_model",
+          "scorer_simulated",
+          "version",
+          "error"
+        ]
       }
     },
     "parameters": {

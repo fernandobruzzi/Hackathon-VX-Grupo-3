@@ -1192,6 +1192,7 @@ export interface components {
       automation?: components["schemas"]["ProposalAutomation"] | null;
       origin: components["schemas"]["ProposalOrigin"];
       llm_audit?: components["schemas"]["LlmAuditSuggestion"] | null;
+      confidence_band?: components["schemas"]["ConfidenceBand"] | null;
     };
     EvidenceItem: {
       attribute: string;
@@ -1401,6 +1402,7 @@ export interface components {
       application_mode?: "HUMAN" | "AUTOMATIC";
       automation?: components["schemas"]["ProposalAutomation"] | null;
       origin: components["schemas"]["ProposalOrigin"];
+      confidence_band?: components["schemas"]["ConfidenceBand"] | null;
     };
     Material: {
       material_code: string;
@@ -2692,6 +2694,7 @@ export interface components {
       }[];
       evidence: string[];
       rationale: string;
+      confidence?: components["schemas"]["LlmAuditConfidence"] | null;
     };
     /** ChatMaterialRequest */
     ChatMaterialRequest: {
@@ -2717,6 +2720,26 @@ export interface components {
       /** Session Version */
       session_version: number;
       material_request: components["schemas"]["MaterialRequestDetail"];
+    };
+    /**
+     * @description Faixa de confiança da sugestão do auditor LLM (#297). Só ordena a revisão; nunca aprova, aplica nem coloca em lote.
+     * @enum {string}
+     */
+    ConfidenceBand: "ALTA" | "MEDIA" | "BAIXA";
+    /** @description Confiança da sugestão (#297): validação pelo domínio e, com pontuador, probabilidades entre os códigos de referência do PDM. */
+    LlmAuditConfidence: {
+      domain_validated: boolean;
+      band: components["schemas"]["ConfidenceBand"] | null;
+      probability: number | null;
+      chosen: string;
+      candidates: {
+        code: string;
+        probability: number | null;
+      }[];
+      scorer_model: string | null;
+      scorer_simulated: boolean;
+      version: string;
+      error: string | null;
     };
   };
   responses: never;
