@@ -58,6 +58,7 @@ export const eventLabels: Record<string, string> = {
   MATERIAL_REQUEST_FORWARDED_TO_PURCHASING: "Encaminhada para compras",
   MATERIAL_REQUEST_CLOSED: "Atendimento encerrado",
   MATERIAL_REQUEST_PURCHASE_RETURNED: "Demanda devolvida por Compras",
+  MATERIAL_REQUEST_SUBSTITUTED: "Material trocado por equivalente autorizado",
 };
 
 export const closureLabels: Record<string, string> = {

@@ -644,3 +644,22 @@ As parcelas reais vêm do detalhe da solicitação; reserva e encaminhamento apa
 Encaminhar para Compras não indica compra realizada, recebimento nem entrega. Na ausência de
 uma parcela na resposta, ela aparece como **Não informada**, sem presumir zero. Não há registros
 nem totais simulados. O modo mock orienta entrar em uma sessão conectada, sem lista fictícia.
+
+## 21. Equivalentes autorizados (#246)
+
+Este é o caminho 6, para quando o material pedido está sem saldo. A Governança registra uma equivalência técnica entre dois materiais distintos (`POST /api/v1/material-equivalences`), com a base da decisão. Essa ação exige `merge:decide`. A equivalência:
+
+- fica em `material_equivalences` como `APROVADA`, com o par em ordem canônica, e vale nos dois sentidos;
+- entra na auditoria como `MATERIAL_EQUIVALENCE_APPROVED`;
+- não unifica materiais nem soma saldos.
+
+O dono da solicitação consulta `GET /api/v1/material-requests/{id}/equivalent-alternatives`. A lista só traz itens quando a solicitação está `EM_ATENDIMENTO` e o disponível do material pedido não cobre o pendente. Ela mostra apenas equivalências aprovadas, cada uma com o disponível no centro de destino e a base da decisão. Um produto apenas parecido, sem registro aprovado, nunca aparece.
+
+A troca vem por `POST /api/v1/material-requests/{id}/substitution`, com `confirm_substitution: true`, `expected_version` e `Idempotency-Key`. Ela segue a mesma ordem de bloqueio do encaminhamento e só é aceita se:
+
+- a falta de saldo estiver confirmada;
+- o equivalente estiver ativo e na mesma unidade da solicitação;
+- nenhuma parcela tiver sido reservada, entregue ou encaminhada, porque parcelas já atendidas pertencem ao material original.
+
+A solicitação guarda o código original (`substituted_from_material_id`) e a equivalência usada, e a auditoria registra `MATERIAL_REQUEST_SUBSTITUTED` com o par. A troca é única por solicitação. O detalhe mostra a troca em `substitution`.
+
