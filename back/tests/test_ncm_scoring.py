@@ -70,3 +70,50 @@ def test_simulated_scorer_is_refused_outside_local(monkeypatch):
         check_simulated_clients()
     with pytest.raises(ValueError, match="desconhecido"):
         get_ncm_scorer("inexistente")
+
+
+class FakeBedrock:
+    def __init__(self, top):
+        self.top, self.bodies = top, []
+
+    def invoke_model(self, **kwargs):
+        import io
+        import json
+
+        self.bodies.append(json.loads(kwargs["body"]))
+        content = [{"token": self.top[0]["token"], "logprob": self.top[0]["logprob"], "top_logprobs": self.top}]
+        return {"body": io.BytesIO(json.dumps({"choices": [{"logprobs": {"content": content}}]}).encode())}
+
+
+def bedrock_scorer(top, calls=5):
+    from domain.llm import LlmBudget
+    from repositories.ncm_scorer.bedrock_import_v1 import BedrockImportV1NcmScorer
+
+    client = FakeBedrock(top)
+    return BedrockImportV1NcmScorer(client=client, model="arn:modelo", budget=LlmBudget(calls)), client
+
+
+def test_bedrock_scorer_reads_letter_logprobs_of_the_first_token():
+    scorer, client = bedrock_scorer([{"token": "B", "logprob": -0.05}, {"token": " A", "logprob": -3.0}])
+    scored = scorer.score("Descrição do material", ("8481.80.95", "8481.80.99", "8481.90.90"))
+    assert scored.logprobs["8481.80.99"] == -0.05 and scored.logprobs["8481.80.95"] == -3.0
+    # Fora das alternativas devolvidas: abaixo de todas.
+    assert scored.logprobs["8481.90.90"] < -3.0
+    body = client.bodies[0]
+    assert body["max_tokens"] == 1 and body["logprobs"] is True and body["top_logprobs"] >= 3
+    assert "C) 8481.90.90" in body["messages"][0]["content"]
+    assert confidence("8481.80.99", tuple(sorted(scored.logprobs)), scored)["band"] == "ALTA"
+
+
+def test_bedrock_scorer_failures_have_stable_codes():
+    scorer, client = bedrock_scorer([{"token": "Z", "logprob": -0.1}], calls=1)
+    with pytest.raises(NcmScorerError, match="SCORER_NO_CANDIDATE_TOKEN"):
+        scorer.score("x", ("a", "b"))
+    with pytest.raises(NcmScorerError, match="SCORER_BUDGET_EXHAUSTED"):
+        scorer.score("x", ("a", "b"))
+    # Código único não gasta chamada.
+    assert scorer.score("x", ("a",)).logprobs == {"a": 0.0}
+    from repositories.ncm_scorer.bedrock_import_v1 import BedrockImportV1NcmScorer
+
+    with pytest.raises(NcmScorerError, match="SCORER_NOT_CONFIGURED"):
+        BedrockImportV1NcmScorer(client=client, model="").score("x", ("a", "b"))
