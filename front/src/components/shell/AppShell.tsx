@@ -14,6 +14,7 @@ import {
   PackageSearch,
   PlayCircle,
   Sun,
+  Truck,
   ChevronDown,
   Check,
 } from "lucide-react";
@@ -69,6 +70,17 @@ const NAV: { section: string; items: NavItem[] }[] = [
         perms: ["merge:decide"],
       },
       { href: "/batch/", label: "Processamento em lote", icon: PlayCircle, perms: ["batch:run"] },
+    ],
+  },
+  {
+    section: "Atender",
+    items: [
+      {
+        href: "/compras/",
+        label: "Encaminhamentos para compras",
+        icon: Truck,
+        perms: ["purchasing:read"],
+      },
     ],
   },
   {
