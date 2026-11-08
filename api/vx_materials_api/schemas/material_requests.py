@@ -5,17 +5,29 @@ from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 RequestStatus = Literal["EM_IDENTIFICACAO", "AGUARDANDO_CADASTRO", "EM_ATENDIMENTO", "ENCERRADA"]
-Quantity = Annotated[str, StringConstraints(pattern=r"^(0|[1-9][0-9]{0,17})(\.[0-9]{1,6})?$", max_length=25)]
+
+
+def _positive_quantity(value: str) -> str:
+    if Decimal(value) <= 0:
+        raise ValueError("A quantidade deve ser positiva.")
+    return value
+
+
+Quantity = Annotated[
+    str,
+    StringConstraints(pattern=r"^(0|[1-9][0-9]{0,17})(\.[0-9]{1,6})?$", max_length=25),
+]
+PositiveQuantity = Annotated[Quantity, AfterValidator(_positive_quantity)]
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 
 
 class CreateMaterialRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     original_text: str = Field(min_length=1, max_length=10000)
-    quantity: Quantity
+    quantity: PositiveQuantity
     unit: ShortText
     center_code: ShortText
     material_id: UUID | None = None
@@ -29,13 +41,6 @@ class CreateMaterialRequest(BaseModel):
     def nonblank_text(cls, value):
         if not value.strip():
             raise ValueError("Descreva a necessidade de material.")
-        return value
-
-    @field_validator("quantity")
-    @classmethod
-    def positive_quantity(cls, value):
-        if Decimal(value) <= 0:
-            raise ValueError("A quantidade deve ser positiva.")
         return value
 
 

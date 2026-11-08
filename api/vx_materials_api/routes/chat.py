@@ -11,6 +11,8 @@ from vx_materials_api.dependencies import agent_client, current_identity, db_ses
 from vx_materials_api.errors import ApiProblem, request_id
 from vx_materials_api.routes.sanitization import catalog
 from vx_materials_api.schemas.chat import (
+    ChatMaterialRequest,
+    ChatMaterialRequestResponse,
     ChatMessageRequest,
     ChatSessionDetail,
     ChatSessionList,
@@ -22,7 +24,7 @@ from vx_materials_api.security.identity import Identity
 from vx_materials_api.security.rbac import effective_permissions, require_center, require_permission
 from vx_materials_api.security.service_tokens import issue_agent_token
 from vx_materials_api.security.sessions import verify_write
-from vx_materials_api.services import chat_order_service, chat_service
+from vx_materials_api.services import chat_material_request_service, chat_order_service, chat_service
 from vx_materials_api.services.agent_client import AgentClient, AgentUnavailable
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -104,3 +106,18 @@ def read_session(
 ) -> ChatSessionDetail:
     require_permission(identity, "chat:use")
     return chat_service.read_session(db, identity, session_id)
+
+
+@router.post("/{session_id}/request-material")
+def request_material(
+    session_id: UUID,
+    payload: ChatMaterialRequest,
+    request: Request,
+    identity: Annotated[Identity, Depends(current_identity)],
+    db: Annotated[Session, Depends(db_session)],
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+) -> ChatMaterialRequestResponse:
+    verify_write(request, identity)
+    return chat_material_request_service.submit_request(
+        db, identity, catalog(request), session_id, payload, idempotency_key, request_id(request)
+    )

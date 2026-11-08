@@ -572,6 +572,7 @@ class AutomaticCorrectionResult(Base):
 class MaterialRequest(Base):
     __tablename__ = "material_requests"
     __table_args__ = (
+        UniqueConstraint("chat_session_id"),
         CheckConstraint("quantity > 0 AND quantity <> 'NaN'::numeric", name="positive_quantity"),
         CheckConstraint("length(btrim(unit)) > 0", name="unit"),
         CheckConstraint("length(btrim(original_text)) > 0", name="original_text"),

@@ -10,6 +10,7 @@ from typing import Any, Protocol
 
 from domain.contracts import ClassificationStatus, PdmClass
 from domain.identity import reference_review_reasons
+from domain.material_code_request import explicit_material_code
 from vx_materials_mcp.chatbot.candidates import (
     DuplicateDecision,
     card_signature,
@@ -227,6 +228,13 @@ def _message_for(validation: dict[str, Any] | None, class_name: str) -> str:
 async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: ToolRecorder) -> AgentRunResponse:
     """Um turno: consulta o modelo da classe, valida a ficha e procura o item na base, com as tools MCP."""
     offered, dismissed = request.context.offered_material_codes, request.context.dismissed_material_codes
+    code = explicit_material_code(request.message, allow_bare=not request.context.history)
+    if code and request.action is None:
+        search = await recorder.call(
+            "search_similar_materials", {"query": f"código: {code}", "limit": 1}, _summarize_search
+        )
+        decision = decide(search, request.message, offered, dismissed, request.action)
+        return _no_class_response(context, recorder, search, decision)
     if context.pdm_class is None:
         search = await _search(recorder, request, context, None)
         decision = decide(search, request.message, offered, dismissed, request.action)

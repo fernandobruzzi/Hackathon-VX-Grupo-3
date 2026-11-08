@@ -6789,6 +6789,138 @@
           }
         }
       }
+    },
+    "/api/v1/chat/{session_id}/request-material": {
+      "post": {
+        "operationId": "submitChatMaterialRequest",
+        "summary": "Confirmar necessidade: material identificado, cadastro novo ou identificação em revisão, sem movimentar estoque.",
+        "tags": [
+          "chat"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da operação.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMaterialRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMaterialRequest"
+              }
+            }
+          }
+        },
+        "description": "Quantidade e unidade obrigatórias; centro e identidade vêm da sessão. Se há dúvida técnica de identidade, segue para identificação sem cadastro automático. Uma solicitação por conversa, com idempotência, versão, auditoria e transação única. Catálogo alterado exige novo turno."
+      }
     }
   },
   "components": {
@@ -10413,6 +10545,17 @@
                 "type": "null"
               }
             ]
+          },
+          "material_request_submission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChatMaterialRequestResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Solicitação criada explicitamente nesta conversa; presente nos três caminhos e recuperada do banco."
           }
         }
       },
@@ -13271,6 +13414,64 @@
           "evidence",
           "rationale"
         ]
+      },
+      "ChatMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_session_version": {
+            "minimum": 1,
+            "title": "Expected Session Version",
+            "type": "integer"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Unit",
+            "type": "string"
+          },
+          "acknowledge_open_requests": {
+            "type": "boolean",
+            "default": false,
+            "description": "Confirma criar outra necessidade após o aviso de solicitações abertas do mesmo material e centro."
+          }
+        },
+        "required": [
+          "expected_session_version",
+          "quantity",
+          "unit"
+        ],
+        "title": "ChatMaterialRequest",
+        "type": "object"
+      },
+      "ChatMaterialRequestResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "session_version": {
+            "title": "Session Version",
+            "type": "integer"
+          },
+          "material_request": {
+            "$ref": "#/components/schemas/MaterialRequestDetail"
+          }
+        },
+        "required": [
+          "session_id",
+          "session_version",
+          "material_request"
+        ],
+        "title": "ChatMaterialRequestResponse",
+        "type": "object"
       }
     },
     "parameters": {

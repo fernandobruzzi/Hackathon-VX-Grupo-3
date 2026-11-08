@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { CheckCircle2, CircleDashed, Send } from "lucide-react";
 import { Badge, Button, Card, Code } from "@/components/ui";
 import { MaterialStatusBadge, ValidationBadge } from "@/components/ui/status";
@@ -7,19 +8,21 @@ import type { ChatAction, MaterialCardData } from "@/types/api";
 import { SimilarCandidates } from "./SimilarCandidates";
 import { CopyMaterialCode } from "./CopyMaterialCode";
 
-/** Ficha do pedido em construção. Espelha material_card do contrato 6.2. */
+/** Ficha do material em construção. Espelha material_card do contrato 6.2. */
 export function MaterialCard({
   card,
   onSubmit,
   submitted,
   onReply,
   busy,
+  requestForm,
 }: {
   card: MaterialCardData;
   onSubmit?: () => void;
   submitted?: { id: string; status: "READY_FOR_REVIEW" | "EXISTING" };
   onReply?: (message: string, action: ChatAction) => void;
   busy?: boolean;
+  requestForm?: ReactNode;
 }) {
   const entries = Object.entries(card.attributes);
   return (
@@ -36,9 +39,7 @@ export function MaterialCard({
             <MaterialStatusBadge value={card.existing.status} />
           </div>
           <p className="text-sm leading-6">{card.existing.pdm_description}</p>
-          <p className="text-xs leading-5 text-on-profundo/80">
-            {card.existing.match_type} · {card.existing.reason}
-          </p>
+          <p className="text-xs leading-5 text-on-profundo/80">{card.existing.reason}</p>
           <div className="rounded-sm bg-white/8 p-3">
             <p className="mb-1 text-[11px] font-bold tracking-[0.06em] text-on-profundo/70 uppercase">
               Estoque nos seus centros
@@ -61,9 +62,11 @@ export function MaterialCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-extrabold tracking-[0.04em] text-verde uppercase">
-              Ficha do pedido
+              Ficha do material
             </p>
-            <p className="mt-1 text-lg font-bold">{card.pdm_class_name}</p>
+            <p className="mt-1 text-lg font-bold">
+              {card.pdm_class_name || "Identificação pendente"}
+            </p>
             <Code className="text-muted">{card.pdm_class_id} · pdm-kit-v1</Code>
           </div>
           <ValidationBadge value={card.validation_status} />
@@ -129,7 +132,8 @@ export function MaterialCard({
           </div>
         )}
 
-        {!card.existing &&
+        {!requestForm &&
+          !card.existing &&
           (submitted ? (
             <div role="status" className="flex flex-col gap-2">
               <Badge tone="info" className="self-start">
@@ -154,6 +158,7 @@ export function MaterialCard({
             </div>
           ))}
       </Card>
+      {requestForm}
     </div>
   );
 }

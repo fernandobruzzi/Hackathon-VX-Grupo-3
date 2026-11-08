@@ -20,13 +20,21 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from domain.identity import identity_signature
+from domain.material_code_request import explicit_material_code
 from domain.pdm_loader import DEFAULT_PDM_VERSION
 from pipelines.sanitize import _catalog
 from pipelines.search_index import index_version
 from repositories.classification import get_classification_repository
 from repositories.embeddings import get_embedding_repository
 from repositories.extraction import get_extraction_repository
-from vx_materials_api.db.models import ChatMessage, ChatSession, Dataset, MaterialMaster, OperationRequest
+from vx_materials_api.db.models import (
+    ChatMessage,
+    ChatSession,
+    Dataset,
+    MaterialMaster,
+    MaterialRequest,
+    OperationRequest,
+)
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
@@ -199,7 +207,11 @@ def turn_status(
     Pronto para envio exige ficha válida, busca executada, nenhum item com a mesma identidade e todos
     os itens parecidos descartados pelo solicitante. Se a busca falhou, o pedido continua aguardando.
     """
-    verified = {_code_to_use(c) for c in search or [] if c.get("identity_verified") and _code_to_use(c)}
+    verified = {
+        _code_to_use(c)
+        for c in search or []
+        if (c.get("identity_verified") or c.get("explicit_code_confirmed")) and _code_to_use(c)
+    }
     if card.existing is not None:
         chosen = {_code_to_use(c) for c in search or [] if c.get("material_code") in offered_before}
         accepted = (verified | chosen | {saved_existing_code}) - {None}
@@ -325,7 +337,7 @@ def reserve_turn(db: Session, identity: Identity, request: ChatMessageRequest, *
     else:
         session = _locked_session(db, identity, request.session_id)
         _require_history_scope(db, identity, session)
-        if session.registration_order_id is not None:
+        if session.registration_order_id is not None or material_request_for(db, session.id) is not None:
             raise _conflict("CHAT_ALREADY_SUBMITTED", "Esta conversa já gerou um pedido. Inicie uma nova conversa.")
         abandoned = session.updated_at < datetime.now(UTC) - ABANDONED_TURN_AFTER
         if session.active_turn_id is not None and not abandoned:
@@ -448,6 +460,19 @@ def complete_turn(
     if saved and saved.get("catalog_proof") != reservation.catalog_proof:
         saved = None
     search, reused = effective_candidates(result, saved)
+    if search is not None and not reused:
+        requested_code = explicit_material_code(request.message, allow_bare=request.session_id is None)
+        search = [
+            {
+                **candidate,
+                "explicit_code_confirmed": bool(
+                    requested_code
+                    and candidate.get("match_type") == "EXACT_MATERIAL_CODE"
+                    and candidate.get("material_code") == requested_code
+                ),
+            }
+            for candidate in search
+        ]
     offered, dismissed = validated_candidate_codes(context, patch, search)
     patch |= {"offered_material_codes": offered, "dismissed_material_codes": dismissed}
     saved_existing = ((saved or {}).get("existing") or {}).get("material_code") if reused else None
@@ -570,4 +595,22 @@ def read_session(db: Session, identity: Identity, session_id: uuid.UUID) -> dict
         "material_card": context.get("material_card"),
         "order_id": session.registration_order_id,
         "submission": submission.response["body"] if submission else None,
+        "material_request_submission": request_submission(db, identity, session),
+    }
+
+
+def material_request_for(db, session_id):
+    return db.scalar(select(MaterialRequest).where(MaterialRequest.chat_session_id == session_id))
+
+
+def request_submission(db, identity, session):
+    from vx_materials_api.services.material_request_service import get_request
+
+    row = material_request_for(db, session.id)
+    if row is None:
+        return None
+    return {
+        "session_id": session.id,
+        "session_version": session.version,
+        "material_request": get_request(db, identity, row.id),
     }
