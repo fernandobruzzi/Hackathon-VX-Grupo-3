@@ -578,6 +578,16 @@ implement requests or stock movements. The #237 persistence base implements crea
 reads and owner cancellation with transactional audit; stock and purchasing operations remain
 in their respective follow-up issues. See section 13 of the model for current API behavior.
 
+## Registration resolution for material requests
+
+Deciding or reevaluating a linked registration updates waiting material requests in the same transaction.
+`REGISTERED` links the new code and forwards the confirmed quantity to purchasing; `EXISTING`
+links one verified active code and leaves normal fulfillment to the requester. Ambiguous codes
+or incompatible units stay for identification review. `REJECTED` closes with the rejection reason
+and guidance to create a corrected request. Closed requests never reopen. Protocol and original
+need remain unchanged; request and forward audits record the actual deciding reviewer and role.
+See section 23 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
+
 ## Stock reservations
 
 `GET /api/v1/stock/availability` reads, and never writes, the available balance of a principal
