@@ -1,29 +1,43 @@
 # Embeddings Titan na busca
 
-A configuração AWS permanece com `embedding_repository` vazio até comparar o
-ganho no top 10 com o custo e a latência do Titan. A linha de base abaixo foi
-medida em PostgreSQL 16 com pgvector, usando o kit do desafio e as regras de
-`21f0a87`. Os 202 pares foram declarados na base por redirecionamentos
-`USAR COD`. A avaliação mede a recuperação do código ativo indicado pela base.
-Ela não estima a precisão de fusões.
+A configuração AWS mantém `embedding_repository` vazio por padrão. O Titan
+recuperou 10 pares a mais no top 10, mas elevou a latência p95 de 177,4 ms para
+787,8 ms. A ativação permanece explícita enquanto o ganho de cobertura tiver
+esse custo de latência na busca interativa.
+
+O benchmark de 8 de novembro de 2026 usou o Titan Text Embeddings V2 em
+`us-east-1` na conta do workshop, com o índice em PostgreSQL 16 e pgvector
+local. As duas buscas usaram o classificador `aliases_v1@3-pilot-families-263`,
+a mesma carga de 23.554 materiais e os mesmos 202 pares declarados por
+redirecionamentos `USAR COD`. A avaliação mede a recuperação do código ativo
+indicado pela base. O ganho de cobertura para `aliases_v2` ainda precisa de
+medição própria.
 
 | Busca | Pares no top 1 | Pares no top 5 | Pares no top 10 | Latência p50 | Latência p95 |
 |---|---:|---:|---:|---:|---:|
-| Identidade e full-text | 92/202 | 127/202 | 135/202 | 88,1 ms | 215,3 ms |
+| Identidade e full-text | 92/202 | 127/202 | 135/202 | 93,9 ms | 177,4 ms |
+| Identidade, full-text e Titan | 94/202 | 138/202 | 145/202 | 668,2 ms | 787,8 ms |
 
 O hash da coorte é
 `5bccde52f862f0dd74e1b67f9dc7e750d7020547a00ed0ffc5590da449a37f81`.
-Uma chamada ao Titan em `us-east-1` com o termo genérico `PARAFUSO` retornou
-512 dimensões e 5 tokens de entrada. A medição com os dados do kit e o
-resultado comparativo seguem pendentes.
+O índice Titan registrou 512 dimensões e cobertura de 23.554 de 23.554
+materiais. A construção levou 1.416,173 segundos com até 10 chamadas
+concorrentes. As 202 consultas levaram 138,439 segundos com Titan e 19,902
+segundos sem embeddings. Houve quatro timeouts de leitura recuperados por
+nova tentativa, em 23.760 tentativas de inferência.
+
+O Titan reportou 1.849.331 tokens de entrada na indexação e 12.102 nas
+consultas. Ao preço de US$ 0,02 por milhão de tokens, a inferência das chamadas
+com resposta custou cerca de US$ 0,0372. [Preços do Amazon Bedrock](https://aws.amazon.com/bedrock/pricing/)
 
 ## Como reproduzir
 
-Use um banco descartável com o kit carregado. Gere os dois índices sobre a
-mesma carga, sem editar materiais ou mudar as revisões de PDM, classificação e
-extração entre as rodadas. Rode as buscas na mesma máquina e compare os
-relatórios quando os dois indicarem 23.554 materiais, 202 pares e o mesmo
-`cohort_sha256`.
+Use um banco descartável com o kit carregado. Para reproduzir a comparação
+publicada, exporte `CLASSIFICATION_REPOSITORY=aliases_v1` nas duas etapas e
+confira a revisão na assinatura do índice. Gere os dois índices sobre a mesma
+carga, mantendo os materiais e as revisões de PDM, classificação e extração
+entre as rodadas. Rode as buscas na mesma máquina e compare os relatórios
+quando os dois indicarem 23.554 materiais, 202 pares e o mesmo `cohort_sha256`.
 
 Para a linha de base, use a credencial batch e rode em `back/`:
 
