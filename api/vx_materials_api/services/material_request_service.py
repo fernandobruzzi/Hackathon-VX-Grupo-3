@@ -113,8 +113,8 @@ def scoped_query(caller, *, mine=False):
     )
 
 
-def _find(db, caller, request_id, *, lock=False):
-    query = scoped_query(caller).where(MaterialRequest.id == request_id)
+def _find(db, caller, request_id, *, lock=False, mine=False):
+    query = scoped_query(caller, mine=mine).where(MaterialRequest.id == request_id)
     row = db.scalar(query.with_for_update() if lock else query)
     if row is None:
         raise ApiProblem(404, "NOT_FOUND", "Solicitação não encontrada no seu escopo.")
@@ -196,8 +196,8 @@ def detail(db, row, caller):
     }
 
 
-def get_request(db, caller, request_id):
-    return detail(db, _find(db, caller, request_id), caller)
+def get_request(db, caller, request_id, *, mine=False):
+    return detail(db, _find(db, caller, request_id, mine=mine), caller)
 
 
 def list_requests(db, caller, *, mine=False, status=None, cursor=None, limit=20):

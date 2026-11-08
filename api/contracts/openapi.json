@@ -4917,6 +4917,16 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "required": false,
+            "description": "Restringe ao solicitante autenticado, inclusive para revisores.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {

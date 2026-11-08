@@ -280,7 +280,7 @@ A unidade precisa coincidir com a do material; não há conversão presumida de 
 Todas as leituras exigem tenant e centro autorizados. O solicitante vê somente as próprias
 solicitações; Governança também vê pendências de identificação/cadastro nos seus centros,
 por `requests:read_queue`. Fiscal vê apenas as solicitações vinculadas a pedidos em
-`PENDING_FISCAL`, por `requests:read_fiscal`. `mine=true` restringe a listagem ao próprio usuário. Os novos papéis
+`PENDING_FISCAL`, por `requests:read_fiscal`. `mine=true` restringe a listagem e o detalhe ao próprio usuário. Os novos papéis
 e filas de Almoxarifado e Compras continuam na #244.
 
 Criação e cancelamento exigem autenticação, Origin/CSRF nas sessões de navegador e
@@ -626,3 +626,21 @@ Após confirmar a necessidade, o chat oferece “Nova solicitação” e “Ence
 abre uma conversa vazia no mesmo centro, sem reenviar a anterior; a segunda mantém as
 mensagens e a ficha em consulta. O histórico restaura o protocolo e oferece as mesmas
 escolhas, preservando a solicitação já registrada.
+
+## 20. Acompanhamento pelo solicitante (#245)
+
+O menu **Minhas solicitações** abre `/solicitacoes/`, com lista paginada por protocolo e filtro
+pelas quatro etapas. O protocolo abre `/solicitacoes/detalhe/?id=...`, compatível com o export
+estático. Ambas as consultas usam `mine=true`: mesmo revisores consultam apenas suas próprias
+solicitações nessa jornada. A API continua verificando tenant, centros e permissões em cada leitura.
+Trocar a sessão descarta os dados anteriores e cancela consultas pendentes.
+
+O detalhe mostra texto original, centro, etapa, equipe correspondente à etapa, pendência geral,
+quantidades solicitada, reservada, entregue, encaminhada e pendente, unidade e histórico real de transições com data e motivo. A equipe é a
+referência do fluxo operacional, não uma atribuição individual. Decimais são formatados como
+strings para preservar a precisão integral da quantidade persistida.
+
+As parcelas reais vêm do detalhe da solicitação; reserva e encaminhamento aparecem com seus estados.
+Encaminhar para Compras não indica compra realizada, recebimento nem entrega. Na ausência de
+uma parcela na resposta, ela aparece como **Não informada**, sem presumir zero. Não há registros
+nem totais simulados. O modo mock orienta entrar em uma sessão conectada, sem lista fictícia.

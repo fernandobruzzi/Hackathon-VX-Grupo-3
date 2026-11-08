@@ -168,6 +168,7 @@ def test_unauthorized_center_csrf_and_origin_rejected_before_writes(case):
 def test_requester_cannot_read_others_but_governance_sees_only_its_queue(case):
     client, db, me = case
     pending = create(client, me)
+    assert client.get(f"{PATH}/{pending['id']}", params={"mine": "true"}).status_code == 200
     material = add_material(db)
     identified = create(client, me, payload(material_id=str(material.id)))
     fiscal = login(client, "AUDITOR_FISCAL")
@@ -183,6 +184,7 @@ def test_requester_cannot_read_others_but_governance_sees_only_its_queue(case):
     )
     governance = login(client, "GESTOR_CADASTRO")
     assert client.get(f"{PATH}/{pending['id']}").status_code == 200
+    assert client.get(f"{PATH}/{pending['id']}", params={"mine": "true"}).status_code == 404
     assert client.get(f"{PATH}/{identified['id']}").status_code == 404
     items = client.get(PATH).json()["items"]
     assert [item["id"] for item in items] == [pending["id"]]
