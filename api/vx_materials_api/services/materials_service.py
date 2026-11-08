@@ -132,14 +132,41 @@ def _inventory(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, l
     centers = sorted(identity.center_codes)
     if not ids or not centers:
         return {}
-    dataset = db.scalar(
+    dataset = current_dataset_id(db, identity.tenant_id)
+    if dataset is None:
+        return {}
+    grouped, names = inventory_quantities(db, identity.tenant_id, dataset, centers, ids)
+    result: dict[UUID, list[InventoryRow]] = defaultdict(list)
+    for (material_id, center, unit), quantity in sorted(grouped.items(), key=lambda item: (item[0][1], item[0][2])):
+        labels = names[(material_id, center, unit)]
+        result[material_id].append(
+            InventoryRow(
+                center_code=center,
+                center_name=next(iter(labels)) if len(labels) == 1 else None,
+                quantity=_quantity(quantity),
+                unit=unit,
+            )
+        )
+    return result
+
+
+def current_dataset_id(db: Session, tenant_id: UUID) -> UUID | None:
+    """Observação de estoque vigente do tenant: o dataset importado mais recente."""
+    return db.scalar(
         select(Dataset.id)
-        .where(Dataset.tenant_id == identity.tenant_id)
+        .where(Dataset.tenant_id == tenant_id)
         .order_by(Dataset.imported_at.desc(), Dataset.id.desc())
         .limit(1)
     )
-    if dataset is None:
-        return {}
+
+
+def inventory_quantities(
+    db: Session, tenant_id: UUID, dataset: UUID, centers: list[str], ids: list[UUID]
+) -> tuple[dict[tuple[UUID, str, str], Decimal], dict[tuple[UUID, str, str], set[str]]]:
+    """Saldo exato por (material principal, centro, unidade) do dataset, seguindo as consolidações aprovadas.
+
+    Usado pela busca de materiais e pela disponibilidade de reservas, para que as duas leiam o mesmo saldo.
+    """
     owner = func.coalesce(InventoryConsolidation.primary_material_id, MaterialInventorySnapshot.material_id)
     rows = db.execute(
         select(
@@ -159,7 +186,7 @@ def _inventory(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, l
             ),
         )
         .where(
-            MaterialInventorySnapshot.tenant_id == identity.tenant_id,
+            MaterialInventorySnapshot.tenant_id == tenant_id,
             MaterialInventorySnapshot.dataset_id == dataset,
             MaterialInventorySnapshot.center_code.in_(centers),
             owner.in_(ids),
@@ -174,18 +201,7 @@ def _inventory(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, l
         if row.center_name:
             names[key].add(row.center_name)
         grouped[key] = exact_sum(grouped[key], quantity)
-    result: dict[UUID, list[InventoryRow]] = defaultdict(list)
-    for (material_id, center, unit), quantity in sorted(grouped.items(), key=lambda item: (item[0][1], item[0][2])):
-        labels = names[(material_id, center, unit)]
-        result[material_id].append(
-            InventoryRow(
-                center_code=center,
-                center_name=next(iter(labels)) if len(labels) == 1 else None,
-                quantity=_quantity(quantity),
-                unit=unit,
-            )
-        )
-    return result
+    return grouped, names
 
 
 def _pending_flags(db: Session, identity: Identity, ids: list[UUID]) -> dict[UUID, set[str]]:
