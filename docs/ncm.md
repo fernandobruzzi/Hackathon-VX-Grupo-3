@@ -134,3 +134,10 @@ de teste para verificar o ciclo completo. Os testes da API exercitam a proposta
 da porca produzida pelo batch, ambas as ordens de revisão, ausência de autorização
 fiscal, atributo alterado e avaliação na auditoria. A ferramenta MCP é chamada
 pelo protocolo stdio real, sem AWS e sem credencial de escrita no cadastro.
+
+## Auditor LLM
+
+Com `LLM_REPOSITORY` definido, os casos que as regras não resolvem passam pelo auditor LLM (#290).
+Ele só contribui com evidência citada: o código continua calculado por estas regras, e o que não
+fecha é descartado com o motivo. As propostas saem com origem `LLM_AUDITOR` e revisão técnica e
+fiscal. Detalhes em [`llm.md`](llm.md#auditor-llm-290).

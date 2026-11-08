@@ -11,6 +11,9 @@ Uso, de `back/`:
 
     uv run python -m pipelines.measure_ncm_benchmark ../data/benchmark_ncm/v1 \\
         --pdm-workbook ../data/desafio01/03_padrao_cadastro_PDM.xlsx
+
+Com `--llm-audit`, o auditor LLM (#290) roda depois das regras, com o modelo de `LLM_REPOSITORY`, e o
+relatório ganha `llm_audit`: resultado por caso, acertos e erros por família e o total com o auditor.
 """
 
 import argparse
@@ -21,11 +24,13 @@ from pathlib import Path
 
 from clients.ncm_snapshot_store import load_configured_ncm_snapshot
 from domain.pdm_loader import load_pdm
+from pipelines.llm_audit import PROPOSED, audit_cases, select_audit_cases, summarize_audit
 from pipelines.ncm_corrections import propose_ncm_corrections
 from pipelines.sanitize import analyze_material, read_csv_records
 from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
+from repositories.llm import get_llm_repository
 
 SITUATIONS = ("CORRETO", "INCORRETO", "AUSENTE")
 
@@ -96,39 +101,86 @@ def _summary(counts: Counter) -> dict:
     }
 
 
-def measure(benchmark_dir: Path, pdm_workbook: str) -> dict:
+def measure(benchmark_dir: Path, pdm_workbook: str, *, llm_audit: bool = False) -> dict:
+    llm = get_llm_repository() if llm_audit else None
+    if llm_audit and llm is None:
+        raise ValueError("A medição do auditor exige LLM_REPOSITORY (bedrock_v1 ou simulated_v1).")
     records = read_csv_records(str(benchmark_dir / "base_sem_gabarito.csv"))
     with (benchmark_dir / "base_sem_gabarito.csv").open(encoding="utf-8-sig", newline="") as source:
         keys = [row["ID_BENCHMARK"] for row in csv.DictReader(source)]
     catalog = load_pdm(pdm_workbook)
     classifier, extractor = get_classification_repository(catalog), get_extraction_repository()
     analyzed = [analyze_material(record, catalog, classifier, extractor) for record in records]
-    proposals = propose_ncm_corrections(analyzed, catalog, snapshot=load_configured_ncm_snapshot())
+    snapshot = load_configured_ncm_snapshot()
+    proposals = propose_ncm_corrections(analyzed, catalog, snapshot=snapshot)
     targets = {proposal.suggested_primary_code: proposal.changeset["after"]["ncm"] for proposal in proposals}
-    predictions = {key: normalize_ncm(targets.get(r.code, r.ncm)) for key, r in zip(keys, records, strict=True)}
-    proposed = {key for key, record in zip(keys, records, strict=True) if record.code in targets}
+    outcomes = None
+    if llm is not None:
+        # O modelo vê só a base sem gabarito, como as regras.
+        outcomes = audit_cases(select_audit_cases(analyzed, catalog, set(targets)), catalog, llm, snapshot=snapshot)
     # O gabarito só é lido depois que todas as propostas existem.
     with (benchmark_dir / "base_com_gabarito.csv").open(encoding="utf-8-sig", newline="") as source:
         rows = list(csv.DictReader(source))
     if [row["ID_BENCHMARK"] for row in rows] != keys:
         raise ValueError("As bases com e sem gabarito precisam ter os mesmos ID_BENCHMARK, na mesma ordem.")
-    return {
+    key_of = {record.code: key for key, record in zip(keys, records, strict=True)}
+    report = {
         "benchmark": str(benchmark_dir),
         "algorithms": {
             "classification": f"{classifier.name}@{classifier.revision}",
             "extraction": f"{extractor.name}@{extractor.revision}",
             "corrections": get_correction_repository().name,
         },
-        **score(rows, predictions, proposed),
+        **score(rows, _predictions(records, keys, targets), {key_of[code] for code in targets}),
     }
+    if outcomes is not None:
+        audited = {o.material_code: o.proposal.changeset["after"]["ncm"] for o in outcomes if o.status == PROPOSED}
+        combined = {**targets, **audited}
+        report["llm_audit"] = {
+            **summarize_audit(outcomes),
+            "families": score_audit(rows, outcomes, key_of),
+            "with_auditor": score(rows, _predictions(records, keys, combined), {key_of[c] for c in combined}),
+        }
+    return report
+
+
+def _predictions(records, keys, targets: dict[str, str]) -> dict[str, str | None]:
+    return {key: normalize_ncm(targets.get(r.code, r.ncm)) for key, r in zip(keys, records, strict=True)}
+
+
+def score_audit(rows: list[dict], outcomes, key_of: dict[str, str]) -> dict:
+    """Acertos, erros e abstenções do auditor por família, separando pendentes do gabarito."""
+    by_key = {row["ID_BENCHMARK"]: row for row in rows}
+    families: dict[str, Counter] = defaultdict(Counter)
+    for outcome in outcomes:
+        row = by_key[key_of[outcome.material_code]]
+        counts = families[row["FAMILIA_GABARITO"]]
+        counts["cases"] += 1
+        counts[outcome.status.lower()] += 1
+        if row["ELEGIVEL_BENCHMARK_NCM"] != "true":
+            counts["pending_cases"] += 1
+            counts["pending_with_suggestion"] += outcome.status == PROPOSED
+            continue
+        if outcome.status == PROPOSED:
+            hit = normalize_ncm(outcome.proposal.changeset["after"]["ncm"]) == row["NCM_GABARITO"]
+            counts["proposed_hit" if hit else "proposed_wrong"] += 1
+            counts["improper_change"] += row["SITUACAO_NCM_ORIGINAL"] == "CORRETO" and not hit
+    total: Counter = Counter()
+    for counts in families.values():
+        total.update(counts)
+    return {**{family: dict(sorted(c.items())) for family, c in sorted(families.items())}, "total": dict(total)}
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("benchmark_dir", type=Path)
     parser.add_argument("--pdm-workbook", required=True)
+    parser.add_argument(
+        "--llm-audit", action="store_true", help="Inclui o auditor LLM (#290), com o modelo de LLM_REPOSITORY."
+    )
     args = parser.parse_args(argv)
-    print(json.dumps(measure(args.benchmark_dir, args.pdm_workbook), ensure_ascii=False, indent=2))
+    report = measure(args.benchmark_dir, args.pdm_workbook, llm_audit=args.llm_audit)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
