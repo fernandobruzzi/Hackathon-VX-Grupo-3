@@ -52,6 +52,7 @@ from repositories.extraction import get_extraction_repository
 from repositories.internal_enrichment_repository import run_internal_enrichment
 from repositories.llm import get_llm_repository
 from repositories.manual_reviews import save_manual_reviews
+from repositories.ncm_scorer import get_ncm_scorer
 from repositories.normalization import get_normalization_repository
 
 PIPELINE_VERSION = "batch-v3-enrichment-diagnostics"
@@ -326,7 +327,7 @@ def run_full(
     ncm_corrections = propose_ncm_corrections(analyzed, catalog, snapshot=snapshot)
     # Auditor LLM opcional (#290): só com LLM_REPOSITORY, e só nos casos que as regras não resolveram.
     audited, audit_report = audit_pending_ncm(
-        analyzed, catalog, ncm_corrections, get_llm_repository(), snapshot=snapshot
+        analyzed, catalog, ncm_corrections, get_llm_repository(), snapshot=snapshot, scorer=get_ncm_scorer()
     )
     corrections += ncm_corrections + audited
     if snapshot is not None:
