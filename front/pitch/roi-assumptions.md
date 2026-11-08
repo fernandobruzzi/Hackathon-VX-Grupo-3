@@ -165,28 +165,3 @@ Antes do congelamento, atualizar a medição com a #32 e vincular os números ao
 job e aos artefatos da execução final. Capturas ilustrativas não comprovam economias nem alterações aplicadas. O
 dashboard conectado atual lê dados persistidos, mas só deve apresentar economia
 realizada com evidência homologada; o modo mock continua sendo ilustrativo.
-
-## 6. Jornada do solicitante: três linhas de valor
-
-Esta seção apoia o [roteiro alternativo da #247](script-solicitante.md). Todas as entradas são
-**hipóteses** e nenhuma foi medida em cliente. As três linhas medem coisas diferentes e não se
-somam sem antes retirar a sobreposição.
-
-| Linha | O que é | Fórmula | Entradas hipotéticas a validar |
-| --- | --- | --- | --- |
-| Reuso de estoque | Necessidade atendida por saldo existente, inclusive equivalente autorizado, que antes viraria compra | `V_reuso = N_estoque × p_compra × v_item` | `N_estoque`: solicitações atendidas por estoque ou equivalente; `p_compra`: fração que teria virado compra sem a busca; `v_item`: valor médio a custo |
-| Cadastro evitado | Pedido que encontrou o item já cadastrado em vez de abrir um código novo | `V_cadastro = N_existente × t_cadastro × c` | `N_existente`: pedidos resolvidos como item existente; `t_cadastro`: horas de um cadastro completo, revisões incluídas; `c`: custo da hora |
-| Compra evitada | Desembolso que deixou de ocorrer porque a peça saiu do estoque | `V_compra = V_reuso × k_caixa` | `k_caixa`: fração do reuso que se converte em caixa no período, confirmada pela Controladoria |
-
-**Regras contra dupla contagem:**
-
-- `V_compra` é a parte em caixa de `V_reuso`, não uma terceira parcela. Some `V_reuso` **ou** `V_compra`, nunca os dois.
-- Um item reaproveitado não pode contar também como capital liberado (`L`, seção 3) no mesmo período.
-- `V_cadastro` é capacidade, como `B_capacidade`. Só vira caixa com redução comprovada de horas extras ou de terceiros.
-- Equivalente autorizado só conta quando a troca foi confirmada e a peça foi entregue. Um encaminhamento para compras não conta em nenhuma linha.
-
-**Como medir num piloto:** no próprio sistema, contar as solicitações encerradas como
-`ATENDIDA_ESTOQUE`, as trocas `MATERIAL_REQUEST_SUBSTITUTED` e os pedidos de cadastro
-`ORDER_FOUND_EXISTING`. Comparar com uma amostra anterior equivalente e manter rejeições e
-devoluções no denominador. Sem essa medição, a fala usa só as fórmulas, nunca valores.
-

@@ -49,7 +49,6 @@ OPERATIONAL_TABLES = (
     "automatic_correction_results",
     "automatic_correction_runs",
     "audit_logs",
-    "notification_reads",
     "lot_reviews",
     "quality_snapshot_items",
     "quality_snapshots",
@@ -68,7 +67,6 @@ OPERATIONAL_TABLES = (
     "material_search_index",
     "batch_jobs",
     "material_inventory_snapshots",
-    "material_equivalences",
     "materials_master",
     "datasets",
 )

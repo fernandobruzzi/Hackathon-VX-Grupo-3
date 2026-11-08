@@ -181,7 +181,6 @@ def detail(db, row, caller):
         # As parcelas de estoque e de compras ficam na mesma solicitação (#242).
         "reservations": [reservation_view(item, delivered.get(item.id, Decimal(0))) for item in reservations],
         "purchase_forwards": [forward_view(forward, material, row, caller) for forward, material in forwards],
-        "substitution": _substitution(db, row),
         "history": [
             {
                 "id": str(event.id),
@@ -194,21 +193,6 @@ def detail(db, row, caller):
             }
             for event in events
         ],
-    }
-
-
-def _substitution(db, row):
-    """Troca por equivalente autorizado confirmada pelo solicitante (#246), ou None."""
-    if row.substituted_from_material_id is None:
-        return None
-    original = db.get(MaterialMaster, row.substituted_from_material_id)
-    current = db.get(MaterialMaster, row.material_id)
-    return {
-        "from_material_id": str(original.id),
-        "from_material_code": original.material_code,
-        "to_material_id": str(current.id),
-        "to_material_code": current.material_code,
-        "equivalence_id": str(row.substitution_equivalence_id),
     }
 
 
