@@ -13,7 +13,7 @@ Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master ba
 | `back/repositories/` | Swappable algorithms and batch persistence | In progress |
 | `back/pipelines/`, `enrichment/`, `clients/` | Batch stages, enrichment and external clients | Implemented; duplicate candidates live in `back/repositories/candidates/` |
 | `back/cli.py` | Batch command line, installed as `vx-back` | In progress |
-| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Optional Bedrock Sonnet 5 chat, local rules, five tools, scoped resources, versioned prompts and bounded enrichment preview; official NCM snapshot capture pending |
+| `mcp/vx_materials_mcp/` | MCP server, tools and chatbot, installed as `vx-agent` | Optional Bedrock Sonnet 5 chat, local rules, six tools, scoped RAG/resources, versioned prompts and bounded enrichment preview; official NCM snapshot capture pending |
 | `api/vx_materials_api/` | API, security, services and database, installed as `vx-api` | Chat, BFF sessions, RBAC, approval queue, transactional audit and scoped dashboard metrics |
 | `api/contracts/` | OpenAPI source and validated examples ([details](api/contracts/README.md)) | Integration contract |
 | `scripts/` | AWS preflight/ECS/EC2 tooling, demo data, policy check and HTTP smoke test | AWS/EC2 tooling tested offline; demo reset implemented |
@@ -51,8 +51,15 @@ uv run ruff check --fix .
 uv run ruff format .
 ```
 
-**Required for people and agents before opening any PR for review:** run all three
-pytest suites locally and fix failures first. From the repo root:
+**Work PRs to `homologacao`: the local test gate has a maximum total duration of
+180 seconds.** Select meaningful focused tests for the changed behavior, including
+database-backed tests when persistence or search changes. Run relevant style,
+type and contract checks within the same budget. Stop checks that exceed the
+budget and record the remaining validation scope. Fix known focused-check failures
+before merging. Full suites are deferred to promotion to `main`.
+
+**Before promoting `homologacao` to `main`:** run all three complete pytest suites
+locally and fix failures first. From the repo root:
 
 ```bash
 (cd back && uv run --locked pytest)
@@ -60,17 +67,17 @@ pytest suites locally and fix failures first. From the repo root:
 (cd api && uv run --locked pytest)
 ```
 
-Run focused tests while developing, then the complete suites before the PR.
+Run focused tests while developing and for work PRs; run complete suites for promotion.
 Run pytest separately per module: a root invocation collects colliding test filenames.
-For changes to operational Python scripts, also run
+For changes to operational Python scripts, select focused tests from
 `uv run --locked --package vx-materials-back pytest scripts/tests` from the root.
 
 Record the exact commands, pass/fail results and skipped tests in the PR description.
-Changes to persistence, migrations or search also require the PostgreSQL-backed API
-and MCP suites with `TEST_DATABASE_URL`, as described below. Skips do not validate
-database behavior. If a required check cannot run, report the blocker before opening
-the PR for review. Use the PR to review locally validated work, not to discover whether
-the tests pass.
+Changes to persistence, migrations or search require focused PostgreSQL-backed
+checks within the work-PR budget and the complete PostgreSQL-backed API and MCP
+suites with `TEST_DATABASE_URL` before promotion, as described below. Skips do not
+validate database behavior. Record blockers and checks deferred to promotion in the
+PR description; the 180-second work-PR limit does not apply to promotion checks.
 
 Database, from the repo root. The first command starts Postgres on port 5432, and the rest run from `api/`. Tests recreate the `_test` database, and they're skipped without this variable. Roles and passwords are global to the server, so tests never change `api_user`, `batch_user` or `mcp_reader`: they log in through `temporary_login`, a disposable member role dropped at the end. Give each concurrent run its own `_test` database name:
 
@@ -382,7 +389,7 @@ through an explicit table and reject unknown or inconsistent content.
    ```
 
 2. Resolve conflicts by keeping both sides' intent. If you can't tell what the other change meant, run `git rebase --abort` and ask its author. For lockfiles, follow [Code style and avoiding conflicts](#code-style-and-avoiding-conflicts).
-3. Run all three local pytest suites and the other checks listed under [Commands](#commands) again, because the combined code hasn't been tested yet. Include their commands, results and skips in the PR description.
+3. Run the focused local gate listed under [Commands](#commands) again on the combined code, with a maximum total duration of 180 seconds for work PRs to `homologacao`. Include commands, results, skips and broader checks deferred to promotion in the PR description.
 4. Push. After a rebase, use `git push --force-with-lease`, on your own branch only.
 5. Create the PR with `--base homologacao`.
 
@@ -523,6 +530,7 @@ AWS: ECS Fargate Express Mode, RDS, S3, Cognito, Bedrock, Secrets Manager, Cloud
 - MCP tool calls in chat are diagnostics for `chat:diagnostics`, granted only by `ROLE_DEV_TI` (persona `DEV_TI`). The API persists them but returns empty `tool_calls` and `calls` to everyone else; the role grants no approval, publication, batch, metrics or audit power. See [`docs/autorizacao.md`](docs/autorizacao.md).
 - `ROLE_ALMOXARIFADO` (`stock:reserve`, `stock:deliver`, `stock:reverse`) and `ROLE_COMPRAS` (`purchasing:read`, `purchasing:handle`) operate material requests. Neither approves registrations, NCM or merges. Routes use `require_stock_action` and `require_purchasing_action`, which check the action and the center. Local personas are `ALMOXARIFADO` and `COMPRAS`. See [`docs/autorizacao.md`](docs/autorizacao.md#almoxarifado-e-compras).
 - Stock price and value are for `metrics:financial` only. MCP tools get the inventory view from `inventory_view(caller)` and never name it directly. The database can't enforce this per user, because MCP has one credential.
+- `retrieve_material_context` binds its caller on the server and filters tenant, centers and the latest dataset before ranking. Its bounded projection contains no financial fields. RAG references never establish identity or approve attributes/NCM. Persist the context manifest and distinguish retrieved sources from citations actually used. See [`docs/rag.md`](docs/rag.md).
 
 ## Database on AWS
 

@@ -11,6 +11,7 @@ ToolName = Literal[
     "validate_and_format_pdm",
     "check_ncm_consistency",
     "enrich_from_trusted_source",
+    "retrieve_material_context",
 ]
 ChatValidationStatus = Literal["VALID", "INCOMPLETE", "INVALID", "OUT_OF_SCOPE"]
 

@@ -1061,7 +1061,8 @@ export interface components {
         | "get_pdm_template"
         | "validate_and_format_pdm"
         | "check_ncm_consistency"
-        | "enrich_from_trusted_source";
+        | "enrich_from_trusted_source"
+        | "retrieve_material_context";
       /** @constant */
       transport: "MCP_STDIO";
       input: {

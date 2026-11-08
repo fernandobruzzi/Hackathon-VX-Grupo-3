@@ -45,6 +45,7 @@ def test_client_discovers_the_tools_over_the_protocol():
         "check_ncm_consistency",
         "enrich_from_trusted_source",
         "get_pdm_template",
+        "retrieve_material_context",
         "search_similar_materials",
         "validate_and_format_pdm",
     }

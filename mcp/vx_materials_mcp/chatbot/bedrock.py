@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from dataclasses import asdict, replace
 
 import anyio
@@ -14,7 +15,7 @@ from domain.contracts import ClassificationStatus, PdmCatalog
 from domain.identity import reference_revision_evidence
 from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot.candidates import existing_message
-from vx_materials_mcp.chatbot.prompts import MATERIAL_REGISTRATION_SYSTEM
+from vx_materials_mcp.chatbot.prompts import MATERIAL_REGISTRATION_SYSTEM, SYSTEM_PROMPT_VERSION
 from vx_materials_mcp.chatbot.session_manager import TurnContext, user_messages
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
 
@@ -178,15 +179,23 @@ class BedrockPlanner:
         except (KeyError, TypeError, ValueError, ValidationError) as error:
             raise BedrockError() from error
 
-    async def respond(self, request: AgentRunRequest, result: AgentRunResponse) -> AgentRunResponse:
+    async def respond(
+        self, request: AgentRunRequest, result: AgentRunResponse, *, rag_context: dict | None = None
+    ) -> AgentRunResponse:
         response = await self._converse(
             {
                 "task": "Redigir a próxima resposta de cadastro com base exclusiva na ficha validada abaixo.",
                 "history": [message.model_dump(mode="json") for message in request.context.history],
                 "message": request.message,
                 "material_card": result.material_card.model_dump(mode="json"),
-                "tool_calls": [call.model_dump(mode="json") for call in result.tool_calls],
+                # O pacote entra uma única vez: o registro completo continua persistido na API.
+                "tool_calls": [
+                    call.model_dump(mode="json")
+                    for call in result.tool_calls
+                    if call.name != "retrieve_material_context" or call.status != "SUCCEEDED"
+                ],
                 "validated_guidance": result.assistant_message,
+                "reference_context": rag_context,
             }
         )
         try:
@@ -197,12 +206,34 @@ class BedrockPlanner:
                 raise ValueError("Resposta vazia ou longa demais")
         except (KeyError, TypeError, ValueError) as error:
             raise BedrockError() from error
+        # A resposta só pode citar itens efetivamente entregues ao modelo nesta chamada.
+        sources = {source["citation_id"]: source for source in (rag_context or {}).get("sources", [])}
+        used = list(dict.fromkeys(re.findall(r"\[(R[0-9]+)\]", text)))
+        if result.material_card.existing:
+            used = []
+        elif any(citation not in sources for citation in used):
+            raise BedrockError()
+        elif used:
+            text = (
+                text.strip()
+                + "\n\nFontes: "
+                + "; ".join(f"[{citation}] {sources[citation]['label']}" for citation in used)
+            )
+        for call in result.tool_calls:
+            if call.name == "retrieve_material_context" and call.status == "SUCCEEDED":
+                call.result["used_citation_ids"] = used
         return result.model_copy(
             update={
                 # O estoque autorizado mantém quantidades e apresentação determinísticas.
                 "assistant_message": existing_message(result.material_card.existing)
                 if result.material_card.existing
                 else text.strip(),
-                "context_patch": {**result.context_patch, "planner": PLANNER},
+                "context_patch": {
+                    **result.context_patch,
+                    "planner": PLANNER,
+                    "system_prompt_version": SYSTEM_PROMPT_VERSION,
+                    "rag_context_id": (rag_context or {}).get("context_id"),
+                    "rag_citations_used": used,
+                },
             }
         )

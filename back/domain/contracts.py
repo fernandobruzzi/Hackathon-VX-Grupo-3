@@ -395,3 +395,53 @@ class LlmRepository(Protocol):
     simulated: bool
 
     def complete(self, *, system: str, prompt: str, schema: dict, tool_name: str, prompt_version: str) -> LlmResult: ...
+
+
+@dataclass(frozen=True)
+class RagScope:
+    tenant_id: str
+    center_codes: frozenset[str]
+
+
+@dataclass(frozen=True)
+class RagMaterial:
+    """Projeção sem campos financeiros; cadastro aprovado e inferência permanecem distintos."""
+
+    tenant_id: str
+    center_codes: frozenset[str]
+    code: str
+    version: int
+    description: str
+    pdm_class_id: str | None
+    attributes: dict[str, str]
+    ncm: str | None
+    technical_source: str
+    ncm_approved: bool
+    score: float
+
+
+class RagCandidateSource(Protocol):
+    """Adaptador persistente autorizado; aplica escopo e versão antes de ranking/limite."""
+
+    version: str
+
+    def retrieve(
+        self,
+        query: str,
+        class_id: str | None,
+        scope: RagScope,
+        limit: int,
+        *,
+        vector: list[float] | None,
+        require_embedding: bool,
+    ) -> list[RagMaterial]: ...
+
+
+class RagMaterialRepository(Protocol):
+    """Algoritmo de recuperação substituível; não autoriza cadastro, identidade nem NCM."""
+
+    name: str
+    version: str
+    retrieval: str
+
+    def retrieve(self, query: str, class_id: str | None, scope: RagScope, limit: int) -> list[RagMaterial]: ...
