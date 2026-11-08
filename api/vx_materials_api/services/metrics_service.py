@@ -18,6 +18,7 @@ from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.metrics import DashboardMetrics, FinancialMetrics, ProposalCounts, QualityCounts
 from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.services.approval_service import exact_sum
+from vx_materials_api.services.journey_metrics import journey
 from vx_materials_api.services.snapshot_service import latest_snapshot, to_contract
 
 
@@ -146,6 +147,8 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
             rejected=statuses["REJECTED"],
             stale=statuses["STALE"],
         ),
+        # A jornada não depende do dataset: solicitações valem para o tenant e os centros da sessão.
+        journey=journey(db, identity),
     )
     # Precisão/recall exigem uma amostra rotulada independente. Aprovar não prova acerto.
     # O depois vem só do snapshot posterior aprovado; mudanças na master não o substituem.

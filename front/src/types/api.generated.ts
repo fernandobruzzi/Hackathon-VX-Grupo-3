@@ -1292,6 +1292,7 @@ export interface components {
         duplicate_recall: number | null;
         validated_class_ids?: string[];
       };
+      journey: components["schemas"]["RequestJourney"];
       financial?: {
         /** @constant */
         currency: "BRL";
@@ -1302,6 +1303,39 @@ export interface components {
         estimated_savings: components["schemas"]["Decimal"] | null;
         assumptions?: string[];
       };
+    };
+    /** @description Jornada do solicitante a partir de registros persistidos; sem quantidades, preços ou valores. Indicador sem dados fica nulo e listado em unavailable. */
+    RequestJourney: {
+      /** @description Solicitações do tenant nos centros autorizados, de qualquer estado. */
+      requests_total: number;
+      open: {
+        em_identificacao: number;
+        aguardando_cadastro: number;
+        em_atendimento: number;
+      } | null;
+      closed: {
+        atendida_estoque: number;
+        atendida_parcial_compras: number;
+        encaminhada_compras: number;
+        cancelada: number;
+        cadastro_rejeitado: number;
+      } | null;
+      resolution_time: {
+        resolved_requests: number;
+        median_hours: number;
+        p90_hours: number;
+      } | null;
+      /** @description Solicitações encaminhadas a Compras (ENCAMINHADO ou ACEITO) com o código existente, sem pedido de cadastro vinculado. */
+      registration_avoided: number | null;
+      /** @description Solicitações cujo material é o código ativo comprovado pela identidade na busca do chat vinculado. */
+      identified_under_other_code: number | null;
+      unavailable: {
+        /** @enum {string} */
+        indicator:
+          "requests" | "resolution_time" | "registration_avoided" | "identified_under_other_code";
+        /** @enum {string} */
+        reason: "NO_REQUESTS" | "NO_RESOLVED_REQUESTS" | "NO_CHAT_LINKED_REQUESTS";
+      }[];
     };
     /** @description Quantidade ou valor decimal, sem conversão para ponto flutuante. */
     Decimal: string;

@@ -255,6 +255,21 @@ export const dashboard = {
   after_snapshot: null,
   pipeline: { proposals_total: 1284, pending: 1102, applied: 151, rejected: 27, stale: 4 },
   evaluation: { reviewed_pairs: 180, merge_precision: 0.967, duplicate_recall: null },
+  journey: {
+    requests_total: 12,
+    open: { em_identificacao: 1, aguardando_cadastro: 1, em_atendimento: 3 },
+    closed: {
+      atendida_estoque: 3,
+      atendida_parcial_compras: 1,
+      encaminhada_compras: 2,
+      cancelada: 1,
+      cadastro_rejeitado: 0,
+    },
+    resolution_time: { resolved_requests: 6, median_hours: 5.5, p90_hours: 26.25 },
+    registration_avoided: 3,
+    identified_under_other_code: null,
+    unavailable: [{ indicator: "identified_under_other_code", reason: "NO_CHAT_LINKED_REQUESTS" }],
+  },
   financial: {
     currency: "BRL",
     data_origin: "SYNTHETIC_CHALLENGE_DATA",

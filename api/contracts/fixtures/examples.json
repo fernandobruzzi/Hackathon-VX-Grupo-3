@@ -648,6 +648,34 @@
         "applied": 0,
         "rejected": 0,
         "stale": 0
+      },
+      "journey": {
+        "requests_total": 12,
+        "open": {
+          "em_identificacao": 1,
+          "aguardando_cadastro": 1,
+          "em_atendimento": 3
+        },
+        "closed": {
+          "atendida_estoque": 3,
+          "atendida_parcial_compras": 1,
+          "encaminhada_compras": 2,
+          "cancelada": 1,
+          "cadastro_rejeitado": 0
+        },
+        "resolution_time": {
+          "resolved_requests": 6,
+          "median_hours": 5.5,
+          "p90_hours": 26.25
+        },
+        "registration_avoided": 3,
+        "identified_under_other_code": null,
+        "unavailable": [
+          {
+            "indicator": "identified_under_other_code",
+            "reason": "NO_CHAT_LINKED_REQUESTS"
+          }
+        ]
       }
     },
     "query": {
@@ -685,6 +713,34 @@
         "applied": 0,
         "rejected": 0,
         "stale": 0
+      },
+      "journey": {
+        "requests_total": 12,
+        "open": {
+          "em_identificacao": 1,
+          "aguardando_cadastro": 1,
+          "em_atendimento": 3
+        },
+        "closed": {
+          "atendida_estoque": 3,
+          "atendida_parcial_compras": 1,
+          "encaminhada_compras": 2,
+          "cancelada": 1,
+          "cadastro_rejeitado": 0
+        },
+        "resolution_time": {
+          "resolved_requests": 6,
+          "median_hours": 5.5,
+          "p90_hours": 26.25
+        },
+        "registration_avoided": 3,
+        "identified_under_other_code": null,
+        "unavailable": [
+          {
+            "indicator": "identified_under_other_code",
+            "reason": "NO_CHAT_LINKED_REQUESTS"
+          }
+        ]
       }
     },
     "query": {
@@ -738,6 +794,32 @@
         "applied": 3,
         "rejected": 0,
         "stale": 0
+      },
+      "journey": {
+        "requests_total": 0,
+        "open": null,
+        "closed": null,
+        "resolution_time": null,
+        "registration_avoided": null,
+        "identified_under_other_code": null,
+        "unavailable": [
+          {
+            "indicator": "requests",
+            "reason": "NO_REQUESTS"
+          },
+          {
+            "indicator": "resolution_time",
+            "reason": "NO_REQUESTS"
+          },
+          {
+            "indicator": "registration_avoided",
+            "reason": "NO_REQUESTS"
+          },
+          {
+            "indicator": "identified_under_other_code",
+            "reason": "NO_REQUESTS"
+          }
+        ]
       }
     },
     "query": {

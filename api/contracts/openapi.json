@@ -8219,6 +8219,9 @@
             ],
             "additionalProperties": false
           },
+          "journey": {
+            "$ref": "#/components/schemas/RequestJourney"
+          },
           "financial": {
             "type": "object",
             "properties": {
@@ -8284,7 +8287,185 @@
           "after",
           "after_snapshot",
           "evaluation",
-          "pipeline"
+          "pipeline",
+          "journey"
+        ],
+        "additionalProperties": false
+      },
+      "RequestJourney": {
+        "type": "object",
+        "description": "Jornada do solicitante a partir de registros persistidos; sem quantidades, preços ou valores. Indicador sem dados fica nulo e listado em unavailable.",
+        "properties": {
+          "requests_total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Solicitações do tenant nos centros autorizados, de qualquer estado."
+          },
+          "open": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "em_identificacao": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "aguardando_cadastro": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "em_atendimento": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "em_identificacao",
+                  "aguardando_cadastro",
+                  "em_atendimento"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "closed": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "Encerradas por motivo; estoque, parcial e compras ficam separados.",
+                "properties": {
+                  "atendida_estoque": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "atendida_parcial_compras": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "encaminhada_compras": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cancelada": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cadastro_rejeitado": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "atendida_estoque",
+                  "atendida_parcial_compras",
+                  "encaminhada_compras",
+                  "cancelada",
+                  "cadastro_rejeitado"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolution_time": {
+            "anyOf": [
+              {
+                "type": "object",
+                "description": "Horas da criação ao evento MATERIAL_REQUEST_CLOSED das solicitações atendidas; percentil pelo posto mais próximo.",
+                "properties": {
+                  "resolved_requests": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "median_hours": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "p90_hours": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "resolved_requests",
+                  "median_hours",
+                  "p90_hours"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "registration_avoided": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Solicitações encaminhadas a Compras (ENCAMINHADO ou ACEITO) com o código existente, sem pedido de cadastro vinculado."
+          },
+          "identified_under_other_code": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Solicitações cujo material é o código ativo comprovado pela identidade na busca do chat vinculado."
+          },
+          "unavailable": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "indicator": {
+                  "type": "string",
+                  "enum": [
+                    "requests",
+                    "resolution_time",
+                    "registration_avoided",
+                    "identified_under_other_code"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "NO_REQUESTS",
+                    "NO_RESOLVED_REQUESTS",
+                    "NO_CHAT_LINKED_REQUESTS"
+                  ]
+                }
+              },
+              "required": [
+                "indicator",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "requests_total",
+          "open",
+          "closed",
+          "resolution_time",
+          "registration_avoided",
+          "identified_under_other_code",
+          "unavailable"
         ],
         "additionalProperties": false
       },
