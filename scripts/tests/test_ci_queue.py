@@ -12,7 +12,7 @@ from ci_queue_report import timing  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 CI = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 DATABASE_TESTS = (ROOT / ".github" / "workflows" / "database-tests.yml").read_text(encoding="utf-8")
-PROMOTION_JOBS = ("python", "python-back", "database", "front", "images")
+PROMOTION_JOBS = ("python", "python-back", "database", "front", "images", "images-smoke", "images-evaluation")
 BACK_TESTS = (ROOT / ".github" / "workflows" / "back-tests.yml").read_text(encoding="utf-8")
 BACK_JOBS = tuple(f"back-{shard}" for shard in ("main", *SHARDS["back"]))
 DATABASE_JOBS = tuple(f"database-{module}-{shard}" for module in ("api", "mcp") for shard in ("main", *SHARDS[module]))
@@ -54,13 +54,17 @@ class WorkflowTests(unittest.TestCase):
         for name in (*PROMOTION_JOBS, *BACK_JOBS, *DATABASE_JOBS):
             with self.subTest(job=name):
                 label = "    name: python (back)\n" if name == "python-back" else ""
-                condition = f"always() && ({allowed})" if name in {"database", "python-back"} else allowed
+                condition = f"always() && ({allowed})" if name in {"database", "python-back", "images"} else allowed
                 self.assertIn(f"  {name}:\n{label}    if: ${{{{ {condition} }}}}\n", CI)
 
     def test_required_checks_require_every_shard(self):
-        for name, shards in (("python-back", BACK_JOBS), ("database", DATABASE_JOBS)):
+        for name, shards in (
+            ("python-back", BACK_JOBS),
+            ("database", DATABASE_JOBS),
+            ("images", ("images-smoke", "images-evaluation")),
+        ):
             with self.subTest(job=name):
-                gate = re.search(rf"(?ms)^  {name}:\n(.*?)(?=^  \S)", CI)[1]
+                gate = re.search(rf"(?ms)^  {name}:\n(.*?)(?=^  \S|\Z)", CI)[1]
                 names = re.search(r"needs: \[([^]]+)\]", gate)[1].split(", ")
                 self.assertCountEqual(names, shards)
                 self.assertIn("join(needs.*.result, ' ')", gate)

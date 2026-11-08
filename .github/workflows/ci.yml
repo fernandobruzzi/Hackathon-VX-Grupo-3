@@ -212,7 +212,7 @@ jobs:
             next-${{ runner.os }}-${{ hashFiles('front/package-lock.json') }}-
       - run: npm run build
 
-  images:
+  images-smoke:
     if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -262,10 +262,6 @@ jobs:
           docker run --rm "$COMPOSE_PROJECT_NAME-agent" python -c 'import os; from domain.pdm_loader import load_pdm; assert load_pdm(os.environ["PDM_WORKBOOK_PATH"]).classes'
           docker run --rm "$COMPOSE_PROJECT_NAME-batch" vx-back --help
           docker run --rm "$COMPOSE_PROJECT_NAME-api" python -c 'import ssl; assert ssl.create_default_context(cafile="/app/certs/rds-global-bundle.pem").cert_store_stats()["x509_ca"] > 0'
-      - name: Check packaged evaluation cohorts without AWS or database
-        run: |
-          docker run --rm --network none --read-only "$COMPOSE_PROJECT_NAME-batch" vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx > "$RUNNER_TEMP/sanitization-evaluation.json"
-          python3 -c 'import json,os; r=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"sanitization-evaluation.json"))); assert r["evaluation_kind"] == "DEVELOPMENT_EVALUATION"; assert not r["independent_review"] and not r["authorizes_merge"]; assert r["groups"]["counts"]["cases"] == 40'
       - name: Prepare the deterministic HTTP smoke kit
         run: |
           python3 scripts/ci_smoke_kit.py data/desafio01 "$RUNNER_TEMP/vx-smoke-data/desafio01"
@@ -289,3 +285,30 @@ jobs:
       - name: Remove isolated stack
         if: always()
         run: docker compose down -v --remove-orphans
+
+  images-evaluation:
+    if: ${{ (github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: batch
+          tags: vx-ci-evaluation:latest
+          load: true
+          cache-from: type=gha,scope=image-batch
+      - name: Check packaged evaluation cohorts without AWS or database
+        run: |
+          docker run --rm --network none --read-only vx-ci-evaluation:latest vx-back sanitization-evaluate /app/data/desafio01/01_base_materiais.csv --pdm-workbook /app/data/desafio01/03_padrao_cadastro_PDM.xlsx > "$RUNNER_TEMP/sanitization-evaluation.json"
+          python3 -c 'import json,os; r=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"sanitization-evaluation.json"))); assert r["evaluation_kind"] == "DEVELOPMENT_EVALUATION"; assert not r["independent_review"] and not r["authorizes_merge"]; assert r["groups"]["counts"]["cases"] == 40'
+
+  images:
+    if: ${{ always() && ((github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao')) }}
+    needs: [images-smoke, images-evaluation]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: test "$RESULTS" = "success success"
