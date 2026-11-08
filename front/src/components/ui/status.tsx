@@ -2,6 +2,7 @@ import { Badge, type Tone } from "@/components/ui";
 import type {
   MaterialStatus,
   OrderStatus,
+  ProposalOrigin,
   ProposalStatus,
   ProposalType,
   ReviewStatus,
@@ -63,3 +64,7 @@ export const ReviewBadge = make(review);
 export const ProposalTypeBadge = ({ value }: { value: ProposalType }) => (
   <Badge tone="brand">{proposalTypeLabel[value]}</Badge>
 );
+
+/** Só a sugestão do auditor LLM ganha selo: as regras do batch são a origem padrão. */
+export const ProposalOriginBadge = ({ value }: { value: ProposalOrigin }) =>
+  value === "LLM_AUDITOR" ? <Badge tone="info">Auditor LLM</Badge> : null;

@@ -541,6 +541,8 @@ def _decide_current(
         # Correção fiscal grava só o NCM: o código precisa estar resolvido pela classe e pelos
         # atributos que o decidem, mas lacunas do PDM e a unidade não são publicadas por ela.
         ncm_only = proposal.proposal_type == "NCM_CORRECTION"
+        if changes.origin == "LLM_AUDITOR" and not ncm_only:
+            raise ApiError(422, "INVALID_PROPOSAL", "Sugestao do auditor LLM so corrige NCM.")
         validation = _validation(
             catalog,
             changes.after,

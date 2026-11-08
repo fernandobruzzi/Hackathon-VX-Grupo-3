@@ -79,6 +79,15 @@ def approval_payload(proposal, ids, dataset_id):
             changeset[field] = proposal.changeset[field]
     if proposal.proposal_type == "NCM_CORRECTION":
         changeset["sources"]["ncm"] = next(change["source"] for change in changes if change["field"] == "ncm")
+    audit = proposal.changeset.get("llm_audit")
+    if audit is not None:
+        # Sugestão do auditor LLM (#290): a origem e as evidências vão para a fila e para a revisão.
+        changeset["origin"] = proposal.changeset["origin"]
+        changeset["llm_audit"] = audit
+        label = f"Auditor LLM ({audit['call']['model']}, {audit['prompt_version']})"
+        changeset["sources"]["attributes"] = f"{label}: trechos citados da descrição, revalidados no PDM"
+        if audit["class_source"] == "LLM":
+            changeset["sources"]["pdm_class_id"] = f"{label}: classe entre as candidatas do PDM"
     lane = proposal.changeset.get("review_lane")
     if lane is not None:
         # Como revisar: em lote após amostra (níveis 1 e 2) ou item a item (nível 3). Decisão da #36.
