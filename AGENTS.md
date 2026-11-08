@@ -574,6 +574,15 @@ reservation from an older dataset awaits reconciliation. Reservations and the in
 `stock_movements` table never touch `material_inventory_snapshots`; cancelling a request releases
 its active reservations. See [`docs/solicitacao-material.md`](docs/solicitacao-material.md#14-disponibilidade-e-reserva-239).
 
+When the destination cannot cover a quantity, `GET /api/v1/stock/availability/alternatives`
+(`inventory:read`, authorized destination, optional `quantity`) lists the caller's other
+authorized centers with positive availability, computed by the same `compute_availability`, and
+sets `suggest_purchasing` when none has any. It is informational under decision D6: it never
+creates a transfer, reservation or movement, and it only iterates the caller's `center_codes`, so
+an out-of-scope center never appears or changes the flag. The chat adds the same hint from the
+caller's inventory view when the conversation's center has no stock. Purchasing referrals (#241)
+should call `stock_service.other_centers` before forwarding. See section 18 of the model.
+
 ## Open request warning
 
 Creating a request for a resolved material and center that already has an open (not
