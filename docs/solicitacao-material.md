@@ -341,9 +341,9 @@ no centro.
 **Cancelamento.** Cancelar a solicitação muda as reservas `ATIVA` para `CANCELADA` na mesma
 transação, com um evento `STOCK_RESERVATION_CANCELLED` por reserva. Movimentos já feitos ficam.
 
-**Pontos de integração.** A #240 grava `stock_movements` com o dataset vigente, muda reservas
-para `CONSUMIDA` e cancela reservas avulsas, usando o mesmo bloqueio por material e centro; a
-fórmula de `D` e as parcelas da solicitação já contam esses movimentos. A reversão deve apontar
+**Pontos de integração.** A #240 (seção 17) grava `stock_movements` com o dataset vigente, muda
+reservas para `CONSUMIDA` e cancela reservas avulsas, usando o mesmo bloqueio por material e
+centro; a fórmula de `D` e as parcelas da solicitação já contam esses movimentos. A reversão deve apontar
 uma entrega do mesmo dataset, para que `E` nunca fique negativo. Os encaminhamentos
 da #241 (`c`) já entram no pendente de `stock_service.fulfillment` (seção 16). A reconciliação de reservas na
 troca de dataset (seção 4.4) ainda não existe: até lá, o bloqueio `RECONCILIATION_REQUIRED`
@@ -419,6 +419,7 @@ Estados e solicitação:
   encaminhamento aguardando Compras, a solicitação encerra com `ENCAMINHADA_COMPRAS` (ou
   `ATENDIDA_PARCIAL_COMPRAS` se houver entregas). Enquanto Compras não decide, a solicitação
   continua aberta, porque uma devolução precisa voltar a `p` e uma solicitação encerrada não reabre.
+  O encerramento é o mesmo da entrega (`stock_service.close_if_fulfilled`, seção 17).
 - `DEVOLVIDO` retorna a quantidade a `p`, incrementa a versão da solicitação e permite reservar
   ou encaminhar de novo.
 - O cancelamento pelo solicitante cancela os encaminhamentos `ENCAMINHADO` com o mesmo motivo,
@@ -429,3 +430,81 @@ Toda criação e transição grava auditoria na mesma transação, para o encami
 fila com o aviso de que o encaminhamento é a demanda para Compras e não confirma pedido ao
 fornecedor, compra realizada nem recebimento. A #242 deve reservar até `D` e encaminhar o
 restante na mesma transação, reaproveitando essas verificações e a unicidade por versão.
+
+## 17. Entrega, cancelamento de reserva e reversão (#240)
+
+Nenhuma tabela nova nem migração: as operações gravam em `stock_movements` (somente inserção) e
+mudam o estado de `stock_reservations`. Os snapshots importados não são tocados.
+
+**Parte aberta da reserva.** A quantidade da reserva nunca é editada. A parte ainda não entregue
+é `quantidade − entregas` da reserva, sem descontar reversões: o que é revertido volta a `D` e a
+`p`, não à reserva (exemplo da seção 4.3). `R` (disponibilidade) e `r` (parcelas da solicitação)
+somam só essa parte das reservas `ATIVA`, e `e` continua sendo entregas menos reversões. Assim
+`r + e + c + p = Q` e `S = D + R + E` depois de qualquer operação. A reserva expõe `quantity`
+(original), `delivered_quantity` (entregas brutas) e `open_quantity` (zero quando não está
+`ATIVA`); a listagem de reservas da solicitação também traz `movements`, com
+`reversed_quantity` em cada entrega.
+
+**Endpoints.** Todos exigem `Idempotency-Key`, Origin/CSRF em sessões de navegador e
+`expected_version` **da solicitação**, como as demais operações da seção 7; cada operação aceita
+incrementa essa versão. Reserva ou movimento fora do tenant ou dos centros do usuário responde
+`404`; papel sem a ação responde `403` (`require_stock_action`).
+
+| Operação | Rota | Permissão | Resultado |
+|---|---|---|---|
+| Confirmar entrega | `POST /api/v1/stock/reservations/{id}/deliveries` com `quantity` | `stock:deliver` | `201`, movimento `ENTREGA` |
+| Cancelar reserva | `POST /api/v1/stock/reservations/{id}/cancel` com `reason` | `stock:reserve` (seção 9: “reservar, entregar, cancelar reserva”) | `200`, reserva `CANCELADA` |
+| Reverter entrega | `POST /api/v1/stock/movements/{id}/reversal` com `quantity` e `reason` | `stock:reverse` | `201`, movimento `REVERSAO` |
+
+Cada transação bloqueia a linha da solicitação (`FOR UPDATE`), depois a reserva, e só então o
+`pg_advisory_xact_lock` por tenant, material principal e centro, na mesma ordem da reserva.
+
+- **Entrega:** só reserva `ATIVA` de solicitação `EM_ATENDIMENTO`; recusa com
+  `409 QUANTITY_EXCEEDS_RESERVATION` acima da parte aberta. O movimento leva o dataset vigente
+  (D4). `R` diminui e `E` aumenta na mesma quantidade, então `D` não muda. A reserva vira
+  `CONSUMIDA` quando a parte aberta chega a zero; entrega parcial a mantém `ATIVA` com o
+  restante. Depois da entrega, a solicitação passa pelo encerramento único descrito abaixo.
+- **Cancelamento de reserva:** só reserva `ATIVA`; libera apenas a parte aberta, registrada como
+  `released_quantity` no evento `STOCK_RESERVATION_CANCELLED`, com o motivo. Entregas já feitas
+  permanecem, e a solicitação continua em atendimento com o pendente de volta.
+- **Reversão:** só de movimento `ENTREGA` (`409 MOVEMENT_NOT_DELIVERY` para uma reversão),
+  limitada ao que ainda não foi revertido (`409 QUANTITY_EXCEEDS_REVERSIBLE`). O movimento
+  `REVERSAO` aponta a entrega e usa o mesmo dataset dela. Uma entrega de dataset anterior é
+  recusada com `409 MOVEMENT_FROM_PREVIOUS_DATASET`, porque o snapshot novo já a incorpora e
+  `E` do dataset vigente ficaria negativo; isso fica para a reconciliação da seção 4.4.
+  Não há prazo (D5), e o motivo é obrigatório.
+
+**Encerramento único.** `stock_service.close_if_fulfilled` é o único ponto que encerra uma
+solicitação por atendimento, chamado depois de cada entrega e de cada aceite de Compras (seção 16).
+Segue a seção 5: `EM_ATENDIMENTO` passa a `ENCERRADA` só com `p = 0`, `r = 0` e nenhum
+encaminhamento `ENCAMINHADO` aguardando Compras. Então `e + c = Q`, e o motivo é
+`ATENDIDA_ESTOQUE` (`e = Q`), `ATENDIDA_PARCIAL_COMPRAS` (`e > 0` e `c > 0`) ou
+`ENCAMINHADA_COMPRAS` (`e = 0` e `c = Q`). Assim, entregar 6 e encaminhar 4 de uma solicitação de 10
+encerra no aceite de Compras ou na última entrega, o que vier por último. O encerramento é uma
+transição própria: incrementa a versão da solicitação e grava `MATERIAL_REQUEST_CLOSED` no
+histórico, na mesma transação da operação que o causou.
+
+**Cancelamento da solicitação inteira.** Cancela as reservas `ATIVA` (uma vez cada: só reservas
+ainda `ATIVA` mudam, e o cancelamento avulso de uma reserva já cancelada recebe
+`409 RESERVATION_NOT_ACTIVE`) e os encaminhamentos `ENCAMINHADO`. O evento de cada reserva registra
+`released_quantity`, a parte não entregue; entregas feitas continuam em `e` e `E`.
+
+**Reversão em solicitação encerrada.** É aceita, porque a seção 5 trata a reversão como
+operação separada, inclusive após o cancelamento. A solicitação não reabre: continua
+`ENCERRADA` com o motivo original, e a quantidade revertida volta ao disponível do centro.
+O `pending` dessa solicitação passa a mostrar o que ficou sem atendimento, mas nenhuma operação
+nova a atende; o solicitante cria outra solicitação. O evento `STOCK_DELIVERY_REVERSED`
+registra o estado da solicitação naquele momento.
+
+**Auditoria.** `STOCK_DELIVERED` e `STOCK_DELIVERY_REVERSED` (entidade `stock_movement`) e
+`STOCK_RESERVATION_CANCELLED` (entidade `stock_reservation`) gravam ator, papel efetivo, antes e
+depois (reserva ou entrega, parcelas, versão da solicitação, disponível antes e depois) na mesma
+transação. A mesma chave com o mesmo conteúdo devolve a resposta original, revalidando tenant e
+centro; conteúdo diferente recebe `409 IDEMPOTENCY_CONFLICT`.
+
+**Testes.** `api/tests/test_stock_deliveries.py`, no PostgreSQL, cobre entrega parcial e total,
+cancelamento após entrega parcial, reversões parciais e esgotadas, dataset anterior, papéis e
+centros, idempotência e CSRF, uma sequência aleatória de operações com encaminhamentos, aceites e devoluções de Compras
+(três sementes) que confere `r + e + c + p = Q`, `p ≥ 0`, `D ≥ 0`, `S = D + R + E` e a variação de `D` a cada passo, e duas
+entregas concorrentes contra a mesma reserva, o encerramento combinado com Compras nas duas
+ordens e o cancelamento da solicitação após entrega parcial.
