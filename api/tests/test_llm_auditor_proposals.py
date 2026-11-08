@@ -118,6 +118,18 @@ def test_queue_and_detail_show_the_auditor_origin_and_evidence(approval_case):
     assert "prompt" not in json.dumps(audit).replace("prompt_version", "")
 
 
+def test_detail_of_ncm_correction_shows_only_what_approval_writes(approval_case):
+    # A aprovação grava só o NCM: a revisão não pode prometer atributos nem descrição novos.
+    material = install(approval_case)
+    detail = approval_case["client"].get(f"/api/v1/sanitization/{approval_case['proposal'].id}").json()
+    assert [row["field"] for row in detail["changes"]] == ["NCM"]
+    assert detail["changes"][0]["after"] == "7318.15.00"
+    assert detail["after"]["ncm"] == "7318.15.00"
+    assert detail["after"]["attributes"] == {k: v for k, v in material.attributes.items() if v is not None}
+    assert detail["after"]["description"] == detail["members"][0]["description"]
+    assert detail["after"]["unit"] == material.unit
+
+
 def test_auditor_suggestion_needs_both_reviews_and_writes_only_the_ncm(approval_case):
     case = approval_case
     material = install(case)

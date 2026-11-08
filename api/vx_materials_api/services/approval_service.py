@@ -55,6 +55,11 @@ from vx_materials_api.services.enrichment_validation import (
 from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
 
+def writes_only_ncm(proposal) -> bool:
+    """Correção fiscal aprovada grava só o NCM; a revisão usa o mesmo predicado para não prometer mais."""
+    return proposal.proposal_type == "NCM_CORRECTION"
+
+
 def decode_proposal(proposal: SanitizationProposal):
     try:
         members = [MemberInterpretation.model_validate_json(json.dumps(m)) for m in proposal.members]
@@ -540,7 +545,7 @@ def _decide_current(
         partial_enrichment = proposal.proposal_type == "ENRICHMENT" and changes.enrichment_context is not None
         # Correção fiscal grava só o NCM: o código precisa estar resolvido pela classe e pelos
         # atributos que o decidem, mas lacunas do PDM e a unidade não são publicadas por ela.
-        ncm_only = proposal.proposal_type == "NCM_CORRECTION"
+        ncm_only = writes_only_ncm(proposal)
         if changes.origin == "LLM_AUDITOR" and not ncm_only:
             raise ApiError(422, "INVALID_PROPOSAL", "Sugestao do auditor LLM so corrige NCM.")
         validation = _validation(
