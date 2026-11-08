@@ -36,6 +36,7 @@ class ToolCall(_Contract):
         "validate_and_format_pdm",
         "check_ncm_consistency",
         "enrich_from_trusted_source",
+        "retrieve_material_context",
     ]
     transport: Literal["MCP_STDIO"]
     input: dict[str, Any]

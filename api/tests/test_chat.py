@@ -352,6 +352,47 @@ def agent_result(card, *calls, patch=None):
     return {**AGENT_RESULT, "tool_calls": list(calls), "material_card": card, "context_patch": patch or {}}
 
 
+def rag_call(center):
+    return {
+        "id": "tool-call-004",
+        "name": "retrieve_material_context",
+        "transport": "MCP_STDIO",
+        "input": {"query": "parafuso"},
+        "status": "SUCCEEDED",
+        "duration_ms": 1,
+        "result": {
+            "context": {
+                "version": "rag_context_v1",
+                "context_id": "a" * 64,
+                "items": [
+                    {
+                        "kind": "MATERIAL",
+                        "citation_id": "R1",
+                        "content": {
+                            "material_code": "EXEMPLO",
+                            "centers": [{"center_code": center}],
+                        },
+                    }
+                ],
+            },
+            "used_citation_ids": ["R1"],
+        },
+    }
+
+
+@pytest.mark.parametrize(("center", "status"), [("1200", 200), ("9999", 404)])
+def test_rag_sources_are_scoped_before_response_and_traced_in_history(client, agent, factory, center, status):
+    agent.result = agent_result(CARD, rag_call(center))
+    response = send(client, center="1100")
+    assert response.status_code == status
+    if status == 200:
+        body = response.json()
+        assert body["tool_calls"] == []
+        assert count(
+            factory, "SELECT context->'history_center_codes' FROM chat_sessions WHERE id = :s", s=body["session_id"]
+        ) == ["1100", "1200"]
+
+
 @pytest.mark.parametrize("center_name", ["São Paulo", "Centro - Norte", "Unidade A, B. (SP)"])
 def test_first_existing_turn_preserves_center_names_and_structured_scope(client, agent, factory, center_name):
     existing = deepcopy(EXISTING)
@@ -701,7 +742,7 @@ def test_history_rejects_unbounded_cursor(client, cursor):
 
 
 @pytest.mark.parametrize(
-    "source", ["session", "inventory", "past_inventory", "legacy_past_inventory", "named_past_inventory"]
+    "source", ["session", "inventory", "past_inventory", "legacy_past_inventory", "named_past_inventory", "rag"]
 )
 def test_history_and_resume_recheck_current_center_scope(factory, identity, agent, monkeypatch, source):
     from dataclasses import replace
@@ -731,8 +772,10 @@ def test_history_and_resume_recheck_current_center_scope(factory, identity, agen
         agent.result["assistant_message"] = (
             "Esse item já existe: use o código 16031971. Mesmo item. Estoque nos seus centros: 4 PC no centro 1200."
         )
+    if source == "rag":
+        agent.result = agent_result(CARD, rag_call("1200"))
     first = send(client, center="1200" if source == "session" else "1100").json()
-    if source in {"past_inventory", "legacy_past_inventory", "named_past_inventory"}:
+    if source in {"past_inventory", "legacy_past_inventory", "named_past_inventory", "rag"}:
         agent.result = AGENT_RESULT
         assert send(client, session_id=first["session_id"], version=1, center="1100").status_code == 200
     if source in {"inventory", "legacy_past_inventory"}:

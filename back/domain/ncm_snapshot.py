@@ -4,7 +4,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import StrEnum
 from types import MappingProxyType
@@ -41,6 +41,7 @@ class NcmSnapshot:
     source_kind: NcmSourceKind
     source_last_update: str
     records: Mapping[str, NcmRecord]
+    hierarchy: Mapping[str, NcmRecord] = field(default_factory=lambda: MappingProxyType({}))
 
 
 @dataclass(frozen=True)
@@ -116,6 +117,7 @@ def load_ncm_snapshot(
     if not isinstance(rows, list) or not rows:
         raise NcmSnapshotError("Nomenclaturas deve ser uma lista nao vazia")
     records: dict[str, NcmRecord] = {}
+    hierarchy: dict[str, NcmRecord] = {}
     for index, row in enumerate(rows):
         if not isinstance(row, dict):
             raise NcmSnapshotError(f"Nomenclatura {index} invalida")
@@ -130,6 +132,9 @@ def load_ncm_snapshot(
             raise NcmSnapshotError(f"Vigencia invertida: {code}")
         digits = code.replace(".", "")
         if len(digits) != 8:
+            if digits in hierarchy:
+                raise NcmSnapshotError(f"Codigo duplicado no snapshot: {code}")
+            hierarchy[digits] = NcmRecord(code, description, start, end)
             continue
         normalized = f"{digits[:4]}.{digits[4:6]}.{digits[6:]}"
         if normalized in records:
@@ -140,7 +145,9 @@ def load_ncm_snapshot(
     digest = hashlib.sha256(raw).hexdigest()
     version = version if version is not None else f"ncm-{snapshot_date.isoformat()}-{digest[:12]}"
     validate_ncm_version(version)
-    return NcmSnapshot(version, digest, snapshot_date, source_kind, updated, MappingProxyType(records))
+    return NcmSnapshot(
+        version, digest, snapshot_date, source_kind, updated, MappingProxyType(records), MappingProxyType(hierarchy)
+    )
 
 
 def check_snapshot_ncm(snapshot: NcmSnapshot, raw_code: str | None) -> NcmSnapshotCheck:

@@ -3,6 +3,10 @@
 O servidor stdio registra `enrich_from_trusted_source`, quatro templates de resource e
 três prompts v1. A descoberta e as chamadas passam pelo protocolo MCP real.
 
+A tool `retrieve_material_context` acrescenta referências RAG limitadas e citadas,
+com escopo por tenant, centros e dataset vigente. O chat Bedrock usa o sistema v2;
+as três definições de prompt MCP v1 permanecem disponíveis. Ver [contexto RAG](rag.md).
+
 A tool recebe somente `material_code`, `attributes_requested` e `refresh`. O servidor
 consulta `datasets.real_material_codes` pela view `mcp_datasets`, exige um manifesto
 com 15 códigos no dataset mais recente e confere o material no mesmo tenant. Nenhuma lista ou URL enviada pelo
