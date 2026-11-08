@@ -582,6 +582,9 @@ class MaterialRequest(Base):
             "status IN ('EM_IDENTIFICACAO', 'AGUARDANDO_CADASTRO', 'EM_ATENDIMENTO', 'ENCERRADA')", name="status"
         ),
         CheckConstraint("(status = 'ENCERRADA') = (closure_reason IS NOT NULL)", name="closure_reason"),
+        CheckConstraint(
+            "(substituted_from_material_id IS NULL) = (substitution_equivalence_id IS NULL)", name="substitution"
+        ),
         Index("ix_material_requests_tenant_id_requester_user_id", "tenant_id", "requester_user_id"),
         Index("ix_material_requests_tenant_id_center_code_status", "tenant_id", "center_code", "status"),
     )
@@ -599,6 +602,40 @@ class MaterialRequest(Base):
     closure_reason: Mapped[str | None] = mapped_column(Text)
     chat_session_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("chat_sessions.id"))
     registration_order_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("registration_orders.id"))
+    # Troca confirmada pelo solicitante por um equivalente autorizado (#246): o código original fica aqui.
+    substituted_from_material_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("materials_master.id"))
+    substitution_equivalence_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("material_equivalences.id"))
+    version: Mapped[int] = _version()
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()
+
+
+EQUIVALENCE_STATUSES = ("APROVADA", "REVOGADA")
+
+
+class MaterialEquivalence(Base):
+    """Equivalência técnica aprovada entre dois materiais distintos (#246).
+
+    Não é identidade: os materiais continuam separados, com códigos e saldos próprios. O par é
+    guardado em ordem canônica (menor id primeiro), então vale nos dois sentidos sem duplicar.
+    """
+
+    __tablename__ = "material_equivalences"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "material_id", "equivalent_material_id"),
+        CheckConstraint("material_id < equivalent_material_id", name="canonical_pair"),
+        CheckConstraint("length(btrim(basis)) > 0", name="basis"),
+        CheckConstraint(_one_of("status", EQUIVALENCE_STATUSES), name="status"),
+        CheckConstraint("version > 0", name="version"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
+    equivalent_material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
+    basis: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    approved_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
     version: Mapped[int] = _version()
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = _updated_at()
