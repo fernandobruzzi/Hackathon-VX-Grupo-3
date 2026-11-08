@@ -1,0 +1,106 @@
+{
+ "_fixture_notice": "TRECHO da tabela oficial NCM vigente (Portal Unico Siscomex), capturada em 08/11/2026; arquivo completo SHA-256 011c72b42bef00b0f5440bf19dee67e5879c3459ef0b155f137cd949d6e2f252. Usado para testar o formato; importado nos testes como procedencia nao verificada.",
+ "Data_Ultima_Atualizacao_NCM": "Vigente em 08/11/2026",
+ "Ato": "Resolução Gecex nº 926/2026",
+ "Nomenclaturas": [
+  {
+   "Codigo": "0102.29.1",
+   "Descricao": "Para reprodução",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "0102.29.11",
+   "Descricao": "Prenhes ou com cria ao pé",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "73",
+   "Descricao": "Obras de ferro fundido, ferro ou aço.",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "73.18",
+   "Descricao": "Parafusos, pinos ou pernos, roscados, porcas, tira-fundos, ganchos roscados, rebites, chavetas, contrapinos ou troços, arruelas (anilhas) (incluindo as de pressão) e artigos semelhantes, de ferro fundido, ferro ou aço.",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "7318.1",
+   "Descricao": "- Artigos roscados:",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "7318.15.00",
+   "Descricao": "-- Outros parafusos e pinos ou pernos, mesmo com as porcas e arruelas (anilhas)",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "7318.16.00",
+   "Descricao": "-- Porcas",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "84",
+   "Descricao": "Reatores nucleares, caldeiras, máquinas, aparelhos e instrumentos mecânicos, e suas partes.",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "84.82",
+   "Descricao": "Rolamentos de esferas, de roletes ou de agulhas.",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "8482.10",
+   "Descricao": "- Rolamentos de esferas",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  },
+  {
+   "Codigo": "8482.10.10",
+   "Descricao": "De carga radial",
+   "Data_Inicio": "01/04/2022",
+   "Data_Fim": "31/12/9999",
+   "Tipo_Ato_Ini": "Res Gecex",
+   "Numero_Ato_Ini": "272",
+   "Ano_Ato_Ini": "2021"
+  }
+ ]
+}

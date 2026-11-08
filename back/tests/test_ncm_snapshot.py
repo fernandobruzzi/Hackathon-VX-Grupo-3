@@ -14,6 +14,7 @@ from clients.ncm_snapshot_store import NcmSnapshotStore
 from clients.storage import LocalObjectStore, ObjectConflictError
 from domain.ncm_snapshot import (
     MAX_SNAPSHOT_BYTES,
+    OFFICIAL_NCM_REDIRECT_URL,
     OFFICIAL_NCM_URL,
     NcmSnapshotError,
     NcmSourceKind,
@@ -101,6 +102,8 @@ def test_effectiveness_uses_snapshot_date_and_never_current_clock():
         lambda p: p["Nomenclaturas"][3].update(Data_Fim="05/11/2026"),
         lambda p: p["Nomenclaturas"][3].update(Codigo=73181500),
         lambda p: p["Nomenclaturas"][3].update(Codigo="7318.BAD"),
+        lambda p: p["Nomenclaturas"][3].update(Codigo="73.1"),
+        lambda p: p["Nomenclaturas"][3].update(Codigo="731.8"),
         lambda p: p["Nomenclaturas"][3].update(Descricao=""),
         lambda p: p["Nomenclaturas"][3].pop("Data_Fim"),
         lambda p: p["Nomenclaturas"].append(None),
@@ -166,6 +169,41 @@ def test_download_uses_fixed_https_endpoint_timeout_and_bounded_body(monkeypatch
     assert opener.open.call_args.kwargs["timeout"] == 30
     opener.open.return_value.__enter__.return_value.read.assert_called_once_with(MAX_SNAPSHOT_BYTES + 1)
     assert _NoRedirect().redirect_request(None, None, 302, "", {}, "https://example.org") is None
+
+
+def test_download_follows_only_the_public_profile_redirect_of_the_official_url():
+    from urllib.request import Request
+
+    handler = _NoRedirect()
+    official = Request(OFFICIAL_NCM_URL, headers={"Accept": "application/json"})
+    followed = handler.redirect_request(official, None, 307, "", {}, OFFICIAL_NCM_REDIRECT_URL)
+    assert followed is not None and followed.full_url == OFFICIAL_NCM_REDIRECT_URL
+    assert handler.max_redirections == 1
+    for target in (
+        "https://example.org/ncm.json",
+        "http://portalunico.siscomex.gov.br/classif/api/publico/nomenclatura/download/json?perfil=PUBLICO",
+        f"{OFFICIAL_NCM_URL}?perfil=OUTRO",
+        f"{OFFICIAL_NCM_REDIRECT_URL}&extra=1",
+    ):
+        assert handler.redirect_request(official, None, 307, "", {}, target) is None
+    # Um redirecionamento a partir de outro endereço nunca é seguido, nem para o destino esperado.
+    other = Request("https://example.org/ncm.json")
+    assert handler.redirect_request(other, None, 307, "", {}, OFFICIAL_NCM_REDIRECT_URL) is None
+
+
+def test_official_export_shape_loads_positions_items_and_extra_fields():
+    raw = (Path(__file__).parent / "fixtures/ncm_official_excerpt.json").read_bytes()
+    snapshot = load_ncm_snapshot(raw, snapshot_date=date(2026, 11, 8))
+    assert snapshot.source_kind is NcmSourceKind.IMPORTED_UNVERIFIED
+    assert snapshot.source_last_update == "Vigente em 08/11/2026"
+    assert set(snapshot.records) == {"0102.29.11", "7318.15.00", "7318.16.00", "8482.10.10"}
+    # Posições "73.18" e itens de sete dígitos ficam só na hierarquia.
+    assert {"73", "7318", "73181", "0102291", "848210"} <= set(snapshot.hierarchy)
+    check = check_snapshot_ncm(snapshot, "73181500")
+    assert check.exists_in_snapshot and check.valid_in_snapshot
+    assert check.reasons == ("NCM_SOURCE_UNVERIFIED",)
+    assert check_snapshot_ncm(snapshot, "7318.15").reasons[0] == "NCM_INVALID_FORMAT"
+    assert check_snapshot_ncm(snapshot, "73181900").reasons[0] == "NCM_NOT_IN_SNAPSHOT"
 
 
 def test_download_failure_never_returns_a_fallback(monkeypatch):
