@@ -294,14 +294,14 @@ export function ManualReviewsPage() {
                     <tbody>
                       {data.items.map((row) => (
                         <tr key={row.id}>
-                          <Td>
+                          <Td className="[overflow-wrap:anywhere]">
                             <Code>{row.observation.material_code}</Code>
                             <p className="mt-1 max-w-md">{row.observation.description}</p>
                             <p className="mt-1 text-xs text-muted">
                               {row.observation.status} · {row.observation.unit}
                             </p>
                           </Td>
-                          <Td>
+                          <Td className="[overflow-wrap:anywhere]">
                             {row.reasons.map((r) => (
                               <p key={r} className="mb-1">
                                 {REASON_LABELS[r] ?? r}
