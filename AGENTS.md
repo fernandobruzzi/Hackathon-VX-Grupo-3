@@ -863,6 +863,14 @@ The quality view never returns financial values. Missing evaluations, savings or
 approved after snapshots stay unavailable; applying proposals does not imply
 savings or an independent accuracy measurement. See [`docs/dashboard.md`](docs/dashboard.md).
 
+The `journey` section counts persisted material requests by tenant and the request's
+destination center within the caller's authorized centers: open by state, closed by reason
+(stock, partial and purchasing kept separate), time to resolution from the closure audit
+event, registrations avoided (live purchase forwards without a registration order) and items
+identified under another code (identity match saved in the linked chat). It carries no
+quantities or values. An indicator without data is `null` and listed in `unavailable` with
+its reason, never estimated.
+
 ## Frontend
 
 Navigation badges must never use mock counts in API mode. Without a reliable,

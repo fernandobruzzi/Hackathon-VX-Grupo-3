@@ -37,6 +37,40 @@ snapshot importado do mesmo tenant e escopo. Sem dataset visível, a API respond
   depois, só os que continuam ativos no snapshot. Unificações rejeitadas ou
   desatualizadas não contam.
 
+## Jornada do solicitante (#250)
+
+O campo `journey` resume as solicitações de material persistidas (seções 13 a 17 de
+[solicitacao-material.md](solicitacao-material.md)). Vale para as duas visões, com o mesmo
+conteúdo: são contagens e tempos, sem quantidades, preços nem valores. Não depende do dataset:
+conta as solicitações do tenant cujo centro de destino está entre os centros autorizados da
+sessão, de qualquer solicitante. Solicitações de outros centros não entram em nenhum indicador.
+
+| Campo | Origem |
+|---|---|
+| `requests_total` | Solicitações no escopo, em qualquer estado |
+| `open` | Não encerradas por estado: `EM_IDENTIFICACAO`, `AGUARDANDO_CADASTRO`, `EM_ATENDIMENTO` |
+| `closed` | Encerradas por motivo, separando estoque (`ATENDIDA_ESTOQUE`), parcial (`ATENDIDA_PARCIAL_COMPRAS`) e compras (`ENCAMINHADA_COMPRAS`), além de `CANCELADA` e `CADASTRO_REJEITADO` |
+| `resolution_time` | Horas entre a criação e o primeiro `MATERIAL_REQUEST_CLOSED` da auditoria, só das solicitações atendidas (os três primeiros motivos). Mediana e percentil 90 pelo posto mais próximo (sempre um tempo observado), com o tamanho da amostra |
+| `registration_avoided` | Cadastro evitado: solicitações com encaminhamento para Compras `ENCAMINHADO` ou `ACEITO`, feito com o código existente e sem pedido de cadastro vinculado. Devolvidos e cancelados não contam |
+| `identified_under_other_code` | Duplicidade evitada: solicitações vinculadas a uma conversa cuja busca salvou uma correspondência de identidade (`duplicate_check.existing`) que resolve para o material da solicitação, pelo mesmo código ativo ou pelo `active_code_target` de um código bloqueado. Semelhança sem identidade comprovada não conta |
+
+Sem dados, o indicador volta `null` e aparece em `unavailable` com o motivo, nunca como zero
+estimado:
+
+- `NO_REQUESTS`: nenhuma solicitação no escopo; vale para todos os indicadores.
+- `NO_RESOLVED_REQUESTS`: nenhuma solicitação atendida, então não há tempo até o atendimento.
+- `NO_CHAT_LINKED_REQUESTS`: nenhuma solicitação vinculada a conversa, então não há base para
+  saber se o item foi identificado sob outro código.
+
+Limites conhecidos: a duplicidade evitada lê a correspondência salva na conversa no momento da
+consulta; enquanto a criação de solicitações pelo chat (#238) não registrar a correspondência
+na própria solicitação, uma conversa que continuar depois pode mudar esse valor. Pedidos de
+cadastro que terminam em `EXISTING` ainda não resolvem a solicitação vinculada (#243) e não
+entram no indicador. O encaminhamento para Compras não comprova compra nem recebimento.
+
+Na tela, a seção "Jornada do solicitante" mostra cada indicador; os indisponíveis aparecem
+como "Indisponível" com o motivo.
+
 ## Snapshot posterior
 
 `POST /api/v1/dashboard/snapshots` exige `batch:run` (Governança), CSRF e
@@ -90,7 +124,8 @@ scripts/smoke_test.sh http://localhost:8000 --mode local
 
 O smoke confere dados importados, bloqueio da visão financeira para Governança,
 acesso do Fiscal e ausência de comparação inventada. Os testes da API verificam
-sessões reais, isolamento por tenant/dataset/centro, transições do funil,
+sessões reais, isolamento por tenant/dataset/centro, transições do funil, jornada do
+solicitante por centro autorizado e indicadores indisponíveis sem dados,
 preservação do antes, decimais exatos, valores ausentes e o contrato público.
 O front usa a API por padrão e trata carregamento, base ausente, erro e repetição.
 Somente `NEXT_PUBLIC_DATA_SOURCE=mock` habilita os exemplos, rotulados como simulados.
