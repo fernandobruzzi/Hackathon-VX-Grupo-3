@@ -122,3 +122,36 @@ simulado e não mede qualidade. A medição com o Bedrock depende de acesso ao m
 ```bash
 uv run --locked pytest tests/test_llm_audit.py tests/test_measure_ncm_benchmark.py
 ```
+
+## Confiança do auditor (#297)
+
+A confiança da sugestão do auditor tem duas camadas:
+
+1. **Validação pelo domínio:** é a revalidação descrita acima. Ela é binária e auditável: a sugestão só existe se cada trecho citado estiver na descrição e se o motor de regras chegar ao mesmo código. Toda sugestão registra `domain_validated: true`.
+2. **Pontuação por log probs:** é opcional e vem de `NCM_SCORER_REPOSITORY`. O pontuador recebe o mesmo prompt, sem NCM atual nem gabarito, e todos os códigos de referência da classe no PDM. Ele não gera resposta: devolve o log prob de cada candidato. A probabilidade normalizada entre os candidatos vira uma faixa: `ALTA` a partir de 0,9, `MEDIA` a partir de 0,6, `BAIXA` abaixo disso. Os limites são provisórios até a calibração com um modelo real.
+
+O changeset guarda `llm_audit.confidence` com:
+
+- versão (`ncm-confidence-v1`);
+- candidatos;
+- probabilidades e faixa;
+- pontuador (repositório, modelo e se é simulado);
+- o código de erro, quando houver.
+
+Uma falha do pontuador, ou log probs para candidatos diferentes (`SCORER_CANDIDATES_MISMATCH`), deixa a sugestão sem faixa, só com a validação pelo domínio. A confiança nunca aprova, aplica nem coloca a sugestão em lote: ela continua com revisão técnica e fiscal.
+
+`simulated_v1` dá o mesmo log prob a todos os candidatos, ou valores fixos nos testes. É rotulado e recusado fora de `APP_ENV=local`. Sem a variável, nenhum modelo pontua.
+
+**Calibração:** `pipelines.measure_ncm_benchmark --llm-audit` conta, por família, acertos e erros por faixa (`band_<FAIXA>_hit` e `band_<FAIXA>_wrong`, e `SEM_PONTUADOR` sem pontuador). O gabarito só é lido depois de todas as sugestões existirem.
+
+**Modelos com log probs no Bedrock:**
+
+- O Claude na Messages/Converse API não expõe log probs. Por isso o Sonnet 5 continua só gerando a sugestão.
+- O Bedrock Custom Model Import devolve log probs com `"return_logprobs": true` no `InvokeModel`, para modelos importados a partir de 31/07/2025. O formato `OpenAIChatCompletion` traz log probs do prompt e da saída; o `BedrockCompletion` traz só os da saída. Fontes: [recursos avançados do Custom Model Import](https://docs.aws.amazon.com/bedrock/latest/userguide/custom-model-import-advanced-features.html) e [o anúncio do suporte a log probs](https://aws.amazon.com/blogs/machine-learning/unlock-model-insights-with-log-probability-support-for-amazon-bedrock-custom-model-import).
+- Os modelos abertos gerenciados (como o gpt-oss) não têm suporte a log probs confirmado na documentação.
+
+**Pendente:**
+
+- Confirmar na conta do workshop quais modelos importados estão disponíveis, em que região e com que limites. Este ambiente não tem credenciais AWS.
+- Implementar o pontuador real (`bedrock_import_v1`), que depende dessa confirmação.
+

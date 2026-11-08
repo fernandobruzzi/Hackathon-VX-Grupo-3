@@ -31,6 +31,7 @@ from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
 from repositories.llm import get_llm_repository
+from repositories.ncm_scorer import get_ncm_scorer
 
 SITUATIONS = ("CORRETO", "INCORRETO", "AUSENTE")
 
@@ -117,7 +118,8 @@ def measure(benchmark_dir: Path, pdm_workbook: str, *, llm_audit: bool = False) 
     outcomes = None
     if llm is not None:
         # O modelo vê só a base sem gabarito, como as regras.
-        outcomes = audit_cases(select_audit_cases(analyzed, catalog, set(targets)), catalog, llm, snapshot=snapshot)
+        cases = select_audit_cases(analyzed, catalog, set(targets))
+        outcomes = audit_cases(cases, catalog, llm, snapshot=snapshot, scorer=get_ncm_scorer())
     # O gabarito só é lido depois que todas as propostas existem.
     with (benchmark_dir / "base_com_gabarito.csv").open(encoding="utf-8-sig", newline="") as source:
         rows = list(csv.DictReader(source))
@@ -164,6 +166,9 @@ def score_audit(rows: list[dict], outcomes, key_of: dict[str, str]) -> dict:
         if outcome.status == PROPOSED:
             hit = normalize_ncm(outcome.proposal.changeset["after"]["ncm"]) == row["NCM_GABARITO"]
             counts["proposed_hit" if hit else "proposed_wrong"] += 1
+            # Calibração (#297): acerto por faixa de confiança, sem faixa quando não há pontuador.
+            level = outcome.proposal.changeset["llm_audit"]["confidence"]["band"] or "SEM_PONTUADOR"
+            counts[f"band_{level}_{'hit' if hit else 'wrong'}"] += 1
             counts["improper_change"] += row["SITUACAO_NCM_ORIGINAL"] == "CORRETO" and not hit
     total: Counter = Counter()
     for counts in families.values():

@@ -106,6 +106,20 @@ class LlmAuditAttribute(StrictModel):
     base: Literal["LITERAL", "INFERIDO"]
 
 
+class LlmAuditConfidence(StrictModel):
+    """Confiança da sugestão (#297): organiza a revisão e nunca aprova nada sozinha."""
+
+    version: str = Field(min_length=1)
+    domain_validated: bool
+    chosen: str
+    candidates: list[str] = Field(min_length=1)
+    scorer: dict[str, Any] | None = None
+    probabilities: dict[str, float] | None = None
+    probability: float | None = Field(default=None, ge=0, le=1)
+    band: Literal["ALTA", "MEDIA", "BAIXA"] | None = None
+    error: str | None = None
+
+
 class LlmAuditContext(StrictModel):
     """Evidência do auditor LLM (#290). É contexto da revisão: nada aqui é aplicado por si só."""
 
@@ -121,6 +135,7 @@ class LlmAuditContext(StrictModel):
     evidence: list[str] = Field(default_factory=list)
     rationale: str
     context: dict[str, Any]
+    confidence: LlmAuditConfidence | None = None
 
 
 class ProposalChangeset(StrictModel):
