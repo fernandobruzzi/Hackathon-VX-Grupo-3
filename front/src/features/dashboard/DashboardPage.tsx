@@ -8,6 +8,7 @@ import { can } from "@/lib/permissions";
 import { fmtBRL, fmtDate, fmtInt, fmtPct } from "@/lib/format";
 import type { DashboardMetrics } from "@/types/api";
 import { dashboard } from "@/mocks/data";
+import { NcmSection } from "./NcmSection";
 
 export function DashboardPage() {
   const { me, backend, api } = useAuth();
@@ -267,6 +268,7 @@ export function DashboardPage() {
                   </p>
                 </Card>
               </section>
+              <NcmSection ncm={d.ncm} />
               <section className="mt-6">
                 {financial && d.financial ? (
                   <Card className="grid gap-6 md:grid-cols-3">
