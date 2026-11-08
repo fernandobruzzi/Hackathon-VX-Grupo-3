@@ -8,15 +8,18 @@ from fastapi import APIRouter, Header, Query, Request
 from vx_materials_api.routes.sanitization import Caller, Db
 from vx_materials_api.schemas.material_requests import (
     CancelMaterialRequest,
+    ConfirmFulfillment,
     CreateMaterialRequest,
     ForwardToPurchasing,
+    FulfillmentPreview,
+    FulfillmentResult,
     MaterialRequestDetail,
     MaterialRequestList,
     RequestStatus,
 )
 from vx_materials_api.security.sessions import verify_write
 from vx_materials_api.services import material_request_service as service
-from vx_materials_api.services import purchase_forward_service
+from vx_materials_api.services import partial_fulfillment_service, purchase_forward_service
 
 router = APIRouter(prefix="/api/v1/material-requests", tags=["material-requests"])
 
@@ -74,5 +77,25 @@ def forward_to_purchasing(
 ):
     verify_write(request, caller)
     return purchase_forward_service.forward_request(
+        db, caller, request_id, payload, idempotency_key, request.state.request_id
+    )
+
+
+@router.get("/{request_id}/fulfillment-options", response_model=FulfillmentPreview)
+def fulfillment_options(request_id: UUID, caller: Caller, db: Db):
+    return partial_fulfillment_service.preview(db, caller, request_id)
+
+
+@router.post("/{request_id}/fulfillment", status_code=201, response_model=FulfillmentResult)
+def confirm_fulfillment(
+    request_id: UUID,
+    payload: ConfirmFulfillment,
+    request: Request,
+    caller: Caller,
+    db: Db,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    verify_write(request, caller)
+    return partial_fulfillment_service.confirm(
         db, caller, request_id, payload, idempotency_key, request.state.request_id
     )

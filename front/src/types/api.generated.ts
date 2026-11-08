@@ -830,6 +830,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/material-requests/{id}/fulfillment-options": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar a divisão entre reserva e compras do próprio solicitante; não grava nada. */
+    get: operations["previewMaterialRequestFulfillment"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/material-requests/{id}/fulfillment": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirmar a escolha do solicitante na falta parcial (D1): reservar o disponível e encaminhar o restante para compras, ou encaminhar tudo; a divisão é recalculada na transação. */
+    post: operations["confirmMaterialRequestFulfillment"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/purchase-forwards": {
     parameters: {
       query?: never;
@@ -2184,8 +2218,14 @@ export interface components {
       can_cancel: boolean;
       /** Pending Quantity */
       pending_quantity: string;
+      /** Reserved Quantity */
+      reserved_quantity: string;
+      /** Delivered Quantity */
+      delivered_quantity: string;
       /** Forwarded Quantity */
       forwarded_quantity: string;
+      /** Reservations */
+      reservations: components["schemas"]["StockReservation"][];
       /** Purchase Forwards */
       purchase_forwards: components["schemas"]["PurchaseForward"][];
       /** History */
@@ -2241,7 +2281,10 @@ export interface components {
       /** Quantity */
       quantity: string;
     };
-    /** StockReservation */
+    /**
+     * StockReservation
+     * @description `quantity` é a quantidade reservada original; `open_quantity` ainda conta em `R`.
+     */
     StockReservation: {
       /**
        * Id
@@ -2418,6 +2461,105 @@ export interface components {
     ForwardToPurchasing: {
       /** Expected Version */
       expected_version: number;
+    };
+    /**
+     * ConfirmFulfillment
+     * @description Escolha do solicitante na falta parcial (D1); a divisão é recalculada no servidor.
+     */
+    ConfirmFulfillment: {
+      /** Expected Version */
+      expected_version: number;
+      /**
+       * Option
+       * @enum {string}
+       */
+      option: "PARTIAL" | "PURCHASING_ONLY";
+    };
+    /**
+     * FulfillmentSplit
+     * @description Quanto seria reservado do estoque e quanto seria encaminhado para compras.
+     */
+    FulfillmentSplit: {
+      /**
+       * Option
+       * @enum {string}
+       */
+      option: "PARTIAL" | "PURCHASING_ONLY";
+      /** Reserve Quantity */
+      reserve_quantity: string;
+      /** Forward Quantity */
+      forward_quantity: string;
+    };
+    /**
+     * FulfillmentPreview
+     * @description Consulta da divisão; não reserva, não encaminha e não grava nada.
+     */
+    FulfillmentPreview: {
+      /**
+       * Request Id
+       * Format: uuid
+       */
+      request_id: string;
+      /** Request Version */
+      request_version: number;
+      /** Unit */
+      unit: string;
+      /** Center Code */
+      center_code: string;
+      /** Requested */
+      requested: string;
+      /** Reserved */
+      reserved: string;
+      /** Delivered */
+      delivered: string;
+      /** Forwarded */
+      forwarded: string;
+      /** Pending */
+      pending: string;
+      /** Available */
+      available: string;
+      /** Blocked Reason */
+      blocked_reason:
+        | (
+            | "REQUEST_NOT_IN_SERVICE"
+            | "INACTIVE_MATERIAL"
+            | "UNIT_MISMATCH"
+            | "NOTHING_PENDING"
+            | "NO_INVENTORY_DATASET"
+            | "RECONCILIATION_REQUIRED"
+            | "STOCK_UNIT_UNRESOLVED"
+            | "STOCK_AVAILABLE"
+          )
+        | null;
+      /** Default Option */
+      default_option: ("PARTIAL" | "PURCHASING_ONLY") | null;
+      /** Options */
+      options: components["schemas"]["FulfillmentSplit"][];
+    };
+    /**
+     * FulfillmentResult
+     * @description Parcelas efetivamente gravadas, calculadas com o disponível lido dentro do bloqueio.
+     */
+    FulfillmentResult: {
+      /**
+       * Option
+       * @enum {string}
+       */
+      option: "PARTIAL" | "PURCHASING_ONLY";
+      /** Reserved Quantity */
+      reserved_quantity: string;
+      /** Forwarded Quantity */
+      forwarded_quantity: string;
+      /** Available At Confirmation */
+      available_at_confirmation: string;
+      /** Reservation Id */
+      reservation_id: string | null;
+      /**
+       * Purchase Forward Id
+       * Format: uuid
+       */
+      purchase_forward_id: string;
+      request: components["schemas"]["MaterialRequestDetail"];
     };
     /** AcceptPurchaseForward */
     AcceptPurchaseForward: {
@@ -6758,6 +6900,185 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MaterialRequestDetail"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  previewMaterialRequestFulfillment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Opções de atendimento com a divisão calculada agora; a opção padrão é PARTIAL. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FulfillmentPreview"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  confirmMaterialRequestFulfillment: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConfirmFulfillment"];
+      };
+    };
+    responses: {
+      /** @description Parcelas gravadas na mesma solicitação; o encaminhamento é a demanda para Compras, não compra realizada. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FulfillmentResult"];
         };
       };
       /** @description Sessão inválida ou expirada. */

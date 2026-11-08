@@ -2618,7 +2618,10 @@
       "updated_at": "2026-11-07T20:00:00Z",
       "can_cancel": true,
       "pending_quantity": "10.000000",
+      "reserved_quantity": "0.000000",
+      "delivered_quantity": "0.000000",
       "forwarded_quantity": "0.000000",
+      "reservations": [],
       "purchase_forwards": [],
       "history": [
         {
@@ -2698,7 +2701,10 @@
       "updated_at": "2026-11-07T20:05:00Z",
       "can_cancel": true,
       "pending_quantity": "4.000000",
+      "reserved_quantity": "0.000000",
+      "delivered_quantity": "0.000000",
       "forwarded_quantity": "0.000000",
+      "reservations": [],
       "purchase_forwards": [],
       "history": [
         {
@@ -2768,7 +2774,10 @@
       "updated_at": "2026-11-07T20:00:00Z",
       "can_cancel": true,
       "pending_quantity": "10.000000",
+      "reserved_quantity": "0.000000",
+      "delivered_quantity": "0.000000",
       "forwarded_quantity": "0.000000",
+      "reservations": [],
       "purchase_forwards": [],
       "history": [
         {
@@ -2813,7 +2822,10 @@
       "updated_at": "2026-11-07T20:00:00Z",
       "can_cancel": false,
       "pending_quantity": "10.000000",
+      "reserved_quantity": "0.000000",
+      "delivered_quantity": "0.000000",
       "forwarded_quantity": "0.000000",
+      "reservations": [],
       "purchase_forwards": [],
       "history": [
         {
@@ -2997,7 +3009,10 @@
       "updated_at": "2026-11-08T09:00:00Z",
       "can_cancel": true,
       "pending_quantity": "0.000000",
+      "reserved_quantity": "0.000000",
+      "delivered_quantity": "0.000000",
       "forwarded_quantity": "10.000000",
+      "reservations": [],
       "purchase_forwards": [
         {
           "id": "72412412-0000-4000-8000-000000000001",
@@ -3040,6 +3055,144 @@
           "created_at": "2026-11-08T09:00:00Z"
         }
       ]
+    }
+  },
+  {
+    "name": "material-request-fulfillment-options",
+    "path": "/api/v1/material-requests/{id}/fulfillment-options",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000021"
+    },
+    "response": {
+      "request_id": "72372372-0000-4000-8000-000000000021",
+      "request_version": 1,
+      "unit": "PC",
+      "center_code": "1200",
+      "requested": "10.000000",
+      "reserved": "0.000000",
+      "delivered": "0.000000",
+      "forwarded": "0.000000",
+      "pending": "10.000000",
+      "available": "6.000000",
+      "blocked_reason": null,
+      "default_option": "PARTIAL",
+      "options": [
+        {
+          "option": "PARTIAL",
+          "reserve_quantity": "6.000000",
+          "forward_quantity": "4.000000"
+        },
+        {
+          "option": "PURCHASING_ONLY",
+          "reserve_quantity": "0.000000",
+          "forward_quantity": "10.000000"
+        }
+      ]
+    }
+  },
+  {
+    "name": "material-request-fulfillment-partial",
+    "path": "/api/v1/material-requests/{id}/fulfillment",
+    "method": "post",
+    "status": 201,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000021"
+    },
+    "request": {
+      "expected_version": 1,
+      "option": "PARTIAL"
+    },
+    "response": {
+      "option": "PARTIAL",
+      "reserved_quantity": "6.000000",
+      "forwarded_quantity": "4.000000",
+      "available_at_confirmation": "6.000000",
+      "reservation_id": "72422422-0000-4000-8000-000000000001",
+      "purchase_forward_id": "72422422-0000-4000-8000-000000000002",
+      "request": {
+        "id": "72372372-0000-4000-8000-000000000021",
+        "protocol": "SM-00000003",
+        "requester_user_id": "72372372-0000-4000-8000-000000000002",
+        "original_text": "Preciso de 10 canetas azuis.",
+        "quantity": "10.000000",
+        "unit": "PC",
+        "center_code": "1200",
+        "material_id": "72412412-0000-4000-8000-000000000002",
+        "status": "EM_ATENDIMENTO",
+        "closure_reason": null,
+        "chat_session_id": null,
+        "registration_order_id": null,
+        "version": 2,
+        "created_at": "2026-11-08T09:59:00Z",
+        "updated_at": "2026-11-08T10:00:00Z",
+        "can_cancel": true,
+        "pending_quantity": "0.000000",
+        "reserved_quantity": "6.000000",
+        "delivered_quantity": "0.000000",
+        "forwarded_quantity": "4.000000",
+        "reservations": [
+          {
+            "id": "72422422-0000-4000-8000-000000000001",
+            "request_id": "72372372-0000-4000-8000-000000000021",
+            "material_id": "72412412-0000-4000-8000-000000000002",
+            "center_code": "1200",
+            "quantity": "6.000000",
+            "delivered_quantity": "0.000000",
+            "open_quantity": "6.000000",
+            "unit": "PC",
+            "status": "ATIVA",
+            "dataset_id": "23923923-0000-4000-8000-000000000003",
+            "created_by_user_id": "72372372-0000-4000-8000-000000000002",
+            "version": 1,
+            "created_at": "2026-11-08T10:00:00Z",
+            "updated_at": "2026-11-08T10:00:00Z"
+          }
+        ],
+        "purchase_forwards": [
+          {
+            "id": "72422422-0000-4000-8000-000000000002",
+            "material_request_id": "72372372-0000-4000-8000-000000000021",
+            "request_protocol": "SM-00000003",
+            "material_id": "72412412-0000-4000-8000-000000000002",
+            "material_code": "000123",
+            "material_description": "CANETA ESFEROGRAFICA AZUL",
+            "quantity": "4.000000",
+            "unit": "PC",
+            "center_code": "1200",
+            "status": "ENCAMINHADO",
+            "reason": null,
+            "forwarded_by_user_id": "72372372-0000-4000-8000-000000000002",
+            "handled_by_user_id": null,
+            "handled_at": null,
+            "version": 1,
+            "created_at": "2026-11-08T10:00:00Z",
+            "updated_at": "2026-11-08T10:00:00Z",
+            "can_handle": false
+          }
+        ],
+        "history": [
+          {
+            "id": "72422422-0000-4000-8000-000000000003",
+            "action": "MATERIAL_REQUEST_CREATED",
+            "actor_user_id": "72372372-0000-4000-8000-000000000002",
+            "before_status": null,
+            "after_status": "EM_ATENDIMENTO",
+            "reason": null,
+            "created_at": "2026-11-08T09:59:00Z"
+          },
+          {
+            "id": "72422422-0000-4000-8000-000000000004",
+            "action": "MATERIAL_REQUEST_PARTIAL_FULFILLMENT",
+            "actor_user_id": "72372372-0000-4000-8000-000000000002",
+            "before_status": "EM_ATENDIMENTO",
+            "after_status": "EM_ATENDIMENTO",
+            "reason": "Atendimento parcial: 6.000000 PC reservado(s) do estoque e 4.000000 PC encaminhado(s) para compras.",
+            "created_at": "2026-11-08T10:00:00Z"
+          }
+        ]
+      }
     }
   },
   {

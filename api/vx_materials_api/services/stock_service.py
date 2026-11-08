@@ -305,6 +305,54 @@ def _replay(db, caller, previous, resource=StockReservation):
     return previous.response
 
 
+def add_reservation(db, caller, role, row, material, state, quantity, request_version, correlation_id, origin=None):
+    """Insere a reserva e grava `STOCK_RESERVED`; quem chama já bloqueou e conferiu `quantity ≤ D`.
+
+    `request_version` é a versão da solicitação antes da operação, que quem chama já incrementou.
+    `origin` registra quando a reserva vem da confirmação do solicitante na divisão parcial (#242).
+    """
+    reservation = StockReservation(
+        id=uuid4(),
+        tenant_id=caller.tenant_id,
+        request_id=row.id,
+        material_id=material.id,
+        center_code=row.center_code,
+        quantity=quantity,
+        unit=row.unit,
+        status="ATIVA",
+        dataset_id=state["dataset_id"],
+        created_by_user_id=caller.user_id,
+    )
+    db.add(reservation)
+    db.flush()
+    db.refresh(reservation)
+    after = compute_availability(db, caller.tenant_id, material, row.center_code)
+    db.add(
+        AuditLog(
+            tenant_id=caller.tenant_id,
+            actor_user_id=caller.user_id,
+            actor_type="USER",
+            roles_snapshot=list(caller.roles),
+            effective_role=role,
+            action="STOCK_RESERVED",
+            entity_type="stock_reservation",
+            entity_id=str(reservation.id),
+            before_json=None,
+            after_json={
+                **reservation_view(reservation),
+                "request_version_before": request_version,
+                "request_version_after": row.version,
+                "available_before": _quantity(state["available"]),
+                "available_after": _quantity(after["available"]),
+                **({"origin": origin} if origin else {}),
+            },
+            request_id=correlation_id,
+        )
+    )
+    db.flush()
+    return reservation, after
+
+
 def reserve(db, caller, request_id: UUID, payload, key, correlation_id) -> dict:
     require_permission(caller, "stock:reserve")
     digest = canonical_hash({"request_id": str(request_id), **payload.model_dump(mode="json")})
@@ -347,46 +395,11 @@ def reserve(db, caller, request_id: UUID, payload, key, correlation_id) -> dict:
     # O pendente já desconta encaminhamentos: `r + e + c ≤ Q` vale entre reserva e compras.
     if quantity > fulfillment(db, row)["pending"]:
         raise ApiProblem(409, "QUANTITY_EXCEEDS_PENDING", "A quantidade excede o pendente da solicitação.")
-    reservation = StockReservation(
-        id=uuid4(),
-        tenant_id=caller.tenant_id,
-        request_id=row.id,
-        material_id=material.id,
-        center_code=row.center_code,
-        quantity=quantity,
-        unit=row.unit,
-        status="ATIVA",
-        dataset_id=state["dataset_id"],
-        created_by_user_id=caller.user_id,
-    )
-    db.add(reservation)
     request_version = row.version
     row.version += 1
-    db.flush()
-    db.refresh(reservation)
-    after = compute_availability(db, caller.tenant_id, material, row.center_code)
-    db.add(
-        AuditLog(
-            tenant_id=caller.tenant_id,
-            actor_user_id=caller.user_id,
-            actor_type="USER",
-            roles_snapshot=list(caller.roles),
-            effective_role=role,
-            action="STOCK_RESERVED",
-            entity_type="stock_reservation",
-            entity_id=str(reservation.id),
-            before_json=None,
-            after_json={
-                **reservation_view(reservation),
-                "request_version_before": request_version,
-                "request_version_after": row.version,
-                "available_before": _quantity(state["available"]),
-                "available_after": _quantity(after["available"]),
-            },
-            request_id=correlation_id,
-        )
+    reservation, after = add_reservation(
+        db, caller, role, row, material, state, quantity, request_version, correlation_id
     )
-    db.flush()
     response = {
         "reservation": reservation_view(reservation),
         "request": request_summary(row, caller),

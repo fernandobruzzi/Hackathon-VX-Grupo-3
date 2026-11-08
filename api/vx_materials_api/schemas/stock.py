@@ -7,9 +7,15 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from vx_materials_api.schemas.material_requests import MaterialRequestSummary, Quantity
+from vx_materials_api.schemas.material_requests import (
+    MaterialRequestSummary,
+    Quantity,
+    ReservationStatus,
+    StockReservation,
+)
 
-ReservationStatus = Literal["ATIVA", "CONSUMIDA", "CANCELADA"]
+__all__ = ["ReservationStatus", "StockReservation"]
+
 MovementType = Literal["ENTREGA", "REVERSAO"]
 AvailabilityBlock = Literal[
     "INACTIVE_MATERIAL",
@@ -106,26 +112,6 @@ class ReverseStockMovement(BaseModel):
     @classmethod
     def nonblank_reason(cls, value):
         return _nonblank(value)
-
-
-class StockReservation(BaseModel):
-    """`quantity` é a quantidade reservada original; `open_quantity` ainda conta em `R`."""
-
-    model_config = ConfigDict(extra="forbid")
-    id: UUID
-    request_id: UUID
-    material_id: UUID
-    center_code: str
-    quantity: Quantity
-    delivered_quantity: Quantity
-    open_quantity: Quantity
-    unit: str
-    status: ReservationStatus
-    dataset_id: UUID
-    created_by_user_id: UUID
-    version: int = Field(ge=1)
-    created_at: datetime
-    updated_at: datetime
 
 
 class StockMovement(BaseModel):
