@@ -7,7 +7,7 @@ export function AuditIdentity({ event }: { event: AuditEvent }) {
   return (
     <>
       <Td className="font-semibold">{system ? "Sistema" : event.actor}</Td>
-      <Td>
+      <Td className="[overflow-wrap:anywhere]">
         <Code>{system ? "Processo automático" : (event.effective_role ?? "—")}</Code>
       </Td>
     </>
