@@ -393,7 +393,7 @@ funções `stock_service.fulfillment` e `stock_service.compute_availability`. Re
 
 - `409 NOTHING_PENDING` quando `p = 0`;
 - `409 STOCK_AVAILABLE` quando `D ≥ p`: o atendimento é por reserva. Com `0 < D < p`, encaminhar
-  tudo é a opção integral da D1; a divisão entre reserva e compras é da #242;
+  tudo é a opção integral da D1; a divisão entre reserva e compras está na seção 19;
 - o `blocked_reason` da disponibilidade (`NO_INVENTORY_DATASET`, `RECONCILIATION_REQUIRED`),
   porque sem saldo confiável a falta não pode ser confirmada;
 - `409 STOCK_UNIT_UNRESOLVED` quando o centro tem saldo em outra unidade (`unconverted_units`),
@@ -428,8 +428,9 @@ Estados e solicitação:
 Toda criação e transição grava auditoria na mesma transação, para o encaminhamento
 (`purchase_forward`) e para a solicitação quando a versão dela muda. A tela `/compras/` mostra a
 fila com o aviso de que o encaminhamento é a demanda para Compras e não confirma pedido ao
-fornecedor, compra realizada nem recebimento. A #242 deve reservar até `D` e encaminhar o
-restante na mesma transação, reaproveitando essas verificações e a unicidade por versão.
+fornecedor, compra realizada nem recebimento. A divisão parcial da #242 (seção 19) reserva até
+`D` e encaminha o restante na mesma transação, reaproveitando essas verificações e a unicidade
+por versão.
 
 ## 17. Entrega, cancelamento de reserva e reversão (#240)
 
@@ -508,3 +509,75 @@ centros, idempotência e CSRF, uma sequência aleatória de operações com enca
 (três sementes) que confere `r + e + c + p = Q`, `p ≥ 0`, `D ≥ 0`, `S = D + R + E` e a variação de `D` a cada passo, e duas
 entregas concorrentes contra a mesma reserva, o encerramento combinado com Compras nas duas
 ordens e o cancelamento da solicitação após entrega parcial.
+
+## 19. Atendimento parcial entre estoque e compras (#242)
+
+Implementa o caminho 3 e a decisão D1. Nenhuma tabela nova nem migração: as parcelas são uma
+reserva (`stock_reservations`, seção 14) e um encaminhamento (`purchase_forwards`, seção 16),
+ambos ligados à mesma solicitação.
+
+**Quem confirma.** A D1 dá a escolha ao solicitante, e a seção 9 reserva `stock:reserve` ao
+Almoxarifado. A decisão adotada: o próprio solicitante confirma a opção (`requests:create`, dono
+da solicitação, centro autorizado), e o servidor executa as duas parcelas na mesma transação. A
+quantidade reservada não vem do cliente: é sempre `min(D, p)`, calculada dentro do bloqueio.
+Isso não concede `stock:reserve`: o solicitante continua recebendo `403` ao reservar uma
+quantidade livre e não entrega, não cancela reservas nem reverte entregas. A parcela de estoque
+fica na fila normal do Almoxarifado, que entrega ou cancela a reserva como em qualquer outra
+(D2, D3). Almoxarifado, Compras e Cadastro recebem `404` ao confirmar a divisão de uma
+solicitação alheia.
+
+**Consulta.** `GET /api/v1/material-requests/{id}/fulfillment-options`, só para o dono, devolve as
+parcelas atuais (`requested`, `reserved`, `delivered`, `forwarded`, `pending`), o disponível do
+centro e as opções com `reserve_quantity` e `forward_quantity`. Com `0 < D < p` as opções são
+`PARTIAL` (padrão) e `PURCHASING_ONLY`; com `D = 0`, só `PURCHASING_ONLY`. Quando a divisão não
+se aplica, `blocked_reason` traz o mesmo código que a confirmação recusaria (`STOCK_AVAILABLE`,
+`NOTHING_PENDING`, `NO_INVENTORY_DATASET`, `RECONCILIATION_REQUIRED`, `STOCK_UNIT_UNRESOLVED`,
+`REQUEST_NOT_IN_SERVICE`, `INACTIVE_MATERIAL`, `UNIT_MISMATCH`) e não há opções. A consulta não
+bloqueia nem grava nada; selecionar o padrão também não.
+
+**Confirmação.** `POST /api/v1/material-requests/{id}/fulfillment` com `expected_version` e
+`option` (`PARTIAL` ou `PURCHASING_ONLY`, obrigatório: a confirmação é sempre explícita) exige
+`Idempotency-Key` e Origin/CSRF nas sessões de navegador. A transação usa as mesmas verificações
+e a mesma ordem do encaminhamento integral (`purchase_forward_service.locked_shortage`):
+
+1. bloqueia a linha da solicitação e confere dono, versão, estado `EM_ATENDIMENTO`, material
+   ativo e unidade;
+2. obtém o bloqueio consultivo por tenant, material principal e centro e só então lê `p` e `D`;
+3. recusa como a seção 16 quando não há falta confirmada (`D ≥ p` dá `409 STOCK_AVAILABLE`: o
+   atendimento integral pelo estoque é a reserva do Almoxarifado, caminho 1);
+4. calcula a divisão: em `PARTIAL`, reserva `min(D, p)` e encaminha `p − min(D, p)`; em
+   `PURCHASING_ONLY`, encaminha `p` sem reserva;
+5. grava a reserva (se houver), o encaminhamento, a auditoria das duas parcelas e um único
+   evento da solicitação, e incrementa a versão da solicitação uma vez.
+
+**Recalcular sem duplicar.** Se `D` mudar entre a consulta e a confirmação, vale o `D` lido dentro
+do bloqueio: com 6 disponíveis na consulta e outra reserva de 2 confirmada antes, a divisão vira
+4 reservados e 6 encaminhados. Se nada restar, `PARTIAL` encaminha tudo sem reserva e o histórico
+diz que nada foi reservado; se `D` passar a cobrir `p`, a confirmação é recusada com
+`STOCK_AVAILABLE` e nada é gravado. Reserva e encaminhamento somam exatamente `p`, então
+`r + e + c ≤ Q` continua valendo, e a reserva concorrente de outra solicitação esbarra no mesmo
+bloqueio (`409 INSUFFICIENT_STOCK` quando a divisão chegou antes). O encaminhamento leva a versão
+da solicitação anterior à confirmação e continua único por (`material_request_id`,
+`request_version`): repetir com a mesma chave devolve a resposta salva; outra chave na mesma
+versão recebe `409 VERSION_CONFLICT`; outra opção com a mesma chave, `409 IDEMPOTENCY_CONFLICT`.
+
+**Auditoria.** `STOCK_RESERVED` (entidade `stock_reservation`) registra o papel efetivo do
+solicitante, o disponível antes e depois e `origin: REQUESTER_PARTIAL_CONFIRMATION`;
+`PURCHASE_FORWARD_CREATED` registra o encaminhamento; a solicitação recebe
+`MATERIAL_REQUEST_PARTIAL_FULFILLMENT` (ou `MATERIAL_REQUEST_FORWARDED_TO_PURCHASING` quando nada
+foi reservado), com `fulfillment_split` no `after_json`: opção, pendente antes, disponível na
+confirmação, quantidades e identificadores das duas parcelas.
+
+**Visível ao solicitante.** O detalhe da solicitação passa a trazer `reserved_quantity`,
+`delivered_quantity`, `reservations` (com `quantity`, `delivered_quantity`, `open_quantity` e
+estado) ao lado de `forwarded_quantity` e `purchase_forwards`. A resposta da confirmação traz
+`reserved_quantity`, `forwarded_quantity`, `available_at_confirmation`, os identificadores das
+parcelas e o detalhe atualizado. O encerramento continua único (`close_if_fulfilled`, seção 17):
+entregar os 6 e Compras aceitar os 4 encerra com `ATENDIDA_PARCIAL_COMPRAS`, o que vier por último.
+
+**Testes.** `api/tests/test_partial_fulfillment.py`, no PostgreSQL, cobre 10 solicitadas com 6
+disponíveis (reserva de 6 e encaminhamento de 4, até o encerramento), consulta sem gravação,
+replay e conflitos de idempotência e versão, recálculo quando outra reserva chega antes da
+confirmação, `PARTIAL` sem saldo restante, `PURCHASING_ONLY`, recusa com saldo suficiente ou
+material não identificado, papéis e CSRF, e uma divisão concorrente com uma reserva avulsa,
+aceitando qualquer ordem e conferindo `r + e + c + p = Q` e `S = D + R + E`.
