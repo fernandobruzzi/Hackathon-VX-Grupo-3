@@ -11,6 +11,8 @@ e os casos previamente ensaiados.
 Ao citar qualidade, seguir [as evidências e limites da avaliação](evaluation.md)
 e a homologação humana independente da #113.
 
+Um [roteiro alternativo centrado no solicitante](script-solicitante.md) (#247) só deve ser usado depois de ensaiado.
+
 ## Tempo e operação
 
 | Janela      | Duração | Assunto            | Operação planejada                                                                                                          |
