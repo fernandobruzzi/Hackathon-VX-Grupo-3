@@ -238,7 +238,7 @@ async def run_turn(request: AgentRunRequest, context: TurnContext, recorder: Too
             "search_similar_materials", {"query": f"código: {code}", "limit": 1}, _summarize_search
         )
         decision = decide(search, request.message, offered, dismissed, request.action)
-        return _no_class_response(context, recorder, search, decision)
+        return _no_class_response(context, recorder, search, decision, request.context.center_code)
     if context.pdm_class is None:
         search = await _search(recorder, request, context, None)
         decision = decide(search, request.message, offered, dismissed, request.action)
