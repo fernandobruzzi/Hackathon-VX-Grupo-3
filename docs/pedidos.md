@@ -77,8 +77,11 @@ que já foi corrigida na conversa. Pedidos legados sem nome do item continuam co
 a análise textual anterior. A migração acrescenta esse nome sem alterar os dados
 originais do kit.
 
-Depois do envio, a conversa fica disponível como evidência e não aceita novos
-turnos que poderiam mudar a ficha encaminhada; para outro item, use “Nova conversa”.
+A confirmação pergunta se o solicitante quer fazer mais cadastros. “Novo cadastro”
+abre uma conversa vazia no mesmo centro. “Encerrar” mantém as mensagens e a ficha
+visíveis em modo de leitura. Ao reabrir um pedido enviado pelo histórico, a
+confirmação oferece as mesmas escolhas. A conversa enviada permanece como
+evidência da ficha encaminhada.
 A Governança e o Fiscal continuam aprovando pelo fluxo de pedidos existente.
 
 ## Listagem paginada
