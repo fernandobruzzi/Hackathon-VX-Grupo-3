@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Button, Code, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui";
 import { ApiError } from "@/lib/api";
 import type { AuditEvent } from "@/types/api";
@@ -92,30 +92,37 @@ export function AuditPage() {
             <Th>Recurso</Th>
             <Th>Justificativa</Th>
             <Th>Requisição</Th>
-            {backend && <Th>Alterações</Th>}
           </tr>
         </thead>
         <tbody>
           {rows.map((a) => (
-            <tr key={a.id}>
-              <Td>
-                <Code className="text-muted">{fmtDate(a.created_at)}</Code>
-              </Td>
-              <AuditIdentity event={a} />
-              <Td>
-                <AuditAction action={a.action} />
-              </Td>
-              <Td className="text-sm">{a.entity}</Td>
-              <Td className="max-w-xs text-sm text-muted">{a.reason ?? "—"}</Td>
-              <Td>
-                <Code className="text-muted">{a.request_id || "Não registrada"}</Code>
-              </Td>
-              {backend && (
+            <Fragment key={a.id}>
+              <tr>
                 <Td>
-                  <AuditChanges event={a} />
+                  <Code className="text-muted">{fmtDate(a.created_at)}</Code>
                 </Td>
+                <AuditIdentity event={a} />
+                <Td>
+                  <AuditAction action={a.action} />
+                </Td>
+                <Td className="text-sm [overflow-wrap:anywhere]">{a.entity}</Td>
+                <Td className="max-w-xs text-sm text-muted">{a.reason ?? "—"}</Td>
+                <Td className="[overflow-wrap:anywhere]">
+                  <Code className="text-muted">{a.request_id || "Não registrada"}</Code>
+                </Td>
+              </tr>
+              {/* Alterações ocupam a largura da tabela para não serem cortadas na última coluna. */}
+              {backend && (
+                <tr>
+                  <Td className="pt-0" colSpan={7}>
+                    <p className="mb-2 text-xs font-bold tracking-[0.04em] text-muted uppercase">
+                      Alterações
+                    </p>
+                    <AuditChanges event={a} />
+                  </Td>
+                </tr>
               )}
-            </tr>
+            </Fragment>
           ))}
         </tbody>
       </Table>

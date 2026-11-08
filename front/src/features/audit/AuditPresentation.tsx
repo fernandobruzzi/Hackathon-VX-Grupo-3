@@ -110,7 +110,7 @@ export function AuditChanges({ event }: { event: AuditEvent }) {
     rows.push(...compare(left, right, `Material ${code} (${id})`));
   }
   return (
-    <div className="w-72 max-w-[80vw] text-sm sm:w-96">
+    <div className="max-w-4xl min-w-0 text-sm">
       {rows.length ? (
         <ul className="space-y-3">
           {rows.map((row) => (
