@@ -15,7 +15,7 @@ Este registro decide o que pode entrar na fala; não transforma hipóteses de
 | R$ 400 milhões/ano de mercado               | A conta `2.000 × R$ 200 mil` é aritmética de hipóteses                                                   | Usar recorte oficial de empresas; receita potencial fica como sensibilidade, fora da fala principal |
 | US$ 26 milhões Verdantis, caso IBM e 5%–15% | São alegações atribuídas a fornecedores/consultoria na #27; não constituem avaliação independente do MVP | Omitir da fala principal e do cálculo do ROI                                                        |
 | R$ 100 milhões de estoque MRO               | Não existe cliente ou medição que sustente essa entrada aqui                                             | Manter somente como hipótese explícita no cenário ilustrativo                                       |
-| 11% e correções da #31                      | Reproduzidos historicamente no commit d11f135, com 887 propostas de unidade                              | Usar 11,2% com denominador de registros e substituir todos os números após a #32                    |
+| Cobertura e propostas da #317 | Lote integral de 8/11 com 23.554 registros e 16.721 propostas | Mostrar propostas e aplicações da amostra separadamente |
 
 ## Legislação: o que o texto oficial sustenta
 
@@ -66,12 +66,12 @@ minutos atuais, a decisão é omitir os casos em vez de repetir números sem con
 ## Produto demonstrável e limites
 
 Esta matriz descreve o código local integrado em `homologacao`, sem afirmar
-execução remota ou ensaio humano. A medição batch continua ligada ao commit
-histórico; os números não foram recontados com as regras atuais.
+execução remota ou ensaio humano. A rodada do batch de 8/11 está identificada
+por commit, job e hashes na evidência da #317.
 
 | Afirmação                                                     | Evidência local integrada                                                                             | Limite para a fala                                                                                                            |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| O batch propõe unificações e correções                        | Relatório histórico completo e hashes em `batch-preview.json`                                         | Prévia, não execução final da #32, aplicação ou economia                                                                      |
+| O batch propõe unificações e correções | [Rodada local de 8/11](evidence/batch-final.json) | Usar as contagens por tipo e separar a amostra aplicada da economia |
 | O Agent pede campos, formata o PDM e busca similares          | `mcp/tests/test_conversation_flow.py` confronta chamadas MCP reais                                    | Busca depende de índice/caso; sem banco falha explicitamente; não prova Bedrock                                               |
 | Há sessões reais da aplicação, pedidos, aprovação e auditoria | `api/tests/test_demo_switch.py`, `test_authenticated_approvals.py`, `test_orders.py` e `test_chat.py` | Código local integrado (#200/#171/#180); Cognito/HTTPS e ensaio de navegador na AWS permanecem pendentes                      |
 | O dashboard lê dados persistidos                              | `api/tests/test_dashboard.py`; `docs/dashboard.md`                                                    | API distingue proposta/aplicação; economia realizada e precisão independente ficam indisponíveis sem evidência                |
