@@ -1,0 +1,247 @@
+{
+  "classification": "FULL_LOCAL_KIT_RUN",
+  "issue": 317,
+  "measured_on": "2026-11-08",
+  "source_commit": "5e854792bd9ac38344b622355dc1c42530b1821c",
+  "database": "PostgreSQL 16 + pgvector, banco local de ensaio",
+  "dataset_id": "17a7b010-56c0-5de2-aee7-678f2a7a6452",
+  "manifest_key": "raw/17a7b010-56c0-5de2-aee7-678f2a7a6452/manifest.json",
+  "files_sha256": {
+    "01_base_materiais.csv": "b8f0cc0a93632ad81ce6c8d149d1a9cc24cd6b5189fa76569add54db3dadd6e8",
+    "02_pedidos_cadastro.csv": "84f94946c2c59cd83a80b806a387e274ae789e2b6bb2d2fa5d992a06b6c8076a",
+    "03_padrao_cadastro_PDM.xlsx": "33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+  },
+  "job": {
+    "id": "35f25a84-2967-4ead-9dd7-99921a2c0370",
+    "status": "SUCCEEDED",
+    "pipeline_version": "batch-v3-enrichment-diagnostics",
+    "analysis_signature": "pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v2@1|extractor:rule_based_v1@11-quantity-reference-199|identity-v3|approved-attributes-v1|independent-fields-v2",
+    "pdm_version": "pdm-kit-v1",
+    "official_ncm_snapshot_version": null,
+    "ncm_rules": [
+      "pdm-ncm-v2",
+      "ncm-proposal-v1"
+    ],
+    "correction_repository": "head_noun_v2",
+    "automatic_correction_mode": "OFF",
+    "model_usage": {
+      "calls": {},
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": "0",
+      "note": "sem chamadas de modelo"
+    },
+    "metrics_key": "runs/35f25a84-2967-4ead-9dd7-99921a2c0370/metrics.json",
+    "metrics_sha256": "3ca67191a6172322258d37428680ed5785d411ff19b0c0f74bb05dc93e131fcd",
+    "timing_seconds": {
+      "analysis": 120.37,
+      "propose": 408.57,
+      "save": 235.36,
+      "total_this_attempt": 764.29,
+      "total_all_attempts": 764.29,
+      "attempts": 1
+    }
+  },
+  "batch": {
+    "coverage": {
+      "materials_total": 23554,
+      "outcomes": {
+        "PENDENTE": 9237,
+        "PROPOSTA": 13348,
+        "SEM_ALTERACAO": 969
+      },
+      "errors": {}
+    },
+    "proposals_total": 16721,
+    "proposals_by_type": {
+      "ENRICHMENT": 350,
+      "MERGE": 1124,
+      "NCM_CORRECTION": 6083,
+      "PDM_CORRECTION": 8277,
+      "UNIT_CORRECTION": 887
+    },
+    "persisted_proposals_by_type": {
+      "MERGE": 1124,
+      "ENRICHMENT": 350,
+      "NCM_CORRECTION": 6083,
+      "PDM_CORRECTION": 8277,
+      "UNIT_CORRECTION": 887
+    },
+    "merge_summary": {
+      "proposals": 1124,
+      "materials": 2536,
+      "identity_verified": 1124,
+      "fiscal_review_required": 810,
+      "conflicts": {
+        "PDM_INVALIDO": 374,
+        "NCM_DIVERGENTE": 265,
+        "UNIDADE_SEM_FATOR": 92,
+        "UNIDADES_DIFERENTES": 40
+      }
+    },
+    "materials_with_correction_proposal": 12770,
+    "ncm_proposals": {
+      "fill_missing": 680,
+      "change_code": 884,
+      "format_only": 4519
+    }
+  },
+  "sample_review": {
+    "route": "POST /api/v1/sanitization/{proposal_id}/decide",
+    "session": "sessões locais de Governança PDM e Auditoria Fiscal",
+    "decisions": [
+      {
+        "proposal_id": "00f5532e-1cf8-5018-948d-32c5f3791f55",
+        "proposal_type": "UNIT_CORRECTION",
+        "material_codes": [
+          "28269908"
+        ],
+        "changes": [
+          {
+            "field": "Unidade",
+            "before": "LT",
+            "after": "L",
+            "source": "head_noun_v2/unit.alias_without_class (rule_based_v1/unit.alias)"
+          }
+        ],
+        "review_area": "TECHNICAL",
+        "status": "APPLIED",
+        "audit_event_id": "523baf87-b315-4b3c-86cf-135e3094d332",
+        "audited_action": "PROPOSAL_APPROVE_TECHNICAL"
+      },
+      {
+        "proposal_id": "00b3ef34-6256-570c-ad57-7015255c21b7",
+        "proposal_type": "NCM_CORRECTION",
+        "material_codes": [
+          "29093560"
+        ],
+        "changes": [
+          {
+            "field": "NCM",
+            "before": null,
+            "after": "4015.19.00",
+            "source": "pdm-ncm-v2/PDM070_NCM; ncm-proposal-v1; PDM sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+          },
+          {
+            "field": "Classe PDM",
+            "before": null,
+            "after": "PDM070",
+            "source": "Classificação batch: aliases_v2"
+          },
+          {
+            "field": "MATERIAL",
+            "before": null,
+            "after": "LATEX",
+            "source": "Extração batch: rule_based_v1; validação PDM e originais no dataset"
+          }
+        ],
+        "review_area": "TECHNICAL",
+        "status": "PENDING",
+        "audit_event_id": "cc579d9b-c209-4692-9687-b64d09fde2ae",
+        "audited_action": "PROPOSAL_APPROVE_TECHNICAL"
+      },
+      {
+        "proposal_id": "00b3ef34-6256-570c-ad57-7015255c21b7",
+        "proposal_type": "NCM_CORRECTION",
+        "material_codes": [
+          "29093560"
+        ],
+        "changes": [
+          {
+            "field": "NCM",
+            "before": null,
+            "after": "4015.19.00",
+            "source": "pdm-ncm-v2/PDM070_NCM; ncm-proposal-v1; PDM sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b"
+          },
+          {
+            "field": "Classe PDM",
+            "before": null,
+            "after": "PDM070",
+            "source": "Classificação batch: aliases_v2"
+          },
+          {
+            "field": "MATERIAL",
+            "before": null,
+            "after": "LATEX",
+            "source": "Extração batch: rule_based_v1; validação PDM e originais no dataset"
+          }
+        ],
+        "review_area": "FISCAL",
+        "status": "APPLIED",
+        "audit_event_id": "9b3b8abc-0299-452d-bc24-5609d9dd7db9",
+        "audited_action": "PROPOSAL_APPROVE_FISCAL"
+      }
+    ],
+    "changed_materials_verified_in_database": [
+      {
+        "material_code": "28269908",
+        "version": 2
+      },
+      {
+        "material_code": "29093560",
+        "version": 2
+      }
+    ]
+  },
+  "dashboard": {
+    "route": "POST /api/v1/dashboard/snapshots",
+    "before": {
+      "materials_total": 23554,
+      "active": 20014,
+      "blocked": 2331,
+      "obsolete": 1209,
+      "missing_ncm": 1173,
+      "noncanonical_unit": 2030,
+      "duplicate_codes": 1412
+    },
+    "after": {
+      "materials_total": 23554,
+      "active": 20014,
+      "blocked": 2331,
+      "obsolete": 1209,
+      "missing_ncm": 1172,
+      "noncanonical_unit": 2029,
+      "duplicate_codes": 1412
+    },
+    "pipeline": {
+      "proposals_total": 16721,
+      "pending": 16719,
+      "applied": 2,
+      "rejected": 0,
+      "stale": 0
+    },
+    "snapshot": {
+      "id": "19edecd9-1e5f-4953-ab22-97071aab3e32",
+      "dataset_id": "17a7b010-56c0-5de2-aee7-678f2a7a6452",
+      "created_at": "2026-11-08T12:48:56.354213Z",
+      "applied_proposals": 2,
+      "materials_changed": 2,
+      "inventory_value_conserved": true,
+      "export_key": "exports/19edecd9-1e5f-4953-ab22-97071aab3e32/quality_snapshot.json"
+    },
+    "export_sha256": "a15ba0c1651657254b222ba742794e1ffd724be659cc88cd10906cb9a92360da"
+  },
+  "financial_savings_measured": false,
+  "rehearsal_reset": {
+    "runs": 1,
+    "fingerprint_sha256": "5b455d4b87425ac4e44b14c2f859f3452aa0ae061af3a48c4e45a2d48e2a6ca8",
+    "state": {
+      "sha256": "5b455d4b87425ac4e44b14c2f859f3452aa0ae061af3a48c4e45a2d48e2a6ca8",
+      "counts": {
+        "materials": 23554,
+        "proposals": 16721,
+        "pending_proposals": 16721,
+        "orders": 520,
+        "audit_events": 0,
+        "chat_sessions": 0,
+        "operation_requests": 0,
+        "inventory_consolidations": 0,
+        "batch_jobs": 0,
+        "material_search_index": 23554,
+        "quality_snapshots": 0
+      }
+    },
+    "orders_imported_each_run": 520,
+    "index_version": "search-index-v2|pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v2@1|extractor:rule_based_v1@11-quantity-reference-199|identity-v3|approved-attributes-v1|independent-fields-v2"
+  }
+}

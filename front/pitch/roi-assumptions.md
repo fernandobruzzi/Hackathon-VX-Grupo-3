@@ -9,7 +9,7 @@ ou desconto a valor presente. Não constituem previsão de retorno nem resultado
 
 | Tipo                     | Significado                                                               | Uso na fala                                           |
 | ------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Medição local preliminar | Resultado reproduzível no kit, com versão e arquivos identificados        | Pode ser mostrado como proposta; atualizar após a #32 |
+| Medição local            | Resultado reproduzível no kit, com versão e arquivos identificados        | Mostrar separadamente propostas e aplicações da amostra |
 | Fonte externa            | Informação publicada por terceiro, com recorte, data e origem             | Não atribuir ao nosso produto                         |
 | Hipótese                 | Entrada escolhida para explorar um cenário, ainda sem validação comercial | Dizer explicitamente que é hipotética                 |
 | Estimativa calculada     | Saída de uma fórmula aplicada às hipóteses                                | Apresentar junto às hipóteses e ao que foi excluído   |
@@ -20,40 +20,33 @@ em centros diferentes. Unificar códigos não libera dinheiro por si só.
 
 ## 2. O que foi medido no kit
 
-Rodada somente de leitura no commit `d11f13529f3436672a2145922e8d8509dede160d`,
-com os algoritmos e hashes registrados em [batch-preview.json](evidence/batch-preview.json).
-São números históricos preliminares para o roteiro, não uma recontagem da
-`homologacao` atual nem a execução final da #32. Reexecutar os comandos atuais
-pode produzir outros números; conservar este artefato como registro histórico.
+O [lote local de 8/11/2026](evidence/batch-final.json) registra o commit, o job,
+os hashes e a amostra aprovada. A [prévia de 5/11](evidence/batch-preview.json)
+fica como histórico.
 
-| Indicador                                              | Resultado               | Interpretação permitida                                                                                   |
-| ------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| Registros de materiais de entrada                      | 23.554                  | Dimensão do kit                                                                                           |
-| Materiais envolvidos em grupos propostos de unificação | 2.629; 11,2% da entrada | `2.629 / 23.554 × 100 = 11,1616%`; não é percentual de estoque recuperável                                |
-| Propostas de unificação                                | 1.147                   | Identidade confirmada pelo algoritmo do PDM; não é precisão medida por especialistas nem aprovação humana |
-| Unificações com revisão fiscal indicada                | 258                     | Divergência de NCM entre membros; não equivale a 258 infrações ou multas                                  |
-| Propostas `PDM_CORRECTION`                             | 7.202                   | Descrição e/ou grupo de mercadoria propostos                                                              |
-| Propostas `UNIT_CORRECTION`                            | 887                     | Valor atualizado nesta rodada; substitui a contagem inicial de 628 da #31                                 |
-| Total de propostas desses três tipos                   | 9.236                   | `1.147 + 7.202 + 887`; não é número de materiais distintos                                                |
-| Materiais com alguma correção proposta                 | 7.780                   | Pode haver sobreposição com os grupos de unificação                                                       |
-| NCM ausente no original                                | 1.173; 5,0%             | Ausência, sem afirmar vigência ou correção dos demais NCMs                                                |
-| Unidade de embalagem sem fator conhecido               | 978                     | Pendência de normalização; não converter automaticamente                                                  |
+| Indicador | Resultado | Interpretação |
+| --- | ---: | --- |
+| Registros de entrada | 23.554 | Base sintética inteira |
+| Registros com proposta | 13.348 | Um desfecho por material, mesmo se houver várias propostas |
+| Registros pendentes ou sem alteração | 9.237 e 969 | A soma com os registros com proposta cobre a base |
+| Propostas de unificação | 1.124 | Envolvem 2.536 materiais, ou 10,8% dos registros |
+| Unificações encaminhadas ao Fiscal | 810 | 265 propostas de unificação registram divergência de NCM |
+| Propostas de NCM | 6.083 | 680 preenchimentos, 884 trocas de código e 4.519 ajustes de formato |
+| Propostas PDM e de unidade | 8.277 e 887 | Descrição e grupo no PDM, unidade na categoria própria |
+| Propostas de enriquecimento | 350 | Atributos propostos com evidência de fontes internas |
+| Propostas no total | 16.721 | As categorias podem se sobrepor por material |
 
-A rodada de relatório não aplicou mudanças e não mediu redução de compras,
-tempo de cadastro, estoque, multas ou caixa. Os campos de correção somam 6.923
-descrições, 542 grupos e 887 unidades: um material pode ter mais de um campo.
-Não somar esses campos como se fossem materiais únicos.
+O lote e o snapshot medem o tratamento da base sintética. As horas, compras,
+estoque excedente e economia de caixa exigem medição em piloto. O modelo abaixo
+usa hipóteses próprias, separadas dos resultados do kit.
 
-Reprodução na raiz, depois de `uv sync --all-packages`:
-
-```bash
-uv run vx-back sanitize-report data/desafio01/01_base_materiais.csv --pdm-workbook data/desafio01/03_padrao_cadastro_PDM.xlsx
-uv run vx-back normalization-report data/desafio01/01_base_materiais.csv
-```
-
-No Windows, use `$env:PYTHONUTF8 = "1"` antes dos comandos. Na rodada final,
-registrar o commit, hashes, configuração, manifesto/job, saídas e data. Se os
-números mudarem, substituir a tabela, o arquivo de evidência e a fala em conjunto.
+Para reproduzir a rodada, use um banco de ensaio migrado com o kit carregado
+por `vx-bootstrap`. Em `APP_ENV=local`, crie o job com `vx-batch-job` e execute
+`vx-back sanitize --job-id <id> --pdm-workbook data/desafio01/03_padrao_cadastro_PDM.xlsx`
+com a credencial batch. A evidência registra a assinatura de análise e a chave
+do relatório. As decisões foram registradas pela API de revisão e o snapshot
+por `POST /api/v1/dashboard/snapshots`. O [procedimento de reset](../../docs/demo.md)
+recompõe o estado inicial do ensaio.
 
 ## 3. Modelo econômico ilustrativo
 
@@ -75,7 +68,7 @@ implantação está separado da assinatura para não desaparecer do cálculo.
 | Integração, treinamento e implantação           | `C0`    | R$ 50 mil no primeiro ano   | Orçamento do piloto                                                                                 |
 
 O valor `S` é **premissa**, não estoque real de cliente nem valor do kit.
-A proporção monetária elegível abaixo não vem dos 11,2% de registros nem dos
+A proporção monetária elegível abaixo não vem dos 10,8% de registros nem dos
 5%–15% citados por consultorias. São denominadores diferentes.
 
 Fórmulas, com percentuais em fração e tempo em minutos:

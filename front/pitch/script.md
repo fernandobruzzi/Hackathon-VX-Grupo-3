@@ -1,16 +1,13 @@
 # Roteiro do pitch
 
-Desafio 01 — Do Fundo do Poço. Versão de trabalho de 5/11/2026, na #28.
+Desafio 01 — Do Fundo do Poço. Evidência do saneamento atualizada em 8/11/2026, na #317.
 **Planejado para 4min30s, com 30s de margem dentro dos cinco minutos.** A duração
 é uma estimativa textual; o ensaio humano na AWS e no Plano B continua pendente.
 
-Preparação documental com **Refs #28**; a issue permanece aberta. A prévia batch
-preserva a medição histórica de 5/11 no commit
-`d11f13529f3436672a2145922e8d8509dede160d`; não é uma recontagem da `homologacao`
-atual. A base local integrada já entrega sessões, busca MCP, pedidos, aprovação,
-auditoria, dashboard com dados persistidos, resolução manual e enriquecimento
-com fonte. O ensaio humano integrado na AWS e no Plano B segue pendente
-nas #26, #29 e #34. Usar somente o ambiente e os casos previamente ensaiados.
+O saneamento integral, as decisões da amostra e o snapshot posterior estão na
+[evidência da rodada local](evidence/batch-final.json). O ensaio humano integrado
+na AWS e no Plano B segue pendente nas #26, #29 e #34. Usar somente o ambiente
+e os casos previamente ensaiados.
 Ao citar qualidade, seguir [as evidências e limites da avaliação](evaluation.md)
 e a homologação humana independente da #113.
 
@@ -20,8 +17,8 @@ e a homologação humana independente da #113.
 | ----------- | ------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | 00:00–00:25 | 25s     | Problema           | Exibir descrição incompleta do parafuso                                                                                     |
 | 00:25–00:55 | 30s     | Solução            | Mostrar regra PDM compartilhada e resultado como proposta                                                                   |
-| 00:55–02:15 | 80s     | Demo real do motor | Dois turnos no chat conectado à API/MCP; se essa interface não estiver validada, usar a evidência local reproduzível abaixo |
-| 02:15–03:00 | 45s     | Resultado medido   | Exibir o JSON do batch identificado por versão e hashes                                                                     |
+| 00:55–02:15 | 80s     | Saneamento da base | Exibir o resultado do batch, o caso de NCM da amostra, a auditoria e o snapshot posterior                                  |
+| 02:15–03:00 | 45s     | Cadastro no chat   | Mostrar o campo faltante, a validação PDM e NCM e o resultado da busca de semelhantes                                      |
 | 03:00–03:40 | 40s     | Impacto hipotético | Exibir cenário central e rótulo “HIPÓTESE — inclui capacidade, não só caixa”                                                |
 | 03:40–04:10 | 30s     | Mercado e piloto   | Recorte IBGE e proposta de validar disposição a pagar                                                                       |
 | 04:10–04:30 | 20s     | Fechamento         | Próximo passo e limite atual                                                                                                |
@@ -44,9 +41,21 @@ encerrar e abrir para perguntas. Não preencher a margem com novas promessas.
 > Nossa solução usa o mesmo padrão de materiais para analisar a base existente
 > e conferir novos pedidos. O resultado do saneamento é uma proposta com antes,
 > depois e regra aplicada. A prioridade é evitar uma unificação errada. A
-> publicação depende de revisão; esta demonstração não altera o cadastro.
+> aplicação das propostas passa pelo fluxo de revisão. A amostra da demonstração
+> foi aplicada em um banco de ensaio.
 
-### 00:55 — Antes de clicar, diga o que vai acontecer
+### 00:55 — Saneamento integral e amostra aplicada
+
+> Em 8 de novembro, o lote local analisou os 23.554 registros do kit. Foram
+> registradas 16.721 propostas. Em NCM, foram 680 preenchimentos, 884 trocas de
+> código e 4.519 ajustes de formato propostos. Um material pode aparecer em
+> várias propostas. Aplicamos uma amostra pela fila normal,
+> com decisões registradas na auditoria e um snapshot posterior da base.
+> No snapshot, o preenchimento aprovado reduziu os registros sem NCM de
+> 1.173 para 1.172. A rodada mede o tratamento do kit; a economia precisa
+> ser comprovada num piloto.
+
+### 02:15 — Validação no cadastro
 
 > Vou enviar um pedido de parafuso sem a classe de resistência. O motor deve
 > identificar o campo ausente e pedir essa informação. No painel, as chamadas
@@ -54,14 +63,6 @@ encerrar e abrir para perguntas. Não preencher a margem com novas promessas.
 > A descrição fica no padrão. A busca deve mostrar se há candidatos e se falta
 > alguma decisão. Validar a ficha não publica o material; o envio depende do
 > resultado e das decisões exigidas.
-
-### 02:15 — Resultado local, sem transformar proposta em economia
-
-> Na rodada local preliminar de 5 de novembro, analisamos os 23.554 registros do kit. O algoritmo
-> gerou 1.147 propostas de unificação, envolvendo 2.629 materiais: 11,2% da entrada.
-> Também propôs 7.202 correções de descrição ou grupo e 887 de unidade.
-> São propostas, com possíveis sobreposições de materiais. Não são registros
-> já eliminados nem dinheiro economizado. A rodada final atualizará esses números.
 
 ### 03:00 — Impacto como hipótese
 
@@ -108,6 +109,11 @@ Sem índice, a verificação fica pendente e o envio bloqueado. Uma ficha `VALID
 não comprova publicação. Mostrar as chamadas realmente executadas e o estado
 retornado. O planejador usa regras; esse fluxo não comprova inferência Bedrock/LLM.
 
+Se o solicitante escolher um item já cadastrado ou aceitar um semelhante,
+mostrar quantidade em estoque, detalhes do item e valor unitário para o papel
+autorizado. O roteiro encerra a demonstração desse caminho nesse retorno.
+Reservas, compras e acompanhamento detalhado ficam na evolução pós-hackathon.
+
 Verificação local pelo endpoint do agente e subprocesso MCP reais, a partir de `mcp/`:
 
 ```bash
@@ -136,12 +142,12 @@ As condições, evidências e fallback estão em [rehearsal.md](rehearsal.md).
 
 ## Perguntas prováveis da banca
 
-- **Vocês economizaram 11,2% do estoque?** Não. Esse percentual conta registros
-  envolvidos em propostas no kit; não mede valor excedente nem caixa.
+- **Quanto a empresa economizou?** A rodada mediu propostas e aplicações no kit
+  sintético. Economia realizada precisa de evidência financeira num piloto.
 - **O retorno de 9,5% foi medido?** Não. É um cenário econômico que inclui capacidade.
   Só um piloto com Controladoria pode comprovar benefício e caixa.
-- **Qual é a precisão?** A identidade segue regras do PDM, mas a medição em amostra
-  revisada por especialistas é uma entrega da #32. Não anunciar “100%”.
+- **Qual é a precisão?** A identidade segue as regras do PDM. A medição independente
+  por especialistas está na #113.
 - **Onde está o modelo de IA?** O planejador demonstrado é determinístico e usa MCP
   real. Não apresentamos inferência Bedrock como algo executado nesta versão.
 - **Há proteção fiscal completa?** A revisão fiscal e a consistência NCM local estão integradas;
@@ -151,4 +157,4 @@ As condições, evidências e fallback estão em [rehearsal.md](rehearsal.md).
   explicando a limitação. Não chamar isso de ensaio concluído do Plano B.
 
 Fontes e denominadores: [premissas](roi-assumptions.md),
-[checagem de fontes](source-checks.md) e [evidência local](evidence/batch-preview.json).
+[checagem de fontes](source-checks.md) e [evidência local](evidence/batch-final.json).
