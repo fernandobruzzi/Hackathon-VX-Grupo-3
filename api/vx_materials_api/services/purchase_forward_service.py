@@ -30,7 +30,12 @@ from vx_materials_api.services.material_request_service import (
     remember_idempotency,
     summary,
 )
-from vx_materials_api.services.stock_service import _lock_stock, compute_availability, fulfillment
+from vx_materials_api.services.stock_service import (
+    _lock_stock,
+    close_if_fulfilled,
+    compute_availability,
+    fulfillment,
+)
 
 
 def forward_request(db, caller, request_id, payload, key, correlation_id):
@@ -144,26 +149,6 @@ def _claim(db, caller, operation, key, digest):
     return previous
 
 
-def _close_if_done(db, caller, role, request, correlation_id):
-    """Encerra quando nada falta (`p = 0`, `r = 0`) e nenhum encaminhamento aguarda Compras."""
-    if request.status != "EM_ATENDIMENTO":
-        return
-    awaiting = db.scalar(
-        select(PurchaseForward.id).where(
-            PurchaseForward.material_request_id == request.id, PurchaseForward.status == "ENCAMINHADO"
-        )
-    )
-    quantities = fulfillment(db, request)
-    if awaiting or quantities["reserved"] > 0 or quantities["pending"] > 0:
-        return
-    before = summary(request, caller)
-    request.status = "ENCERRADA"
-    request.closure_reason = "ATENDIDA_PARCIAL_COMPRAS" if quantities["delivered"] > 0 else "ENCAMINHADA_COMPRAS"
-    request.version += 1
-    db.flush()
-    _audit(db, caller, role, request, before, None, correlation_id, action="MATERIAL_REQUEST_CLOSED")
-
-
 def handle_forward(db, caller, forward_id, payload, key, correlation_id, *, accept):
     """Compras aceita ou devolve com motivo; a devolução retorna a quantidade a `p`."""
     require_permission(caller, "purchasing:handle")
@@ -201,7 +186,8 @@ def handle_forward(db, caller, forward_id, payload, key, correlation_id, *, acce
     action = "PURCHASE_FORWARD_ACCEPTED" if accept else "PURCHASE_FORWARD_RETURNED"
     audit_forward(db, caller, role, action, forward, before, forward.reason, correlation_id)
     if accept:
-        _close_if_done(db, caller, role, request, correlation_id)
+        # Mesmo encerramento da entrega (seção 5): sem pendência, reserva nem encaminhamento aberto.
+        close_if_fulfilled(db, caller, role, request, correlation_id)
     else:
         request_before = summary(request, caller)
         request.version += 1

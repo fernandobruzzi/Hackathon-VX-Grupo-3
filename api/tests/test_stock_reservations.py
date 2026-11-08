@@ -335,7 +335,8 @@ def test_consolidations_and_deliveries_of_the_current_dataset_count(case):
     add_stock(db, old, material, "50")
     request = new_request(client, login(client, "SOLICITANTE_OPERACAO"), material, "10")
     clerk = login(client, "ALMOXARIFADO")
-    old_reservation = reserve(client, clerk, request, "1").json()["reservation"]
+    # Reserva de 8 da qual saem 4 + 3: restam 1 em `R` (só a parte não entregue conta).
+    old_reservation = reserve(client, clerk, request, "8").json()["reservation"]
     current = add_dataset(db, imported_at=NEWER_DATE)
     add_stock(db, current, material, "6")
     add_stock(db, current, material, "3", unit="CX")
