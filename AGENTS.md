@@ -551,9 +551,11 @@ The `GRANT migration_user TO <master>` line is required on PostgreSQL 16: withou
 ## NCM consistency
 
 `back/domain/ncm_rules.py` and the MCP tool `check_ncm_consistency` evaluate syntax
-and PDM coherence without writing materials or approving changes. Without the
-official snapshot (#30), existence and validity are unknown, never inferred from
-the PDM. Evaluation hashes bind inputs and reference versions. The batch proposes
+and PDM coherence without writing materials or approving changes. Without a
+configured official snapshot (`NCM_SNAPSHOT_VERSION`, #30), existence and validity are
+unknown, never inferred from the PDM. `clients.ncm_snapshot_cli download` registers
+the daily official table; only that path records `OFFICIAL_DOWNLOAD`. Capture, kit
+measurement and Compose setup are in `docs/ncm-snapshot.md`. Evaluation hashes bind inputs and reference versions. The batch proposes
 `NCM_CORRECTION` in any status for a class opened by the item name (in full or
 unambiguously abbreviated) with one resolved code. Only the attributes that decide the
 code are required, and `ncm_proposal_blockers` adds a stricter proposal policy without
