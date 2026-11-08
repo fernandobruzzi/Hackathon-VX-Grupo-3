@@ -14127,6 +14127,31 @@
             ],
             "default": null,
             "title": "Unavailable Reason"
+          },
+          "estimated_hours": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Hours"
+          },
+          "quantities": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Quantities",
+            "type": "object"
+          },
+          "stock_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/StockSavingsEvidence"
+            },
+            "title": "Stock Evidence",
+            "type": "array"
           }
         },
         "required": [
@@ -14197,6 +14222,63 @@
           "sha256"
         ],
         "title": "AssumptionSource",
+        "type": "object"
+      },
+      "StockSavingsEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "delivery_id": {
+            "format": "uuid",
+            "title": "Delivery Id",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "recorded_on": {
+            "format": "date",
+            "title": "Recorded On",
+            "type": "string"
+          },
+          "snapshot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Snapshot Ids",
+            "type": "array"
+          },
+          "factors": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Factors",
+            "type": "object"
+          }
+        },
+        "required": [
+          "delivery_id",
+          "quantity",
+          "unit",
+          "unit_price",
+          "source",
+          "recorded_on",
+          "snapshot_ids",
+          "factors"
+        ],
+        "title": "StockSavingsEvidence",
         "type": "object"
       }
     },

@@ -47,6 +47,7 @@ from vx_materials_api.services.materials_service import (
     current_dataset_id,
     inventory_quantities,
 )
+from vx_materials_api.services.savings_stock_basis import capture_stock_basis
 
 ZERO = Decimal(0)
 RESERVE_OPERATION = "stock.reserve"
@@ -693,6 +694,14 @@ def deliver(db, caller, reservation_id: UUID, payload, key, correlation_id) -> d
             "movement": response["movement"],
             "reservation": response["reservation"],
             "fulfillment": response["fulfillment"],
+            "savings_basis": capture_stock_basis(
+                db,
+                caller.tenant_id,
+                movement.dataset_id,
+                reservation.material_id,
+                reservation.center_code,
+                reservation.unit,
+            ),
             "request_version": delivered_version,
             "request_status": row.status,
             "available_before": _quantity(before["available"]),

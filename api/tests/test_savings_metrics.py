@@ -73,6 +73,7 @@ def test_savings_counts_audited_events_once_and_excludes_measured_stock_from_est
                 action=event.action,
                 entity_type=event.entity_type,
                 entity_id=event.entity_id,
+                before_json=event.before_json,
                 after_json=payload,
                 roles_snapshot=[],
             )
@@ -99,7 +100,7 @@ def test_savings_counts_audited_events_once_and_excludes_measured_stock_from_est
     assert components["registration_reuse"].amount_brl == "33.33"
     assert components["duplicate_codes"].amount_brl == "12.00"
     assert components["batch_reviews"].amount_brl == "13.33"
-    assert result.estimated_savings == "58.66"
+    assert result.estimated_savings is None
     assert result.realized_savings is None
     assert components["stock_fulfilled"].kind == "MEASURED_KIT_VALUE"
     assert all(a.source and a.recorded_on == date(2026, 11, 8) for c in components.values() for a in c.assumptions)
@@ -122,14 +123,18 @@ def test_assumptions_reject_noncanonical_or_negative_values(tmp_path, value):
 
 
 def test_stock_value_uses_deliveries_minus_reversals_and_never_reservations(dashboard_case):
-    from vx_materials_api.db.models import MaterialRequest, StockMovement, StockReservation, UserSso
+    from vx_materials_api.db.models import ChatSession, MaterialRequest, StockMovement, StockReservation, UserSso
 
     client, db, dataset, materials, snapshots, proposal, _ = dashboard_case
     login(client)
     approve(client, proposal)
     db.expire_all()
     user = db.scalar(select(UserSso.id).where(UserSso.tenant_id == dataset.tenant_id))
+    chat = ChatSession(tenant_id=dataset.tenant_id, owner_user_id=user, status="OPEN", context={})
+    db.add(chat)
+    db.flush()
     request = MaterialRequest(
+        chat_session_id=chat.id,
         tenant_id=dataset.tenant_id,
         requester_user_id=user,
         original_text="3 unidades",
@@ -158,7 +163,7 @@ def test_stock_value_uses_deliveries_minus_reversals_and_never_reservations(dash
         result = metrics(db, principal(role="ROLE_AUDITOR_FISCAL"), view="executive").financial
         return next(c for c in result.components if c.key == "stock_fulfilled")
 
-    assert stock().amount_brl == "0.00"  # Reserva não prova atendimento.
+    assert stock().amount_brl is None and stock().count == "0"  # Reserva não registra preço de entrega.
     delivery = StockMovement(
         tenant_id=dataset.tenant_id,
         reservation_id=reservation.id,
@@ -169,6 +174,20 @@ def test_stock_value_uses_deliveries_minus_reversals_and_never_reservations(dash
     )
     db.add(delivery)
     db.flush()
+    from vx_materials_api.services.savings_stock_basis import capture_stock_basis
+
+    db.add(
+        AuditLog(
+            tenant_id=dataset.tenant_id,
+            actor_type="USER",
+            action="STOCK_DELIVERED",
+            entity_type="stock_movement",
+            entity_id=str(delivery.id),
+            after_json={
+                "savings_basis": capture_stock_basis(db, dataset.tenant_id, dataset.id, materials[0].id, "1100", "PC")
+            },
+        )
+    )
     db.add(
         StockMovement(
             tenant_id=dataset.tenant_id,
@@ -181,20 +200,23 @@ def test_stock_value_uses_deliveries_minus_reversals_and_never_reservations(dash
         )
     )
     db.commit()
-    assert stock().count == "1" and stock().amount_brl == "20.00"
+    assert stock().count == "2" and stock().amount_brl == "20.00"
     snapshots[0].unit_price = None
     db.commit()
-    assert stock().amount_brl is None
+    assert stock().amount_brl == "20.00"  # A evidência da entrega não é recalculada.
+    assert capture_stock_basis(db, dataset.tenant_id, dataset.id, materials[0].id, "1100", "PC")["unit_price"] is None
     snapshots[0].unit_price = 11
     db.commit()
-    assert stock().amount_brl is None  # Preços diferentes não são escolhidos por suposição.
+    assert stock().amount_brl == "20.00"
+    assert capture_stock_basis(db, dataset.tenant_id, dataset.id, materials[0].id, "1100", "PC")["unit_price"] is None
+    # Uma entrega nova não escolheria arbitrariamente entre esses preços.
     assert (
         next(
             c
             for c in metrics(db, principal(("1200",), "ROLE_AUDITOR_FISCAL"), view="executive").financial.components
             if c.key == "stock_fulfilled"
         ).amount_brl
-        == "0.00"
+        is None
     )
 
 
@@ -226,13 +248,24 @@ def test_assumption_versions_are_immutable_and_example_is_valid(tmp_path):
 
 
 def test_delivery_after_import_uses_movement_dataset(dashboard_case):
-    from vx_materials_api.db.models import Dataset, MaterialRequest, StockMovement, StockReservation, UserSso
+    from vx_materials_api.db.models import (
+        ChatSession,
+        Dataset,
+        MaterialRequest,
+        StockMovement,
+        StockReservation,
+        UserSso,
+    )
 
     _, db, dataset, materials, _, _, _ = dashboard_case
     old = Dataset(tenant_id=dataset.tenant_id, files={}, real_material_codes=[])
     db.add(old)
     user = db.scalar(select(UserSso.id).where(UserSso.tenant_id == dataset.tenant_id))
+    chat = ChatSession(tenant_id=dataset.tenant_id, owner_user_id=user, status="OPEN", context={})
+    db.add(chat)
+    db.flush()
     request = MaterialRequest(
+        chat_session_id=chat.id,
         tenant_id=dataset.tenant_id,
         requester_user_id=user,
         original_text="2 unidades",
@@ -266,6 +299,20 @@ def test_delivery_after_import_uses_movement_dataset(dashboard_case):
     )
     db.add(delivery)
     db.flush()
+    from vx_materials_api.services.savings_stock_basis import capture_stock_basis
+
+    db.add(
+        AuditLog(
+            tenant_id=dataset.tenant_id,
+            actor_type="USER",
+            action="STOCK_DELIVERED",
+            entity_type="stock_movement",
+            entity_id=str(delivery.id),
+            after_json={
+                "savings_basis": capture_stock_basis(db, dataset.tenant_id, dataset.id, materials[0].id, "1100", "PC")
+            },
+        )
+    )
     db.add(
         StockMovement(
             tenant_id=dataset.tenant_id,

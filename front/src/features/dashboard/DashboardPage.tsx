@@ -304,8 +304,8 @@ export function DashboardPage() {
                         {fmtBRL(d.financial.estimated_savings)}
                       </p>
                       <p className="mt-2 text-xs text-muted">
-                        Calculada apenas nos componentes com premissas registradas, detalhados
-                        acima.
+                        Total indisponível: os componentes acima têm naturezas e períodos
+                        diferentes.
                       </p>
                     </div>
                   </Card>

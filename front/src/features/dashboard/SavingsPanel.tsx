@@ -20,13 +20,10 @@ export function SavingsPanel({ data }: { data: NonNullable<DashboardMetrics["fin
         <p className="mt-2 text-sm text-muted">
           Dados sintéticos do desafio. Nenhum valor aqui comprova economia realizada em uma empresa.
         </p>
-        <p className="mt-3 font-semibold">
-          Estimativa parcial do cenário: {money(data.estimated_savings)}
-        </p>
-        <p className="mt-1 text-xs text-muted">
-          Soma somente estimativas com premissas disponíveis: operações observadas e um ano
-          hipotético de manutenção dos códigos. Capacidade de trabalho não é caixa realizado. Não
-          inclui o valor atendido com estoque.
+        <p className="mt-3 text-sm text-muted">
+          Componentes separados: benefício por cadastro, custo anual dos códigos, capacidade de
+          revisão e estoque atendido têm naturezas e períodos diferentes. O total agregado fica
+          indisponível; capacidade de trabalho não é economia de caixa.
         </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {(data.components ?? []).map((component) => (
@@ -39,6 +36,19 @@ export function SavingsPanel({ data }: { data: NonNullable<DashboardMetrics["fin
               <p className="mt-1 font-mono text-sm">
                 {component.count ?? "Indisponível"} {component.count_unit}
               </p>
+              {component.estimated_hours != null && (
+                <p className="mt-2 text-sm">
+                  {Number(component.estimated_hours).toLocaleString("pt-BR", {
+                    maximumFractionDigits: 4,
+                  })}{" "}
+                  horas estimadas
+                </p>
+              )}
+              {Object.entries(component.quantities ?? {}).map(([unit, quantity]) => (
+                <p key={unit} className="text-sm">
+                  Entregue: {quantity} {unit}, líquido de reversões
+                </p>
+              ))}
               <p className="mt-2 text-xs text-muted">{component.formula}</p>
               {component.unavailable_reason && (
                 <p className="mt-2 text-xs text-aviso">{component.unavailable_reason}</p>
@@ -48,6 +58,26 @@ export function SavingsPanel({ data }: { data: NonNullable<DashboardMetrics["fin
                   Atendimento registrado não comprova compra evitada e não integra a estimativa de
                   economia.
                 </p>
+              )}
+              {!!(component.stock_evidence ?? []).length && (
+                <details className="mt-3 text-xs">
+                  <summary className="cursor-pointer">Evidência do preço original usado</summary>
+                  <ul className="mt-2 space-y-2">
+                    {(component.stock_evidence ?? []).map((evidence) => (
+                      <li key={evidence.delivery_id}>
+                        {evidence.quantity} {evidence.unit} × {money(evidence.unit_price)} ·{" "}
+                        {evidence.source} · {evidence.recorded_on}
+                        <p className="mt-1 break-all text-muted">
+                          Linhas originais: {evidence.snapshot_ids.join(", ")}. Fatores:{" "}
+                          {Object.entries(evidence.factors)
+                            .map(([id, factor]) => `${id}: ${factor}`)
+                            .join("; ")}
+                          .
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               )}
               {!!(component.assumptions ?? []).length && (
                 <details className="mt-3 text-xs">

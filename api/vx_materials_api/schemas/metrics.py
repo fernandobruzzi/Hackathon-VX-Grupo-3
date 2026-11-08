@@ -1,6 +1,6 @@
 """Métricas operacionais e financeiras do contrato público do dashboard."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -78,6 +78,17 @@ class NcmMetrics(_Contract):
     benchmark: NcmBenchmark
 
 
+class StockSavingsEvidence(_Contract):
+    delivery_id: UUID
+    quantity: str
+    unit: str
+    unit_price: str
+    source: str
+    recorded_on: date
+    snapshot_ids: list[str]
+    factors: dict[str, str]
+
+
 class SavingsComponent(_Contract):
     key: Literal["registration_reuse", "duplicate_codes", "batch_reviews", "stock_fulfilled"]
     label: str
@@ -88,6 +99,9 @@ class SavingsComponent(_Contract):
     formula: str
     assumptions: list[SavingsAssumption] = Field(default_factory=list)
     unavailable_reason: str | None = None
+    estimated_hours: str | None = None
+    quantities: dict[str, str] = Field(default_factory=dict)
+    stock_evidence: list[StockSavingsEvidence] = Field(default_factory=list)
 
 
 class FinancialMetrics(_Contract):

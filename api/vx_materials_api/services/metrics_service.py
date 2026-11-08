@@ -204,7 +204,7 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
                 "Unificar códigos conserva valor de estoque e não comprova economia realizada.",
                 "Estimativas usam premissas registradas; componentes indisponíveis não são tratados como zero.",
                 "Valor atendido com estoque não comprova compra evitada e não integra a economia estimada.",
-                "A soma combina cadastro, manutenção anual e capacidade hipotéticos; não é caixa realizado.",
+                "Cadastro, manutenção anual e capacidade têm naturezas e períodos distintos e não são somados.",
             ],
         )
     return result

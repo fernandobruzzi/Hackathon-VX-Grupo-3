@@ -1,84 +1,122 @@
 """Valores condicionados a premissas e atendimento real, separados de economia realizada."""
 
-from collections import defaultdict
+from collections import Counter
+from datetime import date
 from decimal import Decimal, localcontext
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import select
 
 from vx_materials_api.db.models import (
     AuditLog,
-    InventoryConsolidation,
-    MaterialInventorySnapshot,
+    Dataset,
     MaterialMaster,
+    MaterialRequest,
     StockMovement,
     StockReservation,
 )
 from vx_materials_api.savings_assumptions import configured_assumptions
-from vx_materials_api.schemas.metrics import SavingsComponent
+from vx_materials_api.schemas.metrics import SavingsComponent, StockSavingsEvidence
+from vx_materials_api.services.materials_service import _quantity
+from vx_materials_api.services.savings_stock_basis import legacy_stock_basis
 
 
 def _money(value):
     return format(value.quantize(Decimal("0.01")), "f")
 
 
-def _stock_value(db, identity, dataset):
-    stock, link, reservation, movement = (
-        MaterialInventorySnapshot,
-        InventoryConsolidation,
-        StockReservation,
-        StockMovement,
+def _stock_value(db, identity, dataset_id):
+    dataset = db.get(Dataset, dataset_id)
+
+    quantities, value, unknown = Counter(), Decimal(0), False
+    prices = []
+    rows = list(
+        db.execute(
+            select(StockMovement, StockReservation)
+            .join(StockReservation, StockReservation.id == StockMovement.reservation_id)
+            .join(MaterialRequest, MaterialRequest.id == StockReservation.request_id)
+            .where(
+                StockMovement.tenant_id == identity.tenant_id,
+                StockMovement.dataset_id == dataset.id,
+                StockReservation.tenant_id == identity.tenant_id,
+                StockReservation.center_code.in_(identity.center_codes),
+                MaterialRequest.tenant_id == identity.tenant_id,
+                MaterialRequest.chat_session_id.is_not(None),
+                MaterialRequest.center_code.in_(identity.center_codes),
+            )
+        )
     )
-    owner = func.coalesce(link.primary_material_id, stock.material_id)
-    prices = defaultdict(set)
-    for material, center, unit, price, factor in db.execute(
-        select(
-            owner,
-            stock.center_code,
-            func.coalesce(link.unit, stock.unit),
-            stock.unit_price,
-            func.coalesce(link.factor, 1),
+    delivered = {
+        movement.id: [movement, reservation, movement.quantity]
+        for movement, reservation in rows
+        if movement.movement_type == "ENTREGA"
+    }
+    for movement, _ in rows:
+        if movement.movement_type == "REVERSAO" and movement.reverses_movement_id in delivered:
+            delivered[movement.reverses_movement_id][2] -= movement.quantity
+    saved = {
+        event.entity_id: (event.after_json or {}).get("savings_basis")
+        for event in db.scalars(
+            select(AuditLog).where(
+                AuditLog.tenant_id == identity.tenant_id,
+                AuditLog.entity_type == "stock_movement",
+                AuditLog.action == "STOCK_DELIVERED",
+                AuditLog.entity_id.in_([str(key) for key in delivered]),
+            )
         )
-        .outerjoin(link, and_(link.source_snapshot_id == stock.id, link.tenant_id == stock.tenant_id))
-        .where(
-            stock.tenant_id == identity.tenant_id,
-            stock.dataset_id == dataset,
-            stock.center_code.in_(identity.center_codes),
-        )
-    ):
-        prices[(material, center, unit)].add(price / factor if price is not None else None)
-    quantities = defaultdict(lambda: Decimal(0))
-    for material, center, unit, kind, quantity in db.execute(
-        select(
-            reservation.material_id,
-            reservation.center_code,
-            reservation.unit,
-            movement.movement_type,
-            movement.quantity,
-        )
-        .join(reservation, movement.reservation_id == reservation.id)
-        .where(
-            movement.tenant_id == identity.tenant_id,
-            reservation.tenant_id == identity.tenant_id,
-            movement.dataset_id == dataset,
-            reservation.center_code.in_(identity.center_codes),
-        )
-    ):
-        quantities[(material, center, unit)] += quantity if kind == "ENTREGA" else -quantity
-    total = Decimal(0)
-    for key, quantity in quantities.items():
+    }
+    for movement, reservation, quantity in delivered.values():
         if quantity < 0:
-            return None, None
+            return None, "quantidade inválida", {}, None, []
         if quantity == 0:
             continue
-        known = prices.get(key, set())
-        if len(known) != 1 or None in known:
-            return str(sum(q > 0 for q in quantities.values())), None
-        price = next(iter(known))
+        quantities[reservation.unit] += quantity
+        basis = saved.get(str(movement.id))
+        if basis is None:
+            basis = legacy_stock_basis(
+                db,
+                identity.tenant_id,
+                dataset,
+                reservation.material_id,
+                reservation.center_code,
+                reservation.unit,
+                movement.created_at,
+            )
+        if (
+            basis.get("dataset_id") != str(dataset.id)
+            or basis.get("material_id") != str(reservation.material_id)
+            or basis.get("center_code") != reservation.center_code
+            or basis.get("unit") != reservation.unit
+            or basis.get("unit_price") is None
+        ):
+            unknown = True
+            continue
+        price = Decimal(basis["unit_price"])
         if not price.is_finite() or price < 0:
-            return None, None
-        total += quantity * price
-    return str(sum(q > 0 for q in quantities.values())), _money(total)
+            unknown = True
+            continue
+        value += quantity * price
+        prices.append(
+            StockSavingsEvidence(
+                delivery_id=movement.id,
+                quantity=_quantity(quantity),
+                unit=reservation.unit,
+                unit_price=format(price, "f"),
+                source=f"Snapshot original {dataset.id}",
+                recorded_on=date.fromisoformat(basis["as_of"]),
+                snapshot_ids=basis["snapshot_ids"],
+                factors=basis["factors"],
+            )
+        )
+    count = _quantity(next(iter(quantities.values()))) if len(quantities) == 1 else "0" if not quantities else None
+    unit = next(iter(quantities)) if len(quantities) == 1 else "quantidades por unidade"
+    return (
+        count,
+        unit,
+        {key: _quantity(value) for key, value in quantities.items()},
+        None if unknown or not prices else _money(value),
+        prices,
+    )
 
 
 def savings_metrics(db, identity, dataset, proposals, allowed):
@@ -103,9 +141,17 @@ def savings_metrics(db, identity, dataset, proposals, allowed):
             proposal = eligible[entity]
             if (after or {}).get("changeset_hash") != proposal.changeset_hash:
                 continue
-            if action == "PROPOSAL_APPROVE_TECHNICAL" and (after or {}).get("lot_review"):
+            if (
+                action == "PROPOSAL_APPROVE_TECHNICAL"
+                and (after or {}).get("lot_review")
+                and (after or {}).get("technical_review_status") == "APPROVED"
+            ):
                 reviewed.add(entity)
-            if proposal.proposal_type == "MERGE" and (after or {}).get("status") == "APPLIED":
+            if (
+                proposal.proposal_type in {"MERGE", "COMPOSITE"}
+                and (before or {}).get("status") == "PENDING"
+                and (after or {}).get("status") == "APPLIED"
+            ):
                 originals = {m["id"]: m.get("status") for m in (before or {}).get("materials", [])}
                 for material in (after or {}).get("materials", []):
                     key = material.get("id")
@@ -167,11 +213,14 @@ def savings_metrics(db, identity, dataset, proposals, allowed):
             ),
         ]:
             values = [assumptions[name] for name in inputs if name in assumptions]
-            amount = None
+            amount, hours = None, None
             if len(values) == len(inputs):
                 numbers = [Decimal(a.value) for a in values]
-                factor = (numbers[0] - numbers[1]) / 60 * numbers[2] if key == "batch_reviews" else numbers[0]
-                amount = _money(Decimal(count) * factor)
+                if key == "batch_reviews":
+                    hours = Decimal(count) * (numbers[0] - numbers[1]) / 60
+                    amount = _money(hours * numbers[2])
+                else:
+                    amount = _money(Decimal(count) * numbers[0])
             components.append(
                 SavingsComponent(
                     key=key,
@@ -180,6 +229,7 @@ def savings_metrics(db, identity, dataset, proposals, allowed):
                     count=str(count),
                     count_unit=unit,
                     amount_brl=amount,
+                    estimated_hours=_quantity(hours) if hours is not None else None,
                     formula=formula,
                     assumptions=values,
                     unavailable_reason="Premissas quantitativas não registradas para este componente."
@@ -187,14 +237,16 @@ def savings_metrics(db, identity, dataset, proposals, allowed):
                     else None,
                 )
             )
-        count, stock_value = _stock_value(db, identity, dataset)
+        count, unit, quantities, stock_value, evidence = _stock_value(db, identity, dataset)
         components.append(
             SavingsComponent(
                 key="stock_fulfilled",
                 label="Valor atendido com estoque",
                 kind="MEASURED_KIT_VALUE",
                 count=count,
-                count_unit="itens por centro e unidade",
+                count_unit=unit,
+                quantities=quantities,
+                stock_evidence=evidence,
                 amount_brl=stock_value,
                 formula=(
                     "quantidade entregue, líquida de reversões × preço unitário original ajustado pelo fator aprovado"
@@ -204,5 +256,5 @@ def savings_metrics(db, identity, dataset, proposals, allowed):
                 else None,
             )
         )
-        estimates = [Decimal(c.amount_brl) for c in components if c.kind == "ESTIMATED" and c.amount_brl is not None]
-        return components, source, _money(sum(estimates, Decimal(0))) if estimates else None
+        # Anuidade, benefício pontual e capacidade humana permanecem componentes separados.
+        return components, source, None

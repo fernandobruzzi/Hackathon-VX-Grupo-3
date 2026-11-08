@@ -2924,6 +2924,14 @@ export interface components {
        * @default null
        */
       unavailable_reason: string | null;
+      /** Estimated Hours */
+      estimated_hours?: string | null;
+      /** Quantities */
+      quantities?: {
+        [key: string]: string;
+      };
+      /** Stock Evidence */
+      stock_evidence?: components["schemas"]["StockSavingsEvidence"][];
     };
     /** SavingsAssumption */
     SavingsAssumption: {
@@ -2953,6 +2961,33 @@ export interface components {
       version: string;
       /** Sha256 */
       sha256: string;
+    };
+    /** StockSavingsEvidence */
+    StockSavingsEvidence: {
+      /**
+       * Delivery Id
+       * Format: uuid
+       */
+      delivery_id: string;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /** Unit Price */
+      unit_price: string;
+      /** Source */
+      source: string;
+      /**
+       * Recorded On
+       * Format: date
+       */
+      recorded_on: string;
+      /** Snapshot Ids */
+      snapshot_ids: string[];
+      /** Factors */
+      factors: {
+        [key: string]: string;
+      };
     };
   };
   responses: never;

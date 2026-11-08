@@ -163,7 +163,7 @@ sintéticos do desafio. A visão de qualidade não carrega nem devolve esses val
 | Reutilizações confirmadas | Uma conversa por confirmação explícita de um código existente, pelo botão do chat; evento `CHAT_EXISTING_CONFIRMED` com dataset, centro e código | Contagem × hipótese `registration_cost`, em R$/cadastro |
 | Códigos desativados | Membros além do principal que passaram de ATIVO a BLOQUEADO em aplicação auditada de unificação e continuam bloqueados | Contagem × hipótese `code_annual_cost`, em R$/código/ano |
 | Revisões em lote | Propostas aplicadas com aprovação técnica auditada em lote, uma vez por proposta | Contagem × (`review_minutes_before` − `review_minutes_after`) / 60 × `hourly_cost` |
-| Valor atendido com estoque | Quantidade efetivamente entregue, líquida de reversões, por material, centro e unidade | Quantidade × preço original ajustado pelo fator de consolidação aprovado |
+| Valor atendido com estoque | Quantidade pedida no chat e efetivamente entregue, líquida de reversões, separada por unidade | Quantidade × preço original ajustado pelo fator aprovado, com linhas, preço, origem e data visíveis |
 
 Exibir um semelhante, encontrar saldo ou reservar não comprova atendimento.
 Escolher explicitamente um semelhante também registra a confirmação se a API
@@ -176,16 +176,29 @@ O valor atendido não comprova compra evitada nem economia realizada. Fica
 separado da soma de estimativas. Sem preço conhecido e único para o material,
 centro e unidade (incluindo fontes consolidadas), o valor fica indisponível;
 não se escolhe um preço entre vários nem se trata ausência como zero.
-O contador desse componente agrupa atendimentos por material, centro e unidade,
-pois somar quantidades de unidades diferentes não é uma contagem válida.
+Somente solicitações vinculadas ao chat compõem esse atendimento. `quantities`
+separa as quantidades por unidade; `count` mostra a quantidade quando há uma única
+unidade e permanece nulo quando há várias, sem somar medidas incompatíveis.
+`stock_evidence` identifica entrega, quantidade líquida, preço unitário, origem,
+data, linhas originais e fatores usados.
 
-`estimated_savings` soma apenas os componentes estimados disponíveis: operações
-observadas no dataset mais um ano hipotético de manutenção dos códigos.
-É um cenário parcial com horizontes explícitos, sem extrapolar o volume de
-operações para um ano. Capacidade de trabalho não é caixa. `realized_savings`
-permanece indisponível. Sem premissa, a contagem continua visível e seu resultado
-financeiro permanece indisponível. Valores são calculados com Decimal e
-arredondados a centavos por componente antes da soma.
+A entrega congela essa evidência no evento privado `STOCK_DELIVERED`, na mesma
+transação. Merges e conversões posteriores não reescrevem seu preço, e reversões
+usam a referência da entrega original. Nenhum preço é devolvido ao Almoxarifado
+por esse registro. No legado sem evidência congelada, somente a origem sem
+transformação anterior comprovada pode ser valorada; outros casos ficam
+indisponíveis. A medição usa o dataset do movimento, mesmo se a reserva for de um
+snapshot anterior.
+
+`estimated_savings` e `realized_savings` agregados permanecem nulos: cadastro
+pontual, manutenção anual e capacidade de revisão têm períodos e naturezas
+diferentes. Os componentes individuais continuam calculados quando suas premissas
+estão registradas. `estimated_hours` explicita as horas estimadas para as propostas
+em lote; uma revisão técnica em lote conta mesmo quando a aplicação dependeu de
+aprovação fiscal posterior. Desativações exigem a transição auditada de PENDING
+para APPLIED em MERGE ou COMPOSITE. Capacidade de trabalho não é caixa.
+Sem premissa, conserva-se a contagem e o resultado financeiro permanece
+indisponível. Valores são calculados com Decimal e arredondados a centavos.
 
 ### Registrar e selecionar premissas
 

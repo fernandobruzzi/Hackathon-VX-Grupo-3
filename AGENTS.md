@@ -937,6 +937,12 @@ savings or an independent accuracy measurement. See [`docs/dashboard.md`](docs/d
 NCM operational acceptance counts distinct audited fiscal decisions, with format-only
 proposals separated. The packaged NCM benchmark is a dated development measurement
 with documentary labels, not a tenant result or independent product accuracy.
+Executive savings keep annual code costs, one-off reuse and review capacity
+separate; aggregate savings remain unavailable. Stock values count chat-linked
+net deliveries against the movement's dataset, using immutable price evidence
+captured in the private delivery audit. Legacy deliveries without that evidence
+are valued only when their original inventory basis is provable. Read
+[`docs/dashboard.md`](docs/dashboard.md) before changing savings or delivery evidence.
 
 ## Frontend
 

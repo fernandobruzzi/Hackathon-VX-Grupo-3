@@ -872,6 +872,59 @@
             "formula": "códigos desativados × custo anual hipotético por código",
             "assumptions": [],
             "unavailable_reason": "Premissas quantitativas não registradas para este componente."
+          },
+          {
+            "key": "registration_reuse",
+            "label": "Reutilizações confirmadas no chat",
+            "kind": "ESTIMATED",
+            "count": "0",
+            "count_unit": "conversas",
+            "amount_brl": null,
+            "formula": "conversas confirmadas × custo hipotético por cadastro",
+            "assumptions": [],
+            "unavailable_reason": "Premissa não registrada."
+          },
+          {
+            "key": "batch_reviews",
+            "label": "Capacidade de revisão em lote",
+            "kind": "ESTIMATED",
+            "count": "0",
+            "count_unit": "propostas",
+            "amount_brl": null,
+            "estimated_hours": null,
+            "formula": "propostas × (minutos antes − depois) / 60 × custo da hora",
+            "assumptions": [],
+            "unavailable_reason": "Premissas não registradas."
+          },
+          {
+            "key": "stock_fulfilled",
+            "label": "Valor atendido com estoque",
+            "kind": "MEASURED_KIT_VALUE",
+            "count": "2",
+            "count_unit": "PC",
+            "amount_brl": "20.00",
+            "formula": "quantidade entregue líquida de reversões × preço original",
+            "assumptions": [],
+            "quantities": {
+              "PC": "2"
+            },
+            "stock_evidence": [
+              {
+                "delivery_id": "11111111-1111-4111-8111-111111111111",
+                "quantity": "2",
+                "unit": "PC",
+                "unit_price": "10",
+                "source": "Snapshot original do exemplo sintético",
+                "recorded_on": "2026-11-08",
+                "snapshot_ids": [
+                  "11111111-1111-4111-8111-111111111112"
+                ],
+                "factors": {
+                  "11111111-1111-4111-8111-111111111112": "1"
+                }
+              }
+            ],
+            "unavailable_reason": null
           }
         ],
         "assumption_source": null,
