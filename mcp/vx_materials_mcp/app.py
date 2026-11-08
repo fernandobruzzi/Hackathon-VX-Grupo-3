@@ -108,9 +108,22 @@ def create_app(
             # A ação estruturada continua indo intacta para o ciclo determinístico abaixo.
             if planner:
                 context = await planner.interpret(payload, context, catalog)
+            rag_context = None
             async with connect(caller) as client:
-                result = await run_turn(payload, context, ToolRecorder(client))
-            return await planner.respond(payload, result) if planner else result
+                recorder = ToolRecorder(client)
+                result = await run_turn(payload, context, recorder)
+                if planner:
+                    rag_context = await recorder.call(
+                        "retrieve_material_context",
+                        {
+                            "query": (context.search_text or payload.message)[:2000],
+                            "pdm_class_id": result.material_card.pdm_class_id,
+                            "limit": 3,
+                        },
+                        lambda packet: {"context": packet, "used_citation_ids": []},
+                    )
+                    result = result.model_copy(update={"tool_calls": recorder.calls})
+            return await planner.respond(payload, result, rag_context=rag_context) if planner else result
 
         try:
             turn = turns.start(execute)

@@ -291,7 +291,7 @@ O /mcp importará esse pacote. Assim, batch e chat usam a mesma regra para concl
 
 O LLM decide quais consultas executar e como formular as perguntas. O motor de domínio valida os dados.
 
-### As cinco tools essenciais
+### Ferramentas MCP
 
 | Tool | Entrada | Retorno |
 |---|---|---|
@@ -300,6 +300,7 @@ O LLM decide quais consultas executar e como formular as perguntas. O motor de d
 | validate_and_format_pdm | pdm_class_id, pdm_version, attributes | VALID, INCOMPLETE, INVALID ou OUT_OF_SCOPE, campos ausentes, erros e descrição quando válida |
 | check_ncm_consistency | pdm_class_id, attributes, ncm, ncm_version | Formato, existência, vigência, coerência, códigos candidatos e necessidade de revisão |
 | enrich_from_trusted_source | material_code, attributes_requested, refresh | Valores propostos, fonte por atributo, confiança e divergências |
+| retrieve_material_context | query, pdm_class_id, limit | Exemplos e referências PDM/NCM citados, com escopo autenticado e orçamento de contexto; não determina identidade nem aprovação |
 
 #### search_similar_materials
 

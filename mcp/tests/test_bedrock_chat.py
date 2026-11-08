@@ -107,7 +107,7 @@ def test_interprets_literal_value_and_uses_versioned_system_prompt(catalog):
     context = interpret(catalog, sdk, request(BOLT + " A classe de resistência é 8.8."))
     assert context.attributes["CLASSE RESISTENCIA"] == "8.8"
     assert sdk.calls[0]["modelId"] == MODEL
-    assert "material_registration_system_v1" in sdk.calls[0]["system"][0]["text"]
+    assert "material_registration_system_v2" in sdk.calls[0]["system"][0]["text"]
     assert "Governança" in sdk.calls[0]["system"][0]["text"]
 
 

@@ -30,6 +30,23 @@ def register_resources(server, catalog, repository):
         snapshot = _read(load_configured_ncm_snapshot, ncm_version)
         if snapshot is None:
             raise ResourceError("Snapshot NCM indisponível; existência e vigência desconhecidas")
+        ancestor = snapshot.hierarchy.get(code.replace(".", ""))
+        if ancestor is not None:
+            return json.dumps(
+                {
+                    "record": asdict(ancestor),
+                    "ncm_version": snapshot.version,
+                    "source_sha256": snapshot.source_sha256,
+                    "snapshot_date": snapshot.snapshot_date,
+                    "source_kind": snapshot.source_kind,
+                    "source_last_update": snapshot.source_last_update,
+                    "source_url": OFFICIAL_NCM_URL if snapshot.source_kind == NcmSourceKind.OFFICIAL_DOWNLOAD else None,
+                    "valid_in_snapshot": ancestor.valid_from <= snapshot.snapshot_date <= ancestor.valid_until,
+                    "rule_id": "ncm_snapshot_v1/hierarchy",
+                },
+                ensure_ascii=False,
+                default=str,
+            )
         check = check_snapshot_ncm(snapshot, code)
         record = snapshot.records.get(check.normalized_ncm)
         return json.dumps(
