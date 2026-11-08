@@ -9,7 +9,7 @@ import { meFor } from "../src/lib/permissions";
 (globalThis as Record<string, unknown>).React = React;
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 
-test("seletor exibe nome recebido da sessão e envia o código do centro", async () => {
+test("seletor envia código do centro e chat distingue timeout de outras falhas 503", async () => {
   process.env.NEXT_PUBLIC_DATA_SOURCE = "api";
   const originalFetch = globalThis.fetch;
   const me = meFor("SOLICITANTE_OPERACAO");
@@ -18,6 +18,7 @@ test("seletor exibe nome recebido da sessão e envia o código do centro", async
     center_names: { "1100": "USINA DE BENEFICIAMENTO" },
   };
   const writes: Record<string, unknown>[] = [];
+  let agentError = { code: "AGENT_UNAVAILABLE", message: "O assistente está indisponível." };
   Object.assign(globalThis, {
     window: {
       location: { pathname: "/chat/" },
@@ -33,7 +34,7 @@ test("seletor exibe nome recebido da sessão e envia o código do centro", async
       if (init.method === "POST") {
         writes.push(JSON.parse(init.body as string));
         return Response.json(
-          { error: { code: "TEST", message: "teste", details: {}, request_id: "test" } },
+          { error: { ...agentError, details: {}, request_id: "test" } },
           { status: 503 },
         );
       }
@@ -60,6 +61,17 @@ test("seletor exibe nome recebido da sessão e envia o código do centro", async
     );
     await act(async () => view.root.findByType("form").props.onSubmit({ preventDefault() {} }));
     assert.equal(writes[0].center_code, "1100");
+    assert.equal(view.root.findByProps({ role: "alert" }).children.join(""), agentError.message);
+    for (const [code, expected] of [
+      ["AGENT_TIMEOUT", "O assistente não respondeu a tempo. Tente enviar de novo."],
+      ["AGENT_BUSY", "O assistente está ocupado. Aguarde alguns instantes e tente enviar de novo."],
+      ["AGENT_UNAVAILABLE", "Não foi possível falar com o servidor."],
+    ]) {
+      agentError = { code, message: "" };
+      await act(async () => view.root.findByType("form").props.onSubmit({ preventDefault() {} }));
+      assert.equal(view.root.findByProps({ role: "alert" }).children.join(""), expected);
+      assert.equal(view.root.findByType("textarea").props.value, "parafuso");
+    }
   } finally {
     if (view) await act(async () => view.unmount());
     globalThis.fetch = originalFetch;

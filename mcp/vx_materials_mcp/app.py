@@ -1,6 +1,7 @@
 """Servidor HTTP interno do Agent, chamado somente pela API."""
 
 import asyncio
+import logging
 import os
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
@@ -19,7 +20,7 @@ from repositories.extraction import get_extraction_repository
 from vx_materials_mcp.chatbot import mcp_client
 from vx_materials_mcp.chatbot.agent import TURN_TIMEOUT_SECONDS, ToolLimitExceeded, ToolRecorder, run_turn
 from vx_materials_mcp.chatbot.bedrock import BedrockError, BedrockPlanner
-from vx_materials_mcp.chatbot.session_manager import build_turn_context
+from vx_materials_mcp.chatbot.session_manager import build_fallback_context, build_turn_context
 from vx_materials_mcp.chatbot.turns import AgentBusy, TurnCancelled, TurnManager, configured_limit
 from vx_materials_mcp.schemas.agent import AgentRunRequest, AgentRunResponse
 from vx_materials_mcp.security import (
@@ -33,6 +34,7 @@ from vx_materials_mcp.server import DEFAULT_PDM_PATH, PDM_PATH_VARIABLE
 
 # Abre o servidor MCP de um turno, já vinculado à identidade validada.
 Connect = Callable[[Caller], AbstractAsyncContextManager[Any]]
+logger = logging.getLogger(__name__)
 
 
 class AgentError(Exception):
@@ -104,15 +106,23 @@ def create_app(
 
         async def execute() -> AgentRunResponse:
             context = build_turn_context(payload, catalog.classes, classifier, extractor)
+            active_planner = planner
             # Reconstruir a descrição também nos botões: uma classe pode existir só na interpretação LLM.
             # A ação estruturada continua indo intacta para o ciclo determinístico abaixo.
-            if planner:
-                context = await planner.interpret(payload, context, catalog)
+            if active_planner:
+                try:
+                    context = await active_planner.interpret(payload, context, catalog)
+                except BedrockError as error:
+                    if error.code != "BEDROCK_UNAVAILABLE":
+                        raise
+                    logger.warning("Bedrock unavailable during interpretation; request_id=%s", x_request_id)
+                    context = build_fallback_context(payload, catalog.classes, classifier, extractor)
+                    active_planner = None
             rag_context = None
             async with connect(caller) as client:
                 recorder = ToolRecorder(client)
                 result = await run_turn(payload, context, recorder)
-                if planner:
+                if active_planner:
                     rag_context = await recorder.call(
                         "retrieve_material_context",
                         {
@@ -123,7 +133,14 @@ def create_app(
                         lambda packet: {"context": packet, "used_citation_ids": []},
                     )
                     result = result.model_copy(update={"tool_calls": recorder.calls})
-            return await planner.respond(payload, result, rag_context=rag_context) if planner else result
+            if active_planner:
+                try:
+                    return await active_planner.respond(payload, result, rag_context=rag_context)
+                except BedrockError as error:
+                    if error.code != "BEDROCK_UNAVAILABLE":
+                        raise
+                    logger.warning("Bedrock unavailable during response; request_id=%s", x_request_id)
+            return result
 
         try:
             turn = turns.start(execute)

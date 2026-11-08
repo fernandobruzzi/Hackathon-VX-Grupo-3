@@ -5,7 +5,7 @@ das mensagens do usuário: a mais recente que identifica uma classe vence. Atrib
 turnos anteriores valem até o usuário informar outro valor.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from domain.contracts import (
     ClassificationInput,
@@ -15,7 +15,7 @@ from domain.contracts import (
     ExtractionRepository,
     PdmClass,
 )
-from domain.identity import resolve_item_name
+from domain.identity import reference_revision_evidence, resolve_item_name
 from vx_materials_mcp.chatbot.candidates import is_reply_to_candidates
 from vx_materials_mcp.schemas.agent import AgentRunRequest
 
@@ -80,3 +80,46 @@ def build_turn_context(
         attributes.update({name: value.value for name, value in extracted.items()})
     names = (e.matched_name for e in classification.evidence if e.class_id == pdm_class.id)
     return TurnContext(classification, pdm_class, resolve_item_name(pdm_class, names), attributes)
+
+
+def build_fallback_context(
+    request: AgentRunRequest,
+    catalog_classes: dict[str, PdmClass],
+    classifier: ClassificationRepository,
+    extractor: ExtractionRepository,
+) -> TurnContext:
+    """Mantém o estado aceito sem reintroduzir fatos históricos quando o modelo está indisponível."""
+    clean = request.model_copy(
+        update={"context": request.context.model_copy(update={"history": [], "confirmed_attributes": {}})}
+    )
+    current = build_turn_context(clean, catalog_classes, classifier, extractor)
+    previous = catalog_classes.get(request.context.pdm_class_id or "")
+    changed = current.pdm_class is not None and (
+        previous is None
+        or current.pdm_class.id != previous.id
+        or (current.item_name and request.context.item_name and current.item_name != request.context.item_name)
+    )
+    if previous and (request.action is not None or not changed):
+        known = {attribute.name for attribute in previous.attributes}
+        attributes = {name: value for name, value in request.context.confirmed_attributes.items() if name in known}
+        if request.action is None and not is_reply_to_candidates(request.message):
+            attributes.update(
+                {name: value.value for name, value in extractor.extract(previous, request.message).attributes.items()}
+            )
+        classification = replace(
+            current.classification,
+            status=ClassificationStatus.CLASSIFIED,
+            pdm_class_id=previous.id,
+            candidate_class_ids=(),
+            evidence=(),
+        )
+        item_name = request.context.item_name or (previous.item_names[0] if len(previous.item_names) == 1 else None)
+        current = TurnContext(classification, previous, item_name, attributes)
+    query = " ".join(
+        [
+            current.item_name or "",
+            *(f"{name}: {value}" for name, value in current.attributes.items() if value),
+            *reference_revision_evidence(*(user_messages(request) if previous and not changed else [request.message])),
+        ]
+    ).strip()
+    return replace(current, search_text=query if current.pdm_class else request.message)

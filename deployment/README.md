@@ -287,9 +287,12 @@ retorna erro sem substituir o estado aceito, as mensagens ou a versão da conver
 Em botões de escolha/descarte, o modelo reconstrói a descrição pelo histórico;
 a mensagem do botão fica fora da interpretação e a ação estruturada permanece
 autoritativa no ciclo determinístico.
-Falhas AWS e respostas inválidas retornam 503 sanitizado, sem fallback silencioso.
+Indisponibilidade AWS usa o atendimento por regras e as tools MCP; falha na redação
+preserva a resposta validada. O Agent registra a etapa e o request ID, sem detalhes
+privados. Respostas inválidas do modelo continuam retornando 503 sanitizado.
 O SDK usa conexão de 2 s, leitura de 8 s e uma tentativa por chamada; o prazo global
-do Agent continua 20 s. Medir latência real de Sonnet 5 na #107 antes da demo.
+do Agent é 45 s e a API aguarda 50 s, abaixo dos 60 s da origem CloudFront.
+Medir latência real do modelo configurado na #107 antes da demo.
 
 Sem `BEDROCK_CHAT_MODEL_ID`, o fluxo local permanece por regras e não faz chamadas
 de modelo. Testes usam transporte simulado; acesso, custo e qualidade precisam ser

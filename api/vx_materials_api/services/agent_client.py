@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from vx_materials_api.schemas.chat import AgentRunResponse
 
 # Um pouco acima do prazo do Agent, para receber o erro dele em vez de cortar a conexão.
-TIMEOUT_SECONDS = 25.0
+TIMEOUT_SECONDS = 50.0
 
 
 class AgentUnavailable(Exception):

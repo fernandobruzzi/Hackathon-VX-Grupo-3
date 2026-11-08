@@ -23,9 +23,11 @@ const SUGGESTIONS = [
 function errorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 409)
     return "Esta conversa mudou em outra aba ou ainda está processando. Atualize a conversa para continuar.";
-  if (error instanceof ApiError && error.status === 503)
+  if (error instanceof ApiError && error.error.code === "AGENT_TIMEOUT")
     return "O assistente não respondeu a tempo. Tente enviar de novo.";
-  if (error instanceof ApiError) return error.message;
+  if (error instanceof ApiError && error.error.code === "AGENT_BUSY")
+    return "O assistente está ocupado. Aguarde alguns instantes e tente enviar de novo.";
+  if (error instanceof ApiError) return error.message || "Não foi possível falar com o servidor.";
   return "Não foi possível falar com o servidor.";
 }
 

@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import botocore.session
 import pytest
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ReadTimeoutError
 from botocore.validate import validate_parameters
 from fastapi.testclient import TestClient
 from test_conversation_flow import BOLT, PDM, SECRET, run, token
@@ -187,18 +187,52 @@ def test_endpoint_calls_sonnet_twice_and_preserves_real_mcp_validation(catalog, 
         validate_parameters(call, schema.input_shape)
 
 
-def test_bedrock_failure_returns_sanitized_error_without_fallback(catalog, monkeypatch):
+@pytest.mark.parametrize(
+    "error",
+    [
+        ClientError({"Error": {"Code": "AccessDeniedException", "Message": "secret internal details"}}, "Converse"),
+        ReadTimeoutError(endpoint_url="https://secret.internal", error="secret internal details"),
+    ],
+    ids=["access-denied", "read-timeout"],
+)
+def test_bedrock_failure_returns_validated_fallback_without_private_details(catalog, monkeypatch, error):
     monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
-    sdk = FakeBedrock(
-        error=ClientError(
-            {"Error": {"Code": "AccessDeniedException", "Message": "secret internal details"}}, "Converse"
-        )
-    )
+    sdk = FakeBedrock(error=error)
     response = run(client_for(catalog, sdk), BOLT)
-    assert response.status_code == 503
-    assert response.json()["error"]["code"] == "BEDROCK_UNAVAILABLE"
+    assert response.status_code == 200
+    data = response.json()
+    assert data["material_card"]["pdm_class_id"] == "PDM001"
+    assert data["material_card"]["can_submit"] is False
+    assert "CLASSE RESISTENCIA" in data["material_card"]["missing_attributes"]
+    assert any(
+        call["name"] == "validate_and_format_pdm" and call["status"] == "SUCCEEDED" for call in data["tool_calls"]
+    )
     assert "secret" not in response.text
     assert len(sdk.calls) == 1
+
+
+def test_bedrock_response_failure_preserves_validated_material_card(catalog, monkeypatch):
+    monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
+    sdk = FakeBedrock()
+    original = sdk.converse
+
+    def converse(**kwargs):
+        if "toolConfig" in kwargs:
+            return original(**kwargs)
+        sdk.calls.append(deepcopy(kwargs))
+        raise ReadTimeoutError(endpoint_url="https://secret.internal", error="secret internal details")
+
+    sdk.converse = converse
+    response = run(client_for(catalog, sdk), BOLT)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(sdk.calls) == 2
+    assert data["material_card"]["pdm_class_id"] == "PDM001"
+    assert "CLASSE RESISTENCIA" in data["material_card"]["missing_attributes"]
+    assert data["material_card"]["can_submit"] is False
+    assert "Para completar a ficha:" in data["assistant_message"]
+    assert "secret" not in response.text
+    assert "Qual é a classe de resistência do parafuso?" != data["assistant_message"]
 
 
 def test_without_configuration_keeps_local_rules(catalog, monkeypatch):
@@ -368,6 +402,55 @@ def previous_state(payload, message=BOLT, class_id="PDM001", item_name="PARAFUSO
         }
     )
     return payload
+
+
+def test_interpretation_outage_preserves_removed_attributes_and_search_scope(catalog, monkeypatch):
+    monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
+    payload = previous_state(
+        request("A classe de resistência é 8.8."),
+        attributes={"BITOLA": "M12", "ACABAMENTO": None, "CLASSE RESISTENCIA": None},
+    )
+    sdk = FakeBedrock(error=ReadTimeoutError(endpoint_url="https://secret.internal"))
+    response = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run",
+        json=payload.model_dump(mode="json"),
+        headers={"X-Request-ID": "outage-removed-attribute", "Authorization": f"Bearer {token()}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["material_card"]["attributes"]["ACABAMENTO"] is None
+    assert data["material_card"]["attributes"]["CLASSE RESISTENCIA"] == "8.8"
+    assert data["context_patch"]["confirmed_attributes"]["BITOLA"] == "M12"
+    search = next(call for call in data["tool_calls"] if call["name"] == "search_similar_materials")
+    assert "zincado" not in search["input"]["query"].lower()
+    assert "DIN 933" not in search["input"]["query"]
+    assert data["material_card"]["can_submit"] is False
+
+
+def test_interpretation_outage_starts_new_identity_without_previous_attributes(catalog, monkeypatch):
+    monkeypatch.setenv("BEDROCK_CHAT_MODEL_ID", MODEL)
+    payload = previous_state(
+        request("Agora preciso de uma porca sextavada M16."),
+        attributes={"BITOLA": "M12", "CLASSE RESISTENCIA": "8.8", "ACABAMENTO": "ZINCADO BRANCO", "NORMA": "DIN 933"},
+    )
+    sdk = FakeBedrock(error=ReadTimeoutError(endpoint_url="https://secret.internal"))
+    response = client_for(catalog, sdk).post(
+        "/internal/v1/chat/run",
+        json=payload.model_dump(mode="json"),
+        headers={"X-Request-ID": "outage-new-identity", "Authorization": f"Bearer {token()}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    card = data["material_card"]
+    assert card["pdm_class_id"] == "PDM003"
+    assert card["attributes"]["BITOLA"] == "M16"
+    assert card["attributes"]["CLASSE RESISTENCIA"] is None
+    assert card["attributes"]["ACABAMENTO"] is None
+    search = next(call for call in data["tool_calls"] if call["name"] == "search_similar_materials")
+    assert "parafuso" not in search["input"]["query"].lower()
+    assert "zincado" not in search["input"]["query"].lower()
+    assert "DIN 933" not in search["input"]["query"]
+    assert card["can_submit"] is False
 
 
 def test_class_change_drops_shared_attributes_of_previous_material(catalog):

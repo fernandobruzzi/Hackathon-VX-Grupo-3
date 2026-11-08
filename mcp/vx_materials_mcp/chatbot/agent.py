@@ -32,7 +32,7 @@ PLANNER = "rule_based_v1"
 MAX_TOOL_CALLS = 5
 # Acima disso, listar os nomes do PDM confunde mais que ajuda: pergunta-se o tipo em aberto.
 MAX_LISTED_NAMES = 8
-TURN_TIMEOUT_SECONDS = 20.0
+TURN_TIMEOUT_SECONDS = 45.0
 
 
 class ToolLimitExceeded(RuntimeError):

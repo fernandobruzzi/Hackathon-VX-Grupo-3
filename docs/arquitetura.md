@@ -529,7 +529,7 @@ Limites iniciais:
 
 - Até cinco chamadas de ferramentas por turno.
 - Até duas rodadas de interpretação pelo LLM.
-- Prazo de 20 segundos para execução síncrona, seguido do fechamento do stdio.
+- Prazo de 45 segundos para execução síncrona, seguido do fechamento do stdio; a API aguarda 50 segundos, dentro dos 60 segundos da origem CloudFront.
 - Até dois turnos simultâneos por worker por padrão (`AGENT_MAX_CONCURRENT_TURNS`); excesso recebe `AGENT_BUSY`, sem fila. [Medição e limpeza de processos](agent-concurrency.md).
 - Pesquisa externa demorada retorna pendência, usando evidências em cache quando disponíveis.
 - Logs visíveis mostram nomes, parâmetros permitidos, duração e resultados resumidos das tools.
