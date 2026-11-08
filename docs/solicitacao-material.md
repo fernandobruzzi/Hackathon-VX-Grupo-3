@@ -645,42 +645,7 @@ Encaminhar para Compras não indica compra realizada, recebimento nem entrega. N
 uma parcela na resposta, ela aparece como **Não informada**, sem presumir zero. Não há registros
 nem totais simulados. O modo mock orienta entrar em uma sessão conectada, sem lista fictícia.
 
-## 21. Equivalentes autorizados (#246)
-
-Este é o caminho 6, para quando o material pedido está sem saldo. A Governança registra uma equivalência técnica entre dois materiais distintos (`POST /api/v1/material-equivalences`), com a base da decisão. Essa ação exige `merge:decide`. A equivalência:
-
-- fica em `material_equivalences` como `APROVADA`, com o par em ordem canônica, e vale nos dois sentidos;
-- entra na auditoria como `MATERIAL_EQUIVALENCE_APPROVED`;
-- não unifica materiais nem soma saldos.
-
-O dono da solicitação consulta `GET /api/v1/material-requests/{id}/equivalent-alternatives`. A lista só traz itens quando a solicitação está `EM_ATENDIMENTO` e o disponível do material pedido não cobre o pendente. Ela mostra apenas equivalências aprovadas, cada uma com o disponível no centro de destino e a base da decisão. Um produto apenas parecido, sem registro aprovado, nunca aparece.
-
-A troca vem por `POST /api/v1/material-requests/{id}/substitution`, com `confirm_substitution: true`, `expected_version` e `Idempotency-Key`. Ela segue a mesma ordem de bloqueio do encaminhamento e só é aceita se:
-
-- a falta de saldo estiver confirmada;
-- o equivalente estiver ativo e na mesma unidade da solicitação;
-- nenhuma parcela tiver sido reservada, entregue ou encaminhada, porque parcelas já atendidas pertencem ao material original.
-
-A solicitação guarda o código original (`substituted_from_material_id`) e a equivalência usada, e a auditoria registra `MATERIAL_REQUEST_SUBSTITUTED` com o par. A troca é única por solicitação. O detalhe mostra a troca em `substitution`.
-
-## 22. Notificações do solicitante (#249)
-
-As notificações são derivadas da auditoria: nada novo é gravado quando uma etapa muda. Uma notificação é um evento de auditoria feito por outra pessoa, ou pelo sistema, sobre uma solicitação do usuário. Entram eventos da solicitação, da reserva, do encaminhamento para compras e do pedido de cadastro vinculado:
-
-- reserva, entrega, reversão e cancelamento de reserva;
-- encaminhamento criado, aceito, devolvido ou cancelado;
-- encerramento da solicitação;
-- cadastro publicado, rejeitado ou resolvido como item já existente, e revisão pendente de resposta ou reaberta.
-
-As ações do próprio solicitante não viram notificação.
-
-`GET /api/v1/notifications` (`requests:read_own`) devolve só as do dono, mais recentes primeiro. O `unread_count` é o total real de não lidas, calculado pela mesma consulta, e não o tamanho da página. `POST /api/v1/notifications/read` marca ids próprios, ou todos com `all: true`, em `notification_reads`, onde a operação é só de inserção e pode ser repetida.
-
-O menu do front mostra "Notificações" com o contador real. Sem resposta confiável da API, o contador some em vez de mostrar zero.
-
-
-
-## 23. Resolução do cadastro vinculado (#243)
+## 21. Resolução do cadastro vinculado (#243)
 
 A decisão do cadastro e a continuidade da solicitação compartilham a mesma transação,
 com auditoria, controle de versão e a idempotência da decisão existente:

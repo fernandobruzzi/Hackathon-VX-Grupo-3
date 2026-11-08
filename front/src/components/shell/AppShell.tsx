@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BarChart3,
-  Bell,
   ClipboardList,
   FileSearch,
   GitMerge,
@@ -23,7 +22,6 @@ import { useAuth } from "@/lib/auth";
 import { SignOutButton } from "./SignOutButton";
 import { can, PERSONAS } from "@/lib/permissions";
 import { cn } from "@/lib/format";
-import { useUnreadNotifications } from "@/features/notifications/unread";
 import type { Permission } from "@/types/api";
 import { pendingCounts } from "@/mocks/queue";
 
@@ -33,8 +31,6 @@ type NavItem = {
   icon: React.ElementType;
   perms: Permission[];
   badge?: (role: string) => number | undefined;
-  /** Contador real da API (#249), nunca simulado. */
-  live?: boolean;
 };
 const NAV: { section: string; items: NavItem[] }[] = [
   {
@@ -97,13 +93,6 @@ const NAV: { section: string; items: NavItem[] }[] = [
         perms: ["requests:read_own"],
       },
       {
-        href: "/notificacoes/",
-        label: "Notificações",
-        icon: Bell,
-        perms: ["requests:read_own"],
-        live: true,
-      },
-      {
         href: "/dashboard/",
         label: "Qualidade da base",
         icon: BarChart3,
@@ -124,7 +113,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     useAuth();
   const router = useRouter();
   const path = usePathname();
-  const unread = useUnreadNotifications(path);
 
   useEffect(() => {
     if (ready && !me) router.replace("/login/");
@@ -161,7 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <ul className="mt-2 flex flex-col gap-0.5">
                   {items.map((i) => {
                     const active = path?.startsWith(i.href);
-                    const n = i.live ? unread : backend ? undefined : i.badge?.(role);
+                    const n = backend ? undefined : i.badge?.(role);
                     return (
                       <li key={i.href}>
                         <Link
@@ -178,10 +166,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           {!!n && (
                             <span
                               role="status"
-                              title={i.live ? "Não lidas" : "Contagem simulada"}
-                              aria-label={
-                                i.live ? `${n} notificações não lidas` : `${n} pendências simuladas`
-                              }
+                              title="Contagem simulada"
+                              aria-label={`${n} pendências simuladas`}
                               className={cn(
                                 "rounded-full px-2 py-0.5 font-mono text-[11px]",
                                 active ? "bg-on-esmeralda text-esmeralda" : "bg-white/12",

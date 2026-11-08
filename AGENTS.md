@@ -586,7 +586,7 @@ links one verified active code and leaves normal fulfillment to the requester. A
 or incompatible units stay for identification review. `REJECTED` closes with the rejection reason
 and guidance to create a corrected request. Closed requests never reopen. Protocol and original
 need remain unchanged; request and forward audits record the actual deciding reviewer and role.
-See section 23 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
+See section 21 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
 
 ## Stock reservations
 
@@ -684,14 +684,6 @@ with the owner's effective role and `origin: REQUESTER_PARTIAL_CONFIRMATION`, an
 `stock:reserve`. Deliveries, reservation cancels and reversals stay with Almoxarifado. The request
 detail lists `reservations` and `purchase_forwards` with their states. See section 19 of
 [`docs/solicitacao-material.md`](docs/solicitacao-material.md#19-atendimento-parcial-entre-estoque-e-compras-242).
-
-## Approved equivalents
-
-When a requested material lacks stock, the requester sees only technically equivalent materials whose equivalence Governança approved (`POST /api/v1/material-equivalences`, `merge:decide`, stored as a canonical pair in `material_equivalences`), with their availability at the request's center (#246). Switching requires `confirm_substitution: true`, uses the purchasing-forward lock order and confirmed shortage, refuses requests with any served parcel, and records the original code and the equivalence on the request and in the audit. Equivalence never merges materials or adds their stock. See section 21 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
-
-## Requester notifications
-
-`GET /api/v1/notifications` derives the requester's notifications from the audit of their own requests, reservations, purchase forwards and linked registration orders, excluding their own actions (#249). Only reads are stored (`notification_reads`, insert-only, `POST /api/v1/notifications/read` with ids or `all`), so `unread_count` is the real total. The navigation badge uses it and is omitted when the API gives no reliable total. See section 22 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
 
 ## Browser session transitions
 
