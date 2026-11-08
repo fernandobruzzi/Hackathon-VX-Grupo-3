@@ -13,6 +13,8 @@ from vx_materials_api.db.models import Base
 TABLES = {
     "material_requests",
     "purchase_forwards",
+    "material_equivalences",
+    "notification_reads",
     "automatic_correction_runs",
     "automatic_correction_results",
     "manual_reviews",
