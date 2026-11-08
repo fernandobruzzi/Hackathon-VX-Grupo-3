@@ -561,6 +561,19 @@ implement requests or stock movements. The #237 persistence base implements crea
 reads and owner cancellation with transactional audit; stock and purchasing operations remain
 in their respective follow-up issues. See section 13 of the model for current API behavior.
 
+## Stock reservations
+
+`GET /api/v1/stock/availability` reads, and never writes, the available balance of a principal
+material in an authorized center: current-dataset snapshots with approved consolidations, in the
+material's unit, minus `ATIVA` reservations and minus deliveries net of reversals recorded against
+the current dataset. `POST /api/v1/material-requests/{id}/reservations` (`stock:reserve`,
+`Idempotency-Key`, `expected_version`) locks the request row and a per tenant/material/center
+advisory lock before reading availability, so concurrent reservations never oversubscribe; it
+refuses with 409 above availability or the request's pending quantity, and while an `ATIVA`
+reservation from an older dataset awaits reconciliation. Reservations and the insert-only
+`stock_movements` table never touch `material_inventory_snapshots`; cancelling a request releases
+its active reservations. See [`docs/solicitacao-material.md`](docs/solicitacao-material.md#14-disponibilidade-e-reserva-239).
+
 ## Chat order submission
 
 A ready chat card creates no order until the user explicitly submits it through

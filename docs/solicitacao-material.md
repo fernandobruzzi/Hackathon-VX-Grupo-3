@@ -289,8 +289,62 @@ Criação e cancelamento exigem autenticação, Origin/CSRF nas sessões de nave
 Cada criação/transição gera auditoria na mesma transação; o detalhe expõe o histórico em
 ordem de versão. Replay não cria outro evento e revalida o escopo atual.
 
-Esta base não reserva, entrega ou encaminha para compras. Os vínculos de conversa e pedido
-já possuem chaves estrangeiras; reservas, movimentos e encaminhamentos passarão a referenciar
+Esta base não entrega nem encaminha para compras. Os vínculos de conversa e pedido
+já possuem chaves estrangeiras; reservas, movimentos e encaminhamentos referenciam
 a solicitação nas respectivas issues, sem inventar identificadores de entidades inexistentes.
-A #240 deve integrar a liberação de reservas e o tratamento das parcelas ao cancelamento antes
-de habilitar essas operações. O reset explícito da demo inclui as solicitações operacionais.
+O reset explícito da demo inclui as solicitações, reservas e movimentos operacionais.
+
+## 14. Disponibilidade e reserva (#239)
+
+**Tabelas.** `stock_reservations` guarda solicitação, material principal, centro, quantidade
+(`NUMERIC(24,6)`), unidade, estado (`ATIVA`, `CONSUMIDA`, `CANCELADA`), dataset de estoque vigente
+no momento da reserva, autor e versão. `stock_movements` já existe para a fórmula, mas só a #240
+grava nela: reserva, tipo (`ENTREGA`, `REVERSAO`), quantidade positiva, movimento revertido
+(obrigatório só na reversão) e dataset de origem. A credencial da API tem `SELECT, INSERT, UPDATE`
+nas reservas e apenas `SELECT, INSERT` nos movimentos; `batch_user` e `mcp_reader` não leem
+nenhuma das duas. Os snapshots importados continuam sem `UPDATE` nem `DELETE`.
+
+**Disponibilidade.** `GET /api/v1/stock/availability?material_id=…&center_code=…` exige
+`inventory:read` e centro autorizado e só lê. Devolve, sem preço nem valor:
+
+- `imported` (`S`): soma dos snapshots do dataset vigente do tenant no centro, seguindo as
+  consolidações aprovadas, pela mesma consulta da busca de materiais. Só entram linhas na unidade
+  do material; outras unidades aparecem em `unconverted_units` e não são convertidas.
+- `reserved` (`R`): reservas `ATIVA` do material principal no centro, de qualquer dataset.
+- `delivered` (`E`): entregas menos reversões registradas contra o dataset vigente (D4).
+- `available` (`D`): `S − R − E`, nunca exibido abaixo de zero.
+- `reservable` e `blocked_reason`: `INACTIVE_MATERIAL`, `MATERIAL_WITHOUT_UNIT`,
+  `NO_INVENTORY_DATASET` ou `RECONCILIATION_REQUIRED`, quando há reserva `ATIVA` feita contra um
+  dataset anterior. Até a reconciliação da seção 4.4, novas reservas desse material e centro ficam
+  bloqueadas, e as antigas continuam contando em `R`.
+
+**Reserva.** `POST /api/v1/material-requests/{id}/reservations` com `expected_version` e
+`quantity` exige `stock:reserve` (Almoxarifado) pelo `require_stock_action`, centro autorizado,
+Origin/CSRF em sessões de navegador e `Idempotency-Key`. Uma solicitação fora dos centros do
+usuário responde `404`, e a consulta de outro centro, `403`. A transação:
+
+1. bloqueia a linha da solicitação e confere versão, estado `EM_ATENDIMENTO`, material ativo e
+   unidade;
+2. obtém `pg_advisory_xact_lock` por tenant, material principal e centro, e só então lê `D`;
+3. recusa com `409 INSUFFICIENT_STOCK` acima de `D` e com `409 QUANTITY_EXCEEDS_PENDING` acima do
+   pendente da solicitação (`Q − r − e`);
+4. insere a reserva, incrementa a versão da solicitação e grava `STOCK_RESERVED` em `audit_logs`
+   com papel efetivo, disponível antes e depois.
+
+Duas reservas concorrentes acima do disponível resultam em uma aceita e uma recusada: a segunda
+espera o bloqueio e lê as reservas já confirmadas. A mesma chave com o mesmo conteúdo devolve a
+resposta original, revalidando tenant e centro; conteúdo diferente recebe `409`.
+`GET /api/v1/material-requests/{id}/reservations` lista as reservas e as parcelas
+(`requested`, `reserved`, `delivered`, `pending`) para o próprio solicitante ou para quem reserva
+no centro.
+
+**Cancelamento.** Cancelar a solicitação muda as reservas `ATIVA` para `CANCELADA` na mesma
+transação, com um evento `STOCK_RESERVATION_CANCELLED` por reserva. Movimentos já feitos ficam.
+
+**Pontos de integração.** A #240 grava `stock_movements` com o dataset vigente, muda reservas
+para `CONSUMIDA` e cancela reservas avulsas, usando o mesmo bloqueio por material e centro; a
+fórmula de `D` e as parcelas da solicitação já contam esses movimentos. A reversão deve apontar
+uma entrega do mesmo dataset, para que `E` nunca fique negativo. A #241 acrescenta os
+encaminhamentos (`c`) ao pendente em `stock_service.fulfillment`. A reconciliação de reservas na
+troca de dataset (seção 4.4) ainda não existe: até lá, o bloqueio `RECONCILIATION_REQUIRED`
+impede novas reservas afetadas.
