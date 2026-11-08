@@ -4,7 +4,7 @@ import React, { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AuthProvider } from "../src/lib/auth";
 import { ProposalReview } from "../src/features/sanitization/ProposalReview";
-import { ProposalOriginBadge } from "../src/components/ui/status";
+import { ConfidenceBandBadge, ProposalOriginBadge } from "../src/components/ui/status";
 import { proposals } from "../src/mocks/queue";
 import type { Proposal } from "../src/types/api";
 Object.assign(globalThis, { React });
@@ -34,4 +34,18 @@ test("proposta das regras não mostra o painel do auditor", () => {
     (p) => p.origin === "RULES" && p.proposal_type === "NCM_CORRECTION",
   )!;
   assert.doesNotMatch(review(rules), /auditor LLM/i);
+});
+
+test("revisão mostra a faixa de confiança, os candidatos e que ela não aprova", () => {
+  const html = review(proposals.find((p) => p.origin === "LLM_AUDITOR")!);
+  assert.match(html, /Validada pelo domínio/);
+  assert.match(html, /Confiança alta/);
+  assert.match(html, /7318\.15\.00/);
+  assert.match(html, /Pontuação simulada/);
+  assert.match(html, /não aprova/);
+});
+
+test("sem pontuador não há selo de faixa", () => {
+  assert.equal(renderToStaticMarkup(h(ConfidenceBandBadge, { value: null })), "");
+  assert.match(renderToStaticMarkup(h(ConfidenceBandBadge, { value: "BAIXA" })), /Confiança baixa/);
 });

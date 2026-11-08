@@ -19,6 +19,7 @@ import {
 import { ApiError } from "@/lib/api";
 import type { components } from "@/types/api.generated";
 import {
+  ConfidenceBandBadge,
   ProposalOriginBadge,
   ProposalStatusBadge,
   ProposalTypeBadge,
@@ -285,6 +286,7 @@ export function QueuePage() {
                     <div className="flex flex-col items-start gap-1">
                       <ProposalTypeBadge value={p.proposal_type} />
                       <ProposalOriginBadge value={p.origin} />
+                      <ConfidenceBandBadge value={p.confidence_band} />
                     </div>
                   </Td>
                   <Td>

@@ -150,8 +150,27 @@ Uma falha do pontuador, ou log probs para candidatos diferentes (`SCORER_CANDIDA
 - O Bedrock Custom Model Import devolve log probs com `"return_logprobs": true` no `InvokeModel`, para modelos importados a partir de 31/07/2025. O formato `OpenAIChatCompletion` traz log probs do prompt e da saída; o `BedrockCompletion` traz só os da saída. Fontes: [recursos avançados do Custom Model Import](https://docs.aws.amazon.com/bedrock/latest/userguide/custom-model-import-advanced-features.html) e [o anúncio do suporte a log probs](https://aws.amazon.com/blogs/machine-learning/unlock-model-insights-with-log-probability-support-for-amazon-bedrock-custom-model-import).
 - Os modelos abertos gerenciados (como o gpt-oss) não têm suporte a log probs confirmado na documentação.
 
-**Pendente:**
+**`bedrock_import_v1`:** é o pontuador real. Ele chama `InvokeModel` no formato OpenAIChatCompletion do Custom Model Import, no modelo de `BEDROCK_SCORER_MODEL_ARN`:
 
-- Confirmar na conta do workshop quais modelos importados estão disponíveis, em que região e com que limites. Este ambiente não tem credenciais AWS.
-- Implementar o pontuador real (`bedrock_import_v1`), que depende dessa confirmação.
+- **Pedido:** os candidatos vão com letras (`A) 8481.80.95`), com `max_tokens: 1`, `temperature: 0`, `logprobs: true` e `top_logprobs` de 5 a 20.
+- **Pontuação:** o log prob de cada letra entre as alternativas do primeiro token vira a pontuação do código. A letra que não aparece entre as alternativas fica 20 abaixo da pior devolvida.
+- **Classe com um único código:** devolve log prob 0 sem chamar o modelo.
+- **Orçamento:** cada chamada conta em `NCM_SCORER_MAX_CALLS` (padrão 200).
+- **Falhas:** saem com um código estável e deixam a sugestão sem faixa: `SCORER_NOT_CONFIGURED`, `SCORER_REQUEST_REJECTED`, `SCORER_UNAVAILABLE`, `SCORER_INVALID_RESPONSE`, `SCORER_NO_CANDIDATE_TOKEN`, `SCORER_BUDGET_EXHAUSTED`.
 
+**Na revisão:**
+
+- A fila mostra o selo "Confiança alta/média/baixa" (`confidence_band`).
+- O painel do auditor mostra:
+  - a validação pelo domínio;
+  - a faixa e a probabilidade de cada código do PDM;
+  - o pontuador e um aviso quando a pontuação é simulada.
+- Sem pontuador, o painel diz que vale só a validação pelo domínio.
+
+A documentação da AWS diverge sobre a data mínima de importação: o blog fala em 31/07/2025, e a página de recursos avançados, em 11/11/2025. Nenhuma das duas informa regiões nem limites específicos de log probs.
+
+**Pendente (exige acesso à conta AWS do workshop):**
+
+- confirmar quais modelos importados existem, em que região e com que limites;
+- rodar o `bedrock_import_v1` contra um deles; o formato segue a documentação, mas só foi testado com um cliente simulado;
+- calibrar as faixas no benchmark com `LLM_REPOSITORY=bedrock_v1 NCM_SCORER_REPOSITORY=bedrock_import_v1 ... measure_ncm_benchmark --llm-audit`.

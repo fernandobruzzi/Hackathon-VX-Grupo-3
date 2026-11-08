@@ -8,6 +8,7 @@ import { AlertTriangle, ArrowLeft, Check, X } from "lucide-react";
 import { Badge, Button, Card, Code, Eyebrow, Field, Input, Table, Td, Th } from "@/components/ui";
 import {
   MaterialStatusBadge,
+  ConfidenceBandBadge,
   ProposalOriginBadge,
   ProposalStatusBadge,
   ProposalTypeBadge,
@@ -17,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { ApiError } from "@/lib/api";
 import { cn, fmtBRL } from "@/lib/format";
-import type { LlmAuditSuggestion, Proposal, ReviewStatus } from "@/types/api";
+import type { LlmAuditConfidence, LlmAuditSuggestion, Proposal, ReviewStatus } from "@/types/api";
 
 /** Integração: POST /api/v1/sanitization/{id}/decide { expected_version, review_area, decision, primary_material_code, reason }. */
 export function ProposalReview({ proposal }: { proposal: Proposal }) {
@@ -535,7 +536,63 @@ function LlmAuditPanel({ audit }: { audit: LlmAuditSuggestion }) {
           Classe {audit.class_source === "LLM" ? "escolhida pelo auditor" : "das regras"} · modelo{" "}
           {audit.model} · prompt {audit.prompt_version} · política {audit.policy_version}.
         </p>
+        {audit.confidence && <LlmConfidence confidence={audit.confidence} />}
       </Card>
     </section>
+  );
+}
+
+function LlmConfidence({ confidence }: { confidence: LlmAuditConfidence }) {
+  const percent = (value: number | null) =>
+    value === null ? "—" : `${(value * 100).toFixed(1).replace(".", ",")}%`;
+  return (
+    <div className="mt-4" aria-label="Confiança da sugestão">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="font-semibold">Confiança</span>
+        {confidence.domain_validated && <Badge tone="success">Validada pelo domínio</Badge>}
+        <ConfidenceBandBadge value={confidence.band} />
+        {confidence.band && (
+          <span>
+            {percent(confidence.probability)} para {confidence.chosen}
+          </span>
+        )}
+      </div>
+      {confidence.band ? (
+        <Table className="mt-2">
+          <thead>
+            <tr>
+              <Th>Código do PDM</Th>
+              <Th>Probabilidade</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {confidence.candidates.map((c) => (
+              <tr key={c.code}>
+                <Td>
+                  <Code>{c.code}</Code>
+                </Td>
+                <Td>{percent(c.probability)}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : (
+        <p className="mt-2 text-sm text-muted">
+          {confidence.error
+            ? `Pontuador indisponível (${confidence.error}): vale só a validação pelo domínio.`
+            : "Sem pontuador configurado: vale só a validação pelo domínio."}
+        </p>
+      )}
+      {confidence.scorer_simulated && (
+        <p className="mt-2 text-sm font-semibold text-aviso">
+          Pontuação simulada: não mede a confiança de um modelo real.
+        </p>
+      )}
+      <p className="mt-2 text-sm text-muted">
+        A confiança só ordena a revisão: não aprova nem dispensa a conferência técnica e fiscal
+        {confidence.scorer_model ? ` · pontuador ${confidence.scorer_model}` : ""} ·{" "}
+        {confidence.version}.
+      </p>
+    </div>
   );
 }
