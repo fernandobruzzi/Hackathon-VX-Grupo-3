@@ -31,6 +31,7 @@ from clients.storage import ObjectStore, get_object_store
 from domain.contracts import AnalyzedMaterial, MaterialRecord, MergeProposal, PdmCatalog
 from pipelines.corrections import propose_corrections, summarize_corrections
 from pipelines.identity_review import identity_review_report, store_identity_review
+from pipelines.llm_audit import audit_pending_ncm
 from pipelines.ncm_corrections import bind_snapshot_assessment, propose_ncm_corrections
 from pipelines.sanitize import _catalog, analysis_signature, analyze_material, merge_proposals, summarize
 from repositories.batch_repository import (
@@ -49,6 +50,7 @@ from repositories.classification import get_classification_repository
 from repositories.corrections import get_correction_repository
 from repositories.extraction import get_extraction_repository
 from repositories.internal_enrichment_repository import run_internal_enrichment
+from repositories.llm import get_llm_repository
 from repositories.manual_reviews import save_manual_reviews
 from repositories.normalization import get_normalization_repository
 
@@ -251,8 +253,27 @@ def coverage(
     }
 
 
-def model_usage(assisted=None) -> dict:
-    """O modo padrão não chama modelos; o piloto opcional registra uso observado."""
+def model_usage(assisted=None, audit=None) -> dict:
+    """O modo padrão não chama modelos; o piloto e o auditor opcionais registram uso observado."""
+    usage = _assisted_usage(assisted)
+    audited = (audit or {}).get("usage") or {}
+    if not audited.get("calls"):
+        return usage
+    model = ", ".join(audited["models"])
+    calls = {**usage["calls"], model: usage["calls"].get(model, 0) + audited["attempts"]}
+    note = "Auditor LLM opcional" + (" (simulado)" if audited["simulated"] else "") + "; preço não configurado"
+    return {
+        **usage,
+        "calls": calls,
+        "input_tokens": usage["input_tokens"] + audited["input_tokens"],
+        "output_tokens": usage["output_tokens"] + audited["output_tokens"],
+        "cost_usd": None,
+        "note": note if not usage["calls"] else f"{usage['note']}; {note}",
+        "llm_audit": audited,
+    }
+
+
+def _assisted_usage(assisted) -> dict:
     if assisted and assisted.get("calls"):
         return {
             "calls": {assisted["model_id"]: assisted["calls"]},
@@ -302,7 +323,12 @@ def run_full(
     )
     review = identity_review_report(analyzed, catalog)
     review_key = store_identity_review(review, context.store or get_object_store(), context.tenant_id)
-    corrections += propose_ncm_corrections(analyzed, catalog, snapshot=snapshot)
+    ncm_corrections = propose_ncm_corrections(analyzed, catalog, snapshot=snapshot)
+    # Auditor LLM opcional (#290): só com LLM_REPOSITORY, e só nos casos que as regras não resolveram.
+    audited, audit_report = audit_pending_ncm(
+        analyzed, catalog, ncm_corrections, get_llm_repository(), snapshot=snapshot
+    )
+    corrections += ncm_corrections + audited
     if snapshot is not None:
         merges = [bind_snapshot_assessment(p, catalog, snapshot) for p in merges]
         corrections = [bind_snapshot_assessment(p, catalog, snapshot) for p in corrections]
@@ -367,7 +393,8 @@ def run_full(
             "total_all_attempts": round(sum(a.get("seconds", 0) for a in attempts), 2),
             "attempts": len(attempts),
         },
-        "model_usage": model_usage(internal.get("assisted_usage")),
+        "llm_audit": audit_report,
+        "model_usage": model_usage(internal.get("assisted_usage"), audit_report),
     }
 
 

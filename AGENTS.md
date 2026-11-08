@@ -878,6 +878,8 @@ Any algorithm whose results may disappoint, such as preprocessing, extraction, c
 
 Every call asks for a JSON schema and returns only data that passed it. Invalid, truncated or refused answers, rejected requests and an exhausted budget raise `LlmError` with a stable code, so callers keep the case pending instead of inventing a result. Each attempt counts against `LLM_MAX_CALLS_PER_RUN`; create one repository per run. Logs record model, prompt version, tokens, latency and attempts, never prompts, answers or credentials. Details and verification: [`docs/llm.md`](docs/llm.md).
 
+With `LLM_REPOSITORY` set, the batch runs the LLM auditor (#290) after the rule-based NCM proposals, only on materials the rules left without one, each with the rule's reason. The model gets descriptions and PDM excerpts, never the current NCM or the answer key, and returns evidence or abstains. The domain checks every quote against the text, accepts only admitted PDM values that don't overwrite extracted ones, recomputes the code with the same rules and discards anything that doesn't match, with the reason; codes outside the class references are never accepted. Survivors become `NCM_CORRECTION` with `origin = LLM_AUDITOR` and the model, prompt version and quotes in the changeset, always under technical and fiscal review, never in lots or automatic corrections. Errors and an exhausted budget leave the case pending. `sanitize-report` never calls a model. Measure with `--llm-audit` on `pipelines.measure_ncm_benchmark`.
+
 ## Dashboard
 
 `GET /api/v1/dashboard/metrics` reads the original inventory snapshots and the
