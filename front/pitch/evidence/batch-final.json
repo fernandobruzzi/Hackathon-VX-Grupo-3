@@ -223,7 +223,7 @@
   },
   "financial_savings_measured": false,
   "rehearsal_reset": {
-    "runs": 1,
+    "runs": 2,
     "fingerprint_sha256": "5b455d4b87425ac4e44b14c2f859f3452aa0ae061af3a48c4e45a2d48e2a6ca8",
     "state": {
       "sha256": "5b455d4b87425ac4e44b14c2f859f3452aa0ae061af3a48c4e45a2d48e2a6ca8",
@@ -242,6 +242,7 @@
       }
     },
     "orders_imported_each_run": 520,
-    "index_version": "search-index-v2|pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v2@1|extractor:rule_based_v1@11-quantity-reference-199|identity-v3|approved-attributes-v1|independent-fields-v2"
+    "index_version": "search-index-v2|pdm-kit-v1|pdm-sha256:33820f96f0e2a6742bcbf2f9552bd18666f6898ff027d36a4ddc68ee313d6a5b|classifier:aliases_v2@1|extractor:rule_based_v1@11-quantity-reference-199|identity-v3|approved-attributes-v1|independent-fields-v2",
+    "verified_with_status": true
   }
 }
