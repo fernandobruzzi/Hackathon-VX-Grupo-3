@@ -25,6 +25,7 @@ from vx_materials_api.routes import (
     material_equivalences,
     material_requests,
     materials,
+    notifications,
     purchase_forwards,
     registration_orders,
     sanitization,
@@ -111,6 +112,7 @@ def create_app(
     app.include_router(material_requests.router)
     app.include_router(purchase_forwards.router)
     app.include_router(materials.router)
+    app.include_router(notifications.router)
     app.include_router(auth.router)
     app.include_router(sanitization.router)
     app.include_router(enrichment.router)
