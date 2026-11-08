@@ -627,6 +627,21 @@ authorized centers through `require_purchasing_action`. A forward is demand, nev
 purchase or receipt, and the UI must say so. See section 16 of
 [`docs/solicitacao-material.md`](docs/solicitacao-material.md#16-encaminhamento-para-compras-sem-saldo-241).
 
+## Partial fulfillment
+
+When availability covers only part of the pending quantity (`0 ≤ D < p`), the request owner
+chooses `PARTIAL` (default: reserve up to `D`, forward the rest) or `PURCHASING_ONLY`
+(forward everything) with `POST /api/v1/material-requests/{id}/fulfillment` (#242, decision D1).
+`GET .../fulfillment-options` previews the split and writes nothing. Confirmation reuses the
+purchasing-forward checks and lock order (`purchase_forward_service.locked_shortage`), recomputes
+`D` and `p` inside the stock advisory lock, and writes both parcels, their audit and one request
+version in a single transaction; the forward stays unique per request version. The stock parcel
+comes from the owner's choice with a server-computed quantity: it is audited as `STOCK_RESERVED`
+with the owner's effective role and `origin: REQUESTER_PARTIAL_CONFIRMATION`, and grants no
+`stock:reserve`. Deliveries, reservation cancels and reversals stay with Almoxarifado. The request
+detail lists `reservations` and `purchase_forwards` with their states. See section 19 of
+[`docs/solicitacao-material.md`](docs/solicitacao-material.md#19-atendimento-parcial-entre-estoque-e-compras-242).
+
 ## Browser session transitions
 
 The frontend serializes login, persona switching and logout. While a transition
