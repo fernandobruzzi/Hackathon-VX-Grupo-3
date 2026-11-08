@@ -40,6 +40,7 @@ from vx_materials_api.db.models import (
 )
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.security.rbac import has_permission, require_permission, require_resource_scope
+from vx_materials_api.services.registration_request_service import resolve_requests
 
 GOVERNANCE = "orders:decide"
 FISCAL = "ncm:decide"
@@ -377,6 +378,7 @@ def submit_order(db, identity, catalog, order_id, expected_version, key, request
     order.missing_attributes = list(missing)
     order.version += 1
     db.flush()
+    resolve_requests(db, identity, role, order, None, request_id)
     _audit(db, identity, role, order, "ORDER_SUBMITTED", None, before, request_id)
     db.flush()
     db.refresh(order)
@@ -598,6 +600,7 @@ def decide_order(db, identity, catalog, order_id, decision, key, request_id=None
                 order.material_id, order.status, action = material.id, "REGISTERED", "ORDER_REGISTERED"
     order.version += 1
     db.flush()
+    resolve_requests(db, identity, role, order, decision.reason, request_id)
     _audit(db, identity, role, order, action, decision.reason, before, request_id)
     db.flush()
     db.refresh(order)
@@ -658,6 +661,7 @@ def complement_order(db, identity, catalog, order_id, payload, key, request_id=N
     order.missing_attributes = list(missing)
     order.version += 1
     db.flush()
+    resolve_requests(db, identity, role, order, payload.reason, request_id)
     _audit(db, identity, role, order, "ORDER_COMPLEMENTED", payload.reason, before, request_id, after=snapshot())
     db.flush()
     db.refresh(order)
