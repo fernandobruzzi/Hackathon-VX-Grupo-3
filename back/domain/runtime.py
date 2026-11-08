@@ -12,7 +12,7 @@ AWS_RUNTIME_VARIABLES = (
 
 
 # Variáveis que selecionam um cliente externo; o valor `simulated_v1` só vale localmente.
-SIMULATED_SELECTORS = ("EMBEDDING_REPOSITORY", "LLM_REPOSITORY")
+SIMULATED_SELECTORS = ("EMBEDDING_REPOSITORY", "LLM_REPOSITORY", "NCM_SCORER_REPOSITORY")
 
 
 def check_simulated_clients() -> None:

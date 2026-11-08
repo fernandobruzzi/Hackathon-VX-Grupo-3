@@ -21,6 +21,7 @@ from dataclasses import asdict, dataclass, field, replace
 from domain.contracts import AnalyzedMaterial, FieldCorrection, LlmCall, LlmRepository, MergeProposal, PdmCatalog
 from domain.llm import LlmError
 from domain.ncm_rules import RULES_VERSION, check_ncm_consistency, ncm_proposal_blockers
+from domain.ncm_scoring import NcmScorer, NcmScorerError, confidence
 from domain.ncm_snapshot import NcmSnapshot
 from domain.proposals import canonical_hash
 from pipelines.corrections import build_correction_proposal
@@ -300,6 +301,7 @@ def _proposal(
     call: LlmCall,
     prompt: str,
     catalog: PdmCatalog,
+    confidence_record: dict,
 ) -> MergeProposal:
     before, after = assessments
     record = revised.record
@@ -339,6 +341,8 @@ def _proposal(
                 "candidate_classes": list(case.candidate_classes),
                 "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
             },
+            # Ordena a revisão; nunca aprova, aplica nem coloca a sugestão em lote.
+            "confidence": confidence_record,
         },
     }
     return replace(
@@ -351,8 +355,24 @@ def _proposal(
     )
 
 
+def score_confidence(class_id: str, target: str, prompt: str, catalog: PdmCatalog, scorer: NcmScorer | None):
+    """Pontua o código sugerido entre todos os códigos de referência da classe no PDM."""
+    candidates = tuple(sorted({code for ref in catalog.classes[class_id].ncm_references for code in ref.codes}))
+    if scorer is None:
+        return confidence(target, candidates, None)
+    try:
+        return confidence(target, candidates, scorer.score(prompt, candidates))
+    except NcmScorerError as error:
+        return confidence(target, candidates, None, error.code)
+
+
 def audit_cases(
-    cases: list[AuditCase], catalog: PdmCatalog, llm: LlmRepository, *, snapshot: NcmSnapshot | None = None
+    cases: list[AuditCase],
+    catalog: PdmCatalog,
+    llm: LlmRepository,
+    *,
+    snapshot: NcmSnapshot | None = None,
+    scorer: NcmScorer | None = None,
 ) -> list[AuditOutcome]:
     outcomes = []
     for case in cases:
@@ -375,7 +395,9 @@ def audit_cases(
         status, detail, revised, target, assessments = revalidate(case, result.data, catalog, snapshot)
         proposal = None
         if status == PROPOSED:
-            proposal = _proposal(case, revised, target, assessments, result.data, result.call, prompt, catalog)
+            # Só a sugestão que passou pela validação do domínio é pontuada.
+            record = score_confidence(revised.pdm_class_id, target, prompt, catalog, scorer)
+            proposal = _proposal(case, revised, target, assessments, result.data, result.call, prompt, catalog, record)
         outcomes.append(
             AuditOutcome(code, case.reasons, status, detail, proposal, result.call, _digits(result.data.get("ncm")))
         )
@@ -414,10 +436,13 @@ def audit_pending_ncm(
     llm: LlmRepository | None,
     *,
     snapshot: NcmSnapshot | None = None,
+    scorer: NcmScorer | None = None,
 ) -> tuple[list[MergeProposal], dict | None]:
     """Etapa opcional do batch: sem modelo configurado, não faz nada e não chama ninguém."""
     if llm is None:
         return [], None
     proposed = {p.suggested_primary_code for p in ncm_proposals}
-    outcomes = audit_cases(select_audit_cases(materials, catalog, proposed), catalog, llm, snapshot=snapshot)
+    outcomes = audit_cases(
+        select_audit_cases(materials, catalog, proposed), catalog, llm, snapshot=snapshot, scorer=scorer
+    )
     return [o.proposal for o in outcomes if o.proposal is not None], summarize_audit(outcomes)
