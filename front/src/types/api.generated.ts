@@ -932,6 +932,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/chat/{session_id}/request-material": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Confirmar necessidade: material identificado, cadastro novo ou identificação em revisão, sem movimentar estoque.
+     * @description Quantidade e unidade obrigatórias; centro e identidade vêm da sessão. Se há dúvida técnica de identidade, segue para identificação sem cadastro automático. Uma solicitação por conversa, com idempotência, versão, auditoria e transação única. Catálogo alterado exige novo turno.
+     */
+    post: operations["submitChatMaterialRequest"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1746,6 +1766,8 @@ export interface components {
       /** Format: uuid */
       order_id: string | null;
       submission: components["schemas"]["ChatSubmitResponse"] | null;
+      /** @description Solicitação criada explicitamente nesta conversa; presente nos três caminhos e recuperada do banco. */
+      material_request_submission?: components["schemas"]["ChatMaterialRequestResponse"] | null;
     };
     ManualReview: {
       /** Format: uuid */
@@ -2669,6 +2691,31 @@ export interface components {
       }[];
       evidence: string[];
       rationale: string;
+    };
+    /** ChatMaterialRequest */
+    ChatMaterialRequest: {
+      /** Expected Session Version */
+      expected_session_version: number;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /**
+       * @description Confirma criar outra necessidade após o aviso de solicitações abertas do mesmo material e centro.
+       * @default false
+       */
+      acknowledge_open_requests: boolean;
+    };
+    /** ChatMaterialRequestResponse */
+    ChatMaterialRequestResponse: {
+      /**
+       * Session Id
+       * Format: uuid
+       */
+      session_id: string;
+      /** Session Version */
+      session_version: number;
+      material_request: components["schemas"]["MaterialRequestDetail"];
     };
   };
   responses: never;
@@ -7467,6 +7514,100 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PurchaseForward"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  submitChatMaterialRequest: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        session_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChatMaterialRequest"];
+      };
+    };
+    responses: {
+      /** @description Resultado da operação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChatMaterialRequestResponse"];
         };
       };
       /** @description Sessão inválida ou expirada. */

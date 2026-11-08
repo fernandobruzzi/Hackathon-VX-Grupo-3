@@ -286,12 +286,17 @@ def _links(db, caller, payload):
     chat = None
     order = None
     if payload.chat_session_id:
-        chat = db.scalar(
-            select(ChatSession).where(ChatSession.id == payload.chat_session_id).with_for_update(read=True)
-        )
+        chat = db.scalar(select(ChatSession).where(ChatSession.id == payload.chat_session_id).with_for_update())
         require_conversation_owner(caller, chat)
+        from vx_materials_api.services import chat_service
+
+        chat_service._require_history_scope(db, caller, chat)
+        if chat.active_turn_id is not None:
+            raise ApiProblem(409, "TURN_IN_PROGRESS", "Aguarde a conclusão do turno antes de enviar.")
         if chat.context.get("center_code") != payload.center_code:
             raise ApiProblem(422, "CENTER_MISMATCH", "A conversa pertence a outro centro.")
+        if chat_service.material_request_for(db, chat.id) is not None:
+            raise ApiProblem(409, "CHAT_ALREADY_SUBMITTED", "Esta conversa já gerou uma solicitação.")
     if payload.registration_order_id:
         order = db.scalar(
             select(RegistrationOrder)
@@ -352,17 +357,10 @@ def _open_request_warning(total, visible):
     }
 
 
-def create_request(db, caller, payload, key, request_id):
+def create_request_record(db, caller, payload, request_id):
+    """Valida e grava com auditoria; a transação pertence ao comando chamador."""
     role = require_permission(caller, "requests:create")
     require_center(caller, payload.center_code)
-    content = payload.model_dump(mode="json")
-    if not content["acknowledge_open_requests"]:
-        # Mantém o hash das chaves gravadas antes da confirmação existir.
-        del content["acknowledge_open_requests"]
-    digest = canonical_hash(content)
-    previous = _previous(db, caller, "material-request.create", key, digest)
-    if previous:
-        return previous.response
     order = _links(db, caller, payload)
     material_id = payload.material_id or (order.material_id if order else None)
     if order and order.material_id and material_id != order.material_id:
@@ -424,6 +422,21 @@ def create_request(db, caller, payload, key, request_id):
         else None
     )
     _audit(db, caller, role, row, None, reason, request_id, acknowledgement)
+    return row
+
+
+def create_request(db, caller, payload, key, request_id):
+    require_permission(caller, "requests:create")
+    require_center(caller, payload.center_code)
+    content = payload.model_dump(mode="json")
+    if not content["acknowledge_open_requests"]:
+        # Mantém o hash das chaves gravadas antes da confirmação existir.
+        del content["acknowledge_open_requests"]
+    digest = canonical_hash(content)
+    previous = _previous(db, caller, "material-request.create", key, digest)
+    if previous:
+        return previous.response
+    row = create_request_record(db, caller, payload, request_id)
     response = detail(db, row, caller)
     remember_idempotency(db, caller, "material-request.create", key, digest, row, response)
     db.commit()

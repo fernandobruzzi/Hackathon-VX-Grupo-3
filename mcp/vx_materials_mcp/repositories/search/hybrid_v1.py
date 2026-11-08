@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from domain.contracts import AnalyzedMaterial, ClassificationInput, MaterialRecord, PdmCatalog
 from domain.identity import compare_attributes, item_name_review_reasons, partial_identity_key, resolve_item_name
 from domain.identity_decision import decide_identity
+from domain.material_code_request import explicit_material_code
 from domain.pdm_validator import validate_pdm
 from pipelines.search_index import analyze_search_candidate
 from repositories.batch_repository import SearchSource
@@ -44,6 +45,23 @@ class HybridV1SearchRepository:
         self._embedder = embedder
 
     def search(self, query: SearchQuery) -> dict:
+        code = explicit_material_code(query.query, allow_bare=True)
+        if code and not query.attributes and not query.pdm_class_id and not query.item_name:
+            rows = self._catalog.by_code(code, self._version)
+            candidates = [self._candidate(row, None, None, []) for row in rows]
+            for candidate in candidates:
+                # Seleção de um registro por código não é comprovação de identidade para unificação.
+                candidate["match_type"] = "EXACT_MATERIAL_CODE"
+            self._attach_inventory(candidates)
+            for candidate in candidates:
+                candidate.pop("_inventory_id")
+            return {
+                "match_status": self._status(candidates),
+                "pdm_class_id": None,
+                "query_attributes": {},
+                "index_version": self._version,
+                "candidates": candidates,
+            }
         classification = self._classifier.classify(ClassificationInput(query.query))
         class_id = query.pdm_class_id or classification.pdm_class_id
         if class_id is None:
@@ -213,7 +231,8 @@ class HybridV1SearchRepository:
     @staticmethod
     def _reusable(candidate: dict) -> bool:
         return bool(
-            candidate["identity_verified"] and (candidate["status"] == "ATIVO" or candidate["active_code_target"])
+            (candidate["identity_verified"] or candidate.get("match_type") == "EXACT_MATERIAL_CODE")
+            and (candidate["status"] == "ATIVO" or candidate["active_code_target"])
         )
 
     @classmethod

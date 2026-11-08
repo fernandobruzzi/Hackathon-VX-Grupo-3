@@ -608,6 +608,22 @@ read; others appear only in `hidden_count`. The confirmation is recorded in the 
 event. Every active reservation belongs to an open request, so this also covers reservations.
 See section 15 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
 
+## Chat material request submission
+
+The chat's explicit `POST /api/v1/chat/{session_id}/request-material` requires quantity and unit.
+The API reads the saved card, center, owner and catalog proof. A verified identity or an explicit
+ERP code creates a need linked to the active material; a complete, checked nonexistent item creates
+both the request and registration order atomically. Unresolved identification and technically
+unverified similar products stay in identification review, without an automatic registration order.
+An explicit code selects a catalog record; it never proves identity for a merge. The API binds
+that choice to the actual user message, and MCP stock remains scoped to the caller.
+One database constraint allows one material request per conversation. Submitted conversations
+accept no new turns. The session detail restores the request, protocol and state after a reload.
+The existing open-request warning also applies: the UI asks for explicit acknowledgement before
+resending with `acknowledge_open_requests: true`; the normal creation audit records that choice.
+No path reserves, buys, delivers or publishes a material. The legacy order-only endpoint below
+remains available for existing clients; the frontend confirms the material need instead.
+
 ## Chat order submission
 
 A ready chat card creates no order until the user explicitly submits it through

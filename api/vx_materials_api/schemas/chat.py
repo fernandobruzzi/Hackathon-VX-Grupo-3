@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from vx_materials_api.schemas.material_requests import MaterialRequestDetail, PositiveQuantity, ShortText
+
 
 class _Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -115,6 +117,19 @@ class ChatSubmitResponse(_Contract):
     status: Literal["READY_FOR_REVIEW", "EXISTING"]
 
 
+class ChatMaterialRequest(_Contract):
+    acknowledge_open_requests: bool = False
+    expected_session_version: int = Field(ge=1)
+    quantity: PositiveQuantity
+    unit: ShortText
+
+
+class ChatMaterialRequestResponse(_Contract):
+    session_id: UUID
+    session_version: int
+    material_request: MaterialRequestDetail
+
+
 class ChatSessionSummary(_Contract):
     id: UUID
     title: str
@@ -148,3 +163,4 @@ class ChatSessionDetail(_Contract):
     material_card: MaterialCard | None
     order_id: UUID | None
     submission: ChatSubmitResponse | None
+    material_request_submission: ChatMaterialRequestResponse | None = None

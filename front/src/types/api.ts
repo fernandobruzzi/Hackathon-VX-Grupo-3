@@ -32,3 +32,5 @@ export type BatchJob = components["schemas"]["BatchJob"];
 export type BatchJobList = components["schemas"]["BatchJobList"];
 export type AuditEvent = components["schemas"]["AuditEvent"];
 export type DashboardMetrics = components["schemas"]["DashboardMetrics"];
+
+export type MaterialRequestDetail = components["schemas"]["MaterialRequestDetail"];
