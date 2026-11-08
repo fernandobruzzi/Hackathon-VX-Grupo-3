@@ -1,5 +1,6 @@
 """Saneamento de ponta a ponta no banco real, com a credencial batch_user."""
 
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -25,20 +26,31 @@ PDM = str(KIT / "03_padrao_cadastro_PDM.xlsx")
 
 @pytest.fixture(scope="module")
 def sanitized(migrated_url, tmp_path_factory):
+    with batch_database(migrated_url, tmp_path_factory, KIT) as (admin, batch_url, store):
+        yield run_sanitize(PDM, database_url=batch_url, store=store), admin, batch_url
+
+
+@contextmanager
+def batch_database(migrated_url, tmp_path_factory, kit):
     admin = create_engine(migrated_url)
-    with admin.begin() as connection:
-        connection.execute(
-            text("TRUNCATE datasets, reference_versions, materials_master, sanitization_proposals CASCADE")
-        )
-    with temporary_login(migrated_url, "api_user") as api_url, temporary_login(migrated_url, "batch_user") as batch_url:
-        api = create_engine(api_url)
-        store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
-        bootstrap(KIT, api, store)
-        api.dispose()
-        first = run_sanitize(PDM, database_url=batch_url, store=store)
-        second = run_sanitize(PDM, database_url=batch_url, store=store)
-        yield first, second, admin, batch_url
-    admin.dispose()
+    try:
+        with admin.begin() as connection:
+            connection.execute(
+                text("TRUNCATE datasets, reference_versions, materials_master, sanitization_proposals CASCADE")
+            )
+        with (
+            temporary_login(migrated_url, "api_user") as api_url,
+            temporary_login(migrated_url, "batch_user") as batch_url,
+        ):
+            api = create_engine(api_url)
+            store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
+            try:
+                bootstrap(kit, api, store)
+            finally:
+                api.dispose()
+            yield admin, batch_url, store
+    finally:
+        admin.dispose()
 
 
 def total(result):
@@ -52,7 +64,7 @@ def scalar(engine, query):
 
 
 def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
-    first, _, admin, _ = sanitized
+    first, admin, _ = sanitized
     # O número de propostas não pode forçar a aceitação de identidades inconclusivas.
     assert first["merges"] > 0
     assert first["proposals"] == first["merges"] + sum(first["corrections"]["proposals"].values()) + first["enrichment"]
@@ -72,22 +84,15 @@ def test_batch_saves_proposals_with_members_conflicts_and_versions(sanitized):
     assert all(member["expected_version"] == 1 and member["material_id"] for member in row[2])
 
 
-def test_running_again_duplicates_nothing(sanitized):
-    first, second, admin, _ = sanitized
-    assert second["inserted"] == 0
-    assert total(second) == total(first)
-    assert scalar(admin, "SELECT count(*) FROM sanitization_proposals") == total(first)
-
-
 def test_master_data_stays_untouched(sanitized):
-    _, _, admin, _ = sanitized
+    _, admin, _ = sanitized
     assert scalar(admin, "SELECT count(*) FROM materials_master WHERE version <> 1 OR is_canonical") == 0
     assert scalar(admin, "SELECT count(*) FROM materials_master WHERE status = 'ATIVO'") == 20014
 
 
 def test_only_active_materials_are_proposed(sanitized):
     # NCM é dado fiscal do item em qualquer status; as demais propostas só envolvem ativos.
-    _, _, admin, _ = sanitized
+    _, admin, _ = sanitized
     query = (
         "SELECT count(*) FROM sanitization_proposals p, jsonb_array_elements(p.members) member, materials_master m "
         "WHERE m.id = (member->>'material_id')::uuid AND m.status <> 'ATIVO' AND p.proposal_type {} 'NCM_CORRECTION'"
@@ -106,7 +111,7 @@ def test_batch_credential_cannot_change_master(sanitized):
 
 
 def test_packaging_units_are_flagged_in_saved_proposals(sanitized):
-    first, _, admin, _ = sanitized
+    first, admin, _ = sanitized
     assert first["merge_summary"]["conflicts"]["UNIDADE_SEM_FATOR"] > 0
     query = (
         "SELECT count(*) FROM sanitization_proposals "
@@ -116,7 +121,7 @@ def test_packaging_units_are_flagged_in_saved_proposals(sanitized):
 
 
 def test_corrections_are_saved_with_before_after_and_rule(sanitized):
-    first, _, admin, _ = sanitized
+    first, admin, _ = sanitized
     with admin.connect() as connection:
         rows = connection.execute(
             text("SELECT proposal_type, count(*) FROM sanitization_proposals WHERE proposal_type <> 'MERGE' GROUP BY 1")
@@ -141,7 +146,7 @@ def test_corrections_are_saved_with_before_after_and_rule(sanitized):
 
 
 def test_saved_corrections_carry_their_review_lane_and_merges_do_not(sanitized):
-    first, _, admin, _ = sanitized
+    first, admin, _ = sanitized
     tiers = (
         "SELECT p.changeset->'review_lane'->>'tier', count(*) FROM sanitization_proposals p "
         "WHERE p.proposal_type IN ('PDM_CORRECTION', 'UNIT_CORRECTION') GROUP BY 1"
@@ -161,7 +166,7 @@ def test_saved_corrections_carry_their_review_lane_and_merges_do_not(sanitized):
 
 
 def test_every_saved_batch_proposal_matches_the_review_contract(sanitized):
-    _, _, admin, _ = sanitized
+    _, admin, _ = sanitized
     with Session(admin) as db:
         for proposal in db.scalars(select(SanitizationProposal)):
             decode_proposal(proposal)
@@ -171,7 +176,7 @@ def test_every_saved_batch_proposal_matches_the_review_contract(sanitized):
 def test_real_batch_proposal_can_be_applied_with_local_sessions(sanitized, monkeypatch):
     from domain.pdm_loader import load_pdm
 
-    _, _, admin, _ = sanitized
+    _, admin, _ = sanitized
     monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     with admin.connect() as connection:
@@ -236,7 +241,7 @@ def _pdm_valid(connection, catalog, proposal_id) -> bool:
 def test_real_group_correction_is_applied_and_keeps_the_original(sanitized, monkeypatch):
     from domain.pdm_loader import load_pdm
 
-    _, _, admin, _ = sanitized
+    _, admin, _ = sanitized
     monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     catalog = load_pdm(PDM)
@@ -292,7 +297,7 @@ def review(sanitized, monkeypatch):
     """Cliente com sessões locais dentro de uma transação desfeita no fim, sobre o batch real."""
     from domain.pdm_loader import load_pdm
 
-    _, _, admin, _ = sanitized
+    _, admin, _ = sanitized
     monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     with admin.connect() as connection:
@@ -395,9 +400,12 @@ def test_pdm_correction_accepts_ncm_written_without_dots(review):
     assert master(connection, "10002148").ncm == "87089990"
 
 
-def test_manual_review_counts_match_full_base_report_and_rerun(sanitized):
-    first, second, admin, _ = sanitized
-    assert first["manual_review_run_id"] == second["manual_review_run_id"]
+def test_manual_review_counts_match_full_base_report(sanitized):
+    first, admin, _ = sanitized
+    check_manual_review_counts(first, admin)
+
+
+def check_manual_review_counts(first, admin):
     with admin.connect() as connection:
         counts = dict(
             connection.execute(

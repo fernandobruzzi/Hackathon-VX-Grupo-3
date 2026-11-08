@@ -37,7 +37,7 @@ def changed_rules(monkeypatch):
 
 
 @pytest.fixture(scope="module")
-def runs(migrated_url, tmp_path_factory):
+def runs(migrated_url, tmp_path_factory, small_sanitization_kit):
     admin = create_engine(migrated_url)
     with admin.begin() as connection:
         connection.execute(
@@ -47,7 +47,7 @@ def runs(migrated_url, tmp_path_factory):
     with temporary_login(migrated_url, "api_user") as api_url, temporary_login(migrated_url, "batch_user") as batch_url:
         api = create_engine(api_url)
         store = LocalObjectStore(tmp_path_factory.mktemp("storage"))
-        bootstrap(KIT, api, store)
+        bootstrap(small_sanitization_kit, api, store)
         api.dispose()
         first = run_sanitize(PDM, database_url=batch_url, store=store)
         with admin.begin() as connection:
@@ -87,7 +87,7 @@ def test_second_run_leaves_one_pending_set_per_material_and_type(runs):
     # A regra alterada pertence ao produtor de saneamento. Enriquecimentos independentes
     # conservam evidências e revisões; não são recriados nem substituídos por essa mudança.
     assert second["inserted"] == first["proposals"] - first["enrichment"]
-    assert second["enrichment"] == first["enrichment"]
+    assert second["enrichment"] == first["enrichment"] > 0
     assert scalar(admin, PENDING_PER_KEY) == 0
     pending = scalar(admin, "SELECT count(*) FROM sanitization_proposals WHERE status = 'PENDING'")
     assert pending == second["proposals"]
