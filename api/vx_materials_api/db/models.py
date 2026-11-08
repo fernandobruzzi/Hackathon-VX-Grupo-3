@@ -665,3 +665,42 @@ class StockMovement(Base):
     dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id"), nullable=False)
     created_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
     created_at: Mapped[datetime] = _created_at()
+
+
+PURCHASE_FORWARD_STATUSES = ("ENCAMINHADO", "ACEITO", "DEVOLVIDO", "CANCELADO")
+
+
+class PurchaseForward(Base):
+    """Demanda para Compras com o código já cadastrado; não comprova pedido, recebimento nem entrega."""
+
+    __tablename__ = "purchase_forwards"
+    __table_args__ = (
+        # Uma parcela por versão da solicitação: repetir o encaminhamento não o duplica.
+        UniqueConstraint("material_request_id", "request_version"),
+        CheckConstraint("quantity > 0 AND quantity <> 'NaN'::numeric", name="positive_quantity"),
+        CheckConstraint("length(btrim(unit)) > 0", name="unit"),
+        CheckConstraint("length(btrim(center_code)) > 0", name="center_code"),
+        CheckConstraint(_one_of("status", PURCHASE_FORWARD_STATUSES), name="status"),
+        CheckConstraint("(status IN ('DEVOLVIDO', 'CANCELADO')) = (reason IS NOT NULL)", name="reason"),
+        CheckConstraint("(status IN ('ACEITO', 'DEVOLVIDO')) = (handled_by_user_id IS NOT NULL)", name="handled_by"),
+        CheckConstraint("version > 0", name="version"),
+        CheckConstraint("request_version > 0", name="request_version"),
+        Index("ix_purchase_forwards_tenant_id_center_code_status", "tenant_id", "center_code", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = _tenant()
+    material_request_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("material_requests.id"), nullable=False)
+    request_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials_master.id"), nullable=False)
+    quantity: Mapped[Any] = mapped_column(Numeric(24, 6), nullable=False)
+    unit: Mapped[str] = mapped_column(Text, nullable=False)
+    center_code: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text)
+    forwarded_by_user_id: Mapped[uuid.UUID] = _user_fk(nullable=False)
+    handled_by_user_id: Mapped[uuid.UUID | None] = _user_fk()
+    handled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    version: Mapped[int] = _version()
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()

@@ -9,12 +9,14 @@ from vx_materials_api.routes.sanitization import Caller, Db
 from vx_materials_api.schemas.material_requests import (
     CancelMaterialRequest,
     CreateMaterialRequest,
+    ForwardToPurchasing,
     MaterialRequestDetail,
     MaterialRequestList,
     RequestStatus,
 )
 from vx_materials_api.security.sessions import verify_write
 from vx_materials_api.services import material_request_service as service
+from vx_materials_api.services import purchase_forward_service
 
 router = APIRouter(prefix="/api/v1/material-requests", tags=["material-requests"])
 
@@ -59,3 +61,18 @@ def cancel(
 ):
     verify_write(request, caller)
     return service.cancel_request(db, caller, request_id, payload, idempotency_key, request.state.request_id)
+
+
+@router.post("/{request_id}/purchase-forwards", status_code=201, response_model=MaterialRequestDetail)
+def forward_to_purchasing(
+    request_id: UUID,
+    payload: ForwardToPurchasing,
+    request: Request,
+    caller: Caller,
+    db: Db,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    verify_write(request, caller)
+    return purchase_forward_service.forward_request(
+        db, caller, request_id, payload, idempotency_key, request.state.request_id
+    )

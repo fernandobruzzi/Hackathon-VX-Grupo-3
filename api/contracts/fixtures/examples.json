@@ -2617,9 +2617,13 @@
       "created_at": "2026-11-07T20:00:00Z",
       "updated_at": "2026-11-07T20:00:00Z",
       "can_cancel": true,
+      "pending_quantity": "10.000000",
+      "forwarded_quantity": "0.000000",
+      "purchase_forwards": [],
       "history": [
         {
           "id": "72372372-0000-4000-8000-000000000003",
+          "action": "MATERIAL_REQUEST_CREATED",
           "actor_user_id": "72372372-0000-4000-8000-000000000002",
           "before_status": null,
           "after_status": "EM_IDENTIFICACAO",
@@ -2693,9 +2697,13 @@
       "created_at": "2026-11-07T20:05:00Z",
       "updated_at": "2026-11-07T20:05:00Z",
       "can_cancel": true,
+      "pending_quantity": "4.000000",
+      "forwarded_quantity": "0.000000",
+      "purchase_forwards": [],
       "history": [
         {
           "id": "72372372-0000-4000-8000-000000000013",
+          "action": "MATERIAL_REQUEST_CREATED",
           "actor_user_id": "72372372-0000-4000-8000-000000000002",
           "before_status": null,
           "after_status": "EM_ATENDIMENTO",
@@ -2759,9 +2767,13 @@
       "created_at": "2026-11-07T20:00:00Z",
       "updated_at": "2026-11-07T20:00:00Z",
       "can_cancel": true,
+      "pending_quantity": "10.000000",
+      "forwarded_quantity": "0.000000",
+      "purchase_forwards": [],
       "history": [
         {
           "id": "72372372-0000-4000-8000-000000000003",
+          "action": "MATERIAL_REQUEST_CREATED",
           "actor_user_id": "72372372-0000-4000-8000-000000000002",
           "before_status": null,
           "after_status": "EM_IDENTIFICACAO",
@@ -2800,9 +2812,13 @@
       "created_at": "2026-11-07T20:00:00Z",
       "updated_at": "2026-11-07T20:00:00Z",
       "can_cancel": false,
+      "pending_quantity": "10.000000",
+      "forwarded_quantity": "0.000000",
+      "purchase_forwards": [],
       "history": [
         {
           "id": "72372372-0000-4000-8000-000000000003",
+          "action": "MATERIAL_REQUEST_CREATED",
           "actor_user_id": "72372372-0000-4000-8000-000000000002",
           "before_status": null,
           "after_status": "EM_IDENTIFICACAO",
@@ -2811,6 +2827,7 @@
         },
         {
           "id": "72372372-0000-4000-8000-000000000004",
+          "action": "MATERIAL_REQUEST_CANCELLED",
           "actor_user_id": "72372372-0000-4000-8000-000000000002",
           "before_status": "EM_IDENTIFICACAO",
           "after_status": "ENCERRADA",
@@ -2893,6 +2910,7 @@
         "requested": "10",
         "reserved": "6",
         "delivered": "0",
+        "forwarded": "0",
         "pending": "4"
       },
       "availability": {
@@ -2940,8 +2958,212 @@
         "requested": "10",
         "reserved": "6",
         "delivered": "0",
+        "forwarded": "0",
         "pending": "4"
       }
+    }
+  },
+  {
+    "name": "material-request-forward-to-purchasing",
+    "path": "/api/v1/material-requests/{id}/purchase-forwards",
+    "method": "post",
+    "status": 201,
+    "params": {
+      "id": "72372372-0000-4000-8000-000000000011"
+    },
+    "request": {
+      "expected_version": 1
+    },
+    "response": {
+      "id": "72372372-0000-4000-8000-000000000011",
+      "protocol": "SM-00000002",
+      "requester_user_id": "72372372-0000-4000-8000-000000000002",
+      "original_text": "Preciso de 10 canetas azuis.",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "material_id": "72412412-0000-4000-8000-000000000002",
+      "status": "EM_ATENDIMENTO",
+      "closure_reason": null,
+      "chat_session_id": null,
+      "registration_order_id": null,
+      "version": 2,
+      "created_at": "2026-11-08T08:59:00Z",
+      "updated_at": "2026-11-08T09:00:00Z",
+      "can_cancel": true,
+      "pending_quantity": "0.000000",
+      "forwarded_quantity": "10.000000",
+      "purchase_forwards": [
+        {
+          "id": "72412412-0000-4000-8000-000000000001",
+          "material_request_id": "72372372-0000-4000-8000-000000000011",
+          "request_protocol": "SM-00000002",
+          "material_id": "72412412-0000-4000-8000-000000000002",
+          "material_code": "000123",
+          "material_description": "CANETA ESFEROGRAFICA AZUL",
+          "quantity": "10.000000",
+          "unit": "PC",
+          "center_code": "1200",
+          "status": "ENCAMINHADO",
+          "reason": null,
+          "forwarded_by_user_id": "72372372-0000-4000-8000-000000000002",
+          "handled_by_user_id": null,
+          "handled_at": null,
+          "version": 1,
+          "created_at": "2026-11-08T09:00:00Z",
+          "updated_at": "2026-11-08T09:00:00Z",
+          "can_handle": false
+        }
+      ],
+      "history": [
+        {
+          "id": "72412412-0000-4000-8000-000000000004",
+          "action": "MATERIAL_REQUEST_CREATED",
+          "actor_user_id": "72372372-0000-4000-8000-000000000002",
+          "before_status": null,
+          "after_status": "EM_ATENDIMENTO",
+          "reason": null,
+          "created_at": "2026-11-08T08:59:00Z"
+        },
+        {
+          "id": "72412412-0000-4000-8000-000000000005",
+          "action": "MATERIAL_REQUEST_FORWARDED_TO_PURCHASING",
+          "actor_user_id": "72372372-0000-4000-8000-000000000002",
+          "before_status": "EM_ATENDIMENTO",
+          "after_status": "EM_ATENDIMENTO",
+          "reason": "Encaminhado para compras: 10.000000 PC.",
+          "created_at": "2026-11-08T09:00:00Z"
+        }
+      ]
+    }
+  },
+  {
+    "name": "purchase-forward-list",
+    "path": "/api/v1/purchase-forwards",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "status": "ENCAMINHADO",
+      "center_code": "1200"
+    },
+    "response": {
+      "items": [
+        {
+          "id": "72412412-0000-4000-8000-000000000001",
+          "material_request_id": "72372372-0000-4000-8000-000000000011",
+          "request_protocol": "SM-00000002",
+          "material_id": "72412412-0000-4000-8000-000000000002",
+          "material_code": "000123",
+          "material_description": "CANETA ESFEROGRAFICA AZUL",
+          "quantity": "10.000000",
+          "unit": "PC",
+          "center_code": "1200",
+          "status": "ENCAMINHADO",
+          "reason": null,
+          "forwarded_by_user_id": "72372372-0000-4000-8000-000000000002",
+          "handled_by_user_id": null,
+          "handled_at": null,
+          "version": 1,
+          "created_at": "2026-11-08T09:00:00Z",
+          "updated_at": "2026-11-08T09:00:00Z",
+          "can_handle": true
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "purchase-forward-detail",
+    "path": "/api/v1/purchase-forwards/{id}",
+    "method": "get",
+    "status": 200,
+    "params": {
+      "id": "72412412-0000-4000-8000-000000000001"
+    },
+    "response": {
+      "id": "72412412-0000-4000-8000-000000000001",
+      "material_request_id": "72372372-0000-4000-8000-000000000011",
+      "request_protocol": "SM-00000002",
+      "material_id": "72412412-0000-4000-8000-000000000002",
+      "material_code": "000123",
+      "material_description": "CANETA ESFEROGRAFICA AZUL",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "status": "ENCAMINHADO",
+      "reason": null,
+      "forwarded_by_user_id": "72372372-0000-4000-8000-000000000002",
+      "handled_by_user_id": null,
+      "handled_at": null,
+      "version": 1,
+      "created_at": "2026-11-08T09:00:00Z",
+      "updated_at": "2026-11-08T09:00:00Z",
+      "can_handle": true
+    }
+  },
+  {
+    "name": "purchase-forward-accept",
+    "path": "/api/v1/purchase-forwards/{id}/accept",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "id": "72412412-0000-4000-8000-000000000001"
+    },
+    "request": {
+      "expected_version": 1
+    },
+    "response": {
+      "id": "72412412-0000-4000-8000-000000000001",
+      "material_request_id": "72372372-0000-4000-8000-000000000011",
+      "request_protocol": "SM-00000002",
+      "material_id": "72412412-0000-4000-8000-000000000002",
+      "material_code": "000123",
+      "material_description": "CANETA ESFEROGRAFICA AZUL",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "status": "ACEITO",
+      "reason": null,
+      "forwarded_by_user_id": "72372372-0000-4000-8000-000000000002",
+      "handled_by_user_id": "72412412-0000-4000-8000-000000000003",
+      "handled_at": "2026-11-08T10:00:00Z",
+      "version": 2,
+      "created_at": "2026-11-08T09:00:00Z",
+      "updated_at": "2026-11-08T10:00:00Z",
+      "can_handle": false
+    }
+  },
+  {
+    "name": "purchase-forward-return",
+    "path": "/api/v1/purchase-forwards/{id}/return",
+    "method": "post",
+    "status": 200,
+    "params": {
+      "id": "72412412-0000-4000-8000-000000000001"
+    },
+    "request": {
+      "expected_version": 1,
+      "reason": "Item descontinuado pelo fornecedor habitual."
+    },
+    "response": {
+      "id": "72412412-0000-4000-8000-000000000001",
+      "material_request_id": "72372372-0000-4000-8000-000000000011",
+      "request_protocol": "SM-00000002",
+      "material_id": "72412412-0000-4000-8000-000000000002",
+      "material_code": "000123",
+      "material_description": "CANETA ESFEROGRAFICA AZUL",
+      "quantity": "10.000000",
+      "unit": "PC",
+      "center_code": "1200",
+      "status": "DEVOLVIDO",
+      "reason": "Item descontinuado pelo fornecedor habitual.",
+      "forwarded_by_user_id": "72372372-0000-4000-8000-000000000002",
+      "handled_by_user_id": "72412412-0000-4000-8000-000000000003",
+      "handled_at": "2026-11-08T10:00:00Z",
+      "version": 2,
+      "created_at": "2026-11-08T09:00:00Z",
+      "updated_at": "2026-11-08T10:00:00Z",
+      "can_handle": false
     }
   }
 ]

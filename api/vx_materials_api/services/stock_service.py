@@ -16,6 +16,7 @@ from vx_materials_api.db.models import (
     AuditLog,
     MaterialMaster,
     MaterialRequest,
+    PurchaseForward,
     StockMovement,
     StockReservation,
 )
@@ -42,6 +43,8 @@ from vx_materials_api.services.materials_service import (
 
 ZERO = Decimal(0)
 RESERVE_OPERATION = "stock.reserve"
+# Encaminhamentos que contam em `c` (seção 4.2): devolvidos e cancelados voltam para `p`.
+COUNTED_FORWARDS = ("ENCAMINHADO", "ACEITO")
 
 
 def _decimal(value) -> Decimal:
@@ -156,7 +159,7 @@ def get_availability(db, caller, material_id: UUID, center_code: str) -> dict:
 
 
 def fulfillment(db, row: MaterialRequest) -> dict:
-    """Parcelas `r` e `e` da solicitação; `c` (encaminhamentos) entra com a #241."""
+    """Parcelas `r`, `e` e `c` da solicitação e o pendente `p = Q − r − e − c` (seção 4.2)."""
     reserved = _decimal(
         db.scalar(
             select(func.coalesce(func.sum(StockReservation.quantity), 0)).where(
@@ -172,12 +175,20 @@ def fulfillment(db, row: MaterialRequest) -> dict:
             .where(StockReservation.request_id == row.id)
         )
     )
+    forwarded = _decimal(
+        db.scalar(
+            select(func.coalesce(func.sum(PurchaseForward.quantity), 0)).where(
+                PurchaseForward.material_request_id == row.id, PurchaseForward.status.in_(COUNTED_FORWARDS)
+            )
+        )
+    )
     requested = Decimal(row.quantity)
     return {
         "requested": requested,
         "reserved": reserved,
         "delivered": delivered,
-        "pending": requested - reserved - delivered,
+        "forwarded": forwarded,
+        "pending": requested - reserved - delivered - forwarded,
     }
 
 
@@ -256,6 +267,7 @@ def reserve(db, caller, request_id: UUID, payload, key, correlation_id) -> dict:
         raise ApiProblem(409, state["blocked_reason"], "O saldo deste material e centro não pode ser reservado agora.")
     if quantity > state["available"]:
         raise ApiProblem(409, "INSUFFICIENT_STOCK", "A quantidade excede o saldo disponível no centro.")
+    # O pendente já desconta encaminhamentos: `r + e + c ≤ Q` vale entre reserva e compras.
     if quantity > fulfillment(db, row)["pending"]:
         raise ApiProblem(409, "QUANTITY_EXCEEDS_PENDING", "A quantidade excede o pendente da solicitação.")
     reservation = StockReservation(

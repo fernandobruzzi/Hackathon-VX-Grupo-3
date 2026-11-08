@@ -67,12 +67,13 @@ class StockReservation(BaseModel):
 
 
 class RequestFulfillment(BaseModel):
-    """Parcelas da solicitação (seção 4.2): `pending = requested - reserved - delivered`."""
+    """Parcelas da solicitação (seção 4.2): `pending = requested - reserved - delivered - forwarded`."""
 
     model_config = ConfigDict(extra="forbid")
     requested: DecimalText
     reserved: DecimalText
     delivered: DecimalText
+    forwarded: DecimalText
     pending: DecimalText
 
 
