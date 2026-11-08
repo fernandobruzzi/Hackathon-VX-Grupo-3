@@ -35,9 +35,11 @@ vinculadas ao hash de seu texto de referência; uma atualização exige revisão
 
 ## Referência adotada e limites
 
-Sem o snapshot oficial da #30, `exists_in_snapshot` e `valid_in_snapshot` são
-`null`, com `OFFICIAL_SNAPSHOT_UNAVAILABLE`. Informar `ncm_version` é recusado,
-pois essa versão não foi carregada. O PDM não é apresentado como tabela oficial.
+Sem `NCM_SNAPSHOT_VERSION` configurado, `exists_in_snapshot` e `valid_in_snapshot`
+são `null`, com `OFFICIAL_SNAPSHOT_UNAVAILABLE`. Informar outra `ncm_version` é
+recusado. O PDM não é apresentado como tabela oficial. A captura oficial, sua
+conferência contra o kit e como habilitá-la estão em
+[`ncm-snapshot.md`](ncm-snapshot.md).
 
 ## Do batch às revisões
 

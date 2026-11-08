@@ -4,9 +4,10 @@ O módulo `domain.ncm_snapshot` prepara a tabela de referência e confere exist�
 vigência de códigos na **data registrada no snapshot**. Não usa a data da consulta,
 não muda materiais, não sugere substituições e não concede aprovação fiscal.
 
-Preparação local da #30: **manter o PR em rascunho** até obter e validar uma
-captura oficial real. Os testes locais e os contratos integrados não encerram
-esse critério; não há bytes oficiais nesta entrega.
+A captura oficial foi obtida e validada em 08/11/2026 (#30), conforme
+[Captura oficial de 08/11/2026](#captura-oficial-de-08112026). Os bytes oficiais
+não são versionados no repositório: cada ambiente registra sua própria captura
+pelo cliente HTTPS, que é o único caminho que grava `OFFICIAL_DOWNLOAD`.
 
 ## Fonte e limite da entrega
 
@@ -23,20 +24,77 @@ passados e futuros devem ser consultados pelo Histórico do Classif. A
 informa atualização diária à meia-noite. Portanto, importar a tabela de hoje com
 uma data histórica arbitrária não recria a tabela daquela data.
 
-Em 06/11/2026, a captura no ambiente de desenvolvimento foi bloqueada pela política
-de saída: `curl --head --max-time 20 <URL acima>` recebeu
-`HTTP/1.1 403 Forbidden` e `CONNECT tunnel failed, response 403`. O conector web
-confirmou as páginas oficiais, mas não conseguiu abrir o arquivo JSON. Nenhuma
-tabela oficial foi obtida ou incluída neste PR. O host necessário é
-`portalunico.siscomex.gov.br`, por HTTPS; TLS permanece verificado e não há fallback.
+O endereço publicado responde `307 Temporary Redirect` para o mesmo recurso com
+`?perfil=PUBLICO`. O cliente segue esse único redirecionamento, e somente para essa
+URL exata no mesmo host por HTTPS; qualquer outro destino é recusado. O host
+necessário é `portalunico.siscomex.gov.br`, por HTTPS; TLS permanece verificado e
+não há fallback. Em 06/11/2026 e na manhã de 08/11/2026, ambientes com política de
+saída restrita receberam `CONNECT tunnel failed, response 403`: nesses ambientes o
+domínio precisa ser liberado.
 
 O adaptador aceita o envelope `Data_Ultima_Atualizacao_NCM` / `Nomenclaturas` e os
-campos `Codigo`, `Descricao`, `Data_Inicio`, `Data_Fim`. Datas usam `DD/MM/AAAA`,
-inclusive `31/12/9999`. A compatibilidade precisa ser confirmada com uma captura
-oficial antes de habilitar o fluxo. Os testes usam exclusivamente a fixture
-**SIMULADA** `back/tests/fixtures/ncm_simulated.json`: códigos e intervalos são
-exemplos de teste, não uma fonte fiscal. Os cenários expirado/futuro exercitam a
-regra, sem afirmar que a exportação vigente os contém.
+campos `Codigo`, `Descricao`, `Data_Inicio`, `Data_Fim`; campos adicionais da
+exportação (`Ato`, `Tipo_Ato_Ini`, `Numero_Ato_Ini`, `Ano_Ato_Ini`) são ignorados.
+Datas usam `DD/MM/AAAA`, inclusive `31/12/9999`. Os códigos da hierarquia aparecem
+como capítulo (`73`), posição (`73.18`), subposição (`7318.1`, `7318.15`) e item de
+sete dígitos (`0102.29.1`); só os de oito dígitos (`7318.15.00`) entram no índice.
+
+Os testes usam duas fixtures. `back/tests/fixtures/ncm_simulated.json` é
+**SIMULADA**: códigos e intervalos são exemplos para exercitar vigência expirada e
+futura, que a exportação vigente não contém. `back/tests/fixtures/ncm_official_excerpt.json`
+é um trecho de linhas reais da captura de 08/11/2026, para fixar o formato; nos
+testes ela é importada como `IMPORTED_UNVERIFIED`, nunca como download oficial.
+
+## Captura oficial de 08/11/2026
+
+Comando, a partir de `back/`:
+
+```bash
+uv run python -m clients.ncm_snapshot_cli download
+```
+
+| Campo | Valor |
+|---|---|
+| Versão | `ncm-2026-11-08-011c72b42bef` |
+| SHA-256 | `011c72b42bef00b0f5440bf19dee67e5879c3459ef0b155f137cd949d6e2f252` |
+| Data do snapshot | 2026-11-08 (`Vigente em 08/11/2026`) |
+| Ato declarado | Resolução Gecex nº 926/2026 |
+| Origem | `OFFICIAL_DOWNLOAD`, URL publicada acima |
+| Tamanho | 3.149.450 bytes, 15.157 linhas, 10.516 códigos de oito dígitos sem repetição |
+
+Todas as linhas da exportação vigente terminam em `31/12/9999`: como a Receita
+avisa, a tabela do dia não traz códigos encerrados nem futuros. Um código extinto
+aparece como `NCM_NOT_IN_SNAPSHOT`, não como `NCM_NOT_EFFECTIVE_IN_SNAPSHOT`.
+
+Conferência do kit contra essa versão (`NCM_SNAPSHOT_VERSION` configurado e leitura
+por `load_configured_ncm_snapshot`):
+
+| Conjunto | Existe e vigente | Fora da tabela | Sem NCM |
+|---|---|---|---|
+| Materiais da base (23.554) | 22.361 | 20 | 1.173 |
+| NCMs distintos da base (116) | 113 | 2 | 1 (vazio) |
+| NCMs de referência do PDM (73) | 72 | 1 | — |
+
+Os códigos fora da tabela são `7306.30.00` (desdobrado em `7306.30.10` e
+`7306.30.90`) e `8539.50.00` (desdobrado em `8539.51.00` e `8539.52.00`). O PDM do
+kit ainda cita `7306.30.00` para tubo galvanizado NBR 5580. Com a referência
+configurada, esses materiais e propostas passam a exigir revisão fiscal; o motor
+não escolhe o desdobramento, que depende do produto.
+
+Para usar a referência no Compose, registre a captura no volume compartilhado e
+configure a versão nos três serviços:
+
+```bash
+docker compose run --rm --build batch python -m clients.ncm_snapshot_cli download
+```
+
+```bash
+NCM_SNAPSHOT_VERSION=<versão impressa> docker compose up -d api agent
+```
+
+A configuração continua vazia por padrão. Ao habilitá-la, regenere as propostas
+(`docker compose run --rm --build batch`), porque a aprovação recusa assessments
+sem a referência atual (`NCM_ASSESSMENT_CHANGED`).
 
 ## Importar e conferir localmente
 
@@ -153,16 +211,12 @@ Validação local:
 uv run pytest tests/test_ncm_snapshot.py
 ```
 
-## Critério pendente para sair de rascunho
+## Limites que permanecem
 
-Registrar uma captura obtida pelo cliente HTTPS fixo, com TLS e política de rede
-vigentes, conferir o envelope e os campos contra os bytes oficiais e preservar
-SHA-256, data de cobertura, origem e manifesto no ObjectStore. Validar então a
-leitura compartilhada e os assessments de batch, MCP e API com essa referência.
-O registro histórico de bloqueio por CONNECT 403 acima não foi substituído por
-uma captura nesta integração. Um arquivo de espelho ou uma fixture não recebe
-origem oficial. A configuração permanece vazia até essa validação; sem referência
-a existência e a vigência continuam desconhecidas.
+Um arquivo de espelho ou uma fixture nunca recebe origem oficial. Sem referência
+configurada, existência e vigência continuam desconhecidas. A captura vale para a
+data registrada: para avaliar outra data é preciso outra captura daquele dia, já que
+o histórico do Classif não é importado.
 
 A integração conserva a resolução manual de pendências e a finalização de métricas
 congeladas do batch: a retomada da finalização não reexecuta a análise nem altera
