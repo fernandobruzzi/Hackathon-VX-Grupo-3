@@ -51,6 +51,19 @@ export function MaterialCard({
             ))}
           </div>
           <CopyMaterialCode key={card.existing.material_code} code={card.existing.material_code} />
+          {onReply && (
+            <Button
+              disabled={busy}
+              onClick={() =>
+                onReply(`É o item ${card.existing!.material_code}`, {
+                  type: "PICK_CANDIDATE",
+                  material_code: card.existing!.material_code,
+                })
+              }
+            >
+              Confirmar reutilização
+            </Button>
+          )}
         </Card>
       )}
 

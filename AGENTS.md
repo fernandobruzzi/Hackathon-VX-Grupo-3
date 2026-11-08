@@ -978,3 +978,13 @@ The API serves the static build from the same origin, so there's no SSR, route h
 ## Keeping this file current
 
 When a PR changes a workflow, command, structure or rule described here, update this file in the same PR. Claude-specific notes go in `CLAUDE.md`, everything else here.
+
+### Savings assumptions
+
+The executive dashboard reports audited counts, explicit hypothetical savings,
+and the value fulfilled from stock separately. Stock fulfillment does not prove
+avoided purchases or realized savings. Missing assumptions leave amounts
+unavailable. Register immutable assumptions with
+`python -m vx_materials_api.savings_assumptions <file>` against the API's ObjectStore,
+then select `SAVINGS_ASSUMPTIONS_VERSION` on the API. See `docs/dashboard.md`.
+Do not publish these values in the quality view or count reservations as deliveries.

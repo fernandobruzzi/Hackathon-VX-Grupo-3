@@ -1106,3 +1106,57 @@ def test_dev_ti_cannot_read_other_users_conversation(factory, agent, monkeypatch
     response = _client_for(factory, agent, monkeypatch, dev).get(f"/api/v1/chat/sessions/{turn['session_id']}")
     assert response.status_code == 404
     assert "tool-call-001" not in response.text
+
+
+def test_only_explicit_existing_choice_records_reuse_once(client, agent, factory):
+    from vx_materials_api.db.models import AuditLog
+
+    first = _offer(client, agent)
+    picked = {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": {**EXISTING, "material_code": "777"}}
+    agent.result = agent_result(picked, search_call(similar("777")))
+
+    def confirmations():
+        with factory() as db:
+            return db.scalars(
+                select(AuditLog).where(
+                    AuditLog.action == "CHAT_EXISTING_CONFIRMED", AuditLog.entity_id == first["session_id"]
+                )
+            ).all()
+
+    assert confirmations() == []
+    pick = {"type": "PICK_CANDIDATE", "material_code": "777"}
+    assert (
+        send(client, "Usar este cadastro", first["session_id"], version=1, action=pick).json()["status"] == "EXISTING"
+    )
+    assert len(confirmations()) == 1
+    assert confirmations()[0].after_json["material_code"] == "777"
+    agent.result = agent_result(picked)
+    assert (
+        send(client, "Usar este cadastro", first["session_id"], version=2, action=pick).json()["status"] == "EXISTING"
+    )
+    assert len(confirmations()) == 1
+
+
+def test_refreshed_other_verified_item_is_not_a_confirmed_reuse(client, agent, factory):
+    from vx_materials_api.db.models import AuditLog
+
+    first = _offer(client, agent)
+    different = {**CARD, "duplicate_check_status": "MATCH_FOUND", "existing": {**EXISTING, "material_code": "888"}}
+    agent.result = agent_result(different, search_call(similar("777"), similar("888", verified=True)))
+    response = send(
+        client,
+        "É o item 777",
+        first["session_id"],
+        version=1,
+        action={"type": "PICK_CANDIDATE", "material_code": "777"},
+    )
+    assert response.json()["status"] == "EXISTING"
+    with factory() as db:
+        assert (
+            db.scalar(
+                select(AuditLog.id).where(
+                    AuditLog.entity_id == first["session_id"], AuditLog.action == "CHAT_EXISTING_CONFIRMED"
+                )
+            )
+            is None
+        )

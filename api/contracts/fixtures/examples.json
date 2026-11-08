@@ -860,7 +860,22 @@
         "inventory_book_value": "200874691.83",
         "realized_savings": null,
         "estimated_savings": null,
-        "assumptions": []
+        "assumptions": [],
+        "components": [
+          {
+            "key": "duplicate_codes",
+            "label": "Manutenção anual de códigos desativados",
+            "kind": "ESTIMATED",
+            "count": "0",
+            "count_unit": "códigos",
+            "amount_brl": null,
+            "formula": "códigos desativados × custo anual hipotético por código",
+            "assumptions": [],
+            "unavailable_reason": "Premissas quantitativas não registradas para este componente."
+          }
+        ],
+        "assumption_source": null,
+        "calculation_version": "savings-v1"
       },
       "pipeline": {
         "proposals_total": 0,

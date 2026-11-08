@@ -26,7 +26,7 @@ Para executar somente a nova integração:
 (cd mcp && uv run --locked pytest tests/test_mvp_acceptance.py -v)
 ```
 
-O resultado esperado dessa integração é **1 passed, sem skips**. Uma execução sem `TEST_DATABASE_URL`, que pula testes de banco, não é evidência de aceitação. No CI, o job `database` fornece a variável e executa as suítes completas de API e MCP, incluindo este cenário.
+O resultado esperado dessa integração é **2 passed, sem skips**. Uma execução sem `TEST_DATABASE_URL`, que pula testes de banco, não é evidência de aceitação. No CI, o job `database` fornece a variável e executa as suítes completas de API e MCP, incluindo este cenário.
 
 ## O que o novo cenário comprova
 
@@ -77,3 +77,31 @@ Os testes referenciados nesta matriz existem na base integrada; citar um teste n
 - Repetir no Plano B (#29) para o ensaio da demo. Login local e teste ASGI não contam como execução na AWS.
 
 Até essas verificações, a #26 permanece aberta. A integração desta preparação local em `homologacao` não representa aceite completo do MVP nem homologação AWS.
+
+## Complemento do escopo: indicadores (#315 e #316)
+
+A #26 mantém foco em login, chat de cadastro, saneamento, aprovação e auditoria.
+Reservas e compras não expandem o roteiro do MVP. A captura oficial da #30 segue
+separada: sua ausência não impede o benchmark documental, e existência/vigência
+continuam desconhecidas sem a referência oficial.
+
+A #316 acrescenta ao cenário local com MCP real a conferência de que uma
+unificação aplicada aumenta apenas a contagem auditada de códigos desativados;
+sem premissas registradas não gera economia estimada nem realizada.
+`api/tests/test_savings_metrics.py` cobre premissas, escopo, entregas/reversões e
+valores indisponíveis. `api/tests/test_chat.py::test_only_explicit_existing_choice_records_reuse_once`
+confere a confirmação explícita e sua repetição sem outro evento.
+
+A seção NCM da #315 já está integrada em `homologacao`. Revalidar também
+`api/tests/test_dashboard_ncm.py`, incluindo a taxa fiscal separada da precisão
+independente, ausência de depois sem snapshot e centros herdados por consolidação.
+
+Na AWS, após a correção do modelo de chat (#300), registrar a revisão implantada,
+as versões/hashes do benchmark e das hipóteses selecionadas, o dataset, os eventos
+de decisão e o snapshot posterior da rodada final (#317). A evidência local não
+substitui essa homologação e não encerra a #26.
+
+Os testes de concorrência incluem a partida do MCP real no orçamento de espera.
+O cenário de limpeza força timeout após a conexão, confirma o encerramento do
+subprocesso e executa outro turno na mesma aplicação. Esses prazos de teste não
+alteram o prazo operacional padrão de 20 segundos.

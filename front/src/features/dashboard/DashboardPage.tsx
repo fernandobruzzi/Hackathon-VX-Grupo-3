@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, Kpi, PageHeader, Badge, Button, EmptyState } from "@/components/ui";
+import { SavingsPanel } from "./SavingsPanel";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { can } from "@/lib/permissions";
@@ -67,7 +68,7 @@ export function DashboardPage() {
       .finally(() => setCreating(false));
   };
 
-  const d = backend ? remote : dashboard;
+  const d: DashboardMetrics | null = backend ? remote : dashboard;
   const b = d?.before;
   const a = d?.after ?? null;
   const snapshot = d?.after_snapshot ?? null;
@@ -269,6 +270,7 @@ export function DashboardPage() {
                 </Card>
               </section>
               <NcmSection ncm={d.ncm} />
+              {financial && d.financial && <SavingsPanel data={d.financial} />}
               <section className="mt-6">
                 {financial && d.financial ? (
                   <Card className="grid gap-6 md:grid-cols-3">
@@ -302,7 +304,8 @@ export function DashboardPage() {
                         {fmtBRL(d.financial.estimated_savings)}
                       </p>
                       <p className="mt-2 text-xs text-muted">
-                        Indisponível sem premissas quantitativas registradas.
+                        Calculada apenas nos componentes com premissas registradas, detalhados
+                        acima.
                       </p>
                     </div>
                   </Card>

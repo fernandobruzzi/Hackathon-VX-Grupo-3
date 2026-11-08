@@ -28,6 +28,7 @@ from repositories.classification import get_classification_repository
 from repositories.embeddings import get_embedding_repository
 from repositories.extraction import get_extraction_repository
 from vx_materials_api.db.models import (
+    AuditLog,
     ChatMessage,
     ChatSession,
     Dataset,
@@ -38,7 +39,12 @@ from vx_materials_api.db.models import (
 from vx_materials_api.errors import ApiProblem
 from vx_materials_api.schemas.chat import AgentRunResponse, ChatMessageRequest, ChatTurnResponse, MaterialCard
 from vx_materials_api.security.identity import Identity
-from vx_materials_api.security.rbac import has_permission, require_conversation_owner, require_resource_scope
+from vx_materials_api.security.rbac import (
+    has_permission,
+    require_conversation_owner,
+    require_permission,
+    require_resource_scope,
+)
 
 NCM_VERSION = "ncm-demo-v1"
 # Reserva sem conclusão por mais que isso é tratada como abandonada (queda da API no meio do turno).
@@ -156,6 +162,9 @@ def validate_action(context: dict[str, Any], request: ChatMessageRequest) -> Non
     if action is None:
         return
     offered = [*context.get("offered_material_codes", []), *context.get("stale_offered_material_codes", [])]
+    existing = ((context.get(DUPLICATE_CHECK) or {}).get("existing") or {}).get("material_code")
+    if existing:
+        offered.append(existing)
     if action.type == "PICK_CANDIDATE" and action.material_code not in offered:
         raise ApiProblem(422, "INVALID_ACTION", "Esse código não foi oferecido nesta conversa.")
     if action.type == "DISMISS_CANDIDATES" and not offered:
@@ -496,6 +505,40 @@ def complete_turn(
             "existing": card.get("existing") if status == "EXISTING" else None,
             "similar_candidates": card["similar_candidates"],
         }
+    if request.action and request.action.type == "PICK_CANDIDATE" and status == "EXISTING":
+        chosen = request.action.material_code
+        targets = {_code_to_use(c) for c in search or [] if c.get("material_code") == chosen}
+        if (
+            saved
+            and saved.get("signature") == card_signature(material_card)
+            and (saved.get("existing") or {}).get("material_code") == chosen
+        ):
+            targets.add(chosen)
+        # Uma busca atualizada pode revelar outro item: só a escolha efetiva é confirmação.
+        if material_card.existing.material_code in targets:
+            confirmation = {
+                "material_code": material_card.existing.material_code,
+                "center_code": request.center_code,
+                "dataset_id": reservation.catalog_proof.get("inventory_dataset"),
+            }
+            if context.get("reuse_confirmation") != confirmation:
+                db.add(
+                    AuditLog(
+                        tenant_id=identity.tenant_id,
+                        actor_user_id=identity.user_id,
+                        actor_type="USER",
+                        roles_snapshot=list(identity.roles),
+                        effective_role=require_permission(identity, "chat:use"),
+                        action="CHAT_EXISTING_CONFIRMED",
+                        entity_type="chat_session",
+                        entity_id=str(session.id),
+                        before_json=None,
+                        after_json=confirmation,
+                        reason="Reutilização confirmada explicitamente no chat.",
+                        request_id=request_id,
+                    )
+                )
+            patch["reuse_confirmation"] = confirmation
     session.context = {
         **context,
         **patch,

@@ -6,6 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from vx_materials_api.savings_assumptions import AssumptionSource, SavingsAssumption
+
 
 class _Contract(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -76,6 +78,18 @@ class NcmMetrics(_Contract):
     benchmark: NcmBenchmark
 
 
+class SavingsComponent(_Contract):
+    key: Literal["registration_reuse", "duplicate_codes", "batch_reviews", "stock_fulfilled"]
+    label: str
+    kind: Literal["ESTIMATED", "MEASURED_KIT_VALUE"]
+    count: str | None
+    count_unit: str
+    amount_brl: str | None
+    formula: str
+    assumptions: list[SavingsAssumption] = Field(default_factory=list)
+    unavailable_reason: str | None = None
+
+
 class FinancialMetrics(_Contract):
     currency: Literal["BRL"] = "BRL"
     data_origin: Literal["SYNTHETIC_CHALLENGE_DATA"] = "SYNTHETIC_CHALLENGE_DATA"
@@ -83,6 +97,9 @@ class FinancialMetrics(_Contract):
     realized_savings: str | None = None
     estimated_savings: str | None = None
     assumptions: list[str] = Field(default_factory=list)
+    components: list[SavingsComponent] = Field(default_factory=list)
+    assumption_source: AssumptionSource | None = None
+    calculation_version: str = "savings-v1"
 
 
 class QualitySnapshotRequest(_Contract):

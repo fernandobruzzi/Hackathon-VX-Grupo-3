@@ -133,9 +133,10 @@ A visão de qualidade não consulta preços ou valores nem devolve o objeto
 `financial`.
 
 Os valores do kit são identificados como **dados sintéticos do desafio**. Economia
-realizada e estimada ficam nulas: unificar códigos conserva o valor contábil,
-sem comprovar economia, e não há premissas quantitativas registradas para uma
-estimativa. A API inclui essas premissas no campo `assumptions`.
+realizada permanece indisponível: unificar códigos conserva o valor contábil e
+não comprova economia. Estimativas ficam indisponíveis sem premissas quantitativas
+registradas. A API inclui a interpretação no campo `assumptions` e detalha os
+componentes e hipóteses conforme a seção abaixo.
 
 ## Validação local
 
@@ -151,3 +152,70 @@ sessões reais, isolamento por tenant/dataset/centro, transições do funil,
 preservação do antes, decimais exatos, valores ausentes e o contrato público.
 O front usa a API por padrão e trata carregamento, base ausente, erro e repetição.
 Somente `NEXT_PUBLIC_DATA_SOURCE=mock` habilita os exemplos, rotulados como simulados.
+
+## Economia com premissas explícitas (#316)
+
+A visão executiva mostra quatro componentes, sempre rotulados como dados
+sintéticos do desafio. A visão de qualidade não carrega nem devolve esses valores.
+
+| Componente | Contagem e origem | Valor |
+| --- | --- | --- |
+| Reutilizações confirmadas | Uma conversa por confirmação explícita de um código existente, pelo botão do chat; evento `CHAT_EXISTING_CONFIRMED` com dataset, centro e código | Contagem × hipótese `registration_cost`, em R$/cadastro |
+| Códigos desativados | Membros além do principal que passaram de ATIVO a BLOQUEADO em aplicação auditada de unificação e continuam bloqueados | Contagem × hipótese `code_annual_cost`, em R$/código/ano |
+| Revisões em lote | Propostas aplicadas com aprovação técnica auditada em lote, uma vez por proposta | Contagem × (`review_minutes_before` − `review_minutes_after`) / 60 × `hourly_cost` |
+| Valor atendido com estoque | Quantidade efetivamente entregue, líquida de reversões, por material, centro e unidade | Quantidade × preço original ajustado pelo fator de consolidação aprovado |
+
+Exibir um semelhante, encontrar saldo ou reservar não comprova atendimento.
+Escolher explicitamente um semelhante também registra a confirmação se a API
+validar o resultado como existente. Repetir a confirmação do mesmo código,
+centro e dataset não insere outro evento. A métrica conta uma conversa uma vez.
+O evento fica no log transacional; a listagem de auditoria atual continua limitada
+a propostas e pedidos. Não há criação de material, pedido ou reserva por essa ação.
+
+O valor atendido não comprova compra evitada nem economia realizada. Fica
+separado da soma de estimativas. Sem preço conhecido e único para o material,
+centro e unidade (incluindo fontes consolidadas), o valor fica indisponível;
+não se escolhe um preço entre vários nem se trata ausência como zero.
+O contador desse componente agrupa atendimentos por material, centro e unidade,
+pois somar quantidades de unidades diferentes não é uma contagem válida.
+
+`estimated_savings` soma apenas os componentes estimados disponíveis: operações
+observadas no dataset mais um ano hipotético de manutenção dos códigos.
+É um cenário parcial com horizontes explícitos, sem extrapolar o volume de
+operações para um ano. Capacidade de trabalho não é caixa. `realized_savings`
+permanece indisponível. Sem premissa, a contagem continua visível e seu resultado
+financeiro permanece indisponível. Valores são calculados com Decimal e
+arredondados a centavos por componente antes da soma.
+
+### Registrar e selecionar premissas
+
+O arquivo `api/contracts/fixtures/savings-assumptions.example.json` contém
+hipóteses iniciais explícitas. Não define custo anual por código, pois esse valor
+não foi validado. Não é ativado automaticamente. Cada hipótese tem valor decimal,
+origem e data; unidades são definidas pelas chaves da tabela acima.
+
+Registro local, com o mesmo ObjectStore usado pela API:
+
+```bash
+uv run python -m vx_materials_api.savings_assumptions api/contracts/fixtures/savings-assumptions.example.json
+```
+
+Com a imagem atualizada e o volume compartilhado do Compose:
+
+```bash
+docker compose run --rm --no-deps -T --entrypoint python api -m vx_materials_api.savings_assumptions /dev/stdin < api/contracts/fixtures/savings-assumptions.example.json
+```
+
+O comando grava imutavelmente `references/savings/<version>.json`, valida chaves,
+decimais não negativos, origem, datas e ausência de duplicação. Repetir os mesmos
+bytes é idempotente; outro conteúdo exige versão nova. Depois, configure
+`SAVINGS_ASSUMPTIONS_VERSION=pitch-hypotheses-v1` na API e reinicie-a.
+A resposta informa versão e SHA-256 dos bytes usados. As hipóteses aparecem ao
+lado do componente no painel; os números do pitch devem usar essa mesma versão.
+
+Configuração vazia mantém valores estimados indisponíveis. Referência configurada
+ausente, inválida ou inacessível retorna `SAVINGS_ASSUMPTIONS_UNAVAILABLE` na visão
+executiva, sem substituir por valores de exemplo. A visão de qualidade continua
+independente dessa referência. Tenant, dataset e centros restringem as contagens;
+propostas que alcançam um centro não autorizado, inclusive por consolidação,
+não contribuem para os componentes baseados em propostas.
