@@ -167,7 +167,13 @@ def test_reservation_reduces_availability_seen_by_other_requests(case):
     assert result["reservation"]["quantity"] == "4.000000"
     assert result["reservation"]["dataset_id"] == str(dataset.id)
     assert result["request"]["version"] == first["version"] + 1
-    assert result["fulfillment"] == {"requested": "4", "reserved": "4", "delivered": "0", "pending": "0"}
+    assert result["fulfillment"] == {
+        "requested": "4",
+        "reserved": "4",
+        "delivered": "0",
+        "forwarded": "0",
+        "pending": "0",
+    }
     assert result["availability"]["available"] == "2"
     assert "unit_price" not in str(result) and "total_value" not in str(result)
     contract({"$ref": "#/components/schemas/StockReservationResult"}).validate(result)

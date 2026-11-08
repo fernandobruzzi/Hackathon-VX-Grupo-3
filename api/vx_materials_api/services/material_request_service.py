@@ -12,6 +12,7 @@ from vx_materials_api.db.models import (
     MaterialMaster,
     MaterialRequest,
     OperationRequest,
+    PurchaseForward,
     RegistrationOrder,
     StockReservation,
 )
@@ -25,6 +26,67 @@ from vx_materials_api.security.rbac import (
 )
 
 QUEUE_STATES = ("EM_IDENTIFICACAO", "AGUARDANDO_CADASTRO")
+SIX_PLACES = Decimal("0.000001")
+
+
+def quantity_text(value) -> str:
+    return format(Decimal(value).quantize(SIX_PLACES), "f")
+
+
+def forward_snapshot(forward) -> dict:
+    """Estado auditado do encaminhamento, sem campos derivados do leitor."""
+    return {
+        "id": str(forward.id),
+        "material_request_id": str(forward.material_request_id),
+        "request_version": forward.request_version,
+        "material_id": str(forward.material_id),
+        "quantity": quantity_text(forward.quantity),
+        "unit": forward.unit,
+        "center_code": forward.center_code,
+        "status": forward.status,
+        "reason": forward.reason,
+        "forwarded_by_user_id": str(forward.forwarded_by_user_id),
+        "handled_by_user_id": str(forward.handled_by_user_id) if forward.handled_by_user_id else None,
+        "version": forward.version,
+    }
+
+
+def forward_view(forward, material, request, caller) -> dict:
+    snapshot = forward_snapshot(forward)
+    del snapshot["request_version"]
+    return {
+        **snapshot,
+        "request_protocol": f"SM-{request.protocol_number:08d}",
+        "material_code": material.material_code,
+        "material_description": material.pdm_description
+        or material.original_description_long
+        or material.original_description_short,
+        "handled_at": forward.handled_at.isoformat() if forward.handled_at else None,
+        "created_at": forward.created_at.isoformat(),
+        "updated_at": forward.updated_at.isoformat(),
+        "can_handle": forward.status == "ENCAMINHADO"
+        and forward.center_code in caller.center_codes
+        and has_permission(caller, "purchasing:handle"),
+    }
+
+
+def audit_forward(db, caller, role, action, forward, before, reason, request_id):
+    db.add(
+        AuditLog(
+            tenant_id=caller.tenant_id,
+            actor_user_id=caller.user_id,
+            actor_type="USER",
+            roles_snapshot=list(caller.roles),
+            effective_role=role,
+            action=action,
+            entity_type="purchase_forward",
+            entity_id=str(forward.id),
+            before_json=before,
+            after_json=forward_snapshot(forward),
+            reason=reason,
+            request_id=request_id,
+        )
+    )
 
 
 def scoped_query(caller, *, mine=False):
@@ -65,7 +127,7 @@ def summary(row, caller):
         "requester_user_id": str(row.requester_user_id),
         "original_text": row.original_text,
         "material_id": str(row.material_id) if row.material_id else None,
-        "quantity": format(row.quantity.quantize(Decimal("0.000001")), "f"),
+        "quantity": quantity_text(row.quantity),
         "unit": row.unit,
         "center_code": row.center_code,
         "status": row.status,
@@ -91,11 +153,25 @@ def detail(db, row, caller):
         )
         .order_by(cast(AuditLog.after_json["version"].astext, Integer), AuditLog.created_at, AuditLog.id)
     )
+    forwards = db.execute(
+        select(PurchaseForward, MaterialMaster)
+        .join(MaterialMaster, MaterialMaster.id == PurchaseForward.material_id)
+        .where(PurchaseForward.material_request_id == row.id)
+        .order_by(PurchaseForward.request_version)
+    ).all()
+    # Import tardio: stock_service importa este módulo para idempotência e resumo.
+    from vx_materials_api.services.stock_service import fulfillment
+
+    quantities = fulfillment(db, row)
     return {
         **summary(row, caller),
+        "pending_quantity": quantity_text(quantities["pending"]),
+        "forwarded_quantity": quantity_text(quantities["forwarded"]),
+        "purchase_forwards": [forward_view(forward, material, row, caller) for forward, material in forwards],
         "history": [
             {
                 "id": str(event.id),
+                "action": event.action,
                 "actor_user_id": str(event.actor_user_id),
                 "before_status": (event.before_json or {}).get("status"),
                 "after_status": event.after_json["status"],
@@ -168,7 +244,7 @@ def remember_idempotency(db, caller, operation, key, digest, row, response):
     )
 
 
-def _audit(db, caller, role, row, before, reason, request_id, acknowledgement=None):
+def _audit(db, caller, role, row, before, reason, request_id, acknowledgement=None, *, action=None):
     after = summary(row, caller)
     if acknowledgement:
         after["open_request_acknowledgement"] = acknowledgement
@@ -179,7 +255,7 @@ def _audit(db, caller, role, row, before, reason, request_id, acknowledgement=No
             actor_type="USER",
             roles_snapshot=list(caller.roles),
             effective_role=role,
-            action="MATERIAL_REQUEST_CREATED" if before is None else "MATERIAL_REQUEST_CANCELLED",
+            action=action or ("MATERIAL_REQUEST_CREATED" if before is None else "MATERIAL_REQUEST_CANCELLED"),
             entity_type="material_request",
             entity_id=str(row.id),
             before_json=before,
@@ -390,6 +466,20 @@ def cancel_request(db, caller, request_id, payload, key, correlation_id):
         raise ApiProblem(409, "REQUEST_CLOSED", "A solicitação já está encerrada.")
     before = summary(row, caller)
     row.status, row.closure_reason, row.version = "ENCERRADA", "CANCELADA", row.version + 1
+    # Encaminhamentos ainda não tratados por Compras caem junto; aceitos permanecem (seção 5).
+    open_forwards = db.scalars(
+        select(PurchaseForward)
+        .where(PurchaseForward.material_request_id == row.id, PurchaseForward.status == "ENCAMINHADO")
+        .order_by(PurchaseForward.request_version)
+        .with_for_update()
+    )
+    for forward in open_forwards:
+        forward_before = forward_snapshot(forward)
+        forward.status, forward.reason, forward.version = "CANCELADO", payload.reason, forward.version + 1
+        db.flush()
+        audit_forward(
+            db, caller, role, "PURCHASE_FORWARD_CANCELLED", forward, forward_before, payload.reason, correlation_id
+        )
     db.flush()
     _audit(db, caller, role, row, before, payload.reason, correlation_id)
     _release_reservations(db, caller, role, row, payload.reason, correlation_id)

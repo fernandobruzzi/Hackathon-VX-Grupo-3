@@ -56,6 +56,7 @@ OPERATIONAL_TABLES = (
     "inventory_consolidations",
     "stock_movements",
     "stock_reservations",
+    "purchase_forwards",
     "material_requests",
     "chat_messages",
     "chat_sessions",
