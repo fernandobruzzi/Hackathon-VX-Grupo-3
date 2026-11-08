@@ -35,6 +35,8 @@ TABLES = {
     "quality_snapshots",
     "quality_snapshot_items",
     "lot_reviews",
+    "stock_reservations",
+    "stock_movements",
 }
 VIEWS = {
     "mcp_automatic_index_pending",

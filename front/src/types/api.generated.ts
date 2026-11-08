@@ -719,8 +719,43 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Cancelar solicitação própria sem reserva; versão e motivo obrigatórios. */
+    /** Cancelar solicitação própria e liberar suas reservas ativas; versão e motivo obrigatórios. */
     post: operations["cancelMaterialRequest"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/material-requests/{id}/reservations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar reservas e parcelas da solicitação: próprio solicitante ou Almoxarifado do centro. */
+    get: operations["listStockReservations"];
+    put?: never;
+    /** Reservar saldo do centro para a solicitação em atendimento; transacional, recusa (409) acima do disponível ou do pendente. */
+    post: operations["reserveStock"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/stock/availability": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar a disponibilidade de um material num centro autorizado; não cria registros. */
+    get: operations["getStockAvailability"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1985,6 +2020,123 @@ export interface components {
       items: components["schemas"]["MaterialRequestSummary"][];
       /** Next Cursor */
       next_cursor: string | null;
+    };
+    /**
+     * StockAvailability
+     * @description Disponível = saldo importado do dataset vigente (com consolidações aprovadas) - reservas ATIVA - entregas menos reversões do mesmo dataset, no centro e na unidade do material. Sem preço nem valor.
+     */
+    StockAvailability: {
+      /**
+       * Material Id
+       * Format: uuid
+       */
+      material_id: string;
+      /** Material Code */
+      material_code: string;
+      /** Center Code */
+      center_code: string;
+      /** Unit */
+      unit: string | null;
+      /** Dataset Id */
+      dataset_id: string | null;
+      imported: components["schemas"]["Decimal"];
+      reserved: components["schemas"]["Decimal"];
+      delivered: components["schemas"]["Decimal"];
+      available: components["schemas"]["Decimal"];
+      /** Unconverted Units */
+      unconverted_units: string[];
+      /** Reservable */
+      reservable: boolean;
+      /** Blocked Reason */
+      blocked_reason:
+        | (
+            | "INACTIVE_MATERIAL"
+            | "MATERIAL_WITHOUT_UNIT"
+            | "NO_INVENTORY_DATASET"
+            | "RECONCILIATION_REQUIRED"
+          )
+        | null;
+    };
+    /** CreateStockReservation */
+    CreateStockReservation: {
+      /** Expected Version */
+      expected_version: number;
+      /** Quantity */
+      quantity: string;
+    };
+    /** StockReservation */
+    StockReservation: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Request Id
+       * Format: uuid
+       */
+      request_id: string;
+      /**
+       * Material Id
+       * Format: uuid
+       */
+      material_id: string;
+      /** Center Code */
+      center_code: string;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "ATIVA" | "CONSUMIDA" | "CANCELADA";
+      /**
+       * Dataset Id
+       * Format: uuid
+       */
+      dataset_id: string;
+      /**
+       * Created By User Id
+       * Format: uuid
+       */
+      created_by_user_id: string;
+      /** Version */
+      version: number;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * RequestFulfillment
+     * @description Parcelas da solicitação: pendente = solicitado - reservado - entregue. Encaminhamentos para compras entram com a #241.
+     */
+    RequestFulfillment: {
+      requested: components["schemas"]["Decimal"];
+      reserved: components["schemas"]["Decimal"];
+      delivered: components["schemas"]["Decimal"];
+      pending: components["schemas"]["Decimal"];
+    };
+    /** StockReservationResult */
+    StockReservationResult: {
+      reservation: components["schemas"]["StockReservation"];
+      request: components["schemas"]["MaterialRequestSummary"];
+      fulfillment: components["schemas"]["RequestFulfillment"];
+      availability: components["schemas"]["StockAvailability"];
+    };
+    /** StockReservationList */
+    StockReservationList: {
+      /** Items */
+      items: components["schemas"]["StockReservation"][];
+      fulfillment: components["schemas"]["RequestFulfillment"];
     };
   };
   responses: never;
@@ -5600,6 +5752,271 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MaterialRequestDetail"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  listStockReservations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Reservas da solicitação. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockReservationList"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  reserveStock: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateStockReservation"];
+      };
+    };
+    responses: {
+      /** @description Reserva criada, com a disponibilidade depois dela. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockReservationResult"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getStockAvailability: {
+    parameters: {
+      query: {
+        material_id: string;
+        center_code: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Disponibilidade no centro. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockAvailability"];
         };
       };
       /** @description Sessão inválida ou expirada. */
