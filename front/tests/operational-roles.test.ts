@@ -38,3 +38,13 @@ test("ações de estoque e compras não vazam para os papéis existentes", () =>
   for (const persona of PERSONAS.filter((p) => !["ALMOXARIFADO", "COMPRAS"].includes(p.label)))
     assert.equal(can(meFor(persona.label), ...(operational as never[])), false, persona.label);
 });
+
+test("todos os papéis podem criar e acompanhar suas próprias solicitações", () => {
+  for (const persona of PERSONAS)
+    for (const permission of [
+      "requests:create",
+      "requests:read_own",
+      "requests:cancel_own",
+    ] as const)
+      assert.equal(can(meFor(persona.label), permission), true, `${persona.label}: ${permission}`);
+});

@@ -9,6 +9,8 @@ import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import type { ChatAction, ChatMessage, ChatTurnResponse, ToolCall } from "@/types/api";
 import { MaterialCard } from "./MaterialCard";
+import { MaterialRequestForm } from "./MaterialRequestForm";
+import type { MaterialRequestDetail } from "@/types/api";
 import { ChatHistory } from "./ChatHistory";
 import { ToolCallsPanel } from "./ToolCallsPanel";
 import { CandidateList } from "./SimilarCandidates";
@@ -37,6 +39,7 @@ export function ChatPage() {
 
 function Conversation({ diagnostics }: { diagnostics: boolean }) {
   const { me, api } = useAuth();
+  const canCreateRequest = can(me, "requests:create");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [session, setSession] = useState<{ id: string; version: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,9 +60,14 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
   const [registrationClosed, setRegistrationClosed] = useState(false);
   const confirmationRef = useRef<HTMLHeadingElement>(null);
   const focusNewRegistration = useRef(false);
-  const submissionAttempt = useRef<{ sessionId: string; version: number; key: string } | null>(
-    null,
-  );
+  const [openRequestWarning, setOpenRequestWarning] = useState<string | null>(null);
+  const [materialRequest, setMaterialRequest] = useState<MaterialRequestDetail | null>(null);
+  const submissionAttempt = useRef<{
+    sessionId: string;
+    version: number;
+    body: string;
+    key: string;
+  } | null>(null);
   const operationBusy = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
   const pendingTurn = useRef<AbortController | null>(null);
@@ -74,12 +82,12 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     if (pendingSwitch) draftGuardRef.current?.querySelector("button")?.focus();
   }, [pendingSwitch]);
   useEffect(() => {
-    if (submitted) confirmationRef.current?.focus();
-    if (!submitted && focusNewRegistration.current) {
+    if (submitted || materialRequest) confirmationRef.current?.focus();
+    if (!submitted && !materialRequest && focusNewRegistration.current) {
       focusNewRegistration.current = false;
       draftRef.current?.focus();
     }
-  }, [submitted, registrationClosed]);
+  }, [submitted, materialRequest, registrationClosed]);
   useEffect(
     () => () => {
       historyRequest.current?.abort();
@@ -103,6 +111,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
       !content ||
       operationBusy.current ||
       submitted ||
+      materialRequest ||
       loading ||
       processing ||
       (selected && !session)
@@ -164,46 +173,97 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     }
   };
 
-  const submit = async () => {
+  const submit = async (quantity: string, unit: string, acknowledgeOpenRequests: boolean) => {
     if (
       !session ||
+      !canCreateRequest ||
       operationBusy.current ||
       submitted ||
+      materialRequest ||
       loading ||
       processing ||
-      !last?.material_card.can_submit
+      !last
     )
       return;
     operationBusy.current = true;
+    const controller = new AbortController();
+    pendingTurn.current = controller;
     setBusy(true);
     setError(null);
+    const body = {
+      expected_session_version: session.version,
+      quantity,
+      unit,
+      acknowledge_open_requests: acknowledgeOpenRequests,
+    };
+    const serialized = JSON.stringify(body);
     const previous = submissionAttempt.current;
     const attempt =
-      previous?.sessionId === session.id && previous.version === session.version
+      previous?.sessionId === session.id && previous.body === serialized
         ? previous
-        : { sessionId: session.id, version: session.version, key: crypto.randomUUID() };
+        : {
+            sessionId: session.id,
+            version: session.version,
+            body: serialized,
+            key: crypto.randomUUID(),
+          };
     submissionAttempt.current = attempt;
     try {
-      const response = await api.request("post", "/api/v1/chat/{session_id}/submit", {
+      const response = await api.request("post", "/api/v1/chat/{session_id}/request-material", {
+        signal: controller.signal,
         params: { session_id: attempt.sessionId },
-        body: { expected_session_version: attempt.version },
+        body,
         idempotencyKey: attempt.key,
       });
+      if (pendingTurn.current !== controller) return;
       setSession({ id: response.session_id, version: response.session_version });
+      setMaterialRequest(response.material_request);
       setLast(
         (current) =>
           current && {
             ...current,
-            order_id: response.order_id,
+            order_id: response.material_request.registration_order_id,
             session_version: response.session_version,
+            status: "SUBMITTED",
           },
       );
-      setSubmitted({ id: response.order_id, status: response.status });
     } catch (error) {
-      setError(errorMessage(error));
+      if (pendingTurn.current !== controller) return;
+      if (error instanceof ApiError && error.error.code === "OPEN_REQUESTS_EXIST") {
+        setOpenRequestWarning(error.message);
+        return;
+      }
+      // Uma resposta perdida não significa que a solicitação deixou de ser gravada.
+      try {
+        const saved = await api.request("get", "/api/v1/chat/sessions/{session_id}", {
+          signal: controller.signal,
+          params: { session_id: attempt.sessionId },
+        });
+        if (pendingTurn.current !== controller) return;
+        if (saved.material_request_submission) {
+          setSession({ id: saved.session_id, version: saved.session_version });
+          setMaterialRequest(saved.material_request_submission.material_request);
+          setLast(
+            (current) =>
+              current && {
+                ...current,
+                session_version: saved.session_version,
+                order_id: saved.material_request_submission!.material_request.registration_order_id,
+                status: "SUBMITTED",
+              },
+          );
+          return;
+        }
+      } catch {
+        /* A tentativa mantém a chave para uma repetição segura. */
+      }
+      if (pendingTurn.current === controller) setError(errorMessage(error));
     } finally {
-      operationBusy.current = false;
-      setBusy(false);
+      if (pendingTurn.current === controller) {
+        pendingTurn.current = null;
+        operationBusy.current = false;
+        setBusy(false);
+      }
     }
   };
 
@@ -227,6 +287,8 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     setCalls([]);
     setSubmitted(null);
     setRegistrationClosed(false);
+    setMaterialRequest(null);
+    setOpenRequestWarning(null);
     submissionAttempt.current = null;
     setPanel("ficha");
   };
@@ -251,7 +313,9 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
       setCalls(diagnostics ? saved.calls : []);
       setProcessing(saved.processing);
       if (saved.center_code) setCenter(saved.center_code);
-      if (saved.submission)
+      if (saved.material_request_submission)
+        setMaterialRequest(saved.material_request_submission.material_request);
+      else if (saved.submission)
         setSubmitted({ id: saved.submission.order_id, status: saved.submission.status });
       if (saved.material_card)
         setLast({
@@ -280,7 +344,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
 
   const run = (action: { kind: "new" } | { kind: "open"; id: string }) => {
     if (action.kind === "open") return restore(action.id);
-    focusNewRegistration.current = submitted !== null;
+    focusNewRegistration.current = submitted !== null || materialRequest !== null;
     reset();
   };
   const guardDraft = (action: { kind: "new" } | { kind: "open"; id: string }) => {
@@ -290,7 +354,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
   };
   const keepEditing = () => {
     setPendingSwitch(null);
-    if (submitted) confirmationRef.current?.focus();
+    if (submitted || materialRequest) confirmationRef.current?.focus();
     else draftRef.current?.focus();
   };
   const discardDraft = () => {
@@ -300,7 +364,13 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
     void run(action);
   };
 
-  const replyBusy = busy || loading || processing || submitted !== null || (!!selected && !session);
+  const replyBusy =
+    busy ||
+    loading ||
+    processing ||
+    submitted !== null ||
+    materialRequest !== null ||
+    (!!selected && !session);
   // Mesmos itens e regra da ficha: só a última resposta lista a escolha; após o envio, desabilitada.
   const inlineCandidates =
     last && !last.material_card.existing ? (last.material_card.similar_candidates ?? []) : [];
@@ -315,7 +385,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
       <section className="flex min-h-[calc(100dvh-10rem)] flex-col rounded-lg bg-surface xl:min-h-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-2 px-6 py-4">
           <Eyebrow n="01" rule={false}>
-            Novo pedido de material
+            Nova solicitação de material
           </Eyebrow>
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-xs font-semibold text-muted" htmlFor="center">
@@ -374,8 +444,9 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               <Seta className="h-12 w-11" />
               <h1 className="text-[28px] leading-tight font-extrabold">O que você precisa?</h1>
               <p className="text-[15px] leading-6 text-muted">
-                Descreva o item do seu jeito. O assistente confere se ele já existe, pergunta o que
-                faltar e monta o cadastro no padrão PDM antes de ir para revisão.
+                Descreva o produto ou informe seu código. O assistente confere os materiais
+                existentes e ajuda a registrar sua necessidade. Confira a quantidade, a unidade e o
+                centro antes de confirmar a solicitação.
               </p>
               <div className="flex flex-col gap-2">
                 {SUGGESTIONS.map((s) => (
@@ -407,7 +478,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
                   >
                     {m.author === "assistant" && (
                       <p className="mb-1 text-[11px] font-extrabold tracking-[0.06em] text-verde uppercase">
-                        Assistente de cadastro
+                        Assistente de materiais
                       </p>
                     )}
                     <p className="break-words whitespace-pre-line">{m.content}</p>
@@ -428,12 +499,20 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               {busy && (
                 <li className="flex">
                   <div className="rounded-lg bg-ink px-4 py-3 font-mono text-xs text-muted">
-                    consultando PDM e base de materiais…
+                    Processando…
                   </div>
                 </li>
               )}
               <div ref={endRef} />
             </ol>
+          )}
+          {last && canCreateRequest && !submitted && !materialRequest && !busy && (
+            <p className="mx-auto mt-4 max-w-2xl text-sm text-muted">
+              Para concluir sua solicitação, informe a quantidade e a unidade na ficha.{" "}
+              <a href="#chat-material-need" className="font-semibold text-verde underline">
+                Informar quantidade e confirmar
+              </a>
+            </p>
           )}
         </div>
 
@@ -475,7 +554,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               {error}
             </p>
           )}
-          {submitted && (
+          {(submitted || materialRequest) && (
             <section
               aria-labelledby="registration-confirmation-title"
               className="mx-auto max-w-2xl space-y-3 rounded-md bg-ink p-4"
@@ -487,9 +566,11 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
                 ref={confirmationRef}
                 tabIndex={-1}
               >
-                {submitted.status === "EXISTING"
-                  ? "Pedido confirmado. O item já está cadastrado."
-                  : "Pedido enviado para revisão."}
+                {materialRequest
+                  ? `Solicitação ${materialRequest.protocol} registrada`
+                  : submitted?.status === "EXISTING"
+                    ? "Pedido confirmado. O item já está cadastrado."
+                    : "Pedido enviado para revisão."}
               </h2>
               {registrationClosed ? (
                 <p
@@ -502,11 +583,13 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               ) : (
                 <>
                   <p id="registration-confirmation-detail" className="text-sm text-muted">
-                    Quer fazer mais cadastros?
+                    {materialRequest
+                      ? "Quer fazer outra solicitação?"
+                      : "Quer fazer mais cadastros?"}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" onClick={() => guardDraft({ kind: "new" })}>
-                      Novo cadastro
+                      {materialRequest ? "Nova solicitação" : "Novo cadastro"}
                     </Button>
                     <Button
                       type="button"
@@ -521,13 +604,18 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
             </section>
           )}
           <div
-            hidden={submitted !== null && !text.trim()}
+            hidden={(submitted !== null || materialRequest !== null) && !text.trim()}
             className="mx-auto flex max-w-2xl items-end gap-2 rounded-md bg-ink p-2 ring-1 ring-surface-2 ring-inset focus-within:ring-2 focus-within:ring-verde"
           >
             <textarea
               ref={draftRef}
               disabled={
-                busy || loading || processing || submitted !== null || (!!selected && !session)
+                busy ||
+                loading ||
+                processing ||
+                submitted !== null ||
+                materialRequest !== null ||
+                (!!selected && !session)
               }
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -564,6 +652,7 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
                 loading ||
                 processing ||
                 submitted !== null ||
+                materialRequest !== null ||
                 (!!selected && !session)
               }
               aria-label="Enviar"
@@ -571,10 +660,10 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               <ArrowUp className="size-4" />
             </Button>
           </div>
-          {!submitted && (
+          {!submitted && !materialRequest && (
             <p className="mx-auto mt-2 max-w-2xl text-[11px] text-muted">
-              Validar no chat não publica o material: o pedido passa por Governança PDM e, se mexer
-              em NCM, pelo Fiscal.
+              Confirmar registra sua necessidade. Cadastros novos passam pelas revisões de
+              Governança e Fiscal; reserva, compra e entrega são etapas posteriores.
             </p>
           )}
         </form>
@@ -605,7 +694,27 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
               <MaterialCard
                 card={last.material_card}
                 submitted={submitted ?? undefined}
-                onSubmit={submit}
+                requestForm={
+                  submitted ? undefined : materialRequest !== null || canCreateRequest ? (
+                    <MaterialRequestForm
+                      key={session?.id}
+                      card={last.material_card}
+                      center={
+                        me?.scope.center_codes.includes(center)
+                          ? me.scope.center_names?.[center] || center
+                          : ""
+                      }
+                      busy={busy || loading || processing}
+                      submitted={materialRequest}
+                      openRequestWarning={openRequestWarning}
+                      onConfirm={submit}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted">
+                      Seu perfil permite consultar esta conversa, mas não criar solicitações.
+                    </p>
+                  )
+                }
                 onReply={send}
                 busy={replyBusy}
               />
@@ -621,8 +730,12 @@ function Conversation({ diagnostics }: { diagnostics: boolean }) {
         </TabPanels>
         {last && (
           <p className="font-mono text-[11px] text-muted">
-            {last.request_id} · sessão v{last.session_version} · pedido{" "}
-            {last.order_id?.slice(0, 8) ?? "não criado"}
+            {diagnostics && (
+              <>
+                {last.request_id} · sessão v{last.session_version} ·{" "}
+              </>
+            )}
+            Solicitação {materialRequest?.protocol ?? "não criada"}
           </p>
         )}
       </aside>

@@ -581,3 +581,48 @@ replay e conflitos de idempotência e versão, recálculo quando outra reserva c
 confirmação, `PARTIAL` sem saldo restante, `PURCHASING_ONLY`, recusa com saldo suficiente ou
 material não identificado, papéis e CSRF, e uma divisão concorrente com uma reserva avulsa,
 aceitando qualquer ordem e conferindo `r + e + c + p = Q` e `S = D + R + E`.
+
+## 19. Confirmação da necessidade no chat (#238)
+
+O chat pede quantidade e unidade em campos explícitos da ficha e mostra o centro autorizado
+selecionado para a conversa. Não interpreta medidas, pressão ou referências como quantidade.
+O botão “Confirmar solicitação de material” chama
+`POST /api/v1/chat/{session_id}/request-material`, com versão da conversa, quantidade decimal,
+unidade, CSRF e chave de idempotência. Material, centro, identidade e estado não vêm do navegador.
+
+A API lê a ficha salva e a prova do catálogo, com o mesmo controle de dono, tenant, centros e
+versão do chat. Mudanças no catálogo exigem atualizar a conversa antes de confirmar. Os caminhos:
+
+- **Identificado:** identidade verificada ou código ERP explicitamente informado leva a
+  `EM_ATENDIMENTO`, com o código ativo. Não cria pedido de cadastro.
+- **Inexistente:** PDM completo, busca válida e similares descartados explicitamente levam a
+  `AGUARDANDO_CADASTRO`; solicitação, pedido, vínculos, auditoria e idempotência são gravados
+  na mesma transação. Qualquer falha desfaz tudo.
+- **Inconclusivo:** cria `EM_IDENTIFICACAO`, sem material presumido nem cadastro automático.
+  Escolher um produto apenas semelhante não elimina dúvidas técnicas de identidade.
+
+A consulta por código usa a ferramenta MCP de busca, com tenant, estoque autorizado e índice
+atual. “Código 16031971” é uma escolha explícita de registro; um número ERP isolado é aceito
+somente no início da conversa. A seleção mantém `identity_verified=false` e usa
+`EXACT_MATERIAL_CODE`: não é evidência para unificar materiais ou liberar substituições.
+A API confirma essa intenção contra a mensagem real do solicitante antes de usá-la.
+
+Uma conversa gera no máximo uma solicitação, também protegida por unicidade no banco. Repetir
+com a mesma chave ou com outra chave e os mesmos dados recupera a solicitação; alterar os dados
+após confirmar recebe conflito. Depois de confirmar, inicie outra conversa para outro item.
+O histórico restaura protocolo e estado; resposta perdida é reconciliada pela leitura da sessão.
+Reservas, compras, entregas e publicação permanecem fora desta ação.
+
+A migração de unicidade recusa uma base que já tenha várias solicitações vinculadas à mesma
+conversa. Essas duplicações precisam de revisão operacional antes do upgrade; a migração não
+apaga nem escolhe solicitações automaticamente.
+
+O aviso de outra necessidade aberta no mesmo material e centro (#248) também se aplica ao chat.
+A confirmação inicial responde `409 OPEN_REQUESTS_EXIST` sem gravar. O formulário pede ciência
+explícita antes de reenviar com `acknowledge_open_requests: true`; a criação registra essa ciência
+na auditoria, sem revelar solicitações fora do escopo.
+
+Após confirmar a necessidade, o chat oferece “Nova solicitação” e “Encerrar”. A primeira
+abre uma conversa vazia no mesmo centro, sem reenviar a anterior; a segunda mantém as
+mensagens e a ficha em consulta. O histórico restaura o protocolo e oferece as mesmas
+escolhas, preservando a solicitação já registrada.

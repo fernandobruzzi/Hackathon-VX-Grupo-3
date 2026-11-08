@@ -93,7 +93,11 @@ def _code_to_use(item: dict[str, Any]) -> str | None:
 def existing_from(item: dict[str, Any], reason: str | None = None) -> ExistingMatch:
     code = _code_to_use(item)
     if reason is None:
-        reason = "Mesmo item pela regra de identidade do PDM."
+        reason = (
+            "Registro selecionado pelo código informado."
+            if item.get("match_type") == "EXACT_MATERIAL_CODE"
+            else "Mesmo item pela regra de identidade do PDM."
+        )
     if item["status"] == "BLOQUEADO":
         reason = f"{reason} O código {item['material_code']} está bloqueado: use o código ativo {code}."
     return ExistingMatch(
@@ -117,7 +121,7 @@ def existing_from(item: dict[str, Any], reason: str | None = None) -> ExistingMa
 def verified_existing(search: dict[str, Any]) -> ExistingMatch | None:
     """Primeiro item com a mesma identidade que pode ser reutilizado."""
     for item in search["candidates"]:
-        if item["identity_verified"] and _code_to_use(item):
+        if (item["identity_verified"] or item.get("match_type") == "EXACT_MATERIAL_CODE") and _code_to_use(item):
             return existing_from(item)
     return None
 

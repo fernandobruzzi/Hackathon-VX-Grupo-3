@@ -11,7 +11,7 @@ from vx_materials_api.security.rbac import require_center, require_permission
 from vx_materials_api.services import chat_service, order_service
 
 
-def submit_chat_order(db, identity, catalog, session_id, expected_version, key, request_id):
+def submit_chat_order(db, identity, catalog, session_id, expected_version, key, request_id, *, commit=True):
     role = require_permission(identity, "orders:create")
     # A publicação usa o mesmo lock por empresa, para não perder um cadastro concorrente.
     db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:t, 1))"), {"t": str(identity.tenant_id)})
@@ -40,8 +40,11 @@ def submit_chat_order(db, identity, catalog, session_id, expected_version, key, 
         order_service._remember(
             db, identity, "chat.submit", key, payload_hash, order.id, response.model_dump(mode="json")
         )
-        db.commit()
+        if commit:
+            db.commit()
         return response
+    if chat_service.material_request_for(db, session.id) is not None:
+        raise ApiProblem(409, "CHAT_ALREADY_SUBMITTED", "Esta conversa já gerou uma solicitação.")
     if session.active_turn_id is not None:
         raise ApiProblem(409, "TURN_IN_PROGRESS", "Aguarde a conclusão do turno antes de enviar.")
     if session.version != expected_version:
@@ -113,5 +116,6 @@ def submit_chat_order(db, identity, catalog, session_id, expected_version, key, 
         session_id=session.id, session_version=session.version, order_id=order.id, status=status
     )
     order_service._remember(db, identity, "chat.submit", key, payload_hash, order.id, response.model_dump(mode="json"))
-    db.commit()
+    if commit:
+        db.commit()
     return response

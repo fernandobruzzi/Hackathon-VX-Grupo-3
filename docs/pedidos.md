@@ -57,7 +57,15 @@ existentes.
 
 ## Enviar uma ficha do chat
 
-O botão “Enviar pedido para revisão” chama `POST /api/v1/chat/{session_id}/submit`,
+A interface atual confirma a **solicitação de material**, com quantidade, unidade e centro,
+por `POST /api/v1/chat/{session_id}/request-material` (#238). Quando o item é inexistente e a
+ficha está pronta, a mesma transação cria o pedido de cadastro e o vincula à solicitação.
+Itens identificados ou inconclusivos não geram cadastro automaticamente. O protocolo da
+solicitação é a referência principal; o fluxo técnico abaixo continua responsável pelo cadastro.
+Veja [os três caminhos e a recuperação](solicitacao-material.md#14-confirmação-da-necessidade-no-chat-238).
+
+Para clientes anteriores, o endpoint de envio exclusivo do cadastro permanece disponível:
+o antigo botão “Enviar pedido para revisão” chama `POST /api/v1/chat/{session_id}/submit`,
 com `expected_session_version`, CSRF e `Idempotency-Key`. O corpo não aceita classe,
 atributos, centro nem identidade: a API usa a ficha e o centro do último turno
 concluído, confere o dono, valida o PDM atual e consulta novamente a identidade no
@@ -77,7 +85,8 @@ que já foi corrigida na conversa. Pedidos legados sem nome do item continuam co
 a análise textual anterior. A migração acrescenta esse nome sem alterar os dados
 originais do kit.
 
-A confirmação pergunta se o solicitante quer fazer mais cadastros. “Novo cadastro”
+Nas conversas legadas que geraram somente pedido de cadastro, a confirmação pergunta
+se o solicitante quer fazer mais cadastros. “Novo cadastro”
 abre uma conversa vazia no mesmo centro. “Encerrar” mantém as mensagens e a ficha
 visíveis em modo de leitura. Ao reabrir um pedido enviado pelo histórico, a
 confirmação oferece as mesmas escolhas. A conversa enviada permanece como

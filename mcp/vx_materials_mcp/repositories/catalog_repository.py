@@ -74,6 +74,21 @@ class CatalogRepository:
                 ).mappings()
             ]
 
+    def by_code(self, code: str, version: str) -> list[dict]:
+        query = text(
+            f"SELECT {_MATERIAL_COLUMNS}, 1.0 AS rank {_FROM} "
+            "WHERE c.tenant_id = CAST(:tenant_id AS uuid) AND i.normalization_version = :version "
+            "AND c.material_code = :code AND i.source_version = c.version"
+        )
+        with self._connect() as connection:
+            self._automatic_index_ready(connection)
+            return [
+                dict(row)
+                for row in connection.execute(
+                    query, {"tenant_id": self._tenant_id, "version": version, "code": code}
+                ).mappings()
+            ]
+
     def full_text(self, words: list[str], version: str, class_id: str | None, limit: int) -> list[dict]:
         """Full-text do PostgreSQL com qualquer um dos termos, ordenado por ts_rank_cd."""
         if not words:
