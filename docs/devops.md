@@ -85,7 +85,9 @@ técnica e fiscal, auditoria, snapshot e reset. As imagens incluem o kit inteiro
 que continua sendo usado na avaliação empacotada e nos testes de carga, busca e
 saneamento. O teste de ensaio usa o recorte para repetir o reset e conferir a
 impressão digital. O teste de carga da demo continua verificando 23.554 materiais
-e 520 pedidos com o kit inteiro.
+e 520 pedidos com o kit inteiro. O saneamento no PostgreSQL continua conferindo
+propostas e pendências de toda a base. Os testes de idempotência e substituição
+repetem o batch sobre um recorte que inclui correções e enriquecimento reais.
 
 A avaliação empacotada e o smoke de imagens rodam em paralelo. O check
 obrigatório `images` exige sucesso de ambos. O parser reaproveita os padrões

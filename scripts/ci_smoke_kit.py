@@ -29,12 +29,13 @@ def copy_rows(source: Path, target: Path, column: str, keys: set[str], *, tail: 
         writer.writerows(rows)
 
 
-def create_kit(source: Path, target: Path) -> None:
+def create_kit(source: Path, target: Path, extra_materials: set[str] | None = None) -> None:
     target.mkdir(parents=True)
     materials = "01_base_materiais.csv"
     orders = "02_pedidos_cadastro.csv"
     # Dois pares da demo: um técnico e outro que passa também pelo Fiscal.
-    copy_rows(source / materials, target / materials, "CODIGO_MATERIAL", MATERIAL_CODES, tail=REAL_PRODUCTS)
+    material_codes = MATERIAL_CODES | (extra_materials or set())
+    copy_rows(source / materials, target / materials, "CODIGO_MATERIAL", material_codes, tail=REAL_PRODUCTS)
     copy_rows(source / orders, target / orders, "ID_PEDIDO", {ORDER_ID})
     shutil.copyfile(source / PDM, target / PDM)
 
@@ -43,5 +44,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("target", type=Path)
+    parser.add_argument("--material-code", action="append", default=[])
     args = parser.parse_args()
-    create_kit(args.source, args.target)
+    create_kit(args.source, args.target, set(args.material_code))
