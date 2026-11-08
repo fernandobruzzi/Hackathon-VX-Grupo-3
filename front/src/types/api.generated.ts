@@ -6247,7 +6247,10 @@ export interface operations {
   };
   getMaterialRequest: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Restringe ao solicitante autenticado, inclusive para revisores. */
+        mine?: boolean;
+      };
       header?: never;
       path: {
         id: string;

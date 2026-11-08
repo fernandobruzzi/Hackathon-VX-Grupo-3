@@ -49,8 +49,8 @@ def list_requests(
 
 
 @router.get("/{request_id}", response_model=MaterialRequestDetail)
-def get(request_id: UUID, caller: Caller, db: Db):
-    return service.get_request(db, caller, request_id)
+def get(request_id: UUID, caller: Caller, db: Db, mine: bool = False):
+    return service.get_request(db, caller, request_id, mine=mine)
 
 
 @router.post("/{request_id}/cancel", response_model=MaterialRequestDetail)
