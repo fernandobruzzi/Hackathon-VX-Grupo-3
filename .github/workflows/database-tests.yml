@@ -3,7 +3,10 @@ name: PostgreSQL tests
 on:
   workflow_call:
     inputs:
-      suite:
+      module:
+        required: true
+        type: string
+      shard:
         required: true
         type: string
 
@@ -41,7 +44,7 @@ jobs:
             **/pyproject.toml
       - run: uv sync --locked
       - name: Check installed migration command twice
-        if: inputs.suite == 'api-demo'
+        if: inputs.module == 'api' && inputs.shard == 'demo'
         working-directory: api
         env:
           MIGRATION_DATABASE_URL: postgresql+psycopg://migration_user:ci_only@localhost:5432/vx_migration_check
@@ -49,24 +52,7 @@ jobs:
           uv run --locked vx-db upgrade
           uv run --locked vx-db upgrade
       - name: Run PostgreSQL suite
-        shell: bash
         env:
-          SUITE: ${{ inputs.suite }}
-        run: |
-          # Separa os módulos mais lentos medidos no run 42302580502.
-          demo=(tests/test_demo.py)
-          batch=(tests/test_batch_api.py tests/test_superseded_proposals.py)
-          args=()
-          case "$SUITE" in
-            api-demo) cd api; args=("${demo[@]}") ;;
-            api-batch) cd api; args=("${batch[@]}") ;;
-            api-main)
-              cd api
-              for file in "${demo[@]}" "${batch[@]}"; do
-                args+=(--ignore "$file")
-              done
-              ;;
-            mcp) cd mcp ;;
-            *) echo "Suíte PostgreSQL inválida: $SUITE" >&2; exit 1 ;;
-          esac
-          uv run --locked pytest --durations=10 "${args[@]}"
+          MODULE: ${{ inputs.module }}
+          SHARD: ${{ inputs.shard }}
+        run: python3 scripts/ci_pytest.py "$MODULE" "$SHARD"
