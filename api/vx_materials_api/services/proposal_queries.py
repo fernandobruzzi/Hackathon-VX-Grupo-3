@@ -21,6 +21,7 @@ from vx_materials_api.services.approval_service import (
     exact_sum,
     inventory_rows,
     load_members,
+    writes_only_ncm,
 )
 from vx_materials_api.services.ncm_validation import evaluate_proposed_ncm
 
@@ -92,6 +93,7 @@ def detail(db, proposal, principal, catalog):
     partial_enrichment = proposal.proposal_type == "ENRICHMENT" and changes.enrichment_context is not None
     # Correcao de unidade aplica so a grafia da unidade, sem identidade: o PDM completo nao se aplica.
     unit_only = proposal.proposal_type == "UNIT_CORRECTION"
+    ncm_only = writes_only_ncm(proposal)
     ncm_evaluation = None
     if not unit_only and after.pdm_class_id in catalog.classes:
         try:
@@ -105,11 +107,9 @@ def detail(db, proposal, principal, catalog):
             catalog,
             after.model_dump(),
             [item.model_dump() | {"material_code": codes.get(item.material_id)} for item in interpretations],
-            check_unit=proposal.technical_review_status != "NOT_REQUIRED"
-            and not partial_enrichment
-            and proposal.proposal_type != "NCM_CORRECTION",
+            check_unit=proposal.technical_review_status != "NOT_REQUIRED" and not partial_enrichment and not ncm_only,
             # Correção fiscal grava só o NCM, como na aprovação: lacunas do PDM não a bloqueiam.
-            allow_incomplete=partial_enrichment or proposal.proposal_type == "NCM_CORRECTION",
+            allow_incomplete=partial_enrichment or ncm_only,
         )
         conflicts.extend(blocker for blocker in blockers if blocker not in conflicts)
     try:
@@ -129,12 +129,15 @@ def detail(db, proposal, principal, catalog):
         "unit": "Unidade",
         "ncm": "NCM",
     }
+    # Correção fiscal aprovada grava só o NCM: classe, atributos, descrição e unidade ficam como estão,
+    # então a revisão não mostra essas linhas como se fossem aplicadas.
+    recorded_changes = [change for change in changes.changes if not ncm_only or change.field == "ncm"]
     changes_rows = [
-        change.model_dump() | {"field": labels.get(change.field, change.field)} for change in changes.changes
+        change.model_dump() | {"field": labels.get(change.field, change.field)} for change in recorded_changes
     ]
-    recorded = {change.field for change in changes.changes}
+    recorded = {change.field for change in recorded_changes}
     if primary and not unit_only:
-        for field in ("pdm_class_id", "unit", "ncm"):
+        for field in ("ncm",) if ncm_only else ("pdm_class_id", "unit", "ncm"):
             before_value = getattr(primary, field)
             after_value = getattr(after, field)
             if before_value != after_value and field not in recorded:
@@ -146,7 +149,7 @@ def detail(db, proposal, principal, catalog):
                         "source": changes.sources.get(field, "Fonte nao informada"),
                     }
                 )
-        for name, value in after.attributes.items():
+        for name, value in {} if ncm_only else after.attributes.items():
             if primary.attributes.get(name) != value:
                 changes_rows.append(
                     {
@@ -175,7 +178,9 @@ def detail(db, proposal, principal, catalog):
             "summary": after.item_name or after.pdm_class_id or "Classe pendente",
         },
         "members": member_rows,
-        "after": {
+        "after": ncm_only_after(primary, member_rows, after)
+        if ncm_only
+        else {
             "description": validation.formatted_description
             or after.item_name
             or after.pdm_class_id
@@ -208,6 +213,20 @@ def detail(db, proposal, principal, catalog):
                 total = exact_sum(total, Decimal(row["total_value"]))
         result["consolidated_value_brl"] = str(total) if known else None
     return result
+
+
+def ncm_only_after(primary, member_rows, after):
+    """Registro depois de uma correção só de NCM: o atual, com o novo NCM."""
+    if primary is None:
+        current = member_rows[0] if member_rows else {"description": "", "unit": after.unit}
+        return {"description": current["description"], "ncm": after.ncm, "unit": current["unit"], "attributes": {}}
+    current = next(row for row in member_rows if row["material_code"] == primary.material_code)
+    return {
+        "description": current["description"],
+        "ncm": after.ncm,
+        "unit": primary.unit,
+        "attributes": {k: v for k, v in (primary.attributes or {}).items() if v is not None},
+    }
 
 
 def queue(db, principal, catalog, *, area=None, status=None, proposal_type=None, cursor=None, limit=20):

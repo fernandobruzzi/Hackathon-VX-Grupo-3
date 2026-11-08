@@ -34,6 +34,8 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
   const financial = can(me, "metrics:financial");
 
   const isMerge = p.members.length > 1;
+  // Correção de NCM aprovada grava só o NCM: descrição, atributos e unidade ficam como estão.
+  const ncmOnly = p.proposal_type === "NCM_CORRECTION";
   const area: "TECHNICAL" | "FISCAL" | null =
     p.status !== "PENDING" || (backend && p.allowed_actions.length === 0)
       ? null
@@ -325,10 +327,16 @@ export function ProposalReview({ proposal }: { proposal: Proposal }) {
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Card tone="block" className="flex flex-col gap-3">
           <span className="text-xs font-extrabold tracking-[0.04em] text-esmeralda uppercase">
-            Depois · {isMerge ? "um código ativo" : "registro corrigido"}
+            Depois ·{" "}
+            {ncmOnly ? "só o NCM muda" : isMerge ? "um código ativo" : "registro corrigido"}
           </span>
           {primary && <Code className="text-2xl text-esmeralda">{primary}</Code>}
           <p className="font-mono text-[13px] leading-5">{p.after.description}</p>
+          {ncmOnly && (
+            <p className="text-xs text-on-profundo/80">
+              Descrição, atributos e unidade atuais são mantidos.
+            </p>
+          )}
           <p className="font-mono text-xs text-on-profundo/80">
             NCM {p.after.ncm ?? "—"} · unidade {p.after.unit}
           </p>
