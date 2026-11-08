@@ -762,6 +762,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/stock/availability/alternatives": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Consultar outros centros autorizados com disponível quando o destino não atende; informativo, não cria registros.
+     * @description Só percorre os centros do escopo do usuário: centros fora dele não aparecem nem mudam suggest_purchasing. Não cria transferência, reserva ou movimento (decisão D6).
+     */
+    get: operations["getStockAlternatives"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2089,6 +2109,45 @@ export interface components {
             | "RECONCILIATION_REQUIRED"
           )
         | null;
+    };
+    /**
+     * OtherCenterAvailability
+     * @description Disponível positivo de outro centro autorizado ao usuário. Informativo: não reserva nem transfere.
+     */
+    OtherCenterAvailability: {
+      /** Center Code */
+      center_code: string;
+      /** Center Name */
+      center_name: string | null;
+      available: components["schemas"]["Decimal"];
+      /** Unit */
+      unit: string | null;
+      /** Reservable */
+      reservable: boolean;
+      /** Blocked Reason */
+      blocked_reason:
+        | (
+            | "INACTIVE_MATERIAL"
+            | "MATERIAL_WITHOUT_UNIT"
+            | "NO_INVENTORY_DATASET"
+            | "RECONCILIATION_REQUIRED"
+          )
+        | null;
+    };
+    /**
+     * StockAlternatives
+     * @description Disponibilidade no destino e, quando ele não atende, nos outros centros do escopo do usuário com disponível positivo, do maior para o menor. suggest_purchasing é verdadeiro quando nenhum centro autorizado atende e o material está ativo e com unidade.
+     */
+    StockAlternatives: {
+      destination: components["schemas"]["StockAvailability"];
+      /** Needed */
+      needed: components["schemas"]["Decimal"] | null;
+      /** Destination Sufficient */
+      destination_sufficient: boolean;
+      /** Alternatives */
+      alternatives: components["schemas"]["OtherCenterAvailability"][];
+      /** Suggest Purchasing */
+      suggest_purchasing: boolean;
     };
     /** CreateStockReservation */
     CreateStockReservation: {
@@ -6083,6 +6142,85 @@ export interface operations {
       };
       /** @description Conflito de versão, turno ou idempotência. */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  getStockAlternatives: {
+    parameters: {
+      query: {
+        material_id: string;
+        center_code: string;
+        /** @description Quantidade necessária no destino, na unidade do material; sem ela, o destino atende quando tem algum disponível. */
+        quantity?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Disponibilidade no destino e em outros centros autorizados. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["StockAlternatives"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
         headers: {
           [name: string]: unknown;
         };

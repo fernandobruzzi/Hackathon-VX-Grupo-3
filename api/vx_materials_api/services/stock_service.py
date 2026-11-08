@@ -155,6 +155,85 @@ def get_availability(db, caller, material_id: UUID, center_code: str) -> dict:
     return availability_view(compute_availability(db, caller.tenant_id, material, center_code))
 
 
+# Sem unidade ou inativo, nenhum centro atende: não há o que sugerir nem encaminhar.
+MATERIAL_BLOCKS = ("INACTIVE_MATERIAL", "MATERIAL_WITHOUT_UNIT")
+
+
+def other_centers(db, caller, material: MaterialMaster, center: str, needed: Decimal | None = None) -> dict:
+    """Disponível em outros centros autorizados quando o destino não atende (#251, decisão D6).
+
+    Só lê: nunca cria transferência, reserva ou movimento. Só percorre `caller.center_codes`, então
+    um centro fora do escopo não aparece nem muda `suggest_purchasing`. Sem `needed`, o destino
+    atende quando tem algum disponível; com `needed`, quando cobre essa quantidade.
+    """
+    destination = compute_availability(db, caller.tenant_id, material, center)
+    available = max(destination["available"], ZERO)
+    sufficient = available >= needed if needed is not None else available > 0
+    sufficient = sufficient and destination["blocked_reason"] is None
+    alternatives = []
+    others = sorted(set(caller.center_codes) - {center})
+    usable = destination["blocked_reason"] not in MATERIAL_BLOCKS
+    if not sufficient and usable and others and destination["dataset_id"] is not None:
+        # Uma leitura do saldo importado escolhe os candidatos: como D ≤ S, sem S positivo não há D.
+        grouped, names = inventory_quantities(db, caller.tenant_id, destination["dataset_id"], others, [material.id])
+        for key, imported in grouped.items():
+            _, code, unit = key
+            if unit != material.unit or imported <= 0:
+                continue
+            labels = sorted(names.get(key, ()))
+            state = compute_availability(db, caller.tenant_id, material, code)
+            if state["available"] > 0:
+                alternatives.append(
+                    {
+                        "center_code": code,
+                        "center_name": labels[0] if labels else None,
+                        "available": state["available"],
+                        "blocked_reason": state["blocked_reason"],
+                    }
+                )
+    alternatives.sort(key=lambda item: (-item["available"], item["center_code"]))
+    return {
+        "destination": destination,
+        "needed": needed,
+        "destination_sufficient": sufficient,
+        "alternatives": alternatives,
+        "suggest_purchasing": not sufficient and usable and not alternatives,
+    }
+
+
+def other_centers_view(result: dict) -> dict:
+    destination = result["destination"]
+    unit = destination["material"].unit
+    return {
+        "destination": availability_view(destination),
+        "needed": _quantity(result["needed"]) if result["needed"] is not None else None,
+        "destination_sufficient": result["destination_sufficient"],
+        "alternatives": [
+            {
+                "center_code": item["center_code"],
+                "center_name": item["center_name"],
+                "available": _quantity(item["available"]),
+                "unit": unit,
+                "reservable": item["blocked_reason"] is None,
+                "blocked_reason": item["blocked_reason"],
+            }
+            for item in result["alternatives"]
+        ],
+        "suggest_purchasing": result["suggest_purchasing"],
+    }
+
+
+def get_other_centers(db, caller, material_id: UUID, center_code: str, quantity: Decimal | None) -> dict:
+    require_permission(caller, "inventory:read")
+    require_center(caller, center_code)
+    material = db.scalar(
+        select(MaterialMaster).where(MaterialMaster.id == material_id, MaterialMaster.tenant_id == caller.tenant_id)
+    )
+    if material is None:
+        raise ApiProblem(404, "NOT_FOUND", "Material não encontrado no seu escopo.")
+    return other_centers_view(other_centers(db, caller, material, center_code, quantity))
+
+
 def fulfillment(db, row: MaterialRequest) -> dict:
     """Parcelas `r` e `e` da solicitação; `c` (encaminhamentos) entra com a #241."""
     reserved = _decimal(

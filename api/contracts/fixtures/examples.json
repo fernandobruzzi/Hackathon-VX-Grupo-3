@@ -2845,6 +2845,46 @@
     }
   },
   {
+    "name": "stock-alternatives",
+    "path": "/api/v1/stock/availability/alternatives",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "material_id": "23923923-0000-4000-8000-000000000001",
+      "center_code": "1100",
+      "quantity": "10"
+    },
+    "response": {
+      "destination": {
+        "material_id": "23923923-0000-4000-8000-000000000001",
+        "material_code": "100234",
+        "center_code": "1100",
+        "unit": "PC",
+        "dataset_id": "23923923-0000-4000-8000-000000000003",
+        "imported": "0",
+        "reserved": "0",
+        "delivered": "0",
+        "available": "0",
+        "unconverted_units": [],
+        "reservable": false,
+        "blocked_reason": null
+      },
+      "needed": "10",
+      "destination_sufficient": false,
+      "alternatives": [
+        {
+          "center_code": "1200",
+          "center_name": "São Paulo - Unidade A",
+          "available": "6",
+          "unit": "PC",
+          "reservable": true,
+          "blocked_reason": null
+        }
+      ],
+      "suggest_purchasing": false
+    }
+  },
+  {
     "name": "stock-reserve",
     "path": "/api/v1/material-requests/{id}/reservations",
     "method": "post",

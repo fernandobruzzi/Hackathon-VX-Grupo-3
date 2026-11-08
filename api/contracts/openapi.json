@@ -5498,6 +5498,131 @@
           }
         }
       }
+    },
+    "/api/v1/stock/availability/alternatives": {
+      "get": {
+        "operationId": "getStockAlternatives",
+        "summary": "Consultar outros centros autorizados com disponível quando o destino não atende; informativo, não cria registros.",
+        "tags": [
+          "stock"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "material_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "center_code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "quantity",
+            "in": "query",
+            "required": false,
+            "description": "Quantidade necessária no destino, na unidade do material; sem ela, o destino atende quando tem algum disponível.",
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+              "maxLength": 25
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Disponibilidade no destino e em outros centros autorizados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockAlternatives"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só percorre os centros do escopo do usuário: centros fora dele não aparecem nem mudam suggest_purchasing. Não cria transferência, reserva ou movimento (decisão D6)."
+      }
     }
   },
   "components": {
@@ -10948,6 +11073,116 @@
           "blocked_reason"
         ],
         "title": "StockAvailability",
+        "type": "object"
+      },
+      "OtherCenterAvailability": {
+        "additionalProperties": false,
+        "description": "Disponível positivo de outro centro autorizado ao usuário. Informativo: não reserva nem transfere.",
+        "properties": {
+          "center_code": {
+            "title": "Center Code",
+            "type": "string"
+          },
+          "center_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Center Name"
+          },
+          "available": {
+            "$ref": "#/components/schemas/Decimal"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "reservable": {
+            "title": "Reservable",
+            "type": "boolean"
+          },
+          "blocked_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "INACTIVE_MATERIAL",
+                  "MATERIAL_WITHOUT_UNIT",
+                  "NO_INVENTORY_DATASET",
+                  "RECONCILIATION_REQUIRED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Reason"
+          }
+        },
+        "required": [
+          "center_code",
+          "center_name",
+          "available",
+          "unit",
+          "reservable",
+          "blocked_reason"
+        ],
+        "title": "OtherCenterAvailability",
+        "type": "object"
+      },
+      "StockAlternatives": {
+        "additionalProperties": false,
+        "description": "Disponibilidade no destino e, quando ele não atende, nos outros centros do escopo do usuário com disponível positivo, do maior para o menor. suggest_purchasing é verdadeiro quando nenhum centro autorizado atende e o material está ativo e com unidade.",
+        "properties": {
+          "destination": {
+            "$ref": "#/components/schemas/StockAvailability"
+          },
+          "needed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needed"
+          },
+          "destination_sufficient": {
+            "title": "Destination Sufficient",
+            "type": "boolean"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/OtherCenterAvailability"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "suggest_purchasing": {
+            "title": "Suggest Purchasing",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "destination",
+          "needed",
+          "destination_sufficient",
+          "alternatives",
+          "suggest_purchasing"
+        ],
+        "title": "StockAlternatives",
         "type": "object"
       },
       "CreateStockReservation": {
