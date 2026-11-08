@@ -574,6 +574,15 @@ reservation from an older dataset awaits reconciliation. Reservations and the in
 `stock_movements` table never touch `material_inventory_snapshots`; cancelling a request releases
 its active reservations. See [`docs/solicitacao-material.md`](docs/solicitacao-material.md#14-disponibilidade-e-reserva-239).
 
+## Open request warning
+
+Creating a request for a resolved material and center that already has an open (not
+`ENCERRADA`) request returns `409 OPEN_REQUESTS_EXIST` and writes nothing, unless the body sets
+`acknowledge_open_requests: true` (#248). The warning lists only requests the caller can already
+read; others appear only in `hidden_count`. The confirmation is recorded in the creation audit
+event. Every active reservation belongs to an open request, so this also covers reservations.
+See section 15 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
+
 ## Chat order submission
 
 A ready chat card creates no order until the user explicitly submits it through

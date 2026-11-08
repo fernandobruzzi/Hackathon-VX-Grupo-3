@@ -348,3 +348,32 @@ uma entrega do mesmo dataset, para que `E` nunca fique negativo. A #241 acrescen
 encaminhamentos (`c`) ao pendente em `stock_service.fulfillment`. A reconciliação de reservas na
 troca de dataset (seção 4.4) ainda não existe: até lá, o bloqueio `RECONCILIATION_REQUIRED`
 impede novas reservas afetadas.
+
+## 15. Aviso de solicitação aberta do mesmo material e centro (#248)
+
+Ao criar uma solicitação com material resolvido, a API procura solicitações não encerradas
+(`EM_IDENTIFICACAO`, `AGUARDANDO_CADASTRO`, `EM_ATENDIMENTO`) do mesmo tenant, material e
+centro de destino. Se houver alguma e o corpo não trouxer `acknowledge_open_requests: true`,
+a criação responde `409 OPEN_REQUESTS_EXIST` e não grava nada: nem solicitação, nem auditoria,
+nem resposta idempotente. O cliente mostra o aviso e, se o solicitante confirmar, reenvia o
+mesmo corpo com `acknowledge_open_requests: true`, com a mesma `Idempotency-Key` ou outra.
+O aviso não bloqueia: necessidades diferentes podem coexistir.
+
+O `details` do aviso traz `total_count`, `hidden_count` e `open_requests`. A lista contém
+apenas as solicitações que o usuário já pode ler pela regra de escopo da seção 13 (protocolo,
+estado, quantidade, unidade e data). As demais entram somente em `hidden_count`, sem
+solicitante, texto, quantidade ou identificador.
+
+A confirmação fica na auditoria da criação: `after_json.open_request_acknowledgement` registra
+o total, as ocultas e os identificadores visíveis no momento, e o motivo do evento, exibido no
+histórico, informa só a quantidade confirmada. Uma confirmação sem solicitação aberta cria
+normalmente, sem esse registro. Solicitações encerradas, por cancelamento ou atendimento, não
+geram aviso, assim como solicitações sem material resolvido ou de outro centro. O campo só
+entra no hash de idempotência quando é `true`, então chaves gravadas antes dele continuam
+válidas.
+
+A verificação usa um bloqueio transacional por tenant, material e centro: duas criações
+simultâneas não passam ambas sem aviso. Toda reserva ativa (#239) pertence a uma solicitação
+não encerrada, então o critério também cobre reservas sem consultar a tabela delas. Se uma
+reserva puder existir sem solicitação aberta, esta consulta precisa incluí-la. Ainda não há
+tela de criação de solicitação no front; o contrato descreve o aviso para quando ela existir.
