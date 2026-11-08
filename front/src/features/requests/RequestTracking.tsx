@@ -17,6 +17,7 @@ import {
   type RequestDetail,
   type RequestStatus,
 } from "./tracking";
+import { EquivalentAlternatives } from "./EquivalentAlternatives";
 
 export function RequestTracking({ id }: { id?: string | null }) {
   const { me, backend, sessionBusy, sessionRevision } = useAuth();
@@ -146,8 +147,22 @@ function TrackingSession({ id }: { id?: string | null }) {
                   {closureLabels[detail.closure_reason] ?? "Consulte o motivo no histórico"}
                 </p>
               )}
+              {detail.substitution && (
+                <p>
+                  Material trocado pelo equivalente autorizado{" "}
+                  <span className="font-mono">{detail.substitution.to_material_code}</span> (pedido
+                  original:{" "}
+                  <span className="font-mono">{detail.substitution.from_material_code}</span>
+                  ).
+                </p>
+              )}
               <p className="text-sm text-muted">Atualizada em {requestDate(detail.updated_at)}</p>
             </Card>
+            {detail.status === "EM_ATENDIMENTO" &&
+              detail.requester_user_id === me?.user.id &&
+              !detail.substitution && (
+                <EquivalentAlternatives detail={detail} onChanged={setDetail} />
+              )}
             <section aria-label="Quantidades" className="space-y-3">
               <h2 className="text-lg font-bold">Quantidades · {detail.unit}</h2>
               <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

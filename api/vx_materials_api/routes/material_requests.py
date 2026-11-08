@@ -10,16 +10,18 @@ from vx_materials_api.schemas.material_requests import (
     CancelMaterialRequest,
     ConfirmFulfillment,
     CreateMaterialRequest,
+    EquivalentAlternatives,
     ForwardToPurchasing,
     FulfillmentPreview,
     FulfillmentResult,
     MaterialRequestDetail,
     MaterialRequestList,
     RequestStatus,
+    SubstituteWithEquivalent,
 )
 from vx_materials_api.security.sessions import verify_write
+from vx_materials_api.services import equivalence_service, partial_fulfillment_service, purchase_forward_service
 from vx_materials_api.services import material_request_service as service
-from vx_materials_api.services import partial_fulfillment_service, purchase_forward_service
 
 router = APIRouter(prefix="/api/v1/material-requests", tags=["material-requests"])
 
@@ -99,3 +101,21 @@ def confirm_fulfillment(
     return partial_fulfillment_service.confirm(
         db, caller, request_id, payload, idempotency_key, request.state.request_id
     )
+
+
+@router.get("/{request_id}/equivalent-alternatives", response_model=EquivalentAlternatives)
+def equivalent_alternatives(request_id: UUID, caller: Caller, db: Db):
+    return equivalence_service.alternatives(db, caller, request_id)
+
+
+@router.post("/{request_id}/substitution", response_model=MaterialRequestDetail)
+def substitute(
+    request_id: UUID,
+    payload: SubstituteWithEquivalent,
+    request: Request,
+    caller: Caller,
+    db: Db,
+    idempotency_key: Annotated[UUID, Header(alias="Idempotency-Key")],
+):
+    verify_write(request, caller)
+    return equivalence_service.substitute(db, caller, request_id, payload, idempotency_key, request.state.request_id)

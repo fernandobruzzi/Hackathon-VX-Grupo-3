@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StrictBool, StringConstraints, field_validator
 
 RequestStatus = Literal["EM_IDENTIFICACAO", "AGUARDANDO_CADASTRO", "EM_ATENDIMENTO", "ENCERRADA"]
 
@@ -169,6 +169,17 @@ class StockReservation(BaseModel):
     updated_at: datetime
 
 
+class MaterialSubstitution(BaseModel):
+    """Troca confirmada pelo solicitante por um equivalente autorizado (#246)."""
+
+    model_config = ConfigDict(extra="forbid")
+    from_material_id: UUID
+    from_material_code: str
+    to_material_id: UUID
+    to_material_code: str
+    equivalence_id: UUID
+
+
 class MaterialRequestDetail(MaterialRequestSummary):
     pending_quantity: Quantity
     reserved_quantity: Quantity
@@ -177,6 +188,7 @@ class MaterialRequestDetail(MaterialRequestSummary):
     # As duas parcelas do atendimento (#242) aparecem juntas: reservas e encaminhamentos.
     reservations: list[StockReservation]
     purchase_forwards: list[PurchaseForward]
+    substitution: MaterialSubstitution | None = None
     history: list[MaterialRequestTransition]
 
 
@@ -246,3 +258,57 @@ class FulfillmentResult(BaseModel):
     reservation_id: UUID | None
     purchase_forward_id: UUID
     request: MaterialRequestDetail
+
+
+class RegisterEquivalence(BaseModel):
+    """Equivalência técnica aprovada pela Governança; não unifica materiais nem soma saldos."""
+
+    model_config = ConfigDict(extra="forbid")
+    material_id: UUID
+    equivalent_material_id: UUID
+    basis: str = Field(min_length=1, max_length=2000)
+
+
+class MaterialEquivalence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: UUID
+    material_id: UUID
+    equivalent_material_id: UUID
+    basis: str
+    status: Literal["APROVADA", "REVOGADA"]
+    version: int = Field(ge=1)
+
+
+class EquivalentAlternative(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    equivalence_id: UUID
+    material_id: UUID
+    material_code: str
+    description: str | None
+    unit: str | None
+    status: str
+    available_quantity: Quantity
+    basis: str
+    selectable: bool
+    blocked_reason: str | None
+
+
+class EquivalentAlternatives(BaseModel):
+    """Só aparece alternativa quando falta saldo do material pedido e há equivalência aprovada."""
+
+    model_config = ConfigDict(extra="forbid")
+    request_id: UUID
+    request_version: int = Field(ge=1)
+    shortage: bool
+    pending_quantity: Quantity | None = None
+    available_quantity: Quantity | None = None
+    items: list[EquivalentAlternative]
+
+
+class SubstituteWithEquivalent(BaseModel):
+    """A troca exige confirmação explícita do solicitante e fica registrada na solicitação."""
+
+    model_config = ConfigDict(extra="forbid")
+    expected_version: int = Field(ge=1)
+    material_id: UUID
+    confirm_substitution: StrictBool
