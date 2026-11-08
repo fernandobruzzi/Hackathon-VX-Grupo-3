@@ -167,10 +167,39 @@ def _inventory_message(row: InventoryRow) -> str:
     return f"{row.quantity} {unit} no centro {center}"
 
 
-def existing_message(existing: ExistingMatch) -> str:
+def _positive(row: InventoryRow) -> Decimal:
+    try:
+        quantity = Decimal(row.quantity)
+    except InvalidOperation:
+        return Decimal(0)
+    return quantity if quantity.is_finite() and quantity > 0 else Decimal(0)
+
+
+def _other_centers_note(inventory: list[InventoryRow], center_code: str | None) -> str:
+    """Destino sem saldo e outro centro autorizado com saldo (#251): só informa, não reserva nem transfere.
+
+    `inventory` já vem limitado aos centros do usuário pela busca; nenhum outro centro entra aqui.
+    """
+    if not center_code or any(row.center_code == center_code and _positive(row) for row in inventory):
+        return ""
+    others = sorted(
+        (row for row in inventory if row.center_code != center_code and _positive(row)),
+        key=lambda row: (-_positive(row), row.center_code),
+    )
+    if not others:
+        return ""
+    names = ", ".join((row.center_name or "").strip() or row.center_code for row in others)
+    return (
+        f" O centro de destino {center_code} não tem saldo; há saldo em outros centros autorizados a você: {names}."
+        " É só uma informação: nada é reservado nem transferido."
+    )
+
+
+def existing_message(existing: ExistingMatch, center_code: str | None = None) -> str:
     stock = ", ".join(_inventory_message(row) for row in existing.inventory)
     where = f" Estoque nos seus centros: {stock}." if stock else " Sem estoque nos seus centros."
-    return f"Esse item já existe: use o código {existing.material_code}. {existing.reason}{where}"
+    note = _other_centers_note(existing.inventory, center_code)
+    return f"Esse item já existe: use o código {existing.material_code}. {existing.reason}{where}{note}"
 
 
 def _pending_or_clear(similar: list[SimilarCandidate], dismissed: list[str]) -> DuplicateDecision:

@@ -56,3 +56,38 @@ def test_each_stock_balance_keeps_its_center_and_unit():
 
 def test_no_stock_keeps_explicit_empty_message():
     assert existing_message(match([])).endswith("Sem estoque nos seus centros.")
+
+
+def test_destination_without_stock_mentions_other_authorized_centers():
+    existing = match(
+        [
+            dict(center_code="1100", center_name="Rio", quantity="0", unit="PC"),
+            dict(center_code="1300", center_name="Campinas", quantity="4", unit="PC"),
+            dict(center_code="2100", quantity="9", unit="PC"),
+        ]
+    )
+    original = deepcopy(existing.model_dump())
+    message = existing_message(existing, "1100")
+    assert message.endswith(
+        "O centro de destino 1100 não tem saldo; há saldo em outros centros autorizados a você: 2100, Campinas."
+        " É só uma informação: nada é reservado nem transferido."
+    )
+    assert existing.model_dump() == original
+
+
+def test_destination_with_stock_or_without_center_adds_nothing():
+    existing = match(
+        [
+            dict(center_code="1100", quantity="2", unit="PC"),
+            dict(center_code="1300", quantity="40", unit="PC"),
+        ]
+    )
+    assert existing_message(existing, "1100") == existing_message(existing)
+    assert "destino" not in existing_message(existing)
+
+
+@pytest.mark.parametrize("inventory", [[], [dict(center_code="1300", quantity="0", unit="PC")]])
+def test_no_authorized_stock_anywhere_keeps_the_plain_message(inventory):
+    # A ficha vem da busca, já limitada aos centros do usuário: sem saldo, não há o que sugerir.
+    message = existing_message(match(inventory), "1100")
+    assert "destino" not in message and "outros centros" not in message

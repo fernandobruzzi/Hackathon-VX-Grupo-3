@@ -623,4 +623,9 @@ def test_existing_stock_summary_is_preserved_with_bedrock(catalog, monkeypatch):
     result = AgentRunResponse.model_validate(data)
     response = asyncio.run(BedrockPlanner(MODEL, FakeBedrock()).respond(request(), result))
     assert "10 peças no centro Centro Industrial, 1 peça no centro 2200." in response.assistant_message
+    # O destino da conversa (1200) não tem saldo: a resposta aponta os outros centros autorizados.
+    assert response.assistant_message.endswith(
+        "O centro de destino 1200 não tem saldo; há saldo em outros centros autorizados a você: "
+        "Centro Industrial, 2200. É só uma informação: nada é reservado nem transferido."
+    )
     assert response.material_card == result.material_card
