@@ -12,7 +12,7 @@ Este documento separa três tipos de número, e o pitch deve manter a mesma sepa
 
 | Número | O que mostra | Tipo |
 |---|---|---|
-| **11% da base** | 2.629 dos 23.554 materiais do kit caem em 1.147 grupos de duplicidade com identidade verificada | Medido |
+| **10,8% da base** | 2.536 dos 23.554 materiais do kit estão em 1.124 propostas de unificação | Medido |
 | **5% a 15%** | Faixa típica de itens duplicados em um cadastro de MRO não saneado, numa mesma planta | Fonte ([I.M.A.][ima]) |
 | **US$ 26 mi** | Capital de giro liberado em uma mineradora com cinco minas, eliminando estoque excedente, obsoleto e duplicado | Fonte, fornecedor ([Verdantis][verdantis-mining]) |
 | **67,9%** | Fatia da receita líquida da indústria brasileira gerada por empresas com 500 ou mais pessoas, o nosso cliente-alvo | Fonte ([IBGE, PIA-Empresa 2024][ibge-pia]) |
@@ -28,8 +28,8 @@ O cadastro de materiais é o catálogo de tudo que a empresa compra e estoca: pe
 
 | Problema | Registros | % da base | Como medir |
 |---|---|---|---|
-| Materiais em grupos de duplicidade verificada | 2.629 (1.147 propostas de unificação) | 11,2% | `vx-back sanitize-report` |
-| Propostas de unificação com NCM divergente entre os itens, que exigem revisão fiscal | 258 | – | `vx-back sanitize-report` |
+| Materiais em grupos propostos de unificação | 2.536 (1.124 propostas) | 10,8% | [Rodada de 8/11](evidence/batch-final.json) |
+| Propostas de unificação com divergência de NCM entre os itens | 265 | – | [Rodada de 8/11](evidence/batch-final.json) |
 | NCM ausente | 1.173 | 5,0% | `vx-back normalization-report` |
 | Unidade de embalagem sem fator de conversão | 978 | 4,2% | `vx-back normalization-report` |
 
@@ -81,7 +81,7 @@ O kit é sintético, mas foi construído para reproduzir os problemas de uma bas
 
 1. **Uma regra para saneamento e entrada.** O mesmo motor de regras do PDM corrige a base existente (batch) e valida cada novo pedido no chat. O cliente não compra dois produtos, e o erro corrigido não volta a entrar.
 2. **Precisão antes de volume.** Unir itens diferentes custa mais caro que deixar passar uma duplicidade. Nenhuma unificação é aplicada sem identidade verificada pelo PDM e sem aprovação humana, e cada proposta mostra antes, depois e a regra aplicada.
-3. **Fiscal no fluxo.** Mudança de NCM sempre passa pela aprovação do fiscal. No kit, 258 propostas de unificação foram desviadas para revisão fiscal porque os itens tinham NCM diferentes (medido).
+3. **Fiscal no fluxo.** Mudança de NCM sempre passa pela aprovação do fiscal. Na rodada de 8/11, 810 propostas de unificação exigiram revisão fiscal, e 265 propostas de unificação registraram divergência de NCM.
 4. **Auditoria completa.** Cada alteração registra quem aprovou, quando e com qual evidência. O valor enriquecido de fontes externas guarda a fonte.
 5. **Nativo do padrão brasileiro.** PDM, NCM e reforma tributária são o núcleo do produto, não uma customização.
 6. **Funciona ao lado do ERP.** Propõe correções, sem substituir o ERP nem exigir migração.

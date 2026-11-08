@@ -15,11 +15,8 @@ Se passar de cinco minutos, cortar explicações e anexos, sem acelerar a revis�
 O pitch usa apenas a medição e a versão aprovadas no congelamento. Não anunciar
 que um roteiro coube em cinco minutos com base apenas em contagem de palavras.
 
-A checagem textual atual contou 375 palavras na fala principal (palavras
-separadas por espaço nas linhas de citação). Com hipóteses de 120 palavras
-por minuto e 45 segundos de interação, são 232.5 segundos estimados, abaixo dos
-270 planejados. Essa conta verifica folga textual; não mede o ritmo de uma pessoa
-nem a latência dos ambientes e não substitui as duas passagens cronometradas.
+A fala reserva tempo para mostrar o lote e a amostra aprovada antes de abrir o
+chat. Confirmar essa distribuição nas duas passagens cronometradas por ambiente.
 
 ## Pré-condições do ensaio integrado
 
@@ -28,7 +25,7 @@ nem a latência dos ambientes e não substitui as duas passagens cronometradas.
 - [ ] Executar e conferir no ambiente remoto o seed/reset já entregue pela #34 (`DEMO_MODE=true`), registrando o resumo e os IDs.
 - [ ] API, Agent e front estão no commit identificado; URLs de AWS e Plano B registradas.
 - [ ] As três personas têm sessões reais válidas, quando a troca fizer parte da demo.
-- [ ] O lote da #32 tem job, manifesto, hashes, contagens e amostra revisada identificados.
+- [x] A [rodada local da #317](evidence/batch-final.json) identifica o job, os hashes, as contagens e a amostra revisada.
 - [ ] IDs das propostas, materiais e evidências usados na demo foram registrados.
 - [ ] A proposta escolhida exige as revisões que serão mostradas e está no estado inicial esperado.
 - [ ] Há operador apto a restaurar o estado somente com o mecanismo entregue pela #34.
@@ -44,17 +41,17 @@ remoto nem as etapas acima.
 
 1. Confirmar o ambiente de demonstração e a versão. Preparar/resetar usando a
    entrega da #34 e anotar os IDs. Não executar no ambiente de produção.
-2. Entrar como Solicitante e enviar o pedido do [roteiro](script.md).
-   Verificar o campo ausente, resposta e chamadas MCP executadas; conferir a
-   descrição depois da resposta “classe 8.8, norma DIN 933”.
-3. Se o bloco integrado estiver liberado, trocar para Governança com sessão
+2. Mostrar as métricas confirmadas da rodada de saneamento. Separar propostas,
+   aplicações da amostra e estimativas financeiras.
+3. Se o bloco integrado estiver liberado, entrar como Governança com sessão
    real e abrir a proposta pré-selecionada, com antes/depois e evidência.
 4. Trocar para Auditor fiscal quando exigido. Mostrar estados separados;
    uma aprovação isolada não deve produzir `APPLIED` se houver outra pendente.
 5. Mostrar auditoria com ator e papel efetivos. Os controles visuais de uma
    persona não substituem a autorização do backend.
-6. Mostrar somente as métricas confirmadas da execução final. Proposta,
-   aplicação e estimativa devem estar identificadas separadamente.
+6. Entrar como Solicitante e enviar o pedido do [roteiro](script.md).
+   Verificar o campo ausente, as chamadas MCP e a descrição depois da resposta
+   “classe 8.8, norma DIN 933”. Conferir o retorno da busca de semelhantes.
 7. Encerrar a fala, registrar duração total e restaurar o estado para outra passagem.
 
 As etapas 3–5 substituem parte da demo, em vez de serem somadas ao bloco de
@@ -87,7 +84,7 @@ tokens, senhas e dados pessoais de logs e capturas compartilháveis.
 
 ## Congelamento antes da apresentação
 
-- [ ] Substituir a prévia local pelas contagens verificadas da #32, ou manter a indicação de prévia na fala.
+- [x] O roteiro usa as contagens verificadas da #317 e identifica a rodada como local.
 - [ ] Conferir os denominadores: registros, propostas, materiais distintos, campos e dinheiro.
 - [ ] Revalidar funcionalidades e retirar do roteiro qualquer etapa não entregue ou não ensaiada.
 - [ ] Validar os dois ensaios por ambiente e o tempo total de até cinco minutos.
