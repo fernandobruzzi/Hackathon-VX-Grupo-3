@@ -1,0 +1,14 @@
+services:
+  bootstrap:
+    volumes: &smoke_data
+      - ${CI_SMOKE_DATA_DIR:?}:/data:ro
+  index:
+    volumes: *smoke_data
+  api:
+    volumes: *smoke_data
+  agent:
+    volumes: *smoke_data
+  batch:
+    volumes: *smoke_data
+  demo:
+    volumes: *smoke_data

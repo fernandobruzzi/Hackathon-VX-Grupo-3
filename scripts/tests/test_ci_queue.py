@@ -6,13 +6,16 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ci_pytest import SHARDS  # noqa: E402
 from ci_queue_report import timing  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 CI = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 DATABASE_TESTS = (ROOT / ".github" / "workflows" / "database-tests.yml").read_text(encoding="utf-8")
-PROMOTION_JOBS = ("python", "database", "front", "images")
-DATABASE_JOBS = ("database-api-demo", "database-api-batch", "database-api-main", "database-mcp")
+PROMOTION_JOBS = ("python", "python-back", "database", "front", "images")
+BACK_TESTS = (ROOT / ".github" / "workflows" / "back-tests.yml").read_text(encoding="utf-8")
+BACK_JOBS = tuple(f"back-{shard}" for shard in ("main", *SHARDS["back"]))
+DATABASE_JOBS = tuple(f"database-{module}-{shard}" for module in ("api", "mcp") for shard in ("main", *SHARDS[module]))
 
 
 def job(start, end):
@@ -40,22 +43,29 @@ class QueueTimingTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
-    def test_complete_ci_requires_the_same_repository_promotion(self):
+    def test_complete_ci_requires_a_promotion_or_a_manual_run_on_homologacao(self):
         guard = (
             "github.base_ref == 'main' && github.event.pull_request.head.ref == 'homologacao' && "
             "github.event.pull_request.head.repo.full_name == github.repository"
         )
-        self.assertIn(f"  style:\n    if: ${{{{ github.base_ref == 'homologacao' || ({guard}) }}}}\n", CI)
-        for name in (*PROMOTION_JOBS, *DATABASE_JOBS):
+        manual = "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/homologacao'"
+        self.assertIn(f"  style:\n    if: ${{{{ github.base_ref == 'homologacao' || ({guard}) || ({manual}) }}}}\n", CI)
+        allowed = f"({guard}) || ({manual})"
+        for name in (*PROMOTION_JOBS, *BACK_JOBS, *DATABASE_JOBS):
             with self.subTest(job=name):
-                prefix = "always() && " if name == "database" else ""
-                self.assertIn(f"  {name}:\n    if: ${{{{ {prefix}{guard} }}}}\n", CI)
+                label = "    name: python (back)\n" if name == "python-back" else ""
+                condition = f"always() && ({allowed})" if name in {"database", "python-back"} else allowed
+                self.assertIn(f"  {name}:\n{label}    if: ${{{{ {condition} }}}}\n", CI)
 
-    def test_required_database_check_requires_all_suites(self):
-        job = CI.split("\n  database:\n", 1)[1].split("\n  front:\n", 1)[0]
-        self.assertIn(f"needs: [{', '.join(DATABASE_JOBS)}]", job)
-        self.assertIn("join(needs.*.result, ' ')", job)
-        self.assertIn('test "$RESULTS" = "success success success success"', job)
+    def test_required_checks_require_every_shard(self):
+        for name, shards in (("python-back", BACK_JOBS), ("database", DATABASE_JOBS)):
+            with self.subTest(job=name):
+                gate = re.search(rf"(?ms)^  {name}:\n(.*?)(?=^  \S)", CI)[1]
+                names = re.search(r"needs: \[([^]]+)\]", gate)[1].split(", ")
+                self.assertCountEqual(names, shards)
+                self.assertIn("join(needs.*.result, ' ')", gate)
+                expected = " ".join(["success"] * len(shards))
+                self.assertIn(f'test "$RESULTS" = "{expected}"', gate)
 
     def test_isolated_images_run_both_smokes_and_reset_before_the_full_flow(self):
         self.assertIn("COMPOSE_PROJECT_NAME: vx-ci-${{ github.run_id }}-${{ github.run_attempt }}", CI)
@@ -71,12 +81,13 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("if: always()", CI)
         self.assertNotRegex(CI, r"docker compose[^\n]*run[^\n]*--no-build")
 
-    def test_validation_only_runs_for_pull_requests_targeting_integration_or_production(self):
+    def test_pull_request_targets_and_explicit_ci_trigger(self):
         for filename in ("ci.yml", "policy.yml"):
             with self.subTest(workflow=filename):
                 workflow = (ROOT / ".github" / "workflows" / filename).read_text(encoding="utf-8")
                 triggers = re.search(r"(?ms)^on:\n(.*?)(?=^\S)", workflow).group(1)
-                self.assertEqual(re.findall(r"(?m)^  (\w+):", triggers), ["pull_request"])
+                expected = ["pull_request", "workflow_dispatch"] if filename == "ci.yml" else ["pull_request"]
+                self.assertEqual(re.findall(r"(?m)^  (\w+):", triggers), expected)
                 self.assertRegex(triggers, r"(?m)^    branches: \[homologacao, main\]$")
                 self.assertIn("edited", triggers)  # Retargetar um PR para main também precisa validar.
                 self.assertNotIn("paths", triggers)  # Checks obrigatórios não podem ficar pendentes por filtro.
@@ -88,13 +99,14 @@ class WorkflowTests(unittest.TestCase):
     def test_required_check_names_stay(self):
         for name in ("style", *PROMOTION_JOBS):
             self.assertRegex(CI, rf"(?m)^  {name}:$")
-        self.assertIn("module: [back, mcp, api]", CI)
+        self.assertIn("module: [mcp, api]", CI)
+        self.assertIn("name: python (back)", CI)
 
     def test_cancellable_workflow_never_deploys_or_migrates_outside_the_runner(self):
         # Cancelar no meio de um deploy deixaria lock e revisão pela metade.
         for command in ("deploy_ecs", "deploy_ec2", "bootstrap_aws", "--apply", "aws ", "secrets."):
-            self.assertNotIn(command, CI + DATABASE_TESTS)
-        migrations = re.findall(r"MIGRATION_DATABASE_URL: (\S+)", CI + DATABASE_TESTS)
+            self.assertNotIn(command, CI + DATABASE_TESTS + BACK_TESTS)
+        migrations = re.findall(r"MIGRATION_DATABASE_URL: (\S+)", CI + DATABASE_TESTS + BACK_TESTS)
         self.assertTrue(migrations)
         self.assertTrue(all("@localhost:5432/" in url for url in migrations))
 

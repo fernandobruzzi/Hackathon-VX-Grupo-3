@@ -1,5 +1,7 @@
 """Reset da demo: guarda de ambiente, estado preparado e volta ao mesmo estado depois de um ensaio."""
 
+import subprocess
+import sys
 import uuid
 from pathlib import Path
 
@@ -22,13 +24,32 @@ ORIGIN = "http://localhost:8000"
 
 @pytest.fixture(scope="module")
 def prepared(migrated_url, tmp_path_factory):
+    url, store, first, engine = _prepare(migrated_url, KIT, tmp_path_factory)
+    try:
+        yield url, store, first, engine
+    finally:
+        demo.wipe(engine)
+        engine.dispose()
+
+
+def _prepare(url, kit, tmp_path_factory):
     store = LocalObjectStore(tmp_path_factory.mktemp("demo-storage"))
-    first = demo.reset(migrated_url, KIT, store, PDM)
-    engine = create_engine(migrated_url)
-    yield migrated_url, store, first, engine
-    # Os módulos seguintes esperam o banco sem o estado da demo, como os demais testes deixam.
-    demo.wipe(engine)
-    engine.dispose()
+    first = demo.reset(url, kit, store)
+    engine = create_engine(url)
+    return url, store, first, engine
+
+
+@pytest.fixture(scope="module")
+def rehearsal(migrated_url, tmp_path_factory):
+    kit = tmp_path_factory.mktemp("rehearsal") / "kit"
+    script = KIT.parents[1] / "scripts" / "ci_smoke_kit.py"
+    subprocess.run([sys.executable, str(script), str(KIT), str(kit)], check=True)
+    url, store, first, engine = _prepare(migrated_url, kit, tmp_path_factory)
+    try:
+        yield url, store, first, engine, kit
+    finally:
+        demo.wipe(engine)
+        engine.dispose()
 
 
 def test_reset_requires_demo_mode_and_the_confirmed_database(monkeypatch):
@@ -113,8 +134,8 @@ def _approve(client, csrf, proposal_id, area, version, primary=None):
     return response.json()
 
 
-def test_a_rehearsal_changes_the_state_and_reset_brings_back_the_same_one(prepared, monkeypatch):
-    url, store, first, engine = prepared
+def test_a_rehearsal_changes_the_state_and_reset_brings_back_the_same_one(rehearsal, monkeypatch):
+    url, store, first, engine, kit = rehearsal
     monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     app = create_app(session_factory=sessionmaker(engine, expire_on_commit=False))
@@ -140,7 +161,7 @@ def test_a_rehearsal_changes_the_state_and_reset_brings_back_the_same_one(prepar
     with engine.connect() as connection:
         sessions_before = connection.execute(text("SELECT count(*) FROM auth_sessions")).scalar_one()
 
-    second = demo.reset(url, KIT, store, PDM)
+    second = demo.reset(url, kit, store)
 
     assert second["state"] == first["state"]
     assert second["demo_proposals"] == first["demo_proposals"]
