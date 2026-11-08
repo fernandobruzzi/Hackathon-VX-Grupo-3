@@ -952,6 +952,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/material-equivalences": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Registrar equivalência técnica aprovada pela Governança; não unifica materiais nem soma saldos. */
+    post: operations["registerMaterialEquivalence"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/material-requests/{id}/equivalent-alternatives": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar equivalentes autorizados com saldo quando falta o material pedido; não grava nada. */
+    get: operations["listEquivalentAlternatives"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/material-requests/{id}/substitution": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Trocar o material da solicitação por um equivalente autorizado, com confirmação explícita do solicitante. */
+    post: operations["substituteMaterialRequestWithEquivalent"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2258,6 +2309,8 @@ export interface components {
       purchase_forwards: components["schemas"]["PurchaseForward"][];
       /** History */
       history: components["schemas"]["MaterialRequestTransition"][];
+      /** @default null */
+      substitution: components["schemas"]["MaterialSubstitution"] | null;
     };
     /** MaterialRequestList */
     MaterialRequestList: {
@@ -2740,6 +2793,147 @@ export interface components {
       scorer_simulated: boolean;
       version: string;
       error: string | null;
+    };
+    /**
+     * RegisterEquivalence
+     * @description Equivalência técnica aprovada pela Governança; não unifica materiais nem soma saldos.
+     */
+    RegisterEquivalence: {
+      /**
+       * Material Id
+       * Format: uuid
+       */
+      material_id: string;
+      /**
+       * Equivalent Material Id
+       * Format: uuid
+       */
+      equivalent_material_id: string;
+      /** Basis */
+      basis: string;
+    };
+    /** MaterialEquivalence */
+    MaterialEquivalence: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Material Id
+       * Format: uuid
+       */
+      material_id: string;
+      /**
+       * Equivalent Material Id
+       * Format: uuid
+       */
+      equivalent_material_id: string;
+      /** Basis */
+      basis: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "APROVADA" | "REVOGADA";
+      /** Version */
+      version: number;
+    };
+    /** EquivalentAlternative */
+    EquivalentAlternative: {
+      /**
+       * Equivalence Id
+       * Format: uuid
+       */
+      equivalence_id: string;
+      /**
+       * Material Id
+       * Format: uuid
+       */
+      material_id: string;
+      /** Material Code */
+      material_code: string;
+      /** Description */
+      description: string | null;
+      /** Unit */
+      unit: string | null;
+      /** Status */
+      status: string;
+      /** Available Quantity */
+      available_quantity: string;
+      /** Basis */
+      basis: string;
+      /** Selectable */
+      selectable: boolean;
+      /** Blocked Reason */
+      blocked_reason: string | null;
+    };
+    /**
+     * EquivalentAlternatives
+     * @description Só aparece alternativa quando falta saldo do material pedido e há equivalência aprovada.
+     */
+    EquivalentAlternatives: {
+      /**
+       * Request Id
+       * Format: uuid
+       */
+      request_id: string;
+      /** Request Version */
+      request_version: number;
+      /** Shortage */
+      shortage: boolean;
+      /**
+       * Pending Quantity
+       * @default null
+       */
+      pending_quantity: string | null;
+      /**
+       * Available Quantity
+       * @default null
+       */
+      available_quantity: string | null;
+      /** Items */
+      items: components["schemas"]["EquivalentAlternative"][];
+    };
+    /**
+     * SubstituteWithEquivalent
+     * @description A troca exige confirmação explícita do solicitante e fica registrada na solicitação.
+     */
+    SubstituteWithEquivalent: {
+      /** Expected Version */
+      expected_version: number;
+      /**
+       * Material Id
+       * Format: uuid
+       */
+      material_id: string;
+      /** Confirm Substitution */
+      confirm_substitution: boolean;
+    };
+    /**
+     * MaterialSubstitution
+     * @description Troca confirmada pelo solicitante por um equivalente autorizado (#246).
+     */
+    MaterialSubstitution: {
+      /**
+       * From Material Id
+       * Format: uuid
+       */
+      from_material_id: string;
+      /** From Material Code */
+      from_material_code: string;
+      /**
+       * To Material Id
+       * Format: uuid
+       */
+      to_material_id: string;
+      /** To Material Code */
+      to_material_code: string;
+      /**
+       * Equivalence Id
+       * Format: uuid
+       */
+      equivalence_id: string;
     };
   };
   responses: never;
@@ -7635,6 +7829,277 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChatMaterialRequestResponse"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  registerMaterialEquivalence: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RegisterEquivalence"];
+      };
+    };
+    responses: {
+      /** @description Equivalência aprovada e auditada. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MaterialEquivalence"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  listEquivalentAlternatives: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Alternativas autorizadas; vazio quando há saldo ou nenhuma equivalência aprovada. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["EquivalentAlternatives"];
+        };
+      };
+      /** @description Sessão inválida ou expirada. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Ação ou recurso não autorizado. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Recurso inexistente ou não visível. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Conflito de versão, turno ou idempotência. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Payload inválido. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Limite de chamadas excedido. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+      /** @description Dependência indisponível. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiError"];
+        };
+      };
+    };
+  };
+  substituteMaterialRequestWithEquivalent: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Obrigatório nas escritas com cookie. A API também verifica a origem. */
+        "X-CSRF-Token"?: components["parameters"]["CsrfToken"];
+        /** @description Reutilizar a mesma chave e o mesmo payload ao repetir uma operação. */
+        "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SubstituteWithEquivalent"];
+      };
+    };
+    responses: {
+      /** @description Troca registrada na solicitação e na auditoria. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MaterialRequestDetail"];
         };
       };
       /** @description Sessão inválida ou expirada. */

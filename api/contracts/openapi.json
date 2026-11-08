@@ -6931,6 +6931,372 @@
         },
         "description": "Quantidade e unidade obrigatórias; centro e identidade vêm da sessão. Se há dúvida técnica de identidade, segue para identificação sem cadastro automático. Uma solicitação por conversa, com idempotência, versão, auditoria e transação única. Catálogo alterado exige novo turno."
       }
+    },
+    "/api/v1/material-equivalences": {
+      "post": {
+        "operationId": "registerMaterialEquivalence",
+        "summary": "Registrar equivalência técnica aprovada pela Governança; não unifica materiais nem soma saldos.",
+        "tags": [
+          "material-equivalences"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Equivalência aprovada e auditada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialEquivalence"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterEquivalence"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/material-requests/{id}/equivalent-alternatives": {
+      "get": {
+        "operationId": "listEquivalentAlternatives",
+        "summary": "Listar equivalentes autorizados com saldo quando falta o material pedido; não grava nada.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Alternativas autorizadas; vazio quando há saldo ou nenhuma equivalência aprovada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquivalentAlternatives"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/material-requests/{id}/substitution": {
+      "post": {
+        "operationId": "substituteMaterialRequestWithEquivalent",
+        "summary": "Trocar o material da solicitação por um equivalente autorizado, com confirmação explícita do solicitante.",
+        "tags": [
+          "material-requests"
+        ],
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          },
+          {
+            "cognitoAccessToken": []
+          },
+          {
+            "localSessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Sessão inválida ou expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ação ou recurso não autorizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou não visível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de versão, turno ou idempotência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Payload inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de chamadas excedido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependência indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Troca registrada na solicitação e na auditoria.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequestDetail"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubstituteWithEquivalent"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12324,6 +12690,17 @@
             },
             "title": "History",
             "type": "array"
+          },
+          "substitution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MaterialSubstitution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -13604,6 +13981,294 @@
           "version",
           "error"
         ]
+      },
+      "RegisterEquivalence": {
+        "additionalProperties": false,
+        "description": "Equivalência técnica aprovada pela Governança; não unifica materiais nem soma saldos.",
+        "properties": {
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "equivalent_material_id": {
+            "format": "uuid",
+            "title": "Equivalent Material Id",
+            "type": "string"
+          },
+          "basis": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "equivalent_material_id",
+          "basis"
+        ],
+        "title": "RegisterEquivalence",
+        "type": "object"
+      },
+      "MaterialEquivalence": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "equivalent_material_id": {
+            "format": "uuid",
+            "title": "Equivalent Material Id",
+            "type": "string"
+          },
+          "basis": {
+            "title": "Basis",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "APROVADA",
+              "REVOGADA"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "material_id",
+          "equivalent_material_id",
+          "basis",
+          "status",
+          "version"
+        ],
+        "title": "MaterialEquivalence",
+        "type": "object"
+      },
+      "EquivalentAlternative": {
+        "additionalProperties": false,
+        "properties": {
+          "equivalence_id": {
+            "format": "uuid",
+            "title": "Equivalence Id",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_code": {
+            "title": "Material Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "available_quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "title": "Available Quantity",
+            "type": "string"
+          },
+          "basis": {
+            "title": "Basis",
+            "type": "string"
+          },
+          "selectable": {
+            "title": "Selectable",
+            "type": "boolean"
+          },
+          "blocked_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked Reason"
+          }
+        },
+        "required": [
+          "equivalence_id",
+          "material_id",
+          "material_code",
+          "description",
+          "unit",
+          "status",
+          "available_quantity",
+          "basis",
+          "selectable",
+          "blocked_reason"
+        ],
+        "title": "EquivalentAlternative",
+        "type": "object"
+      },
+      "EquivalentAlternatives": {
+        "additionalProperties": false,
+        "description": "Só aparece alternativa quando falta saldo do material pedido e há equivalência aprovada.",
+        "properties": {
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "request_version": {
+            "minimum": 1,
+            "title": "Request Version",
+            "type": "integer"
+          },
+          "shortage": {
+            "title": "Shortage",
+            "type": "boolean"
+          },
+          "pending_quantity": {
+            "anyOf": [
+              {
+                "maxLength": 25,
+                "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pending Quantity"
+          },
+          "available_quantity": {
+            "anyOf": [
+              {
+                "maxLength": 25,
+                "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Available Quantity"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EquivalentAlternative"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "request_id",
+          "request_version",
+          "shortage",
+          "items"
+        ],
+        "title": "EquivalentAlternatives",
+        "type": "object"
+      },
+      "SubstituteWithEquivalent": {
+        "additionalProperties": false,
+        "description": "A troca exige confirmação explícita do solicitante e fica registrada na solicitação.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "confirm_substitution": {
+            "title": "Confirm Substitution",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_version",
+          "material_id",
+          "confirm_substitution"
+        ],
+        "title": "SubstituteWithEquivalent",
+        "type": "object"
+      },
+      "MaterialSubstitution": {
+        "additionalProperties": false,
+        "description": "Troca confirmada pelo solicitante por um equivalente autorizado (#246).",
+        "properties": {
+          "from_material_id": {
+            "format": "uuid",
+            "title": "From Material Id",
+            "type": "string"
+          },
+          "from_material_code": {
+            "title": "From Material Code",
+            "type": "string"
+          },
+          "to_material_id": {
+            "format": "uuid",
+            "title": "To Material Id",
+            "type": "string"
+          },
+          "to_material_code": {
+            "title": "To Material Code",
+            "type": "string"
+          },
+          "equivalence_id": {
+            "format": "uuid",
+            "title": "Equivalence Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_material_id",
+          "from_material_code",
+          "to_material_id",
+          "to_material_code",
+          "equivalence_id"
+        ],
+        "title": "MaterialSubstitution",
+        "type": "object"
       }
     },
     "parameters": {

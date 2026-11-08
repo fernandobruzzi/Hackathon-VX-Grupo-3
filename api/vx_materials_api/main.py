@@ -22,6 +22,7 @@ from vx_materials_api.routes import (
     dashboard,
     enrichment,
     manual_reviews,
+    material_equivalences,
     material_requests,
     materials,
     purchase_forwards,
@@ -106,6 +107,7 @@ def create_app(
     app.include_router(batch.router)
     app.include_router(manual_reviews.router)
     app.include_router(chat.router)
+    app.include_router(material_equivalences.router)
     app.include_router(material_requests.router)
     app.include_router(purchase_forwards.router)
     app.include_router(materials.router)
