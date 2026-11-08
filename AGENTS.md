@@ -69,6 +69,9 @@ locally and fix failures first. From the repo root:
 
 Run focused tests while developing and for work PRs; run complete suites for promotion.
 Run pytest separately per module: a root invocation collects colliding test filenames.
+Storage changes also run `.github/workflows/storage-windows.yml` on native Windows
+with Python 3.12 and a disposable PostgreSQL database with pgvector. It runs both
+storage test modules and the real-kit bootstrap tests, including a repeated load.
 For changes to operational Python scripts, select focused tests from
 `uv run --locked --package vx-materials-back pytest scripts/tests` from the root.
 
