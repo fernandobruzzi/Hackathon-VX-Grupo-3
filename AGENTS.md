@@ -620,6 +620,15 @@ Origin/CSRF on cookie sessions, and lock the request row, then the reservation, 
 advisory lock, with audit in the same transaction. Movements are never edited or deleted. See
 [`docs/solicitacao-material.md`](docs/solicitacao-material.md#17-entrega-cancelamento-de-reserva-e-reversão-240).
 
+When the destination cannot cover a quantity, `GET /api/v1/stock/availability/alternatives`
+(`inventory:read`, authorized destination, optional `quantity`) lists the caller's other
+authorized centers with positive availability, computed by the same `compute_availability`, and
+sets `suggest_purchasing` when none has any. It is informational under decision D6: it never
+creates a transfer, reservation or movement, and it only iterates the caller's `center_codes`, so
+an out-of-scope center never appears or changes the flag. The chat adds the same hint from the
+caller's inventory view when the conversation's center has no stock. Clients show it before a
+purchasing forward (#241, #242), which never depends on it. See section 18 of the model.
+
 ## Open request warning
 
 Creating a request for a resolved material and center that already has an open (not
