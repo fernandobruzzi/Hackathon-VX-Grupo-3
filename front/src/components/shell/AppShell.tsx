@@ -87,6 +87,12 @@ const NAV: { section: string; items: NavItem[] }[] = [
     section: "Acompanhar",
     items: [
       {
+        href: "/solicitacoes/",
+        label: "Minhas solicitações",
+        icon: ClipboardList,
+        perms: ["requests:read_own"],
+      },
+      {
         href: "/dashboard/",
         label: "Qualidade da base",
         icon: BarChart3,

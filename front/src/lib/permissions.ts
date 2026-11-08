@@ -8,6 +8,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "inventory:read",
     "orders:create",
     "orders:read_own",
+    "requests:read_own",
     "orders:update_own",
     "requests:create",
     "requests:read_own",
@@ -20,6 +21,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "inventory:read",
     "orders:create",
     "orders:read_own",
+    "requests:read_own",
     "orders:update_own",
     "requests:create",
     "requests:read_own",
@@ -39,6 +41,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "inventory:read",
     "orders:create",
     "orders:read_own",
+    "requests:read_own",
     "orders:update_own",
     "requests:create",
     "requests:read_own",
@@ -56,6 +59,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "inventory:read",
     "orders:create",
     "orders:read_own",
+    "requests:read_own",
     "orders:update_own",
     "requests:create",
     "requests:read_own",
@@ -64,6 +68,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
   // Operação da solicitação de material: não aprovam cadastro, NCM nem unificação.
   ROLE_ALMOXARIFADO: [
+    "requests:read_own",
     "chat:use",
     "materials:read",
     "inventory:read",
@@ -78,6 +83,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "stock:reverse",
   ],
   ROLE_COMPRAS: [
+    "requests:read_own",
     "chat:use",
     "materials:read",
     "inventory:read",

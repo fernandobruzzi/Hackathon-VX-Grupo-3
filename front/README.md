@@ -53,6 +53,7 @@ no deploy nem no fluxo de sessão. Consequências:
 | `/login`, `/auth/callback` | SSO Cognito + seletor demo | todos | 6.1 |
 | `/chat` | Novo pedido por conversa: ficha PDM, faltantes, duplicidade, NCM, painel das chamadas MCP | todos | 6.2 |
 | `/pedidos` | Meus pedidos · aba "Para publicar" (Governança) | todos | 6.5 |
+| `/solicitacoes`, `/solicitacoes/detalhe/?id=<UUID>` | Minhas solicitações de material: protocolo, etapa, pendências, quantidades e histórico reais | dono com `requests:read_own` | [jornada do solicitante](../docs/solicitacao-material.md) |
 | `/materiais` | Busca + estoque por centro, bloqueados apontam para o ativo | todos | catálogo |
 | `/saneamento` | Fila técnica / fiscal / decididas | Governança, Fiscal | 6.3 |
 | `/saneamento/[id]` | Revisão: antes, depois, estoque consolidado, mudanças com fonte, decisão com justificativa | Governança (técnica), Fiscal (NCM) | 6.3 |
