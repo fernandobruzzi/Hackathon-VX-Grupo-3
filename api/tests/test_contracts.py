@@ -100,6 +100,17 @@ def test_quality_example_contains_no_financial_values():
     assert quality["after"] is None
 
 
+@pytest.mark.parametrize("field", ["requester_user_id", "original_text"])
+def test_open_request_warning_cannot_carry_requester_identity_or_text(field):
+    example = next(e for e in EXAMPLES if e["name"] == "material-request-create-open-request-warning")
+    schema = {"$ref": "#/components/schemas/OpenMaterialRequestsConflict"}
+    validator(schema).validate(example["response"])
+    leaked = copy.deepcopy(example["response"])
+    leaked["error"]["details"]["open_requests"][0][field] = "não pode aparecer"
+    with pytest.raises(ValidationError):
+        validator(schema).validate(leaked)
+
+
 def test_version_and_uuid_constraints_are_checked():
     request = copy.deepcopy(next(e["request"] for e in EXAMPLES if e["name"] == "chat-incomplete"))
     schema = {"$ref": "#/components/schemas/ChatMessageRequest"}
