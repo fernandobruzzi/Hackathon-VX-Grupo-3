@@ -4215,5 +4215,58 @@
         "equivalence_id": "72462462-0000-4000-8000-000000000003"
       }
     }
+  },
+  {
+    "name": "notifications-list",
+    "path": "/api/v1/notifications",
+    "method": "get",
+    "status": 200,
+    "query": {
+      "limit": 20
+    },
+    "response": {
+      "items": [
+        {
+          "id": "72492492-0000-4000-8000-000000000001",
+          "request_id": "72372372-0000-4000-8000-000000000011",
+          "protocol": "SM-00000002",
+          "action": "STOCK_RESERVED",
+          "title": "Reserva feita no estoque",
+          "reason": null,
+          "created_at": "2026-11-08T09:10:00Z",
+          "read": false
+        }
+      ],
+      "unread_count": 1,
+      "next_cursor": null
+    }
+  },
+  {
+    "name": "notifications-mark-read",
+    "path": "/api/v1/notifications/read",
+    "method": "post",
+    "status": 200,
+    "request": {
+      "ids": [
+        "72492492-0000-4000-8000-000000000001"
+      ],
+      "all": false
+    },
+    "response": {
+      "items": [
+        {
+          "id": "72492492-0000-4000-8000-000000000001",
+          "request_id": "72372372-0000-4000-8000-000000000011",
+          "protocol": "SM-00000002",
+          "action": "STOCK_RESERVED",
+          "title": "Reserva feita no estoque",
+          "reason": null,
+          "created_at": "2026-11-08T09:10:00Z",
+          "read": true
+        }
+      ],
+      "unread_count": 0,
+      "next_cursor": null
+    }
   }
 ]
