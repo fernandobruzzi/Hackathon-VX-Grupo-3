@@ -148,3 +148,15 @@ def test_auditor_origin_is_refused_outside_ncm_corrections(approval_case):
     response = decide(approval_case, payload={**approval_case["payload"], "primary_material_code": None})
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "INVALID_PROPOSAL"
+
+
+def test_confidence_band_and_view_come_from_the_changeset(catalog):
+    from vx_materials_api.services.proposal_queries import confidence_band, llm_audit_view
+
+    _, changes, _ = payload(catalog)
+    parsed = ProposalChangeset.model_validate(json.loads(json.dumps(changes)), strict=False)
+    view = llm_audit_view(parsed.llm_audit)["confidence"]
+    # Sem pontuador configurado: só a validação pelo domínio, sem faixa.
+    assert view["domain_validated"] is True and view["band"] is None
+    assert view["candidates"] == [{"code": "7318.15.00", "probability": None}]
+    assert confidence_band(parsed.llm_audit) is None

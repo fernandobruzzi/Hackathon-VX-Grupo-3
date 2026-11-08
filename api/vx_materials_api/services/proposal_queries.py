@@ -164,6 +164,7 @@ def detail(db, proposal, principal, catalog):
         "application_mode": proposal.application_mode,
         "automation": automation_info(db, proposal),
         "origin": changes.origin,
+        "confidence_band": confidence_band(changes.llm_audit),
         "llm_audit": llm_audit_view(changes.llm_audit),
         "title": f"{after.item_name or after.pdm_class_id or 'Classe pendente'} · "
         + " / ".join(m.material_code for m in materials),
@@ -262,6 +263,7 @@ def queue(db, principal, catalog, *, area=None, status=None, proposal_type=None,
                     "application_mode",
                     "automation",
                     "origin",
+                    "confidence_band",
                 )
             }
         )
@@ -284,6 +286,30 @@ def llm_audit_view(audit) -> dict | None:
         ],
         "evidence": audit.evidence,
         "rationale": audit.rationale,
+        "confidence": confidence_view(audit.confidence),
+    }
+
+
+def confidence_band(audit) -> str | None:
+    """Faixa de confiança do auditor (#297): ordena a revisão, nunca aprova."""
+    return audit.confidence.band if audit is not None and audit.confidence is not None else None
+
+
+def confidence_view(confidence) -> dict | None:
+    if confidence is None:
+        return None
+    probabilities = confidence.probabilities or {}
+    scorer = confidence.scorer or {}
+    return {
+        "domain_validated": confidence.domain_validated,
+        "band": confidence.band,
+        "probability": confidence.probability,
+        "chosen": confidence.chosen,
+        "candidates": [{"code": code, "probability": probabilities.get(code)} for code in confidence.candidates],
+        "scorer_model": scorer.get("model"),
+        "scorer_simulated": bool(scorer.get("simulated", False)),
+        "version": confidence.version,
+        "error": confidence.error,
     }
 
 

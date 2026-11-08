@@ -1,5 +1,6 @@
 import { Badge, type Tone } from "@/components/ui";
 import type {
+  ConfidenceBand,
   MaterialStatus,
   OrderStatus,
   ProposalOrigin,
@@ -68,3 +69,9 @@ export const ProposalTypeBadge = ({ value }: { value: ProposalType }) => (
 /** Só a sugestão do auditor LLM ganha selo: as regras do batch são a origem padrão. */
 export const ProposalOriginBadge = ({ value }: { value: ProposalOrigin }) =>
   value === "LLM_AUDITOR" ? <Badge tone="info">Auditor LLM</Badge> : null;
+
+const CONFIDENCE_TONE = { ALTA: "success", MEDIA: "warning", BAIXA: "danger" } as const;
+
+/** Faixa de confiança do auditor (#297): só ordena a revisão, nunca aprova. */
+export const ConfidenceBandBadge = ({ value }: { value?: ConfidenceBand | null }) =>
+  value ? <Badge tone={CONFIDENCE_TONE[value]}>Confiança {value.toLowerCase()}</Badge> : null;
