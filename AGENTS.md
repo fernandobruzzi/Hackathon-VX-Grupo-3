@@ -574,6 +574,22 @@ reservation from an older dataset awaits reconciliation. Reservations and the in
 `stock_movements` table never touch `material_inventory_snapshots`; cancelling a request releases
 its active reservations. See [`docs/solicitacao-material.md`](docs/solicitacao-material.md#14-disponibilidade-e-reserva-239).
 
+Only the undelivered part of an `ATIVA` reservation (quantity minus its deliveries, reversals
+excluded) counts as reserved, so `r + e + c + p = Q` and `S = D + R + E` after any operation; the
+reservation quantity is never edited. `POST /api/v1/stock/reservations/{id}/deliveries`
+(`stock:deliver`) inserts an `ENTREGA` movement against the current dataset, moving quantity from
+reserved to delivered without changing availability; the reservation becomes `CONSUMIDA` when
+nothing is left. `stock_service.close_if_fulfilled` is the only place that closes a request on
+fulfillment, after deliveries and purchasing accepts: with `p = 0`, `r = 0` and no forward awaiting
+Compras, it picks `ATENDIDA_ESTOQUE`, `ATENDIDA_PARCIAL_COMPRAS` or `ENCAMINHADA_COMPRAS` (section 5).
+`POST /api/v1/stock/reservations/{id}/cancel` (`stock:reserve`) releases only the undelivered part.
+`POST /api/v1/stock/movements/{id}/reversal` (`stock:reverse`, reason required) inserts a
+`REVERSAO` limited to what is not yet reversed, only for deliveries of the current dataset; a
+closed request stays closed. All three take the request's `expected_version`, `Idempotency-Key`,
+Origin/CSRF on cookie sessions, and lock the request row, then the reservation, then the stock
+advisory lock, with audit in the same transaction. Movements are never edited or deleted. See
+[`docs/solicitacao-material.md`](docs/solicitacao-material.md#17-entrega-cancelamento-de-reserva-e-reversão-240).
+
 ## Open request warning
 
 Creating a request for a resolved material and center that already has an open (not
