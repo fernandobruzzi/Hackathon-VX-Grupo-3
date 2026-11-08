@@ -4676,11 +4676,18 @@
             }
           },
           "409": {
-            "description": "Conflito de versão, turno ou idempotência.",
+            "description": "Conflito de idempotência ou aviso OPEN_REQUESTS_EXIST: há solicitação aberta do mesmo material e centro. O aviso não grava nada; reenvie com acknowledge_open_requests=true para criar mesmo assim.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OpenMaterialRequestsConflict"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    }
+                  ]
                 }
               }
             }
@@ -10332,6 +10339,12 @@
             ],
             "default": null,
             "title": "Registration Order Id"
+          },
+          "acknowledge_open_requests": {
+            "default": false,
+            "description": "Confirma a criação mesmo com solicitação aberta do mesmo material e centro, após o aviso OPEN_REQUESTS_EXIST. A confirmação fica na auditoria da criação.",
+            "title": "Acknowledge Open Requests",
+            "type": "boolean"
           }
         },
         "required": [
@@ -10363,6 +10376,108 @@
           "reason"
         ],
         "title": "CancelMaterialRequest",
+        "type": "object"
+      },
+      "OpenMaterialRequestRef": {
+        "additionalProperties": false,
+        "description": "Solicitação aberta que o usuário já pode ler; nunca inclui solicitante nem texto.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "EM_IDENTIFICACAO",
+              "AGUARDANDO_CADASTRO",
+              "EM_ATENDIMENTO"
+            ],
+            "type": "string"
+          },
+          "quantity": {
+            "maxLength": 25,
+            "pattern": "^(0|[1-9][0-9]{0,17})(\\.[0-9]{1,6})?$",
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "protocol",
+          "status",
+          "quantity",
+          "unit",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "OpenMaterialRequestsWarning": {
+        "additionalProperties": false,
+        "description": "Solicitações não encerradas do mesmo tenant, material e centro. As que o usuário não pode ler aparecem só em hidden_count.",
+        "properties": {
+          "total_count": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "hidden_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "open_requests": {
+            "items": {
+              "$ref": "#/components/schemas/OpenMaterialRequestRef"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "total_count",
+          "hidden_count",
+          "open_requests"
+        ],
+        "type": "object"
+      },
+      "OpenMaterialRequestsConflict": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "const": "OPEN_REQUESTS_EXIST",
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "request_id": {
+                "type": "string"
+              },
+              "details": {
+                "$ref": "#/components/schemas/OpenMaterialRequestsWarning"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "request_id",
+              "details"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
         "type": "object"
       },
       "MaterialRequestSummary": {
