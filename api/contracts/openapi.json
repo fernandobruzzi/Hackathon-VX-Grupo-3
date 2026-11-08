@@ -8801,6 +8801,27 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "components": {
+                "items": {
+                  "$ref": "#/components/schemas/SavingsComponent"
+                },
+                "title": "Components",
+                "type": "array"
+              },
+              "assumption_source": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AssumptionSource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "calculation_version": {
+                "title": "Calculation Version",
+                "type": "string"
               }
             },
             "required": [
@@ -14031,6 +14052,233 @@
           "benchmark"
         ],
         "title": "NcmMetrics",
+        "type": "object"
+      },
+      "SavingsComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "enum": [
+              "registration_reuse",
+              "duplicate_codes",
+              "batch_reviews",
+              "stock_fulfilled"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ESTIMATED",
+              "MEASURED_KIT_VALUE"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "count_unit": {
+            "title": "Count Unit",
+            "type": "string"
+          },
+          "amount_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Brl"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "assumptions": {
+            "items": {
+              "$ref": "#/components/schemas/SavingsAssumption"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unavailable Reason"
+          },
+          "estimated_hours": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Hours"
+          },
+          "quantities": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Quantities",
+            "type": "object"
+          },
+          "stock_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/StockSavingsEvidence"
+            },
+            "title": "Stock Evidence",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "kind",
+          "count",
+          "count_unit",
+          "amount_brl",
+          "formula"
+        ],
+        "title": "SavingsComponent",
+        "type": "object"
+      },
+      "SavingsAssumption": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "enum": [
+              "registration_cost",
+              "code_annual_cost",
+              "review_minutes_before",
+              "review_minutes_after",
+              "hourly_cost"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^[0-9]{1,12}(\\.[0-9]{1,6})?$",
+            "title": "Value",
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "recorded_on": {
+            "format": "date",
+            "title": "Recorded On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "source",
+          "recorded_on"
+        ],
+        "title": "SavingsAssumption",
+        "type": "object"
+      },
+      "AssumptionSource": {
+        "properties": {
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "sha256"
+        ],
+        "title": "AssumptionSource",
+        "type": "object"
+      },
+      "StockSavingsEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "delivery_id": {
+            "format": "uuid",
+            "title": "Delivery Id",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "recorded_on": {
+            "format": "date",
+            "title": "Recorded On",
+            "type": "string"
+          },
+          "snapshot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Snapshot Ids",
+            "type": "array"
+          },
+          "factors": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Factors",
+            "type": "object"
+          }
+        },
+        "required": [
+          "delivery_id",
+          "quantity",
+          "unit",
+          "unit_price",
+          "source",
+          "recorded_on",
+          "snapshot_ids",
+          "factors"
+        ],
+        "title": "StockSavingsEvidence",
         "type": "object"
       }
     },

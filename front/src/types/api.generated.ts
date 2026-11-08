@@ -1379,6 +1379,11 @@ export interface components {
         realized_savings: components["schemas"]["Decimal"] | null;
         estimated_savings: components["schemas"]["Decimal"] | null;
         assumptions?: string[];
+        /** Components */
+        components?: components["schemas"]["SavingsComponent"][];
+        assumption_source?: components["schemas"]["AssumptionSource"] | null;
+        /** Calculation Version */
+        calculation_version?: string;
       };
       ncm: components["schemas"]["NcmMetrics"];
     };
@@ -2889,6 +2894,100 @@ export interface components {
       /** Operational Precision */
       operational_precision: number | null;
       benchmark: components["schemas"]["NcmBenchmark"];
+    };
+    /** SavingsComponent */
+    SavingsComponent: {
+      /**
+       * Key
+       * @enum {string}
+       */
+      key: "registration_reuse" | "duplicate_codes" | "batch_reviews" | "stock_fulfilled";
+      /** Label */
+      label: string;
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: "ESTIMATED" | "MEASURED_KIT_VALUE";
+      /** Count */
+      count: string | null;
+      /** Count Unit */
+      count_unit: string;
+      /** Amount Brl */
+      amount_brl: string | null;
+      /** Formula */
+      formula: string;
+      /** Assumptions */
+      assumptions?: components["schemas"]["SavingsAssumption"][];
+      /**
+       * Unavailable Reason
+       * @default null
+       */
+      unavailable_reason: string | null;
+      /** Estimated Hours */
+      estimated_hours?: string | null;
+      /** Quantities */
+      quantities?: {
+        [key: string]: string;
+      };
+      /** Stock Evidence */
+      stock_evidence?: components["schemas"]["StockSavingsEvidence"][];
+    };
+    /** SavingsAssumption */
+    SavingsAssumption: {
+      /**
+       * Key
+       * @enum {string}
+       */
+      key:
+        | "registration_cost"
+        | "code_annual_cost"
+        | "review_minutes_before"
+        | "review_minutes_after"
+        | "hourly_cost";
+      /** Value */
+      value: string;
+      /** Source */
+      source: string;
+      /**
+       * Recorded On
+       * Format: date
+       */
+      recorded_on: string;
+    };
+    /** AssumptionSource */
+    AssumptionSource: {
+      /** Version */
+      version: string;
+      /** Sha256 */
+      sha256: string;
+    };
+    /** StockSavingsEvidence */
+    StockSavingsEvidence: {
+      /**
+       * Delivery Id
+       * Format: uuid
+       */
+      delivery_id: string;
+      /** Quantity */
+      quantity: string;
+      /** Unit */
+      unit: string;
+      /** Unit Price */
+      unit_price: string;
+      /** Source */
+      source: string;
+      /**
+       * Recorded On
+       * Format: date
+       */
+      recorded_on: string;
+      /** Snapshot Ids */
+      snapshot_ids: string[];
+      /** Factors */
+      factors: {
+        [key: string]: string;
+      };
     };
   };
   responses: never;

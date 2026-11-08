@@ -9,6 +9,7 @@ from domain.contracts import FieldStatus
 from repositories.normalization import get_normalization_repository
 from vx_materials_api.db.models import (
     Dataset,
+    InventoryConsolidation,
     MaterialInventorySnapshot,
     MaterialMaster,
     QualitySnapshotItem,
@@ -19,6 +20,7 @@ from vx_materials_api.schemas.metrics import DashboardMetrics, FinancialMetrics,
 from vx_materials_api.security.rbac import require_permission
 from vx_materials_api.services.approval_service import exact_sum
 from vx_materials_api.services.ncm_metrics import ncm_metrics
+from vx_materials_api.services.savings_metrics import savings_metrics
 from vx_materials_api.services.snapshot_service import latest_snapshot, to_contract
 
 
@@ -84,9 +86,22 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
         )
     ):
         material_centers.setdefault(str(material_id), set()).add(center)
+    for primary, center in db.execute(
+        select(InventoryConsolidation.primary_material_id, snapshot.center_code)
+        .join(snapshot, snapshot.id == InventoryConsolidation.source_snapshot_id)
+        .join(MaterialMaster, MaterialMaster.id == InventoryConsolidation.primary_material_id)
+        .where(
+            MaterialMaster.tenant_id == identity.tenant_id,
+            InventoryConsolidation.tenant_id == identity.tenant_id,
+            snapshot.tenant_id == identity.tenant_id,
+            snapshot.dataset_id == selected,
+        )
+    ):
+        material_centers.setdefault(str(primary), set()).add(center)
     allowed = {key for key, centers in material_centers.items() if centers <= identity.center_codes}
     statuses = Counter()
     duplicates: set[str] = set()
+    eligible_ids = []
     ncm_proposals = []
     for status, members, primary, proposal_id, proposal_type, target_ncm, before_ncm, has_before in db.execute(
         select(
@@ -115,6 +130,7 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
             )
         ):
             statuses[status] += 1
+            eligible_ids.append(proposal_id)
             if proposal_type == "NCM_CORRECTION":
                 ncm_proposals.append((proposal_id, status, members, target_ncm, before_ncm, has_before))
             # Unificação ainda válida: os membros além do principal são os códigos duplicados.
@@ -174,12 +190,21 @@ def metrics(db, identity, *, view="quality", dataset_id=None):
         for value in values:
             if value is not None:
                 total = exact_sum(total, value)
+        eligible_proposals = db.scalars(
+            select(SanitizationProposal).where(SanitizationProposal.id.in_(eligible_ids))
+        ).all()
+        components, assumption_source, estimated = savings_metrics(db, identity, selected, eligible_proposals, allowed)
         result.financial = FinancialMetrics(
+            components=components,
+            assumption_source=assumption_source,
+            estimated_savings=estimated,
             inventory_book_value=format(total, "f") if all(value is not None for value in values) else None,
             assumptions=[
                 "Valor contábil do estoque original dos centros autorizados; dados sintéticos do desafio.",
                 "Unificar códigos conserva valor de estoque e não comprova economia realizada.",
-                "Economia estimada indisponível sem premissas quantitativas registradas.",
+                "Estimativas usam premissas registradas; componentes indisponíveis não são tratados como zero.",
+                "Valor atendido com estoque não comprova compra evitada e não integra a economia estimada.",
+                "Cadastro, manutenção anual e capacidade têm naturezas e períodos distintos e não são somados.",
             ],
         )
     return result

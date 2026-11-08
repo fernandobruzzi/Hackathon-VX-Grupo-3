@@ -75,7 +75,8 @@ def held_connection(ready, release):
 
 
 async def wait_ready(ready, count=1):
-    async with asyncio.timeout(5):
+    # A partida real do MCP faz parte do teste; o foco é isolamento, não velocidade de importação.
+    async with asyncio.timeout(20):
         while len(ready) < count:
             await asyncio.sleep(0.01)
 
@@ -113,10 +114,12 @@ def test_burst_rejects_excess_without_spawning_and_preserves_callers(catalog, sp
 def test_timeout_finishes_stdio_cleanup_before_releasing_capacity(catalog, spawned):
     async def exercise():
         ready, release = [], asyncio.Event()
-        app = create_app(catalog, SECRET, held_connection(ready, release), timeout_seconds=2, max_concurrent_turns=1)
+        # O primeiro turno fica retido após o handshake, e o segundo precisa partir normalmente.
+        app = create_app(catalog, SECRET, held_connection(ready, release), timeout_seconds=10, max_concurrent_turns=1)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="http://agent") as client:
             response = await client.post(PATH, json=body(), headers=headers())
             assert response.status_code == 503 and response.json()["error"]["code"] == "AGENT_TIMEOUT"
+            assert ready  # O timeout também precisa cobrir o servidor já conectado.
             assert len(spawned) == 1 and spawned[0][0].returncode is not None
             assert not app.state.turns.active
             release.set()

@@ -1,0 +1,29 @@
+{
+  "version": "pitch-hypotheses-v1",
+  "assumptions": [
+    {
+      "key": "registration_cost",
+      "value": "33.333333",
+      "source": "Hipótese da #28: 20 min por cadastro × R$ 100/h / 60, arredondada a 6 casas. Não medida.",
+      "recorded_on": "2026-11-08"
+    },
+    {
+      "key": "review_minutes_before",
+      "value": "20",
+      "source": "Hipótese ilustrativa da #28, adaptada para este cenário; não é medição de tempo do kit nem economia realizada.",
+      "recorded_on": "2026-11-08"
+    },
+    {
+      "key": "review_minutes_after",
+      "value": "12",
+      "source": "Hipótese ilustrativa da #28, adaptada para este cenário; não é medição de tempo do kit nem economia realizada.",
+      "recorded_on": "2026-11-08"
+    },
+    {
+      "key": "hourly_cost",
+      "value": "100",
+      "source": "Hipótese ilustrativa da #28, adaptada para este cenário; não é medição de tempo do kit nem economia realizada.",
+      "recorded_on": "2026-11-08"
+    }
+  ]
+}

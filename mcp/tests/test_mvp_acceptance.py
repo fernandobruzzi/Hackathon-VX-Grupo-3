@@ -63,6 +63,7 @@ def chat(client, me, message, session_id=None, version=0):
 
 @pytest.fixture
 def flow(database, monkeypatch):
+    monkeypatch.delenv("SAVINGS_ASSUMPTIONS_VERSION", raising=False)
     monkeypatch.setenv("APP_ENV", "local")
     monkeypatch.setenv("LOCAL_TEST_SESSION", "true")
     monkeypatch.setenv("AGENT_INTERNAL_TOKEN_SECRET", SECRET)
@@ -176,6 +177,7 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
     fiscal = login(client, "AUDITOR_FISCAL")
     assert fiscal["user"]["id"] != governance["user"]["id"]
     assert fiscal["csrf_token"] != governance["csrf_token"]
+    financial_before = client.get("/api/v1/dashboard/metrics?view=executive").json()["financial"]
     assert client.post(path + "/decide", json=payload, headers=headers(fiscal)).status_code == 403
     payload = payload | {"review_area": "FISCAL", "expected_version": first.json()["version"]}
     key = str(uuid.uuid4())
@@ -252,6 +254,14 @@ def test_login_chat_mcp_batch_approval_audit_and_metrics(flow):
     assert after["before"] == before["before"] and after["after"] is None
     assert after["financial"]["realized_savings"] is None
     assert after["financial"]["data_origin"] == "SYNTHETIC_CHALLENGE_DATA"
+    assert after["financial"]["estimated_savings"] is None
+    components_before = {c["key"]: c for c in financial_before["components"]}
+    components_after = {c["key"]: c for c in after["financial"]["components"]}
+    assert int(components_after["duplicate_codes"]["count"]) == (
+        int(components_before["duplicate_codes"]["count"]) + len(member_versions) - 1
+    )
+    assert components_after["duplicate_codes"]["amount_brl"] is None
+    assert components_after["stock_fulfilled"]["kind"] == "MEASURED_KIT_VALUE"
     assert client.post("/api/v1/auth/logout", json={}, headers=headers(fiscal)).status_code == 200
     assert client.get("/api/v1/auth/me").status_code == 401
 

@@ -1,3 +1,13 @@
+> **Fonte dos números do MVP (#316):** use os componentes da visão executiva do
+> dashboard, mantendo valor, origem e data das premissas à vista. Identifique a
+> versão e o SHA-256 do arquivo de premissas registrado pela CLI. Cadastro pontual,
+> manutenção anual de códigos, horas estimadas de revisão e estoque atendido são
+> componentes separados; não há total que some períodos e naturezas diferentes.
+> Os valores do kit são sintéticos; atendimento e capacidade não comprovam caixa
+> economizado. Valores indisponíveis não são zero. Os cenários abaixo continuam
+> hipóteses de escala futura; para a demonstração, os números realizados no MVP
+> devem ser lidos dessa tela, com as premissas visíveis.
+
 # Premissas de ROI
 
 Versão de trabalho da [#28](https://github.com/fernandobruzzi/Hackathon-VX-Grupo-3/issues/28), em 5/11/2026.

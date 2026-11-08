@@ -1,10 +1,12 @@
 """Métricas operacionais e financeiras do contrato público do dashboard."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from vx_materials_api.savings_assumptions import AssumptionSource, SavingsAssumption
 
 
 class _Contract(BaseModel):
@@ -76,6 +78,32 @@ class NcmMetrics(_Contract):
     benchmark: NcmBenchmark
 
 
+class StockSavingsEvidence(_Contract):
+    delivery_id: UUID
+    quantity: str
+    unit: str
+    unit_price: str
+    source: str
+    recorded_on: date
+    snapshot_ids: list[str]
+    factors: dict[str, str]
+
+
+class SavingsComponent(_Contract):
+    key: Literal["registration_reuse", "duplicate_codes", "batch_reviews", "stock_fulfilled"]
+    label: str
+    kind: Literal["ESTIMATED", "MEASURED_KIT_VALUE"]
+    count: str | None
+    count_unit: str
+    amount_brl: str | None
+    formula: str
+    assumptions: list[SavingsAssumption] = Field(default_factory=list)
+    unavailable_reason: str | None = None
+    estimated_hours: str | None = None
+    quantities: dict[str, str] = Field(default_factory=dict)
+    stock_evidence: list[StockSavingsEvidence] = Field(default_factory=list)
+
+
 class FinancialMetrics(_Contract):
     currency: Literal["BRL"] = "BRL"
     data_origin: Literal["SYNTHETIC_CHALLENGE_DATA"] = "SYNTHETIC_CHALLENGE_DATA"
@@ -83,6 +111,9 @@ class FinancialMetrics(_Contract):
     realized_savings: str | None = None
     estimated_savings: str | None = None
     assumptions: list[str] = Field(default_factory=list)
+    components: list[SavingsComponent] = Field(default_factory=list)
+    assumption_source: AssumptionSource | None = None
+    calculation_version: str = "savings-v1"
 
 
 class QualitySnapshotRequest(_Contract):

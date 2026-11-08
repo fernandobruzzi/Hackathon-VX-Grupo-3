@@ -105,6 +105,7 @@ services:
       BATCH_RUNNER: ${BATCH_RUNNER:-local_process}
       BATCH_DATABASE_URL: postgresql+psycopg://batch_user:${BATCH_DB_PASSWORD:-local_only_batch}@db:5432/${POSTGRES_DB:-vx_materiais}
       PDM_WORKBOOK_PATH: /data/desafio01/03_padrao_cadastro_PDM.xlsx
+      SAVINGS_ASSUMPTIONS_VERSION: ${SAVINGS_ASSUMPTIONS_VERSION:-}
       NCM_SNAPSHOT_VERSION: ${NCM_SNAPSHOT_VERSION:-}
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       STORAGE_LOCAL_DIR: /storage
