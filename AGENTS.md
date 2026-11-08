@@ -679,6 +679,10 @@ detail lists `reservations` and `purchase_forwards` with their states. See secti
 
 When a requested material lacks stock, the requester sees only technically equivalent materials whose equivalence Governança approved (`POST /api/v1/material-equivalences`, `merge:decide`, stored as a canonical pair in `material_equivalences`), with their availability at the request's center (#246). Switching requires `confirm_substitution: true`, uses the purchasing-forward lock order and confirmed shortage, refuses requests with any served parcel, and records the original code and the equivalence on the request and in the audit. Equivalence never merges materials or adds their stock. See section 21 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
 
+## Requester notifications
+
+`GET /api/v1/notifications` derives the requester's notifications from the audit of their own requests, reservations, purchase forwards and linked registration orders, excluding their own actions (#249). Only reads are stored (`notification_reads`, insert-only, `POST /api/v1/notifications/read` with ids or `all`), so `unread_count` is the real total. The navigation badge uses it and is omitted when the API gives no reliable total. See section 22 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
+
 ## Browser session transitions
 
 The frontend serializes login, persona switching and logout. While a transition

@@ -663,3 +663,18 @@ A troca vem por `POST /api/v1/material-requests/{id}/substitution`, com `confirm
 
 A solicitação guarda o código original (`substituted_from_material_id`) e a equivalência usada, e a auditoria registra `MATERIAL_REQUEST_SUBSTITUTED` com o par. A troca é única por solicitação. O detalhe mostra a troca em `substitution`.
 
+## 22. Notificações do solicitante (#249)
+
+As notificações são derivadas da auditoria: nada novo é gravado quando uma etapa muda. Uma notificação é um evento de auditoria feito por outra pessoa, ou pelo sistema, sobre uma solicitação do usuário. Entram eventos da solicitação, da reserva, do encaminhamento para compras e do pedido de cadastro vinculado:
+
+- reserva, entrega, reversão e cancelamento de reserva;
+- encaminhamento criado, aceito, devolvido ou cancelado;
+- encerramento da solicitação;
+- cadastro publicado, rejeitado ou resolvido como item já existente, e revisão pendente de resposta ou reaberta.
+
+As ações do próprio solicitante não viram notificação.
+
+`GET /api/v1/notifications` (`requests:read_own`) devolve só as do dono, mais recentes primeiro. O `unread_count` é o total real de não lidas, calculado pela mesma consulta, e não o tamanho da página. `POST /api/v1/notifications/read` marca ids próprios, ou todos com `all: true`, em `notification_reads`, onde a operação é só de inserção e pode ser repetida.
+
+O menu do front mostra "Notificações" com o contador real. Sem resposta confiável da API, o contador some em vez de mostrar zero.
+
