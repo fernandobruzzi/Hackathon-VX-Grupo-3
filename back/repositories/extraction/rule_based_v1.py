@@ -7,6 +7,7 @@ vai para `unresolved`, e um repositório futuro, por exemplo com LLM, pode trata
 import re
 import unicodedata
 from fractions import Fraction
+from functools import lru_cache
 
 from domain.contracts import ExtractedAttribute, ExtractionResult, PdmAttribute, PdmClass
 from domain.pdm_validator import is_valid_value
@@ -189,6 +190,11 @@ def _measure_candidates(raw: str) -> list[tuple[str, str]]:
     return candidates
 
 
+@lru_cache(maxsize=4096)
+def _contained_pattern(value: str) -> re.Pattern[str]:
+    return re.compile(rf"(?<![\w.\-]){re.escape(value)}{_VALUE_END}")
+
+
 def _contained_value(attribute: PdmAttribute, raw: str) -> str | None:
     """O único valor permitido contido no texto, quando há exatamente um."""
     if attribute.allowed_values is None:
@@ -196,7 +202,7 @@ def _contained_value(attribute: PdmAttribute, raw: str) -> str | None:
     # M12 dentro de M12 X passo X comprimento não comprova rosca grossa.
     if attribute.name in _METRIC_ATTRIBUTES and (metric := _POOL_METRIC.search(raw)) and metric[2]:
         return None
-    found = [v for v in attribute.allowed_values if re.search(rf"(?<![\w.\-]){re.escape(v)}{_VALUE_END}", raw)]
+    found = [v for v in attribute.allowed_values if _contained_pattern(v).search(raw)]
     longest = [v for v in found if not any(v != other and v in other for other in found)]
     return longest[0] if len(longest) == 1 else None
 
@@ -290,18 +296,35 @@ def _has_metric_gauge_evidence(work: _Extraction, evidence: str, gauge: str) -> 
     )
 
 
-def labeled_spans(attribute_names, segment):
-    """Rótulos e aliases aceitos, compartilhados com a checagem de observações contraditórias."""
+@lru_cache(maxsize=256)
+def _label_patterns(attribute_names: tuple[str, ...]) -> tuple[tuple[str, re.Pattern[str]], ...]:
     labels = sorted({*KEY_ALIASES, *attribute_names, *_REFERENCE_LABELS}, key=len, reverse=True)
-    spans = []
+    patterns = []
     for label in labels:
         guard = r"(?=\s*:)" if label in COLON_ONLY_KEYS else ""
         guard += r"(?=\s*:?\s*\d)" if label in DIGIT_ONLY_KEYS else ""
-        for match in re.finditer(rf"(?<![\w./\-]){re.escape(label)}(?![\w./\-]){guard}", segment):
+        patterns.append((label, re.compile(rf"(?<![\w./\-]){re.escape(label)}(?![\w./\-]){guard}")))
+    return tuple(patterns)
+
+
+def labeled_spans(attribute_names, segment):
+    """Rótulos e aliases aceitos, compartilhados com a checagem de observações contraditórias."""
+    spans = []
+    for label, pattern in _label_patterns(tuple(attribute_names)):
+        for match in pattern.finditer(segment):
             if not any(start < match.end() and match.start() < end for start, end, _ in spans):
                 spans.append((match.start(), match.end(), label))
     spans.sort()
     return spans
+
+
+@lru_cache(maxsize=4096)
+def _enum_pattern(phrase: str) -> re.Pattern[str]:
+    body = re.escape(phrase)
+    if any(c.isdigit() for c in phrase):
+        # Modelos e normas aparecem com ou sem separador: TC-12 e TC12.
+        body = re.sub(r"\\[ \-]|/", r"[\\s\\-/]?", body)
+    return re.compile(rf"(?<![\w./\-]){body}{_VALUE_END}")
 
 
 class RuleBasedV1ExtractionRepository:
@@ -450,12 +473,7 @@ class RuleBasedV1ExtractionRepository:
                         options.setdefault(alias, set()).add(attribute.name)
                         canonical[(alias, attribute.name)] = target
         for phrase in sorted(options, key=len, reverse=True):
-            body = re.escape(phrase)
-            if any(c.isdigit() for c in phrase):
-                # Modelos e normas aparecem com ou sem separador: TC-12 e TC12.
-                body = re.sub(r"\\[ \-]|/", r"[\\s\\-/]?", body)
-            pattern = rf"(?<![\w./\-]){body}{_VALUE_END}"
-            match = re.search(pattern, pool)
+            match = _enum_pattern(phrase).search(pool)
             if not match:
                 continue
             # A fração de uma medida mista (2 1/4POL) não é uma bitola isolada de 1/4POL.

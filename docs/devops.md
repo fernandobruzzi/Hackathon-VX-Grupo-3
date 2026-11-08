@@ -87,6 +87,11 @@ saneamento. O teste de ensaio usa o recorte para repetir o reset e conferir a
 impressão digital. O teste de carga da demo continua verificando 23.554 materiais
 e 520 pedidos com o kit inteiro.
 
+A avaliação empacotada e o smoke de imagens rodam em paralelo. O check
+obrigatório `images` exige sucesso de ambos. O parser reaproveita os padrões
+compilados de rótulos e valores. Em uma amostra local de 1.178 registros do
+kit, a análise passou de 3,28 s para 1,58 s com resultados idênticos.
+
 Na promoção de referência de 7/11, `python (back)` levou 9min29s, `images`
 levou 9min17s e o MCP PostgreSQL levou 8min51s. O objetivo da #329 é reduzir
 o caminho crítico a cinco minutos de execução. A próxima promoção precisa
