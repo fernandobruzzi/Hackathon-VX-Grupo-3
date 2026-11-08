@@ -675,6 +675,10 @@ with the owner's effective role and `origin: REQUESTER_PARTIAL_CONFIRMATION`, an
 detail lists `reservations` and `purchase_forwards` with their states. See section 19 of
 [`docs/solicitacao-material.md`](docs/solicitacao-material.md#19-atendimento-parcial-entre-estoque-e-compras-242).
 
+## Approved equivalents
+
+When a requested material lacks stock, the requester sees only technically equivalent materials whose equivalence Governança approved (`POST /api/v1/material-equivalences`, `merge:decide`, stored as a canonical pair in `material_equivalences`), with their availability at the request's center (#246). Switching requires `confirm_substitution: true`, uses the purchasing-forward lock order and confirmed shortage, refuses requests with any served parcel, and records the original code and the equivalence on the request and in the audit. Equivalence never merges materials or adds their stock. See section 21 of [`docs/solicitacao-material.md`](docs/solicitacao-material.md).
+
 ## Browser session transitions
 
 The frontend serializes login, persona switching and logout. While a transition
