@@ -4,6 +4,8 @@ Guide for everyone working in this repository, people and coding agents alike.
 
 Group 3's solution to Hackathon VX, Challenge 01: sanitize a materials master base, standardize new registrations, and enrich missing data with a recorded source. Deliverables: working MVP, market analysis and a five-minute pitch.
 
+**Status:** the hackathon ended on 8 Nov 2026. The repository is kept as a record of the delivered MVP and as a portfolio project; there is no active maintenance. Statuses below describe the code at the end of the event, and open issues stay as documented future work. The workflow that follows is how the team worked during the event.
+
 ## Where things are
 
 | Path | Contents | Status |
