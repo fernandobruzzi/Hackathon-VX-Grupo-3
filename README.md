@@ -136,8 +136,8 @@ produção e deploy por OIDC.
 - [Miguel Cerne](https://github.com/Cerne17)
 - [Hugo Antunes](https://github.com/hugo-antunes19)
 - [Fernando Bruzzi](https://github.com/fernandobruzzi)
-- [bepo7](https://github.com/bepo7)
-- [EnzoSamp](https://github.com/EnzoSamp)
+- [Bernardo Pozzato](https://github.com/bepo7)
+- [Enzo Sampaio](https://github.com/EnzoSamp)
 
 ## Documentação
 
